@@ -32,28 +32,21 @@
             <div class="w-20 h-20 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-4xl text-blue-600 mb-4 shadow-sm border border-blue-100">
                 <i class="fas fa-school"></i>
             </div>
-            
             <h3 class="text-sm font-bold text-gray-500 mb-2 uppercase tracking-widest">Trường Tiểu học Phú Thọ</h3>
-            
             <h1 class="text-4xl font-extrabold text-blue-900 mb-2 uppercase tracking-tight">LỚP 4/6</h1>
-            
             <h2 class="text-md font-bold text-orange-600 mb-6 border-b pb-4">Năm học: 2025 - 2026</h2>
-            
             <p class="text-gray-500 mb-4 text-xs italic bg-gray-50 p-2 rounded">
                 <i class="fas fa-info-circle mr-1"></i> Cổng thông tin & Ôn tập trực tuyến
             </p>
-
             <div class="space-y-4">
                 <div class="relative">
                     <i class="fas fa-phone-alt absolute left-4 top-3.5 text-gray-400"></i>
                     <input id="inputLogin" type="number" class="w-full pl-10 p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-lg text-center" placeholder="Nhập SĐT Phụ Huynh...">
                 </div>
-                
                 <button onclick="xuLyDangNhap()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg transform transition active:scale-95 text-lg uppercase tracking-wide">
                     Đăng Nhập
                 </button>
             </div>
-
             <div class="mt-6 pt-4 border-t border-gray-100">
                 <p class="text-[10px] text-gray-400">Giáo viên chủ nhiệm: Thầy Nguyễn Hữu Hiển</p>
             </div>
@@ -61,70 +54,58 @@
     </div>
 
     <div id="mainApp" class="hidden">
-        
         <div class="bg-blue-900 text-white shadow-md sticky top-0 z-40 border-b-4 border-yellow-500">
             <div class="p-4 flex justify-between items-center">
                 <div class="flex items-center">
                     <h1 class="text-lg font-bold uppercase tracking-wider mr-2"><i class="fas fa-graduation-cap"></i> LỚP 4/6</h1>
                 </div>
-                
                 <div class="flex items-center space-x-2">
-                    <span id="userLabel" class="bg-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-600 shadow-inner truncate max-w-[150px]">
-                        --
-                    </span>
-                    <button onclick="dangXuat()" class="bg-red-500 text-white w-8 h-8 rounded-full hover:bg-red-600 shadow flex items-center justify-center" title="Đăng xuất">
-                        <i class="fas fa-power-off"></i>
-                    </button>
+                    <span id="userLabel" class="bg-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-600 shadow-inner truncate max-w-[150px]">--</span>
+                    <button onclick="dangXuat()" class="bg-red-500 text-white w-8 h-8 rounded-full hover:bg-red-600 shadow flex items-center justify-center" title="Đăng xuất"><i class="fas fa-power-off"></i></button>
                 </div>
             </div>
-
             <div class="flex bg-white text-sm font-bold shadow-inner">
-                <button onclick="chuyenTab('tabHocSinh')" id="btnTabHS" class="flex-1 py-3 text-center transition duration-300 tab-active">
-                    <i class="fas fa-user mr-2"></i> THÔNG TIN
-                </button>
-                <button onclick="chuyenTab('tabOnTap')" id="btnTabOnTap" class="flex-1 py-3 text-center transition duration-300 tab-inactive">
-                    <i class="fas fa-book-reader mr-2"></i> ÔN TẬP
-                </button>
+                <button onclick="chuyenTab('tabHocSinh')" id="btnTabHS" class="flex-1 py-3 text-center transition duration-300 tab-active"><i class="fas fa-user mr-2"></i> THÔNG TIN</button>
+                <button onclick="chuyenTab('tabOnTap')" id="btnTabOnTap" class="flex-1 py-3 text-center transition duration-300 tab-inactive"><i class="fas fa-book-reader mr-2"></i> ÔN TẬP</button>
             </div>
         </div>
 
         <div class="container mx-auto mt-6 p-4 max-w-2xl">
-            
             <div id="tabHocSinh" class="fade-in">
-                
                 <div id="adminSearchBox" class="hidden bg-white p-5 rounded-xl shadow-sm mb-6 border-l-4 border-yellow-500">
                     <div id="panelThem" class="mb-4">
-                        <button onclick="moFormThem()" class="w-full bg-green-600 text-white py-2 rounded-lg shadow font-bold uppercase text-xs flex justify-center items-center">
-                           <i class="fas fa-plus-circle mr-2"></i> Thêm Học Sinh
-                       </button>
+                        <button onclick="moFormThem()" class="w-full bg-green-600 text-white py-2 rounded-lg shadow font-bold uppercase text-xs flex justify-center items-center"><i class="fas fa-plus-circle mr-2"></i> Thêm Học Sinh</button>
                    </div>
-                    <label class="block text-gray-500 text-xs font-bold mb-2 uppercase">Tra cứu nhanh (Quyền Admin):</label>
+                    <label class="block text-gray-500 text-xs font-bold mb-2 uppercase">Tra cứu nhanh (Admin):</label>
                     <div class="relative">
-                        <select id="selectHS" onchange="chonHocSinhTuList()" class="block w-full bg-gray-50 border border-gray-300 text-gray-800 py-3 px-4 pr-8 rounded-lg font-bold shadow-sm">
-                            <option value="">-- Chọn học sinh --</option>
-                        </select>
+                        <select id="selectHS" onchange="chonHocSinhTuList()" class="block w-full bg-gray-50 border border-gray-300 text-gray-800 py-3 px-4 pr-8 rounded-lg font-bold shadow-sm"><option value="">-- Chọn học sinh --</option></select>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"><i class="fas fa-chevron-down"></i></div>
                     </div>
                 </div>
 
-                <div id="infoCard" class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 relative transition-all">
-                    <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-center text-white relative">
-                        <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-lg border-4 border-blue-200">
+                <div id="infoCard" class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 relative transition-all hidden">
+                    
+                    <div onclick="toggleDetails()" class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-center text-white relative cursor-pointer hover:bg-blue-600 transition group">
+                        <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-lg border-4 border-blue-200 group-hover:scale-110 transition duration-300">
                             <i class="fas fa-user-graduate"></i>
                         </div>
                         <div class="mt-3">
                             <h2 id="viewName" class="text-2xl font-bold uppercase tracking-wide block">--</h2>
-                            <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
+                            <input id="editName" onclick="event.stopPropagation()" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
                         </div>
                         <span id="cardID" class="text-blue-100 text-xs font-mono bg-blue-800 px-2 py-0.5 rounded-full bg-opacity-50">--</span>
                         
+                        <p id="hintText" class="mt-4 text-blue-200 text-xs animate-pulse font-bold">
+                            <i class="fas fa-chevron-down mr-1"></i> Bấm vào đây để xem chi tiết
+                        </p>
+
                         <div id="adminControls" class="hidden absolute top-4 right-4 flex flex-col space-y-2">
-                            <button onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow" title="Sửa"><i class="fas fa-pen"></i></button>
-                            <button onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+                            <button onclick="event.stopPropagation(); batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow" title="Sửa"><i class="fas fa-pen"></i></button>
+                            <button onclick="event.stopPropagation(); xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </div>
 
-                    <div class="p-6 space-y-5">
+                    <div id="detailContent" class="hidden p-6 space-y-5 bg-white border-t border-gray-100">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
                                 <p class="text-[10px] text-gray-400 uppercase font-bold">Ngày sinh</p>
@@ -150,7 +131,6 @@
                                 <p id="viewFather" class="font-bold text-blue-900 text-lg ml-8 block">--</p>
                                 <input id="editFather" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT...">
                             </div>
-
                             <div class="bg-pink-50 p-3 rounded-lg border border-pink-100">
                                 <div class="flex items-center justify-between mb-1">
                                     <div class="flex items-center">
@@ -197,7 +177,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -211,20 +190,13 @@
         window.onload = async function() {
             await taiDanhSach();
             const savedRole = localStorage.getItem('userRole');
-            if (savedRole === 'admin') {
-                vaoGiaoDienAdmin();
-            } else if (savedRole === 'student') {
+            if (savedRole === 'admin') { vaoGiaoDienAdmin(); } 
+            else if (savedRole === 'student') {
                 const savedID = localStorage.getItem('studentID');
                 const hs = dsHocSinh.find(h => h.id === savedID);
                 if(hs) vaoGiaoDienHocSinh(hs);
-                else {
-                    document.getElementById('loader').style.display = 'none';
-                    document.getElementById('loginScreen').classList.remove('hidden');
-                }
-            } else {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('loginScreen').classList.remove('hidden');
-            }
+                else { document.getElementById('loader').style.display = 'none'; document.getElementById('loginScreen').classList.remove('hidden'); }
+            } else { document.getElementById('loader').style.display = 'none'; document.getElementById('loginScreen').classList.remove('hidden'); }
         };
 
         async function taiDanhSach() {
@@ -240,25 +212,10 @@
         function xuLyDangNhap() {
             const input = document.getElementById('inputLogin').value.trim();
             if(!input) return alert("Vui lòng nhập thông tin!");
-
-            if (input === PASS_ADMIN) {
-                localStorage.setItem('userRole', 'admin');
-                vaoGiaoDienAdmin();
-                return;
-            }
-
-            const hsTimThay = dsHocSinh.find(hs => 
-                (hs.fatherPhone && hs.fatherPhone.toString().includes(input)) || 
-                (hs.motherPhone && hs.motherPhone.toString().includes(input))
-            );
-
-            if (hsTimThay) {
-                localStorage.setItem('userRole', 'student');
-                localStorage.setItem('studentID', hsTimThay.id);
-                vaoGiaoDienHocSinh(hsTimThay);
-            } else {
-                alert("Số điện thoại không khớp với dữ liệu học sinh!");
-            }
+            if (input === PASS_ADMIN) { localStorage.setItem('userRole', 'admin'); vaoGiaoDienAdmin(); return; }
+            const hsTimThay = dsHocSinh.find(hs => (hs.fatherPhone && hs.fatherPhone.toString().includes(input)) || (hs.motherPhone && hs.motherPhone.toString().includes(input)));
+            if (hsTimThay) { localStorage.setItem('userRole', 'student'); localStorage.setItem('studentID', hsTimThay.id); vaoGiaoDienHocSinh(hsTimThay); } 
+            else { alert("Số điện thoại không khớp với dữ liệu học sinh!"); }
         }
 
         function vaoGiaoDienAdmin() {
@@ -283,11 +240,7 @@
         }
 
         function dangXuat() {
-            if(confirm("Bạn muốn đăng xuất?")) {
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('studentID');
-                location.reload();
-            }
+            if(confirm("Bạn muốn đăng xuất?")) { localStorage.removeItem('userRole'); localStorage.removeItem('studentID'); location.reload(); }
         }
 
         function chonHocSinhTuList() {
@@ -296,9 +249,27 @@
             hienChiTiet(dsHocSinh[index]);
         }
 
+        // --- HÀM TOGGLE ĐÓNG MỞ ---
+        function toggleDetails() {
+            const content = document.getElementById('detailContent');
+            const hint = document.getElementById('hintText');
+            // Nếu đang ẩn thì hiện, đang hiện thì ẩn
+            if(content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                hint.innerHTML = '<i class="fas fa-chevron-up mr-1"></i> Thu gọn';
+            } else {
+                content.classList.add('hidden');
+                hint.innerHTML = '<i class="fas fa-chevron-down mr-1"></i> Bấm vào đây để xem chi tiết';
+            }
+        }
+
         function hienChiTiet(hs) {
             currentHS = hs;
             batCheDoSua(false);
+
+            // Mặc định luôn ĐÓNG chi tiết khi load học sinh mới
+            document.getElementById('detailContent').classList.add('hidden');
+            document.getElementById('hintText').innerHTML = '<i class="fas fa-chevron-down mr-1"></i> Bấm vào đây để xem chi tiết';
 
             const safe = (val) => (val && val !== "undefined") ? val : "";
             document.getElementById('viewName').innerText = safe(hs.name);
@@ -309,25 +280,23 @@
             document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---";
             document.getElementById('viewAddress').innerText = safe(hs.address) || "---";
             document.getElementById('viewNote').innerText = safe(hs.note) || "Không";
-
             document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
             document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
 
+            document.getElementById('infoCard').classList.remove('hidden'); // Hiện thẻ
+            
             if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
             else document.getElementById('adminControls').classList.add('hidden');
         }
 
         function xuLyNgay(str) {
             if (!str) return "";
-            if (str.toString().includes("T")) {
-                try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {}
-            }
+            if (str.toString().includes("T")) { try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {} }
             return str;
         }
 
         function resetInfoCard() {
-            document.getElementById('viewName').innerText = "--";
-            document.getElementById('cardID').innerText = "--";
+            document.getElementById('infoCard').classList.add('hidden');
         }
 
         function chuyenTab(tabName) {
@@ -335,7 +304,6 @@
             document.getElementById('tabOnTap').classList.add('hidden');
             document.getElementById('btnTabHS').className = "flex-1 py-3 text-center transition duration-300 tab-inactive";
             document.getElementById('btnTabOnTap').className = "flex-1 py-3 text-center transition duration-300 tab-inactive";
-
             document.getElementById(tabName).classList.remove('hidden');
             if(tabName === 'tabHocSinh') document.getElementById('btnTabHS').className = "flex-1 py-3 text-center transition duration-300 tab-active";
             else document.getElementById('btnTabOnTap').className = "flex-1 py-3 text-center transition duration-300 tab-active";
@@ -343,6 +311,12 @@
 
         function batCheDoSua(enable) {
             if(!currentHS || !isAdmin) return;
+            // Nếu bật chế độ sửa, TỰ ĐỘNG MỞ chi tiết ra để sửa
+            if(enable) {
+                document.getElementById('detailContent').classList.remove('hidden');
+                document.getElementById('hintText').innerHTML = '<i class="fas fa-pen mr-1"></i> Đang chỉnh sửa...';
+            }
+
             const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
             if (enable) {
                 document.getElementById('editName').value = currentHS.name;
@@ -352,18 +326,11 @@
                 document.getElementById('editMother').value = currentHS.motherPhone;
                 document.getElementById('editAddress').value = currentHS.address;
                 document.getElementById('editNote').value = currentHS.note;
-
-                fields.forEach(f => {
-                    document.getElementById('view' + f).classList.add('hidden');
-                    document.getElementById('edit' + f).classList.remove('hidden');
-                });
+                fields.forEach(f => { document.getElementById('view' + f).classList.add('hidden'); document.getElementById('edit' + f).classList.remove('hidden'); });
                 document.getElementById('adminControls').classList.add('hidden');
                 document.getElementById('savePanel').classList.remove('hidden');
             } else {
-                fields.forEach(f => {
-                    document.getElementById('view' + f).classList.remove('hidden');
-                    document.getElementById('edit' + f).classList.add('hidden');
-                });
+                fields.forEach(f => { document.getElementById('view' + f).classList.remove('hidden'); document.getElementById('edit' + f).classList.add('hidden'); });
                 document.getElementById('adminControls').classList.remove('hidden');
                 document.getElementById('savePanel').classList.add('hidden');
             }
