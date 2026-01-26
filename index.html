@@ -38,7 +38,7 @@
             <h3 class="text-sm font-bold text-gray-600 mb-6 uppercase tracking-wide border-b pb-4">Trường Tiểu học Phú Thọ</h3>
             
             <p class="text-gray-500 mb-4 text-xs italic bg-gray-50 p-2 rounded">
-                <i class="fas fa-info-circle mr-1"></i> Cổng thông tin điện tử & Ôn tập trực tuyến
+                <i class="fas fa-info-circle mr-1"></i> Cổng thông tin & Ôn tập trực tuyến
             </p>
 
             <div class="space-y-4">
@@ -211,6 +211,16 @@
             const savedRole = localStorage.getItem('userRole');
             if (savedRole === 'admin') {
                 vaoGiaoDienAdmin();
+            } else if (savedRole === 'student') {
+                // Nếu là học sinh, cần kiểm tra lại xem dữ liệu hs còn đúng không
+                const savedID = localStorage.getItem('studentID');
+                const hs = dsHocSinh.find(h => h.id === savedID);
+                if(hs) vaoGiaoDienHocSinh(hs);
+                else {
+                    // Nếu không tìm thấy (do danh sách thay đổi), quay về login
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('loginScreen').classList.remove('hidden');
+                }
             } else {
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('loginScreen').classList.remove('hidden');
@@ -243,7 +253,8 @@
             );
 
             if (hsTimThay) {
-                localStorage.setItem('userRole', 'student'); 
+                localStorage.setItem('userRole', 'student');
+                localStorage.setItem('studentID', hsTimThay.id); // Lưu thêm ID để check
                 vaoGiaoDienHocSinh(hsTimThay);
             } else {
                 alert("Số điện thoại không khớp với dữ liệu học sinh!");
@@ -274,6 +285,7 @@
         function dangXuat() {
             if(confirm("Bạn muốn đăng xuất?")) {
                 localStorage.removeItem('userRole');
+                localStorage.removeItem('studentID');
                 location.reload();
             }
         }
