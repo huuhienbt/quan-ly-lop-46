@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - VioEdu Style (V20)</title>
+    <title>Lớp 4/6 - VioEdu Style (V21)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -11,13 +11,12 @@
         body { font-family: 'Nunito', sans-serif; }
         .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
         .game-btn { transition: all 0.1s; border-bottom: 4px solid rgba(0,0,0,0.2); }
         .game-btn:active { transform: translateY(2px); border-bottom: 0px solid rgba(0,0,0,0.2); }
         .edit-input { border: 2px solid #3b82f6; background-color: #eff6ff; padding: 4px 8px; border-radius: 8px; width: 100%; color: #1e3a8a; font-weight: bold; }
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        
-        /* Hiệu ứng thẻ học sinh */
         .student-card { transition: all 0.3s; }
         .student-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
     </style>
@@ -104,7 +103,7 @@
                 <i class="fas fa-star absolute top-5 left-10 text-yellow-400 opacity-20 text-4xl animate-bounce"></i>
                 <div class="container mx-auto px-4 text-center relative z-10">
                     <h2 id="welcomeText" class="text-2xl font-black mb-2">Chào con, chúc một ngày tốt lành!</h2>
-                    <p class="text-blue-100 opacity-90">Hôm nay con muốn chinh phục môn học nào?</p>
+                    <p id="subWelcomeText" class="text-blue-100 opacity-90">Hôm nay con muốn chinh phục môn học nào?</p>
                 </div>
             </div>
 
@@ -140,9 +139,7 @@
                     </button>
                 </div>
             </div>
-
-            <div id="studentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                </div>
+            <div id="studentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
     </div>
@@ -157,7 +154,6 @@
                     <h2 id="viewName" class="text-2xl font-black uppercase tracking-wide block drop-shadow-md">--</h2>
                     <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
                     <span id="cardID" class="text-blue-100 text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full">--</span>
-                    
                     <div id="adminControls" class="hidden absolute top-4 left-4 flex flex-col space-y-2">
                         <button onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow" title="Sửa"><i class="fas fa-pen"></i></button>
                         <button onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow" title="Xóa"><i class="fas fa-trash-alt"></i></button>
@@ -265,8 +261,9 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = "Thầy Hiển";
             document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
-            document.getElementById('studentStats').classList.add('hidden');
-            veDanhSachQuanLy(dsHocSinh); // Vẽ danh sách quản lý sẵn
+            document.getElementById('studentStats').classList.add('hidden'); // Ẩn điểm của Admin
+            document.getElementById('subWelcomeText').classList.add('hidden'); // Ẩn câu hỏi của Admin
+            veDanhSachQuanLy(dsHocSinh);
         }
 
         function vaoGiaoDienHocSinh(hs) {
@@ -278,6 +275,7 @@
             document.getElementById('headerName').innerText = hs.name;
             document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
             document.getElementById('studentStats').classList.remove('hidden');
+            document.getElementById('subWelcomeText').classList.remove('hidden');
         }
 
         function xuLyClickProfile() {
@@ -289,7 +287,6 @@
             }
         }
 
-        // --- CHUYỂN ĐỔI MÀN HÌNH QUẢN LÝ ---
         function chuyenTrangQuanLy() {
             document.getElementById('gvcnMenu').classList.add('hidden');
             document.getElementById('sectionDashboard').classList.add('hidden');
@@ -365,6 +362,13 @@
             if (!str) return "";
             if (str.toString().includes("T")) { try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {} }
             return str;
+        }
+
+        function resetInfoCard() {
+            document.getElementById('viewName').innerText = "--";
+            document.getElementById('cardID').innerText = "--";
+            document.getElementById('viewDob').innerText = "--";
+            document.getElementById('adminControls').classList.add('hidden');
         }
 
         function batCheDoSua(enable) {
