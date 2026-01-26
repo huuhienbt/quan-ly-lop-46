@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Lớp 4/6 - Thầy Hiển (Online)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body class="bg-gray-50 font-sans">
+
+    <div class="bg-blue-700 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-lg md:text-xl font-bold uppercase"><i class="fas fa-school mr-2"></i> Lớp 4/6 (Online)</h1>
+            <div>
+                 <button id="btnReload" onclick="taiLaiDuLieu()" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2 text-sm">
+                    <i class="fas fa-sync-alt"></i> Tải lại
+                </button>
+                <button id="btnLogin" onclick="dangNhap()" class="bg-white text-blue-700 px-3 py-1 rounded font-bold hover:bg-gray-200 text-sm">
+                    <i class="fas fa-user-lock"></i> Admin
+                </button>
+                <button id="btnLogout" onclick="dangXuat()" class="hidden bg-red-500 text-white px-3 py-1 rounded font-bold hover:bg-red-600 text-sm">
+                    <i class="fas fa-sign-out-alt"></i> Thoát
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto mt-6 p-4">
+        
+        <div id="statusMsg" class="hidden text-center p-2 mb-4 rounded bg-yellow-100 text-yellow-800">
+            <i class="fas fa-spinner fa-spin mr-2"></i> Đang kết nối với Google Sheet... vui lòng đợi.
+        </div>
+
+        <div id="adminControls" class="hidden mb-6 bg-white p-4 rounded shadow border-l-4 border-green-500">
+            <div class="flex justify-between items-center">
+                <span class="font-bold text-gray-700">Xin chào Thầy Hiển!</span>
+                <button onclick="moFormThem()" class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700 font-bold">
+                    <i class="fas fa-plus mr-2"></i> Thêm Học Sinh
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-md rounded-lg overflow-x-auto">
+            <table class="min-w-full leading-normal">
+                <thead>
+                    <tr class="bg-gray-100 text-gray-600 uppercase text-xs font-bold">
+                        <th class="py-3 px-4 text-left">Mã HS</th>
+                        <th class="py-3 px-4 text-left">Họ và Tên</th>
+                        <th class="py-3 px-4 text-center">Ngày Sinh</th>
+                        <th class="py-3 px-4 text-center">Giới Tính</th>
+                        <th class="py-3 px-4 text-center">SĐT PH</th>
+                        <th class="py-3 px-4 text-left">Ghi Chú</th>
+                        <th class="py-3 px-4 text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody" class="text-gray-700 text-sm">
+                    </tbody>
+            </table>
+            <div id="emptyState" class="hidden p-8 text-center text-gray-400">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>Chưa có dữ liệu nào trên Google Sheet.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // THẦY DÁN LINK API CỦA THẦY VÀO GIỮA 2 DẤU NHÁY DƯỚI ĐÂY:
+        // Ví dụ: const API_URL = "https://script.google.com/macros/s/AKfy.../exec";
+        // ============================================================
+        
+        const API_URL = "https://script.google.com/macros/s/AKfycbwePkzMhFSKMbeHZuzPCvfcfztbdrt716FJOwm34Ja99wKUy3XQdA_23d1ByzS745QnLQ/exec"; 
+
+        // ============================================================
+
+        const MAT_KHAU_GV = "123456";
+        let isAdmin = false;
+
+        // 1. HÀM TẢI DỮ LIỆU TỪ GOOGLE SHEET (GET)
+        async function taiLaiDuLieu() {
+            hienThongBao(true, "Đang tải danh sách từ Google Sheet...");
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                hienThiDanhSach(data);
+                hienThongBao(false);
+            } catch (error) {
+                alert("Lỗi kết nối: " + error);
+                hienThongBao(false);
+            }
+        }
+
+        // 2. HÀM HIỂN THỊ LÊN MÀN HÌNH
+        function hienThiDanhSach(danhSach) {
+            const tbody = document.getElementById('studentTableBody');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = "";
+
+            if (!danhSach || danhSach.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            danhSach.forEach((hs) => {
+                let nutXoa = `<span class="text-gray-300 text-xs">--</span>`;
+                if (isAdmin) {
+                    // Nút xóa gọi hàm xoaHocSinh với ID của học sinh
+                    nutXoa = `<button onclick="xoaHocSinh('${hs.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded"><i class="fas fa-trash"></i></button>`;
+                }
+
+                let row = `
+                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                        <td class="py-3 px-4 font-mono text-xs">${hs.id}</td>
+                        <td class="py-3 px-4 font-bold text-blue-700">${hs.name}</td>
+                        <td class="py-3 px-4 text-center">${hs.dob}</td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="${hs.gender === 'Nam' ? 'text-blue-600 bg-blue-100' : 'text-pink-600 bg-pink-100'} px-2 py-1 rounded text-xs">${hs.gender}</span>
+                        </td>
+                        <td class="py-3 px-4 text-center text-gray-500">${hs.parentPhone}</td>
+                        <td class="py-3 px-4 text-gray-500 italic">${hs.note}</td>
+                        <td class="py-3 px-4 text-center">${nutXoa}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // 3. HÀM GỬI DỮ LIỆU LÊN SHEET (POST)
+        async function guiYeuCau(action, data) {
+            hienThongBao(true, "Đang xử lý... Thầy đợi chút nhé!");
+            
+            // Cấu trúc gói tin gửi đi khớp với Google Apps Script
+            const payload = {
+                action: action,
+                data: data
+            };
+
+            try {
+                // Sử dụng 'no-cors' không hoạt động tốt với JSON response, 
+                // nhưng Apps Script redirect cần xử lý khéo.
+                // Ở mức cơ bản, ta dùng fetch mặc định cho Apps Script Web App.
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Quan trọng: Bỏ qua lỗi CORS
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Vì 'no-cors' không cho biết kết quả, ta tự giả định thành công sau 2 giây
+                // Đây là hạn chế của bản miễn phí, nhưng đủ dùng.
+                setTimeout(() => {
+                    hienThongBao(false);
+                    alert("Thao tác đã gửi! Đang cập nhật lại danh sách...");
+                    taiLaiDuLieu(); // Tải lại để thấy thay đổi
+                }, 1500);
+
+            } catch (error) {
+                alert("Có lỗi: " + error);
+                hienThongBao(false);
+            }
+        }
+
+        // 4. CÁC HÀM NGƯỜI DÙNG THAO TÁC
+        function moFormThem() {
+            let ten = prompt("Nhập Tên Học Sinh:");
+            if (!ten) return;
+            
+            // Tạo ID ngẫu nhiên cho nhanh
+            let idMoi = "HS" + Math.floor(Math.random() * 1000);
+
+            let hsMoi = {
+                id: idMoi,
+                name: ten,
+                dob: prompt("Nhập Ngày sinh (dd/mm/yyyy):") || "",
+                gender: prompt("Nhập Giới tính (Nam/Nữ):") || "Nam",
+                parentPhone: prompt("Nhập SĐT Phụ huynh:") || "",
+                note: prompt("Nhập Ghi chú:") || ""
+            };
+
+            guiYeuCau("them", hsMoi);
+        }
+
+        function xoaHocSinh(id) {
+            if (confirm("Thầy có chắc chắn muốn xóa học sinh có mã " + id + " trên Google Sheet không?")) {
+                guiYeuCau("xoa", { id: id });
+            }
+        }
+
+        // Hỗ trợ giao diện
+        function hienThongBao(hien, noiDung = "") {
+            const el = document.getElementById('statusMsg');
+            if (hien) {
+                el.classList.remove('hidden');
+                el.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> ${noiDung}`;
+            } else {
+                el.classList.add('hidden');
+            }
+        }
+
+        function dangNhap() {
+            let pass = prompt("Mật khẩu GVCN:");
+            if (pass === MAT_KHAU_GV) {
+                isAdmin = true;
+                capNhatNutBam();
+                taiLaiDuLieu(); // Load lại để hiện nút xóa
+                alert("Đã vào chế độ Admin");
+            } else if (pass) { alert("Sai mật khẩu"); }
+        }
+
+        function dangXuat() {
+            isAdmin = false;
+            capNhatNutBam();
+            taiLaiDuLieu();
+        }
+
+        function capNhatNutBam() {
+            if (isAdmin) {
+                document.getElementById('btnLogin').classList.add('hidden');
+                document.getElementById('btnLogout').classList.remove('hidden');
+                document.getElementById('adminControls').classList.remove('hidden');
+            } else {
+                document.getElementById('btnLogin').classList.remove('hidden');
+                document.getElementById('btnLogout').classList.add('hidden');
+                document.getElementById('adminControls').classList.add('hidden');
+            }
+        }
+
+        // CHẠY LẦN ĐẦU
+        taiLaiDuLieu(); 
+
+    </script>
+</body>
+</html>
