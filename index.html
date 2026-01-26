@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Lớp 4/6 (V6 - Login Pro)</title>
+    <title>Tra Cứu Lớp 4/6 (V7 - Lưu Giữ Trang)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
@@ -21,12 +21,10 @@
 
     <div class="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-50 border-b-4 border-yellow-500 flex justify-between items-center">
         <h1 class="text-lg font-bold uppercase tracking-wider"><i class="fas fa-search mr-2"></i> Tra Cứu HS</h1>
-        
         <div>
             <button id="btnLogin" onclick="dangNhap()" class="bg-yellow-500 text-blue-900 px-3 py-1 rounded font-bold hover:bg-yellow-400 text-xs shadow transition">
                 <i class="fas fa-user-lock mr-1"></i> Admin
             </button>
-
             <div id="userArea" class="hidden flex items-center space-x-3">
                 <span class="bg-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-600 shadow-inner">
                     <i class="fas fa-user-tie mr-1 text-yellow-400"></i> GVCN
@@ -61,12 +59,10 @@
         </div>
 
         <div id="infoCard" class="hidden bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 fade-in relative transition-all">
-            
             <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-center text-white relative">
                 <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-lg border-4 border-blue-200">
                     <i class="fas fa-user-graduate"></i>
                 </div>
-                
                 <div class="mt-3">
                     <h2 id="viewName" class="text-2xl font-bold uppercase tracking-wide block">--</h2>
                     <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
@@ -155,10 +151,8 @@
         let dsHocSinh = []; 
         let currentHS = null;
 
-        // KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP LÚC MỞ WEB
         function checkLoginState() {
-            const savedState = localStorage.getItem('isGVCN');
-            if (savedState === 'true') {
+            if (localStorage.getItem('isGVCN') === 'true') {
                 isAdmin = true;
                 capNhatGiaoDienAdmin();
             }
@@ -178,7 +172,7 @@
         }
 
         function hienChiTiet() {
-            batCheDoSua(false);
+            batCheDoSua(false); // Tắt chế độ sửa nếu đang bật
             const index = document.getElementById('selectHS').value;
             const card = document.getElementById('infoCard');
             if (index === "") { card.classList.add('hidden'); currentHS = null; return; }
@@ -187,7 +181,7 @@
             currentHS = hs;
             const safe = (val) => (val && val !== "undefined") ? val : "";
 
-            // View Data
+            // Đổ dữ liệu
             document.getElementById('viewName').innerText = safe(hs.name) || "Chưa có tên";
             document.getElementById('cardID').innerText = safe(hs.id);
             document.getElementById('viewDob').innerText = safe(hs.dob) || "-";
@@ -201,7 +195,6 @@
             document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
 
             card.classList.remove('hidden');
-            // Check lại quyền Admin để hiện nút sửa/xóa
             if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
             else document.getElementById('adminControls').classList.add('hidden');
         }
@@ -209,7 +202,6 @@
         function batCheDoSua(enable) {
             if(!currentHS) return;
             const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
-            
             if (enable) {
                 document.getElementById('editName').value = currentHS.name;
                 document.getElementById('editDob').value = currentHS.dob;
@@ -259,49 +251,71 @@
             if(confirm("Xóa em " + currentHS.name + "?")) guiYeuCau("xoa", {id: currentHS.id});
         }
 
+        // --- HÀM GỬI YÊU CẦU & GIỮ NGUYÊN TRANG ---
         async function guiYeuCau(action, data) {
-            document.getElementById('loadingText').innerText = "Đang xử lý...";
+            document.getElementById('loadingText').innerText = "Đang lưu...";
+            
+            // 1. Gửi dữ liệu đi
             await fetch(API_URL, {
                 method: 'POST', mode: 'no-cors',
                 body: JSON.stringify({action: action, data: data})
             });
-            setTimeout(() => { alert("Thành công!"); location.reload(); }, 1500);
-        }
 
-        // --- HỆ THỐNG ĐĂNG NHẬP / ĐĂNG XUẤT ---
+            // 2. Chờ 1.5s để server xử lý
+            setTimeout(async () => {
+                
+                if (action === 'xoa') {
+                    alert("Đã xóa!");
+                    location.reload(); // Xóa thì phải reload trang
+                    return;
+                }
+
+                // 3. Tải lại danh sách MỚI NHẤT (Ngầm)
+                await taiDanhSach();
+                
+                // 4. Tìm lại vị trí của học sinh vừa Sửa/Thêm trong danh sách mới
+                const idCanTim = data.id;
+                const index = dsHocSinh.findIndex(hs => hs.id === idCanTim);
+                
+                if (index !== -1) {
+                    // Chọn lại đúng học sinh đó trong Dropdown
+                    document.getElementById('selectHS').value = index;
+                    // Hiển thị lại chi tiết
+                    hienChiTiet();
+                    alert("Đã lưu thành công!");
+                } else {
+                    location.reload(); // Nếu lỗi không tìm thấy thì mới reload
+                }
+
+            }, 1500);
+        }
 
         function dangNhap() {
             let pass = prompt("Nhập mật khẩu GVCN:");
             if (pass === PASS_ADMIN) {
                 isAdmin = true;
-                localStorage.setItem('isGVCN', 'true'); // Lưu trạng thái vào bộ nhớ trình duyệt
+                localStorage.setItem('isGVCN', 'true');
                 capNhatGiaoDienAdmin();
-                alert("Đăng nhập thành công! Chào thầy Hiển.");
-            } else if (pass) {
-                alert("Sai mật khẩu!");
-            }
+                alert("Xin chào thầy Hiển!");
+            } else if (pass) alert("Sai mật khẩu!");
         }
 
         function dangXuat() {
-            if(confirm("Thầy có chắc muốn đăng xuất không?")) {
+            if(confirm("Thầy có muốn đăng xuất?")) {
                 isAdmin = false;
-                localStorage.removeItem('isGVCN'); // Xóa trạng thái
-                location.reload(); // Tải lại trang về mặc định
+                localStorage.removeItem('isGVCN');
+                location.reload();
             }
         }
 
         function capNhatGiaoDienAdmin() {
-            // Ẩn nút Login, Hiện User Area
             document.getElementById('btnLogin').classList.add('hidden');
             document.getElementById('userArea').classList.remove('hidden');
-            
-            // Hiện các nút chức năng Admin
             document.getElementById('panelThem').classList.remove('hidden');
             if(currentHS) document.getElementById('adminControls').classList.remove('hidden');
         }
 
-        // KHỞI CHẠY
-        checkLoginState(); // Kiểm tra xem đã đăng nhập từ trước chưa
+        checkLoginState();
         taiDanhSach();
     </script>
 </body>
