@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - VioEdu Style (V21)</title>
+    <title>Lớp 4/6 - VioEdu Style (V22)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -17,8 +17,13 @@
         .edit-input { border: 2px solid #3b82f6; background-color: #eff6ff; padding: 4px 8px; border-radius: 8px; width: 100%; color: #1e3a8a; font-weight: bold; }
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .student-card { transition: all 0.3s; }
         .student-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        /* Rank Badge colors */
+        .rank-1 { background-color: #fbbf24; color: white; border: 2px solid #f59e0b; } /* Vàng */
+        .rank-2 { background-color: #9ca3af; color: white; border: 2px solid #6b7280; } /* Bạc */
+        .rank-3 { background-color: #d97706; color: white; border: 2px solid #b45309; } /* Đồng */
+        .rank-other { background-color: #e5e7eb; color: #6b7280; }
     </style>
 </head>
 <body class="bg-blue-50 text-sm min-h-screen font-sans">
@@ -64,9 +69,9 @@
 
                 <div class="flex items-center space-x-3 relative">
                     <div id="studentStats" class="hidden sm:flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
-                        <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-gem mr-1"></i> 0</div>
+                        <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-gem mr-1"></i> <span id="statDiamond">0</span></div>
                         <div class="w-px h-3 bg-gray-300"></div>
-                        <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-trophy mr-1"></i> 0</div>
+                        <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-trophy mr-1"></i> <span id="statMedal">0</span></div>
                     </div>
 
                     <div onclick="xuLyClickProfile()" class="flex items-center space-x-2 cursor-pointer bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full transition border border-blue-200 select-none">
@@ -86,7 +91,7 @@
                             <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-users"></i></div>
                             Thông tin học sinh
                         </div>
-                        <div onclick="moKetQuaHocTap()" class="p-4 hover:bg-yellow-50 border-b border-gray-100 cursor-pointer flex items-center text-gray-700 font-bold transition">
+                        <div onclick="chuyenTrangKetQua()" class="p-4 hover:bg-yellow-50 border-b border-gray-100 cursor-pointer flex items-center text-gray-700 font-bold transition">
                             <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mr-3"><i class="fas fa-chart-line"></i></div>
                             Kết quả học tập
                         </div>
@@ -142,12 +147,30 @@
             <div id="studentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
+        <div id="sectionResults" class="hidden container mx-auto px-4 mt-6 fade-in max-w-5xl">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-yellow-50 p-4 rounded-2xl shadow-md border border-yellow-200">
+                <div class="mb-4 md:mb-0 flex items-center">
+                    <button onclick="veTrangChu()" class="bg-white hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl font-bold mr-4 transition shadow-sm border border-yellow-200"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
+                    <div>
+                        <h2 class="text-xl font-black text-yellow-800 uppercase"><i class="fas fa-crown text-yellow-500 mr-2"></i> Bảng Vàng Thành Tích</h2>
+                        <p class="text-xs text-yellow-600 font-bold">Thống kê Kim cương & Huy chương</p>
+                    </div>
+                </div>
+                <div class="relative w-full md:w-64">
+                    <i class="fas fa-search absolute left-3 top-3 text-yellow-400"></i>
+                    <input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh...">
+                </div>
+            </div>
+
+            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                </div>
+        </div>
+
     </div>
 
     <div id="profileModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative fade-in border-4 border-white">
-            <button onclick="dongHoSo()" class="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-500 w-8 h-8 rounded-full flex items-center justify-center z-10 transition"><i class="fas fa-times"></i></button>
-
+            <button onclick="dongHoSo()" class="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-600 w-8 h-8 rounded-full flex items-center justify-center z-10 transition"><i class="fas fa-times"></i></button>
             <div id="cardContent">
                 <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-8 text-center text-white relative rounded-t-2xl">
                     <div class="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center text-5xl text-blue-500 shadow-xl border-4 border-blue-200 mb-3"><i class="fas fa-user-astronaut"></i></div>
@@ -159,56 +182,21 @@
                         <button onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
-
                 <div class="p-6 space-y-4">
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                            <p class="text-[10px] text-blue-400 uppercase font-bold">Ngày sinh</p>
-                            <p id="viewDob" class="font-bold text-gray-800 text-base">--</p>
-                            <input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy">
-                        </div>
-                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
-                            <p class="text-[10px] text-blue-400 uppercase font-bold">Giới tính</p>
-                            <p id="viewGender" class="font-bold text-gray-800 text-base">--</p>
-                            <select id="editGender" class="hidden edit-input text-center"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select>
-                        </div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><p class="text-[10px] text-blue-400 uppercase font-bold">Ngày sinh</p><p id="viewDob" class="font-bold text-gray-800 text-base">--</p><input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy"></div>
+                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><p class="text-[10px] text-blue-400 uppercase font-bold">Giới tính</p><p id="viewGender" class="font-bold text-gray-800 text-base">--</p><select id="editGender" class="hidden edit-input text-center"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></div>
                     </div>
                     <div class="space-y-3">
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-male"></i></div>
-                                <div><span class="text-[10px] text-gray-400 font-bold uppercase block">Cha</span><span id="viewFather" class="font-bold text-gray-800">--</span><input id="editFather" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div>
-                            </div>
-                            <a id="btnCallFather" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a>
-                        </div>
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200">
-                            <div class="flex items-center">
-                                <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mr-3"><i class="fas fa-female"></i></div>
-                                <div><span class="text-[10px] text-gray-400 font-bold uppercase block">Mẹ</span><span id="viewMother" class="font-bold text-gray-800">--</span><input id="editMother" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div>
-                            </div>
-                            <a id="btnCallMother" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a>
-                        </div>
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-male"></i></div><div><span class="text-[10px] text-gray-400 font-bold uppercase block">Cha</span><span id="viewFather" class="font-bold text-gray-800">--</span><input id="editFather" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div></div><a id="btnCallFather" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a></div>
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mr-3"><i class="fas fa-female"></i></div><div><span class="text-[10px] text-gray-400 font-bold uppercase block">Mẹ</span><span id="viewMother" class="font-bold text-gray-800">--</span><input id="editMother" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div></div><a id="btnCallMother" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a></div>
                     </div>
-                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
-                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p>
-                        <p id="viewAddress" class="text-gray-800 font-bold text-sm">--</p>
-                        <input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ...">
-                    </div>
-                    <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200">
-                        <p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p>
-                        <p id="viewNote" class="text-gray-700 italic text-sm">--</p>
-                        <textarea id="editNote" class="hidden edit-input h-20" placeholder="Nhập ghi chú..."></textarea>
-                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-200"><p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p><p id="viewAddress" class="text-gray-800 font-bold text-sm">--</p><input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ..."></div>
+                    <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200"><p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p><p id="viewNote" class="text-gray-700 italic text-sm">--</p><textarea id="editNote" class="hidden edit-input h-20" placeholder="Nhập ghi chú..."></textarea></div>
                 </div>
-
                 <div class="bg-gray-50 p-4 border-t border-gray-200 flex flex-col space-y-3 rounded-b-3xl">
-                    <div id="savePanel" class="hidden flex space-x-3">
-                        <button onclick="batCheDoSua(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-bold">Hủy</button>
-                        <button onclick="luuThayDoi()" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg game-btn">LƯU LẠI</button>
-                    </div>
-                    <button id="btnLogoutModal" onclick="dangXuat()" class="w-full text-red-400 py-2 rounded-xl font-bold hover:text-red-600 hover:bg-red-50 transition text-xs">
-                        <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất tài khoản
-                    </button>
+                    <div id="savePanel" class="hidden flex space-x-3"><button onclick="batCheDoSua(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-bold">Hủy</button><button onclick="luuThayDoi()" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg game-btn">LƯU LẠI</button></div>
+                    <button id="btnLogoutModal" onclick="dangXuat()" class="w-full text-red-400 py-2 rounded-xl font-bold hover:text-red-600 hover:bg-red-50 transition text-xs"><i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất tài khoản</button>
                 </div>
             </div>
         </div>
@@ -248,7 +236,6 @@
             const input = document.getElementById('inputLogin').value.trim();
             if(!input) return alert("Vui lòng nhập thông tin!");
             if (input === PASS_ADMIN) { localStorage.setItem('userRole', 'admin'); vaoGiaoDienAdmin(); return; }
-            
             const hsTimThay = dsHocSinh.find(hs => (hs.fatherPhone && hs.fatherPhone.toString().includes(input)) || (hs.motherPhone && hs.motherPhone.toString().includes(input)));
             if (hsTimThay) { localStorage.setItem('userRole', 'student'); localStorage.setItem('studentID', hsTimThay.id); vaoGiaoDienHocSinh(hsTimThay); } 
             else { alert("Số điện thoại chưa đúng hoặc không có trong danh sách!"); }
@@ -261,8 +248,8 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = "Thầy Hiển";
             document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
-            document.getElementById('studentStats').classList.add('hidden'); // Ẩn điểm của Admin
-            document.getElementById('subWelcomeText').classList.add('hidden'); // Ẩn câu hỏi của Admin
+            document.getElementById('studentStats').classList.add('hidden'); 
+            document.getElementById('subWelcomeText').classList.add('hidden'); 
             veDanhSachQuanLy(dsHocSinh);
         }
 
@@ -276,6 +263,12 @@
             document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
             document.getElementById('studentStats').classList.remove('hidden');
             document.getElementById('subWelcomeText').classList.remove('hidden');
+            
+            // Cập nhật điểm cho HS
+            const diamonds = parseInt(hs.score) || 0;
+            const medals = Math.floor(diamonds / 100);
+            document.getElementById('statDiamond').innerText = diamonds;
+            document.getElementById('statMedal').innerText = medals;
         }
 
         function xuLyClickProfile() {
@@ -287,23 +280,37 @@
             }
         }
 
+        // --- NAVIGATION ---
         function chuyenTrangQuanLy() {
-            document.getElementById('gvcnMenu').classList.add('hidden');
-            document.getElementById('sectionDashboard').classList.add('hidden');
+            anTatCaSection();
             document.getElementById('sectionManager').classList.remove('hidden');
             veDanhSachQuanLy(dsHocSinh);
         }
 
+        function chuyenTrangKetQua() {
+            anTatCaSection();
+            document.getElementById('sectionResults').classList.remove('hidden');
+            veDanhSachKetQua(dsHocSinh);
+        }
+
         function veTrangChu() {
-            document.getElementById('sectionManager').classList.add('hidden');
+            anTatCaSection();
             document.getElementById('sectionDashboard').classList.remove('hidden');
         }
 
+        function anTatCaSection() {
+            document.getElementById('gvcnMenu').classList.add('hidden');
+            document.getElementById('sectionDashboard').classList.add('hidden');
+            document.getElementById('sectionManager').classList.add('hidden');
+            document.getElementById('sectionResults').classList.add('hidden');
+        }
+
+        // --- RENDERERS ---
         function veDanhSachQuanLy(data) {
             const grid = document.getElementById('studentGrid');
             grid.innerHTML = "";
             data.forEach(hs => {
-                let card = `
+                grid.innerHTML += `
                     <div onclick="xemChiTietTuQuanLy('${hs.id}')" class="student-card bg-white p-4 rounded-xl border border-blue-100 shadow-sm cursor-pointer flex items-center space-x-4">
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">${hs.name.charAt(0)}</div>
                         <div class="flex-1">
@@ -311,29 +318,86 @@
                             <p class="text-xs text-gray-500">${xuLyNgay(hs.dob)}</p>
                         </div>
                         <div class="text-gray-300"><i class="fas fa-chevron-right"></i></div>
-                    </div>
-                `;
-                grid.innerHTML += card;
+                    </div>`;
             });
         }
 
+        function veDanhSachKetQua(data) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = "";
+            // Sắp xếp điểm cao -> thấp
+            const sorted = [...data].sort((a,b) => (b.score || 0) - (a.score || 0));
+            
+            sorted.forEach((hs, index) => {
+                const diamonds = parseInt(hs.score) || 0;
+                const medals = Math.floor(diamonds / 100);
+                let rankClass = "rank-other";
+                if(index === 0) rankClass = "rank-1";
+                if(index === 1) rankClass = "rank-2";
+                if(index === 2) rankClass = "rank-3";
+
+                grid.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-md border border-gray-200 flex items-center justify-between student-card">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-sm ${rankClass}">
+                                ${index + 1}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-base">${hs.name}</h3>
+                                <p class="text-[10px] text-gray-400 font-bold">Mã số: ${hs.id}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-center">
+                                <div class="text-xs text-yellow-500 font-bold mb-1"><i class="fas fa-gem"></i> Kim cương</div>
+                                <div class="flex items-center bg-gray-100 rounded-lg">
+                                    <button onclick="suaDiem('${hs.id}', -10)" class="w-6 h-6 hover:bg-gray-300 rounded-l-lg text-gray-500 font-bold">-</button>
+                                    <span class="px-2 font-black text-blue-800 text-lg w-10 text-center">${diamonds}</span>
+                                    <button onclick="suaDiem('${hs.id}', 10)" class="w-6 h-6 hover:bg-gray-300 rounded-r-lg text-gray-500 font-bold">+</button>
+                                </div>
+                            </div>
+                            <div class="text-center w-16">
+                                <div class="text-xs text-yellow-600 font-bold mb-1"><i class="fas fa-trophy"></i> Cúp</div>
+                                <span class="font-black text-yellow-600 text-xl">${medals}</span>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // --- LOGIC ---
         function locDanhSach() {
             const key = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key));
-            veDanhSachQuanLy(filtered);
+            veDanhSachQuanLy(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key)));
+        }
+
+        function locDanhSachKetQua() {
+            const key = document.getElementById('searchResultInput').value.toLowerCase();
+            veDanhSachKetQua(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key)));
         }
 
         function xemChiTietTuQuanLy(id) {
             const hs = dsHocSinh.find(h => h.id === id);
-            if(hs) {
-                dienThongTinVaoModal(hs);
-                document.getElementById('profileModal').classList.remove('hidden');
-            }
+            if(hs) { dienThongTinVaoModal(hs); document.getElementById('profileModal').classList.remove('hidden'); }
         }
 
-        function moKetQuaHocTap() {
-            document.getElementById('gvcnMenu').classList.add('hidden');
-            alert("Tính năng Kết Quả Học Tập đang được phát triển!"); 
+        function suaDiem(id, delta) {
+            if(!isAdmin) return;
+            const hs = dsHocSinh.find(h => h.id === id);
+            if(hs) {
+                let currentScore = parseInt(hs.score) || 0;
+                let newScore = currentScore + delta;
+                if(newScore < 0) newScore = 0;
+                
+                // Cập nhật giao diện ngay lập tức (giả lập)
+                hs.score = newScore;
+                veDanhSachKetQua(dsHocSinh);
+                
+                // Gửi cập nhật về Server (Nếu backend hỗ trợ cập nhật cột điểm)
+                // Lưu ý: Hiện tại backend V3 của thầy đã có cột score (cột I - index 8), nên gửi lệnh sửa sẽ hoạt động
+                const hsMoi = {...hs, score: newScore}; // Tạo bản sao để gửi
+                guiYeuCau("sua", hsMoi); 
+            }
         }
 
         function dongHoSo() {
@@ -366,8 +430,6 @@
 
         function resetInfoCard() {
             document.getElementById('viewName').innerText = "--";
-            document.getElementById('cardID').innerText = "--";
-            document.getElementById('viewDob').innerText = "--";
             document.getElementById('adminControls').classList.add('hidden');
         }
 
@@ -402,7 +464,8 @@
                 fatherPhone: document.getElementById('editFather').value,
                 motherPhone: document.getElementById('editMother').value,
                 address: document.getElementById('editAddress').value,
-                note: document.getElementById('editNote').value
+                note: document.getElementById('editNote').value,
+                score: currentHS.score // Giữ nguyên điểm số khi sửa thông tin
             };
             guiYeuCau("sua", hsMoi);
         }
@@ -410,7 +473,7 @@
         function moFormThem() {
             if(!isAdmin) return;
             let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return;
-            let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "" };
+            let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "", score: 0 };
             guiYeuCau("them", hsMoi);
         }
 
@@ -425,14 +488,16 @@
 
         async function guiYeuCau(action, data) {
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) });
-            setTimeout(async () => {
-                alert("Thành công!");
-                await taiDanhSach();
-                if(action === 'sua') { 
-                    veDanhSachQuanLy(dsHocSinh); // Vẽ lại danh sách nếu ở trang quản lý
-                    dienThongTinVaoModal(dsHocSinh.find(h => h.id === data.id)); // Cập nhật modal
-                } else location.reload();
-            }, 1500);
+            // Không reload ngay lập tức để UX mượt hơn (với sửa điểm), nhưng với sửa thông tin thì cần
+            if (action !== 'sua') { 
+                setTimeout(async () => {
+                    alert("Thành công!");
+                    location.reload();
+                }, 1500);
+            } else {
+                // Nếu là sửa điểm hoặc sửa tin, load lại ngầm
+                 await taiDanhSach();
+            }
         }
     </script>
 </body>
