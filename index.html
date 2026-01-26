@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Lớp 4/6 (V7 - Lưu Giữ Trang)</title>
+    <title>Tra Cứu Lớp 4/6 (V8 - Fix Lỗi Ngày Sinh)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
@@ -151,6 +151,20 @@
         let dsHocSinh = []; 
         let currentHS = null;
 
+        // --- HÀM MỚI: XỬ LÝ NGÀY THÁNG ---
+        function xuLyNgay(str) {
+            if (!str) return "";
+            // Nếu chuỗi có chứa chữ T và Z (định dạng ISO)
+            if (str.toString().includes("T") && str.toString().includes("Z")) {
+                try {
+                    let d = new Date(str);
+                    // Chuyển sang định dạng VN: ngày/tháng/năm
+                    return d.toLocaleDateString('vi-VN');
+                } catch (e) { return str; }
+            }
+            return str; // Nếu là chữ thường thì trả về nguyên vẹn
+        }
+
         function checkLoginState() {
             if (localStorage.getItem('isGVCN') === 'true') {
                 isAdmin = true;
@@ -172,7 +186,7 @@
         }
 
         function hienChiTiet() {
-            batCheDoSua(false); // Tắt chế độ sửa nếu đang bật
+            batCheDoSua(false); 
             const index = document.getElementById('selectHS').value;
             const card = document.getElementById('infoCard');
             if (index === "") { card.classList.add('hidden'); currentHS = null; return; }
@@ -181,10 +195,12 @@
             currentHS = hs;
             const safe = (val) => (val && val !== "undefined") ? val : "";
 
-            // Đổ dữ liệu
             document.getElementById('viewName').innerText = safe(hs.name) || "Chưa có tên";
             document.getElementById('cardID').innerText = safe(hs.id);
-            document.getElementById('viewDob').innerText = safe(hs.dob) || "-";
+            
+            // SỬ DỤNG HÀM XỬ LÝ NGÀY Ở ĐÂY
+            document.getElementById('viewDob').innerText = xuLyNgay(hs.dob) || "-";
+            
             document.getElementById('viewGender').innerText = safe(hs.gender) || "-";
             document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---";
             document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---";
@@ -204,7 +220,10 @@
             const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
             if (enable) {
                 document.getElementById('editName').value = currentHS.name;
-                document.getElementById('editDob').value = currentHS.dob;
+                
+                // KHI SỬA CŨNG PHẢI XỬ LÝ NGÀY CHO ĐẸP
+                document.getElementById('editDob').value = xuLyNgay(currentHS.dob);
+                
                 document.getElementById('editGender').value = currentHS.gender;
                 document.getElementById('editFather').value = currentHS.fatherPhone;
                 document.getElementById('editMother').value = currentHS.motherPhone;
@@ -251,42 +270,26 @@
             if(confirm("Xóa em " + currentHS.name + "?")) guiYeuCau("xoa", {id: currentHS.id});
         }
 
-        // --- HÀM GỬI YÊU CẦU & GIỮ NGUYÊN TRANG ---
         async function guiYeuCau(action, data) {
             document.getElementById('loadingText').innerText = "Đang lưu...";
-            
-            // 1. Gửi dữ liệu đi
             await fetch(API_URL, {
                 method: 'POST', mode: 'no-cors',
                 body: JSON.stringify({action: action, data: data})
             });
 
-            // 2. Chờ 1.5s để server xử lý
             setTimeout(async () => {
-                
-                if (action === 'xoa') {
-                    alert("Đã xóa!");
-                    location.reload(); // Xóa thì phải reload trang
-                    return;
-                }
-
-                // 3. Tải lại danh sách MỚI NHẤT (Ngầm)
+                if (action === 'xoa') { alert("Đã xóa!"); location.reload(); return; }
                 await taiDanhSach();
                 
-                // 4. Tìm lại vị trí của học sinh vừa Sửa/Thêm trong danh sách mới
+                // Tự động tìm và hiện lại đúng học sinh vừa sửa
                 const idCanTim = data.id;
                 const index = dsHocSinh.findIndex(hs => hs.id === idCanTim);
                 
                 if (index !== -1) {
-                    // Chọn lại đúng học sinh đó trong Dropdown
                     document.getElementById('selectHS').value = index;
-                    // Hiển thị lại chi tiết
                     hienChiTiet();
                     alert("Đã lưu thành công!");
-                } else {
-                    location.reload(); // Nếu lỗi không tìm thấy thì mới reload
-                }
-
+                } else { location.reload(); }
             }, 1500);
         }
 
