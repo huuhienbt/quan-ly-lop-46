@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - VioEdu Style (V22)</title>
+    <title>Lớp 4/6 - Trường TH Phú Thọ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -18,11 +18,9 @@
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .student-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        
-        /* Rank Badge colors */
-        .rank-1 { background-color: #fbbf24; color: white; border: 2px solid #f59e0b; } /* Vàng */
-        .rank-2 { background-color: #9ca3af; color: white; border: 2px solid #6b7280; } /* Bạc */
-        .rank-3 { background-color: #d97706; color: white; border: 2px solid #b45309; } /* Đồng */
+        .rank-1 { background-color: #fbbf24; color: white; border: 2px solid #f59e0b; }
+        .rank-2 { background-color: #9ca3af; color: white; border: 2px solid #6b7280; }
+        .rank-3 { background-color: #d97706; color: white; border: 2px solid #b45309; }
         .rank-other { background-color: #e5e7eb; color: #6b7280; }
     </style>
 </head>
@@ -68,7 +66,8 @@
                 </div>
 
                 <div class="flex items-center space-x-3 relative">
-                    <div id="studentStats" class="hidden sm:flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                    
+                    <div id="studentStats" class="hidden items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
                         <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-gem mr-1"></i> <span id="statDiamond">0</span></div>
                         <div class="w-px h-3 bg-gray-300"></div>
                         <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-trophy mr-1"></i> <span id="statMedal">0</span></div>
@@ -161,9 +160,7 @@
                     <input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh...">
                 </div>
             </div>
-
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                </div>
+            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
     </div>
@@ -248,8 +245,13 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = "Thầy Hiển";
             document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
-            document.getElementById('studentStats').classList.add('hidden'); 
-            document.getElementById('subWelcomeText').classList.add('hidden'); 
+            
+            // XÓA HẲN CLASS FLEX, CHỈ ĐỂ HIDDEN ĐỂ ẨN TRÊN MỌI THIẾT BỊ
+            const stats = document.getElementById('studentStats');
+            stats.classList.add('hidden');
+            stats.classList.remove('flex'); // Quan trọng: Xóa flex để nó không hiện lại
+            
+            document.getElementById('subWelcomeText').classList.add('hidden');
             veDanhSachQuanLy(dsHocSinh);
         }
 
@@ -261,10 +263,13 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = hs.name;
             document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
-            document.getElementById('studentStats').classList.remove('hidden');
-            document.getElementById('subWelcomeText').classList.remove('hidden');
             
-            // Cập nhật điểm cho HS
+            // HIỆN LẠI STATS CHO HỌC SINH
+            const stats = document.getElementById('studentStats');
+            stats.classList.remove('hidden');
+            stats.classList.add('flex'); // Thêm flex để hiện ngang hàng đẹp
+            
+            document.getElementById('subWelcomeText').classList.remove('hidden');
             const diamonds = parseInt(hs.score) || 0;
             const medals = Math.floor(diamonds / 100);
             document.getElementById('statDiamond').innerText = diamonds;
@@ -280,7 +285,6 @@
             }
         }
 
-        // --- NAVIGATION ---
         function chuyenTrangQuanLy() {
             anTatCaSection();
             document.getElementById('sectionManager').classList.remove('hidden');
@@ -305,200 +309,65 @@
             document.getElementById('sectionResults').classList.add('hidden');
         }
 
-        // --- RENDERERS ---
         function veDanhSachQuanLy(data) {
             const grid = document.getElementById('studentGrid');
             grid.innerHTML = "";
             data.forEach(hs => {
-                grid.innerHTML += `
+                let card = `
                     <div onclick="xemChiTietTuQuanLy('${hs.id}')" class="student-card bg-white p-4 rounded-xl border border-blue-100 shadow-sm cursor-pointer flex items-center space-x-4">
                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">${hs.name.charAt(0)}</div>
-                        <div class="flex-1">
-                            <h3 class="font-bold text-gray-800 text-base">${hs.name}</h3>
-                            <p class="text-xs text-gray-500">${xuLyNgay(hs.dob)}</p>
-                        </div>
+                        <div class="flex-1"><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-xs text-gray-500">${xuLyNgay(hs.dob)}</p></div>
                         <div class="text-gray-300"><i class="fas fa-chevron-right"></i></div>
                     </div>`;
+                grid.innerHTML += card;
             });
         }
 
         function veDanhSachKetQua(data) {
             const grid = document.getElementById('resultsGrid');
             grid.innerHTML = "";
-            // Sắp xếp điểm cao -> thấp
             const sorted = [...data].sort((a,b) => (b.score || 0) - (a.score || 0));
-            
             sorted.forEach((hs, index) => {
                 const diamonds = parseInt(hs.score) || 0;
                 const medals = Math.floor(diamonds / 100);
                 let rankClass = "rank-other";
-                if(index === 0) rankClass = "rank-1";
-                if(index === 1) rankClass = "rank-2";
-                if(index === 2) rankClass = "rank-3";
-
+                if(index === 0) rankClass = "rank-1"; if(index === 1) rankClass = "rank-2"; if(index === 2) rankClass = "rank-3";
                 grid.innerHTML += `
                     <div class="bg-white p-4 rounded-2xl shadow-md border border-gray-200 flex items-center justify-between student-card">
-                        <div class="flex items-center space-x-4">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-sm ${rankClass}">
-                                ${index + 1}
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-gray-800 text-base">${hs.name}</h3>
-                                <p class="text-[10px] text-gray-400 font-bold">Mã số: ${hs.id}</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-4">
-                            <div class="text-center">
-                                <div class="text-xs text-yellow-500 font-bold mb-1"><i class="fas fa-gem"></i> Kim cương</div>
-                                <div class="flex items-center bg-gray-100 rounded-lg">
-                                    <button onclick="suaDiem('${hs.id}', -10)" class="w-6 h-6 hover:bg-gray-300 rounded-l-lg text-gray-500 font-bold">-</button>
-                                    <span class="px-2 font-black text-blue-800 text-lg w-10 text-center">${diamonds}</span>
-                                    <button onclick="suaDiem('${hs.id}', 10)" class="w-6 h-6 hover:bg-gray-300 rounded-r-lg text-gray-500 font-bold">+</button>
-                                </div>
-                            </div>
-                            <div class="text-center w-16">
-                                <div class="text-xs text-yellow-600 font-bold mb-1"><i class="fas fa-trophy"></i> Cúp</div>
-                                <span class="font-black text-yellow-600 text-xl">${medals}</span>
-                            </div>
-                        </div>
+                        <div class="flex items-center space-x-4"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-sm ${rankClass}">${index + 1}</div><div><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-[10px] text-gray-400 font-bold">Mã số: ${hs.id}</p></div></div>
+                        <div class="flex items-center space-x-4"><div class="text-center"><div class="text-xs text-yellow-500 font-bold mb-1"><i class="fas fa-gem"></i> Kim cương</div><div class="flex items-center bg-gray-100 rounded-lg"><button onclick="suaDiem('${hs.id}', -10)" class="w-6 h-6 hover:bg-gray-300 rounded-l-lg text-gray-500 font-bold">-</button><span class="px-2 font-black text-blue-800 text-lg w-10 text-center">${diamonds}</span><button onclick="suaDiem('${hs.id}', 10)" class="w-6 h-6 hover:bg-gray-300 rounded-r-lg text-gray-500 font-bold">+</button></div></div><div class="text-center w-16"><div class="text-xs text-yellow-600 font-bold mb-1"><i class="fas fa-trophy"></i> Cúp</div><span class="font-black text-yellow-600 text-xl">${medals}</span></div></div>
                     </div>`;
             });
         }
 
-        // --- LOGIC ---
-        function locDanhSach() {
-            const key = document.getElementById('searchInput').value.toLowerCase();
-            veDanhSachQuanLy(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key)));
-        }
-
-        function locDanhSachKetQua() {
-            const key = document.getElementById('searchResultInput').value.toLowerCase();
-            veDanhSachKetQua(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key)));
-        }
-
-        function xemChiTietTuQuanLy(id) {
-            const hs = dsHocSinh.find(h => h.id === id);
-            if(hs) { dienThongTinVaoModal(hs); document.getElementById('profileModal').classList.remove('hidden'); }
-        }
-
-        function suaDiem(id, delta) {
-            if(!isAdmin) return;
-            const hs = dsHocSinh.find(h => h.id === id);
-            if(hs) {
-                let currentScore = parseInt(hs.score) || 0;
-                let newScore = currentScore + delta;
-                if(newScore < 0) newScore = 0;
-                
-                // Cập nhật giao diện ngay lập tức (giả lập)
-                hs.score = newScore;
-                veDanhSachKetQua(dsHocSinh);
-                
-                // Gửi cập nhật về Server (Nếu backend hỗ trợ cập nhật cột điểm)
-                // Lưu ý: Hiện tại backend V3 của thầy đã có cột score (cột I - index 8), nên gửi lệnh sửa sẽ hoạt động
-                const hsMoi = {...hs, score: newScore}; // Tạo bản sao để gửi
-                guiYeuCau("sua", hsMoi); 
-            }
-        }
-
-        function dongHoSo() {
-            document.getElementById('profileModal').classList.add('hidden');
-            batCheDoSua(false);
-        }
-
-        function dienThongTinVaoModal(hs) {
-            currentHS = hs;
-            const safe = (val) => (val && val !== "undefined") ? val : "";
-            document.getElementById('viewName').innerText = safe(hs.name);
-            document.getElementById('cardID').innerText = safe(hs.id);
-            document.getElementById('viewDob').innerText = xuLyNgay(hs.dob) || "-";
-            document.getElementById('viewGender').innerText = safe(hs.gender) || "-";
-            document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---";
-            document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---";
-            document.getElementById('viewAddress').innerText = safe(hs.address) || "---";
-            document.getElementById('viewNote').innerText = safe(hs.note) || "Không";
-            document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
-            document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
-            if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
-            else document.getElementById('adminControls').classList.add('hidden');
-        }
-
-        function xuLyNgay(str) {
-            if (!str) return "";
-            if (str.toString().includes("T")) { try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {} }
-            return str;
-        }
-
-        function resetInfoCard() {
-            document.getElementById('viewName').innerText = "--";
-            document.getElementById('adminControls').classList.add('hidden');
-        }
-
+        function locDanhSach() { const key = document.getElementById('searchInput').value.toLowerCase(); veDanhSachQuanLy(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
+        function locDanhSachKetQua() { const key = document.getElementById('searchResultInput').value.toLowerCase(); veDanhSachKetQua(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
+        
+        function xemChiTietTuQuanLy(id) { const hs = dsHocSinh.find(h => h.id === id); if(hs) { dienThongTinVaoModal(hs); document.getElementById('profileModal').classList.remove('hidden'); } }
+        function suaDiem(id, delta) { if(!isAdmin) return; const hs = dsHocSinh.find(h => h.id === id); if(hs) { let newScore = (parseInt(hs.score) || 0) + delta; if(newScore < 0) newScore = 0; hs.score = newScore; veDanhSachKetQua(dsHocSinh); guiYeuCau("sua", {...hs, score: newScore}); } }
+        function dongHoSo() { document.getElementById('profileModal').classList.add('hidden'); batCheDoSua(false); }
+        function dienThongTinVaoModal(hs) { currentHS = hs; const safe = (val) => (val && val !== "undefined") ? val : ""; document.getElementById('viewName').innerText = safe(hs.name); document.getElementById('cardID').innerText = safe(hs.id); document.getElementById('viewDob').innerText = xuLyNgay(hs.dob) || "-"; document.getElementById('viewGender').innerText = safe(hs.gender) || "-"; document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---"; document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---"; document.getElementById('viewAddress').innerText = safe(hs.address) || "---"; document.getElementById('viewNote').innerText = safe(hs.note) || "Không"; document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone); document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone); if(isAdmin) document.getElementById('adminControls').classList.remove('hidden'); else document.getElementById('adminControls').classList.add('hidden'); }
+        function xuLyNgay(str) { if (!str) return ""; if (str.toString().includes("T")) { try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {} } return str; }
+        function resetInfoCard() { document.getElementById('viewName').innerText = "--"; document.getElementById('cardID').innerText = "--"; document.getElementById('viewDob').innerText = "--"; document.getElementById('adminControls').classList.add('hidden'); }
+        
         function batCheDoSua(enable) {
             if(!currentHS || !isAdmin) return;
             const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
             if (enable) {
-                document.getElementById('editName').value = currentHS.name;
-                document.getElementById('editDob').value = xuLyNgay(currentHS.dob);
-                document.getElementById('editGender').value = currentHS.gender;
-                document.getElementById('editFather').value = currentHS.fatherPhone;
-                document.getElementById('editMother').value = currentHS.motherPhone;
-                document.getElementById('editAddress').value = currentHS.address;
-                document.getElementById('editNote').value = currentHS.note;
+                document.getElementById('editName').value = currentHS.name; document.getElementById('editDob').value = xuLyNgay(currentHS.dob); document.getElementById('editGender').value = currentHS.gender; document.getElementById('editFather').value = currentHS.fatherPhone; document.getElementById('editMother').value = currentHS.motherPhone; document.getElementById('editAddress').value = currentHS.address; document.getElementById('editNote').value = currentHS.note;
                 fields.forEach(f => { document.getElementById('view' + f).classList.add('hidden'); document.getElementById('edit' + f).classList.remove('hidden'); });
-                document.getElementById('adminControls').classList.add('hidden');
-                document.getElementById('savePanel').classList.remove('hidden');
+                document.getElementById('adminControls').classList.add('hidden'); document.getElementById('savePanel').classList.remove('hidden');
             } else {
                 fields.forEach(f => { document.getElementById('view' + f).classList.remove('hidden'); document.getElementById('edit' + f).classList.add('hidden'); });
-                document.getElementById('adminControls').classList.remove('hidden');
-                document.getElementById('savePanel').classList.add('hidden');
+                document.getElementById('adminControls').classList.remove('hidden'); document.getElementById('savePanel').classList.add('hidden');
             }
         }
 
-        function luuThayDoi() {
-            if(!isAdmin) return;
-            let hsMoi = {
-                id: currentHS.id,
-                name: document.getElementById('editName').value,
-                dob: document.getElementById('editDob').value,
-                gender: document.getElementById('editGender').value,
-                fatherPhone: document.getElementById('editFather').value,
-                motherPhone: document.getElementById('editMother').value,
-                address: document.getElementById('editAddress').value,
-                note: document.getElementById('editNote').value,
-                score: currentHS.score // Giữ nguyên điểm số khi sửa thông tin
-            };
-            guiYeuCau("sua", hsMoi);
-        }
-
-        function moFormThem() {
-            if(!isAdmin) return;
-            let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return;
-            let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "", score: 0 };
-            guiYeuCau("them", hsMoi);
-        }
-
-        function xoaHS() {
-            if(!isAdmin) return;
-            if(confirm("Xóa em " + currentHS.name + "?")) guiYeuCau("xoa", {id: currentHS.id});
-        }
-
-        function dangXuat() {
-            if(confirm("Bạn muốn đăng xuất?")) { localStorage.removeItem('userRole'); localStorage.removeItem('studentID'); location.reload(); }
-        }
-
-        async function guiYeuCau(action, data) {
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) });
-            // Không reload ngay lập tức để UX mượt hơn (với sửa điểm), nhưng với sửa thông tin thì cần
-            if (action !== 'sua') { 
-                setTimeout(async () => {
-                    alert("Thành công!");
-                    location.reload();
-                }, 1500);
-            } else {
-                // Nếu là sửa điểm hoặc sửa tin, load lại ngầm
-                 await taiDanhSach();
-            }
-        }
+        function luuThayDoi() { if(!isAdmin) return; let hsMoi = { id: currentHS.id, name: document.getElementById('editName').value, dob: document.getElementById('editDob').value, gender: document.getElementById('editGender').value, fatherPhone: document.getElementById('editFather').value, motherPhone: document.getElementById('editMother').value, address: document.getElementById('editAddress').value, note: document.getElementById('editNote').value, score: currentHS.score }; guiYeuCau("sua", hsMoi); }
+        function moFormThem() { if(!isAdmin) return; let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return; let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "", score: 0 }; guiYeuCau("them", hsMoi); }
+        function xoaHS() { if(!isAdmin) return; if(confirm("Xóa em " + currentHS.name + "?")) guiYeuCau("xoa", {id: currentHS.id}); }
+        function dangXuat() { if(confirm("Bạn muốn đăng xuất?")) { localStorage.removeItem('userRole'); localStorage.removeItem('studentID'); location.reload(); } }
+        async function guiYeuCau(action, data) { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) }); setTimeout(async () => { alert("Thành công!"); await taiDanhSach(); if(action === 'sua') { veDanhSachQuanLy(dsHocSinh); dienThongTinVaoModal(dsHocSinh.find(h => h.id === data.id)); } else location.reload(); }, 1500); }
     </script>
 </body>
 </html>
