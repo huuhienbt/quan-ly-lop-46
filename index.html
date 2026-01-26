@@ -219,4 +219,127 @@
 
         function vaoGiaoDienAdmin() {
             isAdmin = true;
-            document.getElementById
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('headerName').innerText = "Thầy Hiển";
+            document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
+            document.getElementById('studentStats').style.display = 'none'; 
+            document.getElementById('subWelcomeText').style.display = 'none'; 
+            veDanhSachQuanLy(dsHocSinh);
+        }
+
+        function vaoGiaoDienHocSinh(hs) {
+            isAdmin = false;
+            currentHS = hs;
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('headerName').innerText = hs.name;
+            document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
+            document.getElementById('studentStats').style.display = 'flex'; 
+            document.getElementById('subWelcomeText').style.display = 'block'; 
+            const diamonds = parseInt(hs.score) || 0;
+            const medals = Math.floor(diamonds / 100);
+            document.getElementById('statDiamond').innerText = diamonds;
+            document.getElementById('statMedal').innerText = medals;
+        }
+
+        function xuLyClickProfile() {
+            if(isAdmin) {
+                const menu = document.getElementById('gvcnMenu');
+                if(menu.classList.contains('hidden')) menu.classList.remove('hidden'); else menu.classList.add('hidden');
+            } else {
+                if(currentHS) { dienThongTinVaoModal(currentHS); document.getElementById('profileModal').classList.remove('hidden'); }
+            }
+        }
+
+        function chuyenTrangQuanLy() { anTatCaSection(); document.getElementById('sectionManager').classList.remove('hidden'); veDanhSachQuanLy(dsHocSinh); }
+        function chuyenTrangKetQua() { anTatCaSection(); document.getElementById('sectionResults').classList.remove('hidden'); veDanhSachKetQua(dsHocSinh); }
+        function veTrangChu() { anTatCaSection(); document.getElementById('sectionDashboard').classList.remove('hidden'); }
+        function anTatCaSection() {
+            document.getElementById('gvcnMenu').classList.add('hidden');
+            document.getElementById('sectionDashboard').classList.add('hidden');
+            document.getElementById('sectionManager').classList.add('hidden');
+            document.getElementById('sectionResults').classList.add('hidden');
+        }
+
+        function veDanhSachQuanLy(data) {
+            const grid = document.getElementById('studentGrid');
+            grid.innerHTML = "";
+            data.forEach(hs => {
+                grid.innerHTML += `<div onclick="xemChiTietTuQuanLy('${hs.id}')" class="student-card bg-white p-4 rounded-xl border border-blue-100 shadow-sm cursor-pointer flex items-center space-x-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">${hs.name.charAt(0)}</div><div class="flex-1"><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-xs text-gray-500">${xuLyNgay(hs.dob)}</p></div><div class="text-gray-300"><i class="fas fa-chevron-right"></i></div></div>`;
+            });
+        }
+
+        function veDanhSachKetQua(data) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = "";
+            const sorted = [...data].sort((a,b) => (b.score || 0) - (a.score || 0));
+            sorted.forEach((hs, index) => {
+                const diamonds = parseInt(hs.score) || 0;
+                const medals = Math.floor(diamonds / 100);
+                let rankClass = "rank-other";
+                if(index === 0) rankClass = "rank-1"; if(index === 1) rankClass = "rank-2"; if(index === 2) rankClass = "rank-3";
+                grid.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-md border border-gray-200 flex items-center justify-between student-card"><div class="flex items-center space-x-4"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-sm ${rankClass}">${index + 1}</div><div><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-[10px] text-gray-400 font-bold">Mã số: ${hs.id}</p></div></div><div class="flex items-center space-x-4"><div class="text-center"><div class="text-xs text-yellow-500 font-bold mb-1"><i class="fas fa-gem"></i> Kim cương</div><div class="flex items-center bg-gray-100 rounded-lg"><button onclick="suaDiem('${hs.id}', -10)" class="w-6 h-6 hover:bg-gray-300 rounded-l-lg text-gray-500 font-bold">-</button><span class="px-2 font-black text-blue-800 text-lg w-10 text-center">${diamonds}</span><button onclick="suaDiem('${hs.id}', 10)" class="w-6 h-6 hover:bg-gray-300 rounded-r-lg text-gray-500 font-bold">+</button></div></div><div class="text-center w-16"><div class="text-xs text-yellow-600 font-bold mb-1"><i class="fas fa-trophy"></i> Cúp</div><span class="font-black text-yellow-600 text-xl">${medals}</span></div></div></div>`;
+            });
+        }
+
+        function locDanhSach() { const key = document.getElementById('searchInput').value.toLowerCase(); veDanhSachQuanLy(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
+        function locDanhSachKetQua() { const key = document.getElementById('searchResultInput').value.toLowerCase(); veDanhSachKetQua(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
+        function xemChiTietTuQuanLy(id) { const hs = dsHocSinh.find(h => h.id === id); if(hs) { dienThongTinVaoModal(hs); document.getElementById('profileModal').classList.remove('hidden'); } }
+        function suaDiem(id, delta) { if(!isAdmin) return; const hs = dsHocSinh.find(h => h.id === id); if(hs) { let newScore = (parseInt(hs.score) || 0) + delta; if(newScore < 0) newScore = 0; hs.score = newScore; veDanhSachKetQua(dsHocSinh); guiYeuCau("sua", hs); } }
+        function dongHoSo() { document.getElementById('profileModal').classList.add('hidden'); batCheDoSua(false); }
+        
+        function dienThongTinVaoModal(hs) { 
+            currentHS = hs; 
+            const safe = (val) => (val && val !== "undefined") ? val : ""; 
+            document.getElementById('viewName').innerText = safe(hs.name); document.getElementById('cardID').innerText = safe(hs.id); document.getElementById('viewDob').innerText = xuLyNgay(hs.dob) || "-"; document.getElementById('viewGender').innerText = safe(hs.gender) || "-"; document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---"; document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---"; document.getElementById('viewAddress').innerText = safe(hs.address) || "---"; document.getElementById('viewNote').innerText = safe(hs.note) || "Không"; document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone); document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone); 
+            
+            if(isAdmin) {
+                document.getElementById('btnEditHeader').classList.remove('hidden');
+                document.getElementById('btnEditHeader').classList.add('flex');
+                document.getElementById('btnDeleteFooter').classList.remove('hidden');
+                document.getElementById('savePanel').classList.add('hidden');
+            } else {
+                document.getElementById('btnEditHeader').classList.add('hidden');
+                document.getElementById('btnEditHeader').classList.remove('flex');
+                document.getElementById('btnDeleteFooter').classList.add('hidden');
+                document.getElementById('savePanel').classList.add('hidden');
+            }
+        }
+        function xuLyNgay(str) { if (!str) return ""; if (str.toString().includes("T")) { try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {} } return str; }
+        
+        function batCheDoSua(enable) {
+            if(!currentHS || !isAdmin) return;
+            const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
+            if (enable) {
+                document.getElementById('editName').value = currentHS.name; document.getElementById('editDob').value = xuLyNgay(currentHS.dob); document.getElementById('editGender').value = currentHS.gender; document.getElementById('editFather').value = currentHS.fatherPhone; document.getElementById('editMother').value = currentHS.motherPhone; document.getElementById('editAddress').value = currentHS.address; document.getElementById('editNote').value = currentHS.note;
+                fields.forEach(f => { document.getElementById('view' + f).classList.add('hidden'); document.getElementById('edit' + f).classList.remove('hidden'); });
+                document.getElementById('btnEditHeader').classList.add('hidden');
+                document.getElementById('btnDeleteFooter').classList.add('hidden');
+                document.getElementById('savePanel').classList.remove('hidden');
+            } else {
+                fields.forEach(f => { document.getElementById('view' + f).classList.remove('hidden'); document.getElementById('edit' + f).classList.add('hidden'); });
+                document.getElementById('btnEditHeader').classList.remove('hidden');
+                document.getElementById('btnDeleteFooter').classList.remove('hidden');
+                document.getElementById('savePanel').classList.add('hidden');
+            }
+        }
+
+        function luuThayDoi() { if(!isAdmin) return; let hsMoi = { id: currentHS.id, name: document.getElementById('editName').value, dob: document.getElementById('editDob').value, gender: document.getElementById('editGender').value, fatherPhone: document.getElementById('editFather').value, motherPhone: document.getElementById('editMother').value, address: document.getElementById('editAddress').value, note: document.getElementById('editNote').value, score: currentHS.score }; guiYeuCau("sua", hsMoi); }
+        function moFormThem() { if(!isAdmin) return; let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return; let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "", score: 0 }; guiYeuCau("them", hsMoi); }
+        
+        function xoaHS() {
+            if(!isAdmin) return;
+            let confirmAction = confirm("⚠️ CẢNH BÁO!\n\nThầy có chắc chắn muốn xóa hồ sơ của em " + currentHS.name + " không?\n\nHành động này không thể khôi phục được!");
+            if (confirmAction) {
+                guiYeuCau("xoa", {id: currentHS.id});
+            }
+        }
+
+        function dangXuat() { if(confirm("Bạn muốn đăng xuất?")) { localStorage.removeItem('userRole'); localStorage.removeItem('studentID'); location.reload(); } }
+        async function guiYeuCau(action, data) { try { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) }); if(action !== 'sua' || document.getElementById('profileModal').classList.contains('hidden') === false) { setTimeout(async () => { alert("Thành công!"); await taiDanhSach(); if(action === 'sua') { veDanhSachQuanLy(dsHocSinh); dienThongTinVaoModal(dsHocSinh.find(h => h.id === data.id)); } else location.reload(); }, 1500); } } catch(e) { alert("Lỗi kết nối Server!"); } }
+    </script>
+</body>
+</html>
