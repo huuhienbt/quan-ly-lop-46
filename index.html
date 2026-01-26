@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - V43 Math Image</title>
+    <title>Lớp 4/6 - V44 Smart Image</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -11,20 +11,32 @@
         body { font-family: 'Nunito', sans-serif; overflow-x: hidden; background-color: #f0f9ff; }
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Nút 3D */
         .btn-3d { transition: all 0.1s; border-bottom: 6px solid rgba(0,0,0,0.15); transform: translateY(0); }
         .btn-3d:active { transform: translateY(4px); border-bottom: 2px solid rgba(0,0,0,0.15); }
         .btn-3d:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        
+        /* Input */
         .edit-input { border: 2px solid #bfdbfe; background-color: #eff6ff; padding: 4px 10px; border-radius: 8px; width: 100%; color: #1e40af; font-weight: 800; font-size: 14px; }
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
+        
+        /* Loader & BG */
         #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .animated-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(120deg, #e0f2fe 0%, #f3e8ff 100%); }
         .header-gradient { background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #4f46e5 100%); background-size: 200% 200%; animation: gradientMove 10s ease infinite; }
         @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         
+        /* Quiz */
         .quiz-option { cursor: pointer; transition: all 0.2s; border: 2px solid #e5e7eb; }
         .quiz-option:hover { border-color: #3b82f6; background-color: #eff6ff; }
         .quiz-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #15803d; }
         .quiz-wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c; }
+
+        /* Zoom Ảnh */
+        .zoom-img { cursor: zoom-in; transition: transform 0.3s; }
+        .zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
+        .zoom-overlay img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
     </style>
 </head>
 <body class="text-sm min-h-screen font-sans">
@@ -129,6 +141,10 @@
             <div id="quizContainer" class="bg-white p-6 rounded-3xl shadow-xl border-4 border-blue-100">
                 <p class="text-center text-gray-500 italic">Đang tải câu hỏi...</p>
             </div>
+        </div>
+
+        <div id="zoomModal" class="hidden zoom-overlay" onclick="this.classList.add('hidden')">
+            <img id="zoomImageSrc" src="" alt="Zoom">
         </div>
 
         <div id="notificationModal" class="hidden fixed inset-0 z-[80] modal-overlay flex items-center justify-center p-4">
@@ -311,7 +327,11 @@
             }
 
             const q = dsCauHoiToan[index];
-            let imageHtml = q.image ? `<img src="${q.image}" class="w-full max-w-sm mx-auto rounded-lg mb-4 shadow-sm" alt="Hình ảnh câu hỏi">` : '';
+            // XỬ LÝ ẢNH THÔNG MINH
+            let imageHtml = '';
+            if (q.image) {
+                imageHtml = `<div class="mb-4 flex justify-center"><img src="${q.image}" class="max-h-60 w-auto object-contain rounded-lg shadow border border-gray-200 zoom-img" onclick="phongToAnh(this.src)" alt="Hình minh họa"></div>`;
+            }
 
             let html = `
                 <div class="mb-6">
@@ -327,6 +347,11 @@
                 </div>
             `;
             document.getElementById('quizContainer').innerHTML = html;
+        }
+
+        function phongToAnh(src) {
+            document.getElementById('zoomImageSrc').src = src;
+            document.getElementById('zoomModal').classList.remove('hidden');
         }
 
         function kiemTraDapAn(el, correct, choice, index) {
