@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - VioEdu Style (V25 Fix)</title>
+    <title>Lớp 4/6 - Trường TH Phú Thọ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -18,6 +18,8 @@
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .student-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        
+        /* Rank Styles */
         .rank-1 { background-color: #fbbf24; color: white; border: 2px solid #f59e0b; }
         .rank-2 { background-color: #9ca3af; color: white; border: 2px solid #6b7280; }
         .rank-3 { background-color: #d97706; color: white; border: 2px solid #b45309; }
@@ -28,7 +30,7 @@
 
     <div id="loader">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-        <p class="text-blue-800 font-extrabold animate-pulse">Đang tải dữ liệu lớp học...</p>
+        <p class="text-blue-800 font-extrabold animate-pulse">Đang kết nối dữ liệu...</p>
     </div>
 
     <div id="loginScreen" class="hidden fixed inset-0 bg-gradient-to-br from-blue-500 to-purple-600 z-50 flex items-center justify-center p-4">
@@ -66,7 +68,7 @@
                 </div>
 
                 <div class="flex items-center space-x-3 relative">
-                    <div id="studentStats" class="hidden items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                    <div id="studentStats" style="display: none;" class="items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
                         <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-gem mr-1"></i> <span id="statDiamond">0</span></div>
                         <div class="w-px h-3 bg-gray-300"></div>
                         <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-trophy mr-1"></i> <span id="statMedal">0</span></div>
@@ -100,7 +102,7 @@
                 <i class="fas fa-star absolute top-5 left-10 text-yellow-400 opacity-20 text-4xl animate-bounce"></i>
                 <div class="container mx-auto px-4 text-center relative z-10">
                     <h2 id="welcomeText" class="text-2xl font-black mb-2">Chào con, chúc một ngày tốt lành!</h2>
-                    <p id="subWelcomeText" class="text-blue-100 opacity-90">Hôm nay con muốn chinh phục môn học nào?</p>
+                    <p id="subWelcomeText" class="text-blue-100 opacity-90" style="display: none;">Hôm nay con muốn chinh phục môn học nào?</p>
                 </div>
             </div>
             <div class="container mx-auto px-4 -mt-10 relative z-20 max-w-2xl">
@@ -117,27 +119,15 @@
 
         <div id="sectionManager" class="hidden container mx-auto px-4 mt-6 fade-in max-w-5xl">
             <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-md border border-blue-100">
-                <div class="mb-4 md:mb-0 flex items-center">
-                    <button onclick="veTrangChu()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-xl font-bold mr-4 transition"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
-                    <h2 class="text-xl font-black text-blue-900 uppercase">Quản Lý Hồ Sơ</h2>
-                </div>
-                <div class="flex w-full md:w-auto space-x-2">
-                    <div class="relative flex-1 md:w-64"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-blue-100 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Tìm tên học sinh..."></div>
-                    <button onclick="moFormThem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md game-btn whitespace-nowrap"><i class="fas fa-plus mr-1"></i> Thêm mới</button>
-                </div>
+                <div class="mb-4 md:mb-0 flex items-center"><button onclick="veTrangChu()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-xl font-bold mr-4 transition"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button><h2 class="text-xl font-black text-blue-900 uppercase">Quản Lý Hồ Sơ</h2></div>
+                <div class="flex w-full md:w-auto space-x-2"><div class="relative flex-1 md:w-64"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-blue-100 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Tìm tên học sinh..."></div><button onclick="moFormThem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md game-btn whitespace-nowrap"><i class="fas fa-plus mr-1"></i> Thêm mới</button></div>
             </div>
             <div id="studentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
         <div id="sectionResults" class="hidden container mx-auto px-4 mt-6 fade-in max-w-4xl">
             <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-yellow-50 p-4 rounded-2xl shadow-md border border-yellow-200">
-                <div class="mb-4 md:mb-0 flex items-center">
-                    <button onclick="veTrangChu()" class="bg-white hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl font-bold mr-4 transition shadow-sm border border-yellow-200"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
-                    <div>
-                        <h2 class="text-xl font-black text-yellow-800 uppercase"><i class="fas fa-crown text-yellow-500 mr-2"></i> Bảng Vàng Thành Tích</h2>
-                        <p class="text-xs text-yellow-600 font-bold">Thống kê Kim cương & Huy chương</p>
-                    </div>
-                </div>
+                <div class="mb-4 md:mb-0 flex items-center"><button onclick="veTrangChu()" class="bg-white hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl font-bold mr-4 transition shadow-sm border border-yellow-200"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button><div><h2 class="text-xl font-black text-yellow-800 uppercase"><i class="fas fa-crown text-yellow-500 mr-2"></i> Bảng Vàng Thành Tích</h2><p class="text-xs text-yellow-600 font-bold">Thống kê Kim cương & Huy chương</p></div></div>
                 <div class="relative w-full md:w-64"><i class="fas fa-search absolute left-3 top-3 text-yellow-400"></i><input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh..."></div>
             </div>
             <div id="resultsGrid" class="grid grid-cols-1 gap-4"></div>
@@ -160,14 +150,8 @@
                     </div>
                 </div>
                 <div class="p-6 space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><p class="text-[10px] text-blue-400 uppercase font-bold">Ngày sinh</p><p id="viewDob" class="font-bold text-gray-800 text-base">--</p><input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy"></div>
-                        <div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><p class="text-[10px] text-blue-400 uppercase font-bold">Giới tính</p><p id="viewGender" class="font-bold text-gray-800 text-base">--</p><select id="editGender" class="hidden edit-input text-center"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></div>
-                    </div>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-male"></i></div><div><span class="text-[10px] text-gray-400 font-bold uppercase block">Cha</span><span id="viewFather" class="font-bold text-gray-800">--</span><input id="editFather" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div></div><a id="btnCallFather" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a></div>
-                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mr-3"><i class="fas fa-female"></i></div><div><span class="text-[10px] text-gray-400 font-bold uppercase block">Mẹ</span><span id="viewMother" class="font-bold text-gray-800">--</span><input id="editMother" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div></div><a id="btnCallMother" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a></div>
-                    </div>
+                    <div class="grid grid-cols-2 gap-4"><div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><p class="text-[10px] text-blue-400 uppercase font-bold">Ngày sinh</p><p id="viewDob" class="font-bold text-gray-800 text-base">--</p><input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy"></div><div class="bg-blue-50 p-3 rounded-xl border border-blue-100"><p class="text-[10px] text-blue-400 uppercase font-bold">Giới tính</p><p id="viewGender" class="font-bold text-gray-800 text-base">--</p><select id="editGender" class="hidden edit-input text-center"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></div></div>
+                    <div class="space-y-3"><div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-male"></i></div><div><span class="text-[10px] text-gray-400 font-bold uppercase block">Cha</span><span id="viewFather" class="font-bold text-gray-800">--</span><input id="editFather" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div></div><a id="btnCallFather" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a></div><div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200"><div class="flex items-center"><div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mr-3"><i class="fas fa-female"></i></div><div><span class="text-[10px] text-gray-400 font-bold uppercase block">Mẹ</span><span id="viewMother" class="font-bold text-gray-800">--</span><input id="editMother" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div></div><a id="btnCallMother" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a></div></div>
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-200"><p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p><p id="viewAddress" class="text-gray-800 font-bold text-sm">--</p><input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ..."></div>
                     <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200"><p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p><p id="viewNote" class="text-gray-700 italic text-sm">--</p><textarea id="editNote" class="hidden edit-input h-20" placeholder="Nhập ghi chú..."></textarea></div>
                 </div>
@@ -180,7 +164,11 @@
     </div>
 
     <script>
+        // ============================================
+        // !!! QUAN TRỌNG: THẦY DÁN LINK WEB APP MỚI (SAU KHI DEPLOY) VÀO DƯỚI ĐÂY !!!
         const API_URL = "https://script.google.com/macros/s/AKfycbwePkzMhFSKMbeHZuzPCvfcfztbdrt716FJOwm34Ja99wKUy3XQdA_23d1ByzS745QnLQ/exec"; 
+        // ============================================
+        
         const PASS_ADMIN = "123456";
         let dsHocSinh = []; 
         let currentHS = null;
@@ -205,8 +193,18 @@
         async function taiDanhSach() {
             try {
                 const res = await fetch(API_URL);
-                dsHocSinh = await res.json();
-            } catch (err) { alert("Lỗi kết nối Server! Vui lòng kiểm tra lại link Google Apps Script."); }
+                const data = await res.json();
+                
+                // Kiểm tra nếu Server trả về lỗi dạng text
+                if (typeof data === 'string' && data.includes("LỖI")) {
+                    alert(data); 
+                } else {
+                    dsHocSinh = data;
+                }
+            } catch (err) { 
+                document.getElementById('loader').innerText = "Lỗi kết nối! Hãy kiểm tra lại link Google Apps Script.";
+                console.error(err);
+            }
         }
 
         function xuLyDangNhap() {
@@ -225,9 +223,11 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = "Thầy Hiển";
             document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
-            document.getElementById('studentStats').classList.add('hidden'); 
-            document.getElementById('studentStats').classList.remove('flex'); 
-            document.getElementById('subWelcomeText').classList.add('hidden'); 
+            
+            // ẨN TUYỆT ĐỐI THANH ĐIỂM CỦA GIÁO VIÊN
+            document.getElementById('studentStats').style.display = 'none'; 
+            document.getElementById('subWelcomeText').style.display = 'none'; 
+            
             veDanhSachQuanLy(dsHocSinh);
         }
 
@@ -239,10 +239,11 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = hs.name;
             document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
-            const stats = document.getElementById('studentStats');
-            stats.classList.remove('hidden');
-            stats.classList.add('flex'); 
-            document.getElementById('subWelcomeText').classList.remove('hidden');
+            
+            // HIỆN LẠI CHO HỌC SINH
+            document.getElementById('studentStats').style.display = 'flex'; 
+            document.getElementById('subWelcomeText').style.display = 'block'; 
+            
             const diamonds = parseInt(hs.score) || 0;
             const medals = Math.floor(diamonds / 100);
             document.getElementById('statDiamond').innerText = diamonds;
@@ -319,7 +320,6 @@
                 if(newScore < 0) newScore = 0; 
                 hs.score = newScore; 
                 veDanhSachKetQua(dsHocSinh); 
-                // Gọi API để lưu, xử lý lỗi kết nối
                 guiYeuCau("sua", hs); 
             } 
         }
@@ -349,15 +349,11 @@
         async function guiYeuCau(action, data) { 
             try {
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) }); 
-                // Nếu là thao tác sửa thông tin (ko phải sửa điểm nhanh), thì reload để chắc chắn
                 if(action !== 'sua' || document.getElementById('profileModal').classList.contains('hidden') === false) {
                      setTimeout(async () => { alert("Thành công!"); await taiDanhSach(); if(action === 'sua') { veDanhSachQuanLy(dsHocSinh); dienThongTinVaoModal(dsHocSinh.find(h => h.id === data.id)); } else location.reload(); }, 1500); 
                 }
-            } catch(e) {
-                alert("Lỗi kết nối Server! Kiểm tra lại đường truyền hoặc Script URL.");
-            }
+            } catch(e) { alert("Lỗi kết nối Server! Kiểm tra lại đường truyền."); }
         }
     </script>
 </body>
 </html>
-
