@@ -3,28 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - VioEdu Style</title>
+    <title>Lớp 4/6 - VioEdu Style (V17)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Nunito', sans-serif; } /* Font chữ tròn trịa giống game */
-        .fade-in { animation: fadeIn 0.5s ease-out; }
+        body { font-family: 'Nunito', sans-serif; }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         .modal-overlay { background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
-        
-        /* Hiệu ứng nút bấm game */
         .game-btn { transition: all 0.1s; border-bottom: 4px solid rgba(0,0,0,0.2); }
         .game-btn:active { transform: translateY(2px); border-bottom: 0px solid rgba(0,0,0,0.2); }
-
-        .edit-input { 
-            border: 2px solid #3b82f6; background-color: #eff6ff; 
-            padding: 4px 8px; border-radius: 8px; width: 100%; 
-            color: #1e3a8a; font-weight: bold;
-        }
+        .edit-input { border: 2px solid #3b82f6; background-color: #eff6ff; padding: 4px 8px; border-radius: 8px; width: 100%; color: #1e3a8a; font-weight: bold; }
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
-        
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
@@ -43,7 +34,6 @@
             <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest">Trường TH Phú Thọ</h3>
             <h1 class="text-4xl font-black text-blue-800 mb-1 uppercase drop-shadow-sm">LỚP 4/6</h1>
             <p class="text-blue-500 font-bold mb-6">Năm học 2025 - 2026</p>
-            
             <div class="bg-blue-50 p-4 rounded-xl mb-6 text-left border border-blue-100">
                 <p class="text-gray-500 text-xs font-bold uppercase mb-1">Dành cho Phụ huynh:</p>
                 <div class="relative">
@@ -51,14 +41,10 @@
                     <input id="inputLogin" type="number" class="w-full pl-10 p-3 border-2 border-blue-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-lg text-blue-900" placeholder="Nhập số điện thoại...">
                 </div>
             </div>
-            
             <button onclick="xuLyDangNhap()" class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-4 rounded-xl font-black text-xl shadow-lg game-btn uppercase tracking-wider">
                 VÀO HỌC NGAY <i class="fas fa-arrow-right ml-2"></i>
             </button>
-            
-            <div class="mt-6">
-                <p class="text-[10px] text-white opacity-60">GVCN: Thầy Nguyễn Hữu Hiển</p>
-            </div>
+            <div class="mt-6"><p class="text-[10px] text-white opacity-60">GVCN: Thầy Nguyễn Hữu Hiển</p></div>
         </div>
     </div>
 
@@ -74,19 +60,39 @@
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-3">
-                    <div class="hidden sm:flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+                <div class="flex items-center space-x-3 relative">
+                    <div id="studentStats" class="hidden sm:flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
                         <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-gem mr-1"></i> 0</div>
                         <div class="w-px h-3 bg-gray-300"></div>
                         <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-trophy mr-1"></i> 0</div>
                     </div>
 
-                    <div onclick="moHoSoCaNhan()" class="flex items-center space-x-2 cursor-pointer bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full transition border border-blue-200">
+                    <div onclick="xuLyClickProfile()" class="flex items-center space-x-2 cursor-pointer bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-full transition border border-blue-200 select-none">
                         <div class="text-right">
                             <p id="headerName" class="text-xs font-bold text-blue-900 uppercase">--</p>
                         </div>
                         <div class="w-9 h-9 bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-md border-2 border-white">
                             <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+
+                    <div id="gvcnMenu" class="hidden absolute top-12 right-0 bg-white shadow-2xl rounded-xl w-64 border-2 border-blue-100 overflow-hidden z-50 text-left fade-in">
+                        <div class="bg-blue-50 p-3 border-b border-blue-100 text-xs font-bold text-blue-800 uppercase tracking-wider">
+                            Menu Giáo Viên
+                        </div>
+                        
+                        <div onclick="moQuanLyHS()" class="p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer flex items-center text-gray-700 font-bold transition">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-users"></i></div>
+                            Thông tin học sinh
+                        </div>
+                        
+                        <div onclick="moKetQuaHocTap()" class="p-4 hover:bg-yellow-50 border-b border-gray-100 cursor-pointer flex items-center text-gray-700 font-bold transition">
+                            <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mr-3"><i class="fas fa-chart-line"></i></div>
+                            Kết quả học tập
+                        </div>
+
+                        <div onclick="dangXuat()" class="p-3 hover:bg-red-50 cursor-pointer flex items-center text-red-500 text-xs font-bold justify-center bg-gray-50">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
                         </div>
                     </div>
                 </div>
@@ -96,7 +102,6 @@
         <div class="bg-gradient-to-r from-blue-600 to-purple-600 text-white pt-8 pb-16 rounded-b-[3rem] shadow-lg mb-6 relative overflow-hidden">
             <i class="fas fa-star absolute top-5 left-10 text-yellow-400 opacity-20 text-4xl animate-bounce"></i>
             <i class="fas fa-rocket absolute bottom-5 right-10 text-white opacity-10 text-6xl"></i>
-            
             <div class="container mx-auto px-4 text-center relative z-10">
                 <h2 id="welcomeText" class="text-2xl font-black mb-2">Chào con, chúc một ngày tốt lành!</h2>
                 <p class="text-blue-100 opacity-90">Hôm nay con muốn chinh phục môn học nào?</p>
@@ -105,70 +110,36 @@
 
         <div class="container mx-auto px-4 -mt-10 relative z-20 max-w-4xl">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                
-                <button onclick="alert('Thầy Hiển đang soạn bài tập Toán...')" class="game-btn bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden">
+                <button onclick="alert('Đang soạn bài tập Toán...')" class="game-btn bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
-                    <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center text-2xl text-blue-600 mb-3 group-hover:scale-110 transition">
-                        <i class="fas fa-calculator"></i>
-                    </div>
+                    <div class="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center text-2xl text-blue-600 mb-3 group-hover:scale-110 transition"><i class="fas fa-calculator"></i></div>
                     <span class="font-bold text-gray-700 group-hover:text-blue-600">Toán</span>
                 </button>
-
-                <button onclick="alert('Thầy Hiển đang soạn bài tập Tiếng Việt...')" class="game-btn bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden">
+                <button onclick="alert('Đang soạn bài tập Tiếng Việt...')" class="game-btn bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
-                    <div class="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center text-2xl text-green-600 mb-3 group-hover:scale-110 transition">
-                        <i class="fas fa-book-open"></i>
-                    </div>
+                    <div class="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center text-2xl text-green-600 mb-3 group-hover:scale-110 transition"><i class="fas fa-book-open"></i></div>
                     <span class="font-bold text-gray-700 group-hover:text-green-600">Tiếng Việt</span>
                 </button>
-
                 <button onclick="alert('Coming soon...')" class="game-btn bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-2 bg-purple-500"></div>
-                    <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-2xl text-purple-600 mb-3 group-hover:scale-110 transition">
-                        <i class="fas fa-globe-americas"></i>
-                    </div>
+                    <div class="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center text-2xl text-purple-600 mb-3 group-hover:scale-110 transition"><i class="fas fa-globe-americas"></i></div>
                     <span class="font-bold text-gray-700 group-hover:text-purple-600">Tiếng Anh</span>
                 </button>
-
                 <button onclick="alert('Coming soon...')" class="game-btn bg-white p-4 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-2 bg-yellow-500"></div>
-                    <div class="w-14 h-14 bg-yellow-50 rounded-full flex items-center justify-center text-2xl text-yellow-600 mb-3 group-hover:scale-110 transition">
-                        <i class="fas fa-flask"></i>
-                    </div>
+                    <div class="w-14 h-14 bg-yellow-50 rounded-full flex items-center justify-center text-2xl text-yellow-600 mb-3 group-hover:scale-110 transition"><i class="fas fa-flask"></i></div>
                     <span class="font-bold text-gray-700 group-hover:text-yellow-600">Khoa Học</span>
                 </button>
-
-            </div>
-
-            <div class="mt-8 bg-white rounded-2xl shadow-lg p-6 border-2 border-yellow-100">
-                <h3 class="font-black text-gray-800 uppercase mb-4 flex items-center">
-                    <i class="fas fa-crown text-yellow-500 text-xl mr-2"></i> Bảng Vàng Tuần Này
-                </h3>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between bg-yellow-50 p-3 rounded-xl border border-yellow-200">
-                        <div class="flex items-center space-x-3">
-                            <span class="font-black text-yellow-600 text-lg">#1</span>
-                            <span class="font-bold text-gray-700">Bạn chăm chỉ nhất lớp</span>
-                        </div>
-                        <span class="font-bold text-yellow-600"><i class="fas fa-gem"></i> 150</span>
-                    </div>
-                    <div class="text-center text-xs text-gray-400 italic mt-2">
-                        *Thầy Hiển sẽ cập nhật bảng điểm sau nhé!
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
     <div id="profileModal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative fade-in border-4 border-white">
-            
-            <button onclick="dongHoSo()" class="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-500 w-8 h-8 rounded-full flex items-center justify-center z-10 transition">
-                <i class="fas fa-times"></i>
-            </button>
+            <button onclick="dongHoSo()" class="absolute top-4 right-4 bg-gray-100 hover:bg-gray-200 text-gray-500 w-8 h-8 rounded-full flex items-center justify-center z-10 transition"><i class="fas fa-times"></i></button>
 
             <div id="adminSearchBox" class="hidden bg-yellow-50 p-4 border-b border-yellow-100">
-                <label class="block text-yellow-800 text-[10px] font-bold uppercase mb-1">Tra cứu / Đổi học sinh (Admin):</label>
+                <label class="block text-yellow-800 text-[10px] font-bold uppercase mb-1">Tra cứu / Đổi học sinh:</label>
                 <div class="flex space-x-2">
                     <div class="relative flex-1">
                         <select id="selectHS" onchange="chonHocSinhTuList()" class="block w-full bg-white border border-yellow-300 text-gray-800 py-2 px-3 rounded-lg font-bold text-sm">
@@ -179,17 +150,12 @@
                 </div>
             </div>
 
-            <div>
+            <div id="cardContent">
                 <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-8 text-center text-white relative rounded-t-2xl">
-                    <div class="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center text-5xl text-blue-500 shadow-xl border-4 border-blue-200 mb-3">
-                        <i class="fas fa-user-astronaut"></i>
-                    </div>
-                    
+                    <div class="w-24 h-24 bg-white rounded-full mx-auto flex items-center justify-center text-5xl text-blue-500 shadow-xl border-4 border-blue-200 mb-3"><i class="fas fa-user-astronaut"></i></div>
                     <h2 id="viewName" class="text-2xl font-black uppercase tracking-wide block drop-shadow-md">--</h2>
                     <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
-                    
                     <span id="cardID" class="text-blue-100 text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full">--</span>
-
                     <div id="adminControls" class="hidden absolute top-4 left-4 flex flex-col space-y-2">
                         <button onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow" title="Sửa"><i class="fas fa-pen"></i></button>
                         <button onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow" title="Xóa"><i class="fas fa-trash-alt"></i></button>
@@ -197,17 +163,6 @@
                 </div>
 
                 <div class="p-6 space-y-4">
-                    <div class="flex justify-between bg-gray-50 p-3 rounded-xl border border-gray-200 mb-4">
-                        <div class="text-center w-1/2 border-r border-gray-200">
-                            <div class="text-xs text-gray-400 uppercase font-bold">Kim Cương</div>
-                            <div class="text-xl font-black text-blue-600">0 💎</div>
-                        </div>
-                        <div class="text-center w-1/2">
-                            <div class="text-xs text-gray-400 uppercase font-bold">Danh hiệu</div>
-                            <div class="text-xl font-black text-yellow-500">Tân Thủ</div>
-                        </div>
-                    </div>
-
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
                             <p class="text-[10px] text-blue-400 uppercase font-bold">Ngày sinh</p>
@@ -220,39 +175,27 @@
                             <select id="editGender" class="hidden edit-input text-center"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select>
                         </div>
                     </div>
-
                     <div class="space-y-3">
                         <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200">
                             <div class="flex items-center">
                                 <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-male"></i></div>
-                                <div>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase block">Cha</span>
-                                    <span id="viewFather" class="font-bold text-gray-800">--</span>
-                                    <input id="editFather" type="number" class="hidden edit-input" placeholder="Số ĐT...">
-                                </div>
+                                <div><span class="text-[10px] text-gray-400 font-bold uppercase block">Cha</span><span id="viewFather" class="font-bold text-gray-800">--</span><input id="editFather" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div>
                             </div>
                             <a id="btnCallFather" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a>
                         </div>
-                        
                         <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200">
                             <div class="flex items-center">
                                 <div class="w-8 h-8 rounded-full bg-pink-100 text-pink-600 flex items-center justify-center mr-3"><i class="fas fa-female"></i></div>
-                                <div>
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase block">Mẹ</span>
-                                    <span id="viewMother" class="font-bold text-gray-800">--</span>
-                                    <input id="editMother" type="number" class="hidden edit-input" placeholder="Số ĐT...">
-                                </div>
+                                <div><span class="text-[10px] text-gray-400 font-bold uppercase block">Mẹ</span><span id="viewMother" class="font-bold text-gray-800">--</span><input id="editMother" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div>
                             </div>
                             <a id="btnCallMother" href="#" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center shadow hover:bg-green-600"><i class="fas fa-phone"></i></a>
                         </div>
                     </div>
-
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
                         <p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p>
                         <p id="viewAddress" class="text-gray-800 font-bold text-sm">--</p>
                         <input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ...">
                     </div>
-
                     <div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200">
                         <p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p>
                         <p id="viewNote" class="text-gray-700 italic text-sm">--</p>
@@ -265,8 +208,7 @@
                         <button onclick="batCheDoSua(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-bold">Hủy</button>
                         <button onclick="luuThayDoi()" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg game-btn">LƯU LẠI</button>
                     </div>
-                    
-                    <button onclick="dangXuat()" class="w-full text-red-400 py-2 rounded-xl font-bold hover:text-red-600 hover:bg-red-50 transition text-xs">
+                    <button id="btnLogoutModal" onclick="dangXuat()" class="w-full text-red-400 py-2 rounded-xl font-bold hover:text-red-600 hover:bg-red-50 transition text-xs">
                         <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất tài khoản
                     </button>
                 </div>
@@ -324,7 +266,7 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = "Thầy Hiển";
             document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
-            document.getElementById('adminSearchBox').classList.remove('hidden');
+            document.getElementById('studentStats').classList.add('hidden'); // Giáo viên không cần hiện điểm
         }
 
         function vaoGiaoDienHocSinh(hs) {
@@ -335,16 +277,42 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = hs.name;
             document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
-            document.getElementById('adminSearchBox').classList.add('hidden');
-            dienThongTinVaoModal(hs);
+            document.getElementById('studentStats').classList.remove('hidden');
         }
 
-        function moHoSoCaNhan() {
-            if(isAdmin && !currentHS) resetInfoCard();
-            else if(currentHS) dienThongTinVaoModal(currentHS);
-            document.getElementById('profileModal').classList.remove('hidden');
+        // --- XỬ LÝ SỰ KIỆN CLICK PROFILE ---
+        function xuLyClickProfile() {
+            if(isAdmin) {
+                // Nếu là Admin -> Toggle Menu GVCN
+                const menu = document.getElementById('gvcnMenu');
+                if(menu.classList.contains('hidden')) {
+                    menu.classList.remove('hidden');
+                } else {
+                    menu.classList.add('hidden');
+                }
+            } else {
+                // Nếu là Học sinh -> Mở hồ sơ ngay
+                if(currentHS) {
+                    dienThongTinVaoModal(currentHS);
+                    document.getElementById('profileModal').classList.remove('hidden');
+                }
+            }
         }
 
+        // --- CÁC HÀM CỦA MENU GVCN ---
+        function moQuanLyHS() {
+            document.getElementById('gvcnMenu').classList.add('hidden'); // Đóng menu
+            document.getElementById('adminSearchBox').classList.remove('hidden'); // Hiện ô tìm kiếm
+            resetInfoCard(); // Xóa trắng form
+            document.getElementById('profileModal').classList.remove('hidden'); // Mở modal
+        }
+
+        function moKetQuaHocTap() {
+            document.getElementById('gvcnMenu').classList.add('hidden');
+            alert("Tính năng Kết Quả Học Tập đang được phát triển!"); 
+        }
+
+        // --- CÁC HÀM XỬ LÝ HỒ SƠ & DATA ---
         function dongHoSo() {
             document.getElementById('profileModal').classList.add('hidden');
             batCheDoSua(false);
@@ -370,6 +338,9 @@
             document.getElementById('viewNote').innerText = safe(hs.note) || "Không";
             document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
             document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
+            
+            // Nếu là HS mở thì ẩn nút Logout trong Modal đi (vì đã có nút Logout ngoài menu rồi, hoặc để lại tùy thầy)
+            // Ở đây tôi giữ nút logout trong modal cho tiện.
             
             if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
             else document.getElementById('adminControls').classList.add('hidden');
