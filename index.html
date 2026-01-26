@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Lớp 4/6 (V3 - Có Sửa)</title>
+    <title>Tra Cứu Lớp 4/6 (V4 - Sửa Trực Tiếp)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Style cho ô nhập liệu khi ở chế độ sửa */
+        .edit-input { border: 2px solid #3b82f6; background-color: #eff6ff; padding: 4px 8px; border-radius: 6px; width: 100%; color: #1e3a8a; font-weight: bold; }
+        .edit-input:focus { outline: none; border-color: #f59e0b; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-sm min-h-screen pb-10">
@@ -52,52 +55,65 @@
                 <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-lg border-4 border-blue-200">
                     <i class="fas fa-user-graduate"></i>
                 </div>
-                <h2 id="cardName" class="text-2xl font-bold mt-3 uppercase tracking-wide">--</h2>
+                
+                <div class="mt-3">
+                    <h2 id="viewName" class="text-2xl font-bold uppercase tracking-wide block">--</h2>
+                    <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
+                </div>
+                
                 <span id="cardID" class="text-blue-100 text-xs font-mono bg-blue-800 px-2 py-0.5 rounded-full bg-opacity-50">--</span>
                 
                 <div id="adminControls" class="hidden absolute top-4 right-4 flex flex-col space-y-2">
-                    <button onclick="suaThongTin()" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow transition" title="Sửa thông tin">
-                        <i class="fas fa-edit"></i>
+                    <button id="btnToggleEdit" onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow transition" title="Sửa thông tin">
+                        <i class="fas fa-pen"></i>
                     </button>
-                    <button onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow transition" title="Xóa học sinh">
+                    <button id="btnDelete" onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow transition" title="Xóa học sinh">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
             </div>
 
             <div class="p-6 space-y-4">
+                
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
                         <p class="text-[10px] text-gray-400 uppercase font-bold">Ngày sinh</p>
-                        <p id="cardDob" class="font-bold text-gray-800 text-base">--</p>
+                        <p id="viewDob" class="font-bold text-gray-800 text-base block">--</p>
+                        <input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy">
                     </div>
                     <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
                         <p class="text-[10px] text-gray-400 uppercase font-bold">Giới tính</p>
-                        <p id="cardGender" class="font-bold text-gray-800 text-base">--</p>
+                        <p id="viewGender" class="font-bold text-gray-800 text-base block">--</p>
+                        <select id="editGender" class="hidden edit-input text-center">
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="space-y-3">
-                    <div class="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100 hover:shadow-sm transition">
-                        <div class="flex items-center">
-                            <div class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-male"></i></div>
-                            <div>
-                                <p class="text-[10px] text-blue-800 font-bold uppercase">ĐT Cha</p>
-                                <p id="cardFather" class="font-bold text-blue-900 text-lg tracking-tight">--</p>
+                    <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center">
+                                <div class="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs"><i class="fas fa-male"></i></div>
+                                <span class="text-[10px] text-blue-800 font-bold uppercase">ĐT Cha</span>
                             </div>
+                            <a id="btnCallFather" href="#" class="text-blue-600 hover:text-blue-800"><i class="fas fa-phone-alt"></i></a>
                         </div>
-                        <a id="btnCallFather" href="#" class="bg-white text-blue-600 w-10 h-10 rounded-full flex items-center justify-center shadow hover:bg-blue-600 hover:text-white transition"><i class="fas fa-phone-alt"></i></a>
+                        <p id="viewFather" class="font-bold text-blue-900 text-lg ml-8 block">--</p>
+                        <input id="editFather" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT Cha">
                     </div>
 
-                    <div class="flex items-center justify-between bg-pink-50 p-3 rounded-lg border border-pink-100 hover:shadow-sm transition">
-                        <div class="flex items-center">
-                            <div class="bg-pink-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm shadow"><i class="fas fa-female"></i></div>
-                            <div>
-                                <p class="text-[10px] text-pink-800 font-bold uppercase">ĐT Mẹ</p>
-                                <p id="cardMother" class="font-bold text-pink-900 text-lg tracking-tight">--</p>
+                    <div class="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center">
+                                <div class="bg-pink-500 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs"><i class="fas fa-female"></i></div>
+                                <span class="text-[10px] text-pink-800 font-bold uppercase">ĐT Mẹ</span>
                             </div>
+                            <a id="btnCallMother" href="#" class="text-pink-600 hover:text-pink-800"><i class="fas fa-phone-alt"></i></a>
                         </div>
-                        <a id="btnCallMother" href="#" class="bg-white text-pink-600 w-10 h-10 rounded-full flex items-center justify-center shadow hover:bg-pink-600 hover:text-white transition"><i class="fas fa-phone-alt"></i></a>
+                        <p id="viewMother" class="font-bold text-pink-900 text-lg ml-8 block">--</p>
+                        <input id="editMother" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT Mẹ">
                     </div>
                 </div>
 
@@ -105,12 +121,22 @@
 
                 <div>
                     <p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p>
-                    <p id="cardAddress" class="text-gray-800 font-medium ml-1">--</p>
+                    <p id="viewAddress" class="text-gray-800 font-medium ml-1 block">--</p>
+                    <input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ...">
                 </div>
 
                 <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
                     <p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p>
-                    <p id="cardNote" class="text-gray-700 italic ml-1 text-sm">--</p>
+                    <p id="viewNote" class="text-gray-700 italic ml-1 text-sm block">--</p>
+                    <textarea id="editNote" class="hidden edit-input h-20" placeholder="Nhập ghi chú..."></textarea>
+                </div>
+            </div>
+
+            <div id="saveBar" class="hidden bg-white border-t p-4 flex justify-between items-center shadow-inner animate-pulse">
+                <span class="text-xs text-blue-600 font-bold"><i class="fas fa-info-circle"></i> Đang ở chế độ chỉnh sửa</span>
+                <div class="flex space-x-2">
+                    <button onclick="batCheDoSua(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded font-bold hover:bg-gray-300">Hủy</button>
+                    <button onclick="luuThayDoi()" class="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow-lg">LƯU LẠI</button>
                 </div>
             </div>
         </div>
@@ -130,11 +156,9 @@
         async function taiDanhSach() {
             const select = document.getElementById('selectHS');
             const loading = document.getElementById('loadingText');
-            
             try {
                 const res = await fetch(API_URL);
                 dsHocSinh = await res.json();
-                
                 loading.innerText = "Sẵn sàng tra cứu " + dsHocSinh.length + " học sinh.";
                 loading.className = "text-xs text-center text-green-600 mt-2 font-bold";
                 
@@ -142,13 +166,14 @@
                 dsHocSinh.forEach((hs, index) => {
                     select.innerHTML += `<option value="${index}">${index+1}. ${hs.name}</option>`;
                 });
-            } catch (err) {
-                loading.innerText = "Lỗi kết nối!";
-            }
+            } catch (err) { loading.innerText = "Lỗi kết nối!"; }
         }
 
         // Hiện chi tiết
         function hienChiTiet() {
+            // Nếu đang sửa mà đổi tên thì tắt chế độ sửa đi
+            batCheDoSua(false);
+
             const index = document.getElementById('selectHS').value;
             const card = document.getElementById('infoCard');
 
@@ -160,21 +185,21 @@
 
             const hs = dsHocSinh[index];
             currentHS = hs;
-            const safe = (val) => (val && val !== "undefined") ? val : ""; // Đổi thành rỗng cho đẹp
+            const safe = (val) => (val && val !== "undefined") ? val : "";
 
-            document.getElementById('cardName').innerText = safe(hs.name) || "Chưa có tên";
+            // Đổ dữ liệu vào phần View (Xem)
+            document.getElementById('viewName').innerText = safe(hs.name) || "Chưa có tên";
             document.getElementById('cardID').innerText = safe(hs.id);
-            document.getElementById('cardDob').innerText = safe(hs.dob) || "-";
-            document.getElementById('cardGender').innerText = safe(hs.gender) || "-";
-            
-            document.getElementById('cardFather').innerText = safe(hs.fatherPhone) || "---";
-            document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
-            
-            document.getElementById('cardMother').innerText = safe(hs.motherPhone) || "---";
-            document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
+            document.getElementById('viewDob').innerText = safe(hs.dob) || "-";
+            document.getElementById('viewGender').innerText = safe(hs.gender) || "-";
+            document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---";
+            document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---";
+            document.getElementById('viewAddress').innerText = safe(hs.address) || "Chưa cập nhật";
+            document.getElementById('viewNote').innerText = safe(hs.note) || "Không";
 
-            document.getElementById('cardAddress').innerText = safe(hs.address) || "Chưa cập nhật";
-            document.getElementById('cardNote').innerText = safe(hs.note) || "Không";
+            // Cập nhật link gọi điện
+            document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
+            document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
 
             card.classList.remove('hidden');
             
@@ -182,42 +207,75 @@
             if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
         }
 
-        // CHỨC NĂNG SỬA (MỚI)
-        function suaThongTin() {
+        // CHỨC NĂNG: BẬT/TẮT CHẾ ĐỘ SỬA
+        function batCheDoSua(enable) {
             if(!currentHS) return;
+
+            const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
             
-            // Hiện prompt với giá trị cũ điền sẵn (UX tốt)
-            let ten = prompt("Sửa tên:", currentHS.name); 
-            if(ten === null) return; // Nếu bấm hủy
+            if (enable) {
+                // 1. Chuyển sang chế độ Sửa
+                // Đổ dữ liệu hiện tại vào các ô Input
+                document.getElementById('editName').value = currentHS.name;
+                document.getElementById('editDob').value = currentHS.dob;
+                document.getElementById('editGender').value = currentHS.gender;
+                document.getElementById('editFather').value = currentHS.fatherPhone;
+                document.getElementById('editMother').value = currentHS.motherPhone;
+                document.getElementById('editAddress').value = currentHS.address;
+                document.getElementById('editNote').value = currentHS.note;
 
-            let dob = prompt("Sửa ngày sinh:", currentHS.dob);
-            let gender = prompt("Sửa giới tính:", currentHS.gender);
-            let father = prompt("Sửa SĐT Cha:", currentHS.fatherPhone);
-            let mother = prompt("Sửa SĐT Mẹ:", currentHS.motherPhone);
-            let addr = prompt("Sửa Chỗ ở:", currentHS.address);
-            let note = prompt("Sửa Ghi chú:", currentHS.note);
+                // Ẩn View, Hiện Edit
+                fields.forEach(f => {
+                    document.getElementById('view' + f).classList.add('hidden');
+                    document.getElementById('edit' + f).classList.remove('hidden');
+                });
 
+                // Hiện thanh Lưu, Ẩn nút Sửa trên header
+                document.getElementById('saveBar').classList.remove('hidden');
+                document.getElementById('btnToggleEdit').classList.add('hidden');
+                document.getElementById('btnDelete').classList.add('hidden');
+
+            } else {
+                // 2. Tắt chế độ Sửa (Về chế độ Xem)
+                // Ẩn Edit, Hiện View
+                fields.forEach(f => {
+                    document.getElementById('view' + f).classList.remove('hidden');
+                    document.getElementById('edit' + f).classList.add('hidden');
+                });
+
+                // Ẩn thanh Lưu, Hiện lại nút Sửa
+                document.getElementById('saveBar').classList.add('hidden');
+                if(isAdmin) {
+                    document.getElementById('btnToggleEdit').classList.remove('hidden');
+                    document.getElementById('btnDelete').classList.remove('hidden');
+                }
+            }
+        }
+
+        // CHỨC NĂNG: LƯU THAY ĐỔI
+        function luuThayDoi() {
+            // Lấy dữ liệu từ các ô Input
             let hsMoi = {
-                id: currentHS.id, // Giữ nguyên ID
-                name: ten, dob: dob, gender: gender,
-                fatherPhone: father, motherPhone: mother,
-                address: addr, note: note
+                id: currentHS.id,
+                name: document.getElementById('editName').value,
+                dob: document.getElementById('editDob').value,
+                gender: document.getElementById('editGender').value,
+                fatherPhone: document.getElementById('editFather').value,
+                motherPhone: document.getElementById('editMother').value,
+                address: document.getElementById('editAddress').value,
+                note: document.getElementById('editNote').value
             };
 
             guiYeuCau("sua", hsMoi);
         }
 
         function moFormThem() {
+            // Giữ nguyên logic thêm mới nhanh gọn
             let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return;
             let hsMoi = {
                 id: "HS" + Date.now(),
                 name: ten,
-                dob: prompt("Ngày sinh:") || "",
-                gender: prompt("Giới tính:") || "Nam",
-                fatherPhone: prompt("SĐT Cha:") || "",
-                motherPhone: prompt("SĐT Mẹ:") || "",
-                address: prompt("Chỗ ở:") || "",
-                note: prompt("Ghi chú:") || ""
+                dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: ""
             };
             guiYeuCau("them", hsMoi);
         }
@@ -228,21 +286,21 @@
         }
 
         async function guiYeuCau(action, data) {
-            document.getElementById('loadingText').innerText = "Đang lưu...";
+            document.getElementById('loadingText').innerText = "Đang xử lý...";
             await fetch(API_URL, {
                 method: 'POST', mode: 'no-cors',
                 body: JSON.stringify({action: action, data: data})
             });
-            setTimeout(() => { alert("Xong!"); location.reload(); }, 1500);
+            setTimeout(() => { alert("Thành công!"); location.reload(); }, 1500);
         }
 
         function dangNhap() {
             if(!isAdmin) {
                 if(prompt("Mật khẩu Admin:") === PASS_ADMIN) {
                     isAdmin = true;
-                    document.getElementById('panelThem').classList.remove('hidden'); // Hiện nút Thêm
+                    document.getElementById('panelThem').classList.remove('hidden');
                     document.getElementById('btnAdmin').classList.add('hidden'); 
-                    if(currentHS) document.getElementById('adminControls').classList.remove('hidden'); // Hiện nút Sửa/Xóa
+                    if(currentHS) document.getElementById('adminControls').classList.remove('hidden');
                     alert("Đã mở quyền Admin!");
                 } else alert("Sai mật khẩu!");
             }
