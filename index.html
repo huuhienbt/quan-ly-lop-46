@@ -3,135 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Lớp 4/6 (Hoàn Thiện)</title>
+    <title>Tra Cứu Lớp 4/6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        /* Hiệu ứng hiện thẻ */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans text-sm">
+<body class="bg-gray-100 font-sans text-sm min-h-screen">
 
     <div class="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-50 border-b-4 border-yellow-500">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold uppercase tracking-wider"><i class="fas fa-graduation-cap mr-2"></i> Lớp 4/6 - Thầy Hiển</h1>
+            <h1 class="text-lg font-bold uppercase"><i class="fas fa-search mr-2"></i> Tra Cứu HS</h1>
             <div>
-                 <button onclick="taiLaiDuLieu()" class="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded shadow transition">
-                    <i class="fas fa-sync-alt"></i> Tải lại
-                </button>
-                <button id="btnAdmin" onclick="dangNhap()" class="bg-yellow-500 text-blue-900 px-4 py-2 rounded font-bold hover:bg-yellow-400 shadow ml-2 transition">
+                <button id="btnAdmin" onclick="dangNhap()" class="bg-yellow-500 text-blue-900 px-3 py-1 rounded font-bold hover:bg-yellow-400 text-xs shadow">
                     <i class="fas fa-user-lock"></i> Admin
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="container mx-auto mt-8 p-2 max-w-7xl">
+    <div class="container mx-auto mt-8 p-4 max-w-2xl">
         
-        <div id="statusMsg" class="hidden text-center p-3 mb-6 rounded bg-yellow-100 text-yellow-800 shadow">
-            <i class="fas fa-spinner fa-spin mr-2"></i> Đang xử lý dữ liệu...
+        <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+            <label class="block text-gray-700 text-sm font-bold mb-2 uppercase">
+                <i class="fas fa-user-graduate mr-2 text-blue-600"></i> Chọn học sinh cần xem:
+            </label>
+            <div class="relative">
+                <select id="selectHS" onchange="hienChiTiet()" class="block appearance-none w-full bg-gray-50 border border-gray-300 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-blue-500 font-bold text-lg">
+                    <option value="">-- Đang tải danh sách... --</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+            <p id="loadingText" class="text-xs text-center text-gray-400 mt-2 italic">Đang kết nối dữ liệu...</p>
         </div>
 
-        <div id="adminPanel" class="hidden mb-6 flex justify-end">
-            <button onclick="moFormThem()" class="bg-green-600 text-white px-6 py-2 rounded-lg shadow-lg hover:bg-green-700 font-bold transition flex items-center transform hover:scale-105">
-                <i class="fas fa-user-plus mr-2"></i> Thêm Học Sinh
+        <div id="infoCard" class="hidden bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 fade-in">
+            <div class="bg-blue-600 p-4 text-center relative">
+                <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-inner border-4 border-blue-300">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h2 id="cardName" class="text-2xl font-bold text-white mt-2 uppercase">Nguyễn Văn A</h2>
+                <span id="cardID" class="text-blue-200 text-xs font-mono bg-blue-800 px-2 py-1 rounded-full">HS001</span>
+                
+                <button id="btnDelete" onclick="xoaHS()" class="hidden absolute top-4 right-4 text-white hover:text-red-200 bg-red-500 hover:bg-red-600 p-2 rounded-full shadow">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Ngày sinh</p>
+                        <p id="cardDob" class="font-bold text-gray-700 text-lg">--</p>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        <p class="text-xs text-gray-400 uppercase font-bold">Giới tính</p>
+                        <p id="cardGender" class="font-bold text-gray-700 text-lg">--</p>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 my-2"></div>
+
+                <div class="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <div class="flex items-center">
+                        <div class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3"><i class="fas fa-male"></i></div>
+                        <div>
+                            <p class="text-xs text-blue-800 font-bold uppercase">ĐT Cha</p>
+                            <p id="cardFather" class="font-bold text-blue-900 text-lg">0909...</p>
+                        </div>
+                    </div>
+                    <a id="btnCallFather" href="#" class="bg-white text-blue-500 p-2 rounded-full shadow hover:bg-gray-100"><i class="fas fa-phone-alt"></i></a>
+                </div>
+
+                <div class="flex items-center justify-between bg-pink-50 p-3 rounded-lg border border-pink-100">
+                    <div class="flex items-center">
+                        <div class="bg-pink-500 text-white w-8 h-8 rounded-full flex items-center justify-center mr-3"><i class="fas fa-female"></i></div>
+                        <div>
+                            <p class="text-xs text-pink-800 font-bold uppercase">ĐT Mẹ</p>
+                            <p id="cardMother" class="font-bold text-pink-900 text-lg">0909...</p>
+                        </div>
+                    </div>
+                    <a id="btnCallMother" href="#" class="bg-white text-pink-500 p-2 rounded-full shadow hover:bg-gray-100"><i class="fas fa-phone-alt"></i></a>
+                </div>
+
+                <div class="border-t border-gray-100 my-2"></div>
+
+                <div>
+                    <p class="text-xs text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở hiện nay</p>
+                    <p id="cardAddress" class="text-gray-800 font-medium ml-4">--</p>
+                </div>
+
+                <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                    <p class="text-xs text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p>
+                    <p id="cardNote" class="text-gray-700 italic ml-2">--</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="adminPanel" class="hidden mt-6 text-center">
+             <button onclick="moFormThem()" class="bg-green-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-green-700 font-bold w-full uppercase">
+                <i class="fas fa-plus-circle mr-2"></i> Thêm Học Sinh Mới
             </button>
         </div>
 
-        <div class="bg-white rounded-xl shadow-2xl overflow-hidden">
-            
-            <div class="bg-blue-800 p-4 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-white font-bold text-lg uppercase">
-                    <i class="fas fa-address-card mr-2 text-yellow-400"></i> Thông Tin Học Sinh
-                </h2>
-                <span class="text-blue-200 text-xs italic">Dữ liệu từ Google Sheet</span>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="min-w-full leading-normal">
-                    <thead>
-                        <tr class="bg-gray-50 text-gray-700 uppercase text-xs font-bold border-b-2 border-gray-200">
-                            <th class="py-4 px-4 text-left w-12">#</th>
-                            <th class="py-4 px-4 text-left">Họ và Tên</th>
-                            <th class="py-4 px-4 text-center w-28">Ngày Sinh</th>
-                            <th class="py-4 px-4 text-center w-20">Giới Tính</th>
-                            <th class="py-4 px-4 text-center w-32 text-blue-700"><i class="fas fa-phone-alt mr-1"></i> ĐT Cha</th>
-                            <th class="py-4 px-4 text-center w-32 text-pink-700"><i class="fas fa-phone-alt mr-1"></i> ĐT Mẹ</th>
-                            <th class="py-4 px-4 text-left">Chỗ ở hiện nay</th>
-                            <th class="py-4 px-4 text-left w-32">Ghi chú</th>
-                            <th class="py-4 px-4 text-center w-20">Xóa</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody" class="text-gray-700 bg-white">
-                        </tbody>
-                </table>
-            </div>
-
-            <div id="emptyState" class="hidden p-12 text-center text-gray-400">
-                <i class="fas fa-folder-open text-5xl mb-4 text-gray-300"></i>
-                <p class="text-lg">Danh sách đang trống hoặc chưa tải xong.</p>
-            </div>
-        </div>
     </div>
 
     <script>
         // ============================================
-        // HÃY DÁN LINK API CỦA THẦY VÀO DÒNG DƯỚI (Trong dấu ngoặc kép)
-        const API_URL = "https://script.google.com/macros/s/AKfycbwePkzMhFSKMbeHZuzPCvfcfztbdrt716FJOwm34Ja99wKUy3XQdA_23d1ByzS745QnLQ/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwePkzMhFSKMbeHZuzPCvfcfztbdrt716FJOwm34Ja99wKUy3XQdA_23d1ByzS745QnLQ/exec"; // <--- DÁN LINK API CỦA THẦY VÀO ĐÂY
         // ============================================
 
         const PASS_ADMIN = "123456";
         let isAdmin = false;
+        let dsHocSinh = []; // Biến lưu toàn bộ danh sách
+        let currentHS = null; // Học sinh đang xem
 
-        async function taiLaiDuLieu() {
-            hienThongBao(true, "Đang kết nối Google Sheet...");
+        // 1. Tải danh sách khi mở web
+        async function taiDanhSach() {
+            const select = document.getElementById('selectHS');
+            const loading = document.getElementById('loadingText');
+            
             try {
                 const res = await fetch(API_URL);
-                const data = await res.json();
-                veBang(data);
-                hienThongBao(false);
-            } catch (err) { 
-                alert("Lỗi tải dữ liệu. Vui lòng kiểm tra lại Link API!"); 
-                console.error(err);
-                hienThongBao(false); 
+                dsHocSinh = await res.json();
+                
+                // Xóa loading, điền dữ liệu vào Dropdown
+                loading.innerText = "Đã tải xong " + dsHocSinh.length + " học sinh.";
+                loading.className = "text-xs text-center text-green-600 mt-2 font-bold";
+                
+                select.innerHTML = '<option value="">-- Chọn tên học sinh --</option>';
+                dsHocSinh.forEach((hs, index) => {
+                    select.innerHTML += `<option value="${index}">${index+1}. ${hs.name}</option>`;
+                });
+
+            } catch (err) {
+                loading.innerText = "Lỗi kết nối! Vui lòng tải lại trang.";
+                loading.className = "text-xs text-center text-red-500 mt-2 font-bold";
             }
         }
 
-        function veBang(list) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
-            if(!list || list.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
+        // 2. Hiện chi tiết khi chọn tên
+        function hienChiTiet() {
+            const index = document.getElementById('selectHS').value;
+            const card = document.getElementById('infoCard');
+
+            if (index === "") {
+                card.classList.add('hidden'); // Ẩn nếu không chọn gì
+                currentHS = null;
                 return;
             }
-            document.getElementById('emptyState').classList.add('hidden');
 
-            list.forEach((hs, index) => {
-                let nutXoa = isAdmin ? 
-                    `<button onclick="xoaHS('${hs.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded-full transition shadow-sm border border-red-200"><i class="fas fa-trash-alt"></i></button>` : '';
+            // Lấy thông tin học sinh được chọn
+            const hs = dsHocSinh[index];
+            currentHS = hs;
 
-                // Xử lý hiển thị undefined cho đẹp
-                const safe = (val) => (val && val !== "undefined") ? val : "-";
+            // Điền vào thẻ
+            const safe = (val) => (val && val !== "undefined") ? val : "---";
+            
+            document.getElementById('cardName').innerText = safe(hs.name);
+            document.getElementById('cardID').innerText = safe(hs.id);
+            document.getElementById('cardDob').innerText = safe(hs.dob);
+            document.getElementById('cardGender').innerText = safe(hs.gender);
+            
+            document.getElementById('cardFather').innerText = safe(hs.fatherPhone);
+            document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
+            
+            document.getElementById('cardMother').innerText = safe(hs.motherPhone);
+            document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
 
-                let row = `
-                    <tr class="border-b border-gray-100 hover:bg-blue-50 transition duration-150 group">
-                        <td class="p-4 font-mono text-xs text-gray-400 font-bold">${index+1}</td>
-                        <td class="p-4 font-bold text-gray-800 text-base group-hover:text-blue-800">${safe(hs.name)}</td>
-                        <td class="p-4 text-center font-medium">${safe(hs.dob)}</td>
-                        <td class="p-4 text-center">
-                            <span class="${hs.gender==='Nam'?'text-blue-700 bg-blue-100 border border-blue-200':'text-pink-700 bg-pink-100 border border-pink-200'} px-3 py-1 rounded-full text-xs font-bold shadow-sm">${safe(hs.gender)}</span>
-                        </td>
-                        <td class="p-4 text-center font-bold text-gray-600 font-mono tracking-tighter">${safe(hs.fatherPhone)}</td>
-                        <td class="p-4 text-center font-bold text-gray-600 font-mono tracking-tighter">${safe(hs.motherPhone)}</td>
-                        <td class="p-4 text-gray-700"><i class="fas fa-map-marker-alt text-red-500 mr-2 opacity-50"></i>${safe(hs.address)}</td>
-                        <td class="p-4 italic text-gray-400 text-xs truncate max-w-[150px]" title="${safe(hs.note)}">${safe(hs.note)}</td>
-                        <td class="p-4 text-center">${nutXoa}</td>
-                    </tr>
-                `;
-                tbody.innerHTML += row;
-            });
+            document.getElementById('cardAddress').innerText = safe(hs.address);
+            document.getElementById('cardNote').innerText = safe(hs.note);
+
+            // Hiện thẻ lên
+            card.classList.remove('hidden');
+            
+            // Nếu là admin thì hiện nút xóa
+            if(isAdmin) document.getElementById('btnDelete').classList.remove('hidden');
         }
 
+        // 3. Các chức năng Admin
         function moFormThem() {
             let ten = prompt("1. Nhập Họ và Tên:"); if(!ten) return;
-            
             let hsMoi = {
                 id: "HS" + Date.now(),
                 name: ten,
@@ -142,51 +199,43 @@
                 address: prompt("6. Chỗ ở hiện nay:") || "",
                 note: prompt("7. Ghi chú:") || ""
             };
-
             guiYeuCau("them", hsMoi);
         }
 
-        function xoaHS(id) {
-            if(confirm("Xác nhận xóa học sinh này khỏi danh sách?")) guiYeuCau("xoa", {id: id});
+        function xoaHS() {
+            if(!currentHS) return;
+            if(confirm("Thầy có chắc muốn xóa em " + currentHS.name + " không?")) {
+                guiYeuCau("xoa", {id: currentHS.id});
+            }
         }
 
         async function guiYeuCau(action, data) {
-            hienThongBao(true, "Đang lưu thay đổi...");
+            // Hiện trạng thái đang xử lý
+            document.getElementById('loadingText').innerText = "Đang lưu thay đổi...";
             await fetch(API_URL, {
                 method: 'POST', mode: 'no-cors',
                 body: JSON.stringify({action: action, data: data})
             });
             setTimeout(() => { 
-                hienThongBao(false); 
-                alert("Thao tác thành công!"); 
-                taiLaiDuLieu(); 
+                alert("Thành công!"); 
+                location.reload(); // Tải lại trang để cập nhật danh sách
             }, 1500);
-        }
-
-        function hienThongBao(show, msg="") {
-            const el = document.getElementById('statusMsg');
-            if(show) { el.classList.remove('hidden'); el.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${msg}`; }
-            else el.classList.add('hidden');
         }
 
         function dangNhap() {
             if(!isAdmin) {
-                let pass = prompt("Nhập mật khẩu Admin:");
-                if(pass === PASS_ADMIN) {
+                if(prompt("Mật khẩu Admin:") === PASS_ADMIN) {
                     isAdmin = true;
                     document.getElementById('adminPanel').classList.remove('hidden');
                     document.getElementById('btnAdmin').classList.add('hidden'); 
-                    taiLaiDuLieu(); 
+                    if(currentHS) document.getElementById('btnDelete').classList.remove('hidden');
                     alert("Đã mở khóa quyền Admin!");
-                } else if(pass) {
-                    alert("Sai mật khẩu!");
-                }
+                } else alert("Sai mật khẩu!");
             }
         }
-        
-        // Tự động tải khi mở web
-        taiLaiDuLieu();
+
+        // Chạy ngay khi mở web
+        taiDanhSach();
     </script>
 </body>
 </html>
-
