@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - Trường TH Phú Thọ (V33 Final)</title>
+    <title>Lớp 4/6 - Trường TH Phú Thọ (V34 Final)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -18,8 +18,6 @@
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .student-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        
-        /* Rank Styles */
         .rank-1 { background-color: #fbbf24; color: white; border: 2px solid #f59e0b; }
         .rank-2 { background-color: #9ca3af; color: white; border: 2px solid #6b7280; }
         .rank-3 { background-color: #d97706; color: white; border: 2px solid #b45309; }
@@ -169,7 +167,7 @@
                         <i class="fas fa-trash-alt mr-2"></i> Xóa hồ sơ này
                     </button>
 
-                    <button onclick="dangXuat()" class="w-full text-gray-400 py-2 font-bold hover:text-red-500 transition text-xs">
+                    <button id="btnLogoutModal" onclick="dangXuat()" class="hidden w-full text-gray-400 py-2 font-bold hover:text-red-500 transition text-xs">
                         <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất tài khoản
                     </button>
                 </div>
@@ -297,14 +295,16 @@
             document.getElementById('viewName').innerText = safe(hs.name); document.getElementById('cardID').innerText = safe(hs.id); document.getElementById('viewDob').innerText = xuLyNgay(hs.dob) || "-"; document.getElementById('viewGender').innerText = safe(hs.gender) || "-"; document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---"; document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---"; document.getElementById('viewAddress').innerText = safe(hs.address) || "---"; document.getElementById('viewNote').innerText = safe(hs.note) || "Không"; document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone); document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone); 
             
             if(isAdmin) {
-                document.getElementById('btnEditHeader').classList.remove('hidden');
-                document.getElementById('btnEditHeader').classList.add('flex');
-                document.getElementById('btnDeleteFooter').classList.remove('hidden');
+                // VIEW ADMIN
+                document.getElementById('btnEditHeader').classList.remove('hidden'); // Hiện Sửa
+                document.getElementById('btnDeleteFooter').classList.remove('hidden'); // Hiện Xóa
+                document.getElementById('btnLogoutModal').classList.add('hidden'); // Ẩn Đăng xuất (đã có ở Menu)
                 document.getElementById('savePanel').classList.add('hidden');
             } else {
-                document.getElementById('btnEditHeader').classList.add('hidden');
-                document.getElementById('btnEditHeader').classList.remove('flex');
-                document.getElementById('btnDeleteFooter').classList.add('hidden');
+                // VIEW HỌC SINH
+                document.getElementById('btnEditHeader').classList.add('hidden'); // Ẩn Sửa
+                document.getElementById('btnDeleteFooter').classList.add('hidden'); // Ẩn Xóa
+                document.getElementById('btnLogoutModal').classList.remove('hidden'); // Hiện Đăng xuất
                 document.getElementById('savePanel').classList.add('hidden');
             }
         }
@@ -316,11 +316,13 @@
             if (enable) {
                 document.getElementById('editName').value = currentHS.name; document.getElementById('editDob').value = xuLyNgay(currentHS.dob); document.getElementById('editGender').value = currentHS.gender; document.getElementById('editFather').value = currentHS.fatherPhone; document.getElementById('editMother').value = currentHS.motherPhone; document.getElementById('editAddress').value = currentHS.address; document.getElementById('editNote').value = currentHS.note;
                 fields.forEach(f => { document.getElementById('view' + f).classList.add('hidden'); document.getElementById('edit' + f).classList.remove('hidden'); });
+                
                 document.getElementById('btnEditHeader').classList.add('hidden');
                 document.getElementById('btnDeleteFooter').classList.add('hidden');
                 document.getElementById('savePanel').classList.remove('hidden');
             } else {
                 fields.forEach(f => { document.getElementById('view' + f).classList.remove('hidden'); document.getElementById('edit' + f).classList.add('hidden'); });
+                
                 document.getElementById('btnEditHeader').classList.remove('hidden');
                 document.getElementById('btnDeleteFooter').classList.remove('hidden');
                 document.getElementById('savePanel').classList.add('hidden');
