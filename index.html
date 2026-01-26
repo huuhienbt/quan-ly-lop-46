@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - VioEdu Style (V24)</title>
+    <title>Lớp 4/6 - VioEdu Style (V25 Fix)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -18,8 +18,6 @@
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .student-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
-        
-        /* Rank Colors */
         .rank-1 { background-color: #fbbf24; color: white; border: 2px solid #f59e0b; }
         .rank-2 { background-color: #9ca3af; color: white; border: 2px solid #6b7280; }
         .rank-3 { background-color: #d97706; color: white; border: 2px solid #b45309; }
@@ -140,10 +138,7 @@
                         <p class="text-xs text-yellow-600 font-bold">Thống kê Kim cương & Huy chương</p>
                     </div>
                 </div>
-                <div class="relative w-full md:w-64">
-                    <i class="fas fa-search absolute left-3 top-3 text-yellow-400"></i>
-                    <input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh...">
-                </div>
+                <div class="relative w-full md:w-64"><i class="fas fa-search absolute left-3 top-3 text-yellow-400"></i><input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh..."></div>
             </div>
             <div id="resultsGrid" class="grid grid-cols-1 gap-4"></div>
         </div>
@@ -211,7 +206,7 @@
             try {
                 const res = await fetch(API_URL);
                 dsHocSinh = await res.json();
-            } catch (err) { alert("Lỗi kết nối Server!"); }
+            } catch (err) { alert("Lỗi kết nối Server! Vui lòng kiểm tra lại link Google Apps Script."); }
         }
 
         function xuLyDangNhap() {
@@ -230,13 +225,9 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = "Thầy Hiển";
             document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
-            
-            // XÓA FLEX, ẨN HOÀN TOÀN
-            const stats = document.getElementById('studentStats');
-            stats.classList.add('hidden');
-            stats.classList.remove('flex');
-            
-            document.getElementById('subWelcomeText').classList.add('hidden');
+            document.getElementById('studentStats').classList.add('hidden'); 
+            document.getElementById('studentStats').classList.remove('flex'); 
+            document.getElementById('subWelcomeText').classList.add('hidden'); 
             veDanhSachQuanLy(dsHocSinh);
         }
 
@@ -248,11 +239,9 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('headerName').innerText = hs.name;
             document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
-            
             const stats = document.getElementById('studentStats');
             stats.classList.remove('hidden');
-            stats.classList.add('flex'); // HS thì hiện lại
-            
+            stats.classList.add('flex'); 
             document.getElementById('subWelcomeText').classList.remove('hidden');
             const diamonds = parseInt(hs.score) || 0;
             const medals = Math.floor(diamonds / 100);
@@ -297,13 +286,7 @@
             const grid = document.getElementById('studentGrid');
             grid.innerHTML = "";
             data.forEach(hs => {
-                let card = `
-                    <div onclick="xemChiTietTuQuanLy('${hs.id}')" class="student-card bg-white p-4 rounded-xl border border-blue-100 shadow-sm cursor-pointer flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">${hs.name.charAt(0)}</div>
-                        <div class="flex-1"><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-xs text-gray-500">${xuLyNgay(hs.dob)}</p></div>
-                        <div class="text-gray-300"><i class="fas fa-chevron-right"></i></div>
-                    </div>`;
-                grid.innerHTML += card;
+                grid.innerHTML += `<div onclick="xemChiTietTuQuanLy('${hs.id}')" class="student-card bg-white p-4 rounded-xl border border-blue-100 shadow-sm cursor-pointer flex items-center space-x-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">${hs.name.charAt(0)}</div><div class="flex-1"><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-xs text-gray-500">${xuLyNgay(hs.dob)}</p></div><div class="text-gray-300"><i class="fas fa-chevron-right"></i></div></div>`;
             });
         }
 
@@ -327,11 +310,23 @@
         function locDanhSach() { const key = document.getElementById('searchInput').value.toLowerCase(); veDanhSachQuanLy(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
         function locDanhSachKetQua() { const key = document.getElementById('searchResultInput').value.toLowerCase(); veDanhSachKetQua(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
         function xemChiTietTuQuanLy(id) { const hs = dsHocSinh.find(h => h.id === id); if(hs) { dienThongTinVaoModal(hs); document.getElementById('profileModal').classList.remove('hidden'); } }
-        function suaDiem(id, delta) { if(!isAdmin) return; const hs = dsHocSinh.find(h => h.id === id); if(hs) { let newScore = (parseInt(hs.score) || 0) + delta; if(newScore < 0) newScore = 0; hs.score = newScore; veDanhSachKetQua(dsHocSinh); guiYeuCau("sua", {...hs, score: newScore}); } }
+        
+        function suaDiem(id, delta) { 
+            if(!isAdmin) return; 
+            const hs = dsHocSinh.find(h => h.id === id); 
+            if(hs) { 
+                let newScore = (parseInt(hs.score) || 0) + delta; 
+                if(newScore < 0) newScore = 0; 
+                hs.score = newScore; 
+                veDanhSachKetQua(dsHocSinh); 
+                // Gọi API để lưu, xử lý lỗi kết nối
+                guiYeuCau("sua", hs); 
+            } 
+        }
+
         function dongHoSo() { document.getElementById('profileModal').classList.add('hidden'); batCheDoSua(false); }
         function dienThongTinVaoModal(hs) { currentHS = hs; const safe = (val) => (val && val !== "undefined") ? val : ""; document.getElementById('viewName').innerText = safe(hs.name); document.getElementById('cardID').innerText = safe(hs.id); document.getElementById('viewDob').innerText = xuLyNgay(hs.dob) || "-"; document.getElementById('viewGender').innerText = safe(hs.gender) || "-"; document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---"; document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---"; document.getElementById('viewAddress').innerText = safe(hs.address) || "---"; document.getElementById('viewNote').innerText = safe(hs.note) || "Không"; document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone); document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone); if(isAdmin) document.getElementById('adminControls').classList.remove('hidden'); else document.getElementById('adminControls').classList.add('hidden'); }
         function xuLyNgay(str) { if (!str) return ""; if (str.toString().includes("T")) { try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {} } return str; }
-        function resetInfoCard() { document.getElementById('viewName').innerText = "--"; document.getElementById('cardID').innerText = "--"; document.getElementById('viewDob').innerText = "--"; document.getElementById('adminControls').classList.add('hidden'); }
         
         function batCheDoSua(enable) {
             if(!currentHS || !isAdmin) return;
@@ -350,7 +345,18 @@
         function moFormThem() { if(!isAdmin) return; let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return; let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "", score: 0 }; guiYeuCau("them", hsMoi); }
         function xoaHS() { if(!isAdmin) return; if(confirm("Xóa em " + currentHS.name + "?")) guiYeuCau("xoa", {id: currentHS.id}); }
         function dangXuat() { if(confirm("Bạn muốn đăng xuất?")) { localStorage.removeItem('userRole'); localStorage.removeItem('studentID'); location.reload(); } }
-        async function guiYeuCau(action, data) { await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) }); setTimeout(async () => { alert("Thành công!"); await taiDanhSach(); if(action === 'sua') { veDanhSachQuanLy(dsHocSinh); dienThongTinVaoModal(dsHocSinh.find(h => h.id === data.id)); } else location.reload(); }, 1500); }
+        
+        async function guiYeuCau(action, data) { 
+            try {
+                await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) }); 
+                // Nếu là thao tác sửa thông tin (ko phải sửa điểm nhanh), thì reload để chắc chắn
+                if(action !== 'sua' || document.getElementById('profileModal').classList.contains('hidden') === false) {
+                     setTimeout(async () => { alert("Thành công!"); await taiDanhSach(); if(action === 'sua') { veDanhSachQuanLy(dsHocSinh); dienThongTinVaoModal(dsHocSinh.find(h => h.id === data.id)); } else location.reload(); }, 1500); 
+                }
+            } catch(e) {
+                alert("Lỗi kết nối Server! Kiểm tra lại đường truyền hoặc Script URL.");
+            }
+        }
     </script>
 </body>
 </html>
