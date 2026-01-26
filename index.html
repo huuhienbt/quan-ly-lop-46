@@ -3,31 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tra Cứu Lớp 4/6 (V4 - Sửa Trực Tiếp)</title>
+    <title>Tra Cứu Lớp 4/6 (V5 - Nút Lưu Xịn)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        /* Style cho ô nhập liệu khi ở chế độ sửa */
-        .edit-input { border: 2px solid #3b82f6; background-color: #eff6ff; padding: 4px 8px; border-radius: 6px; width: 100%; color: #1e3a8a; font-weight: bold; }
-        .edit-input:focus { outline: none; border-color: #f59e0b; }
+        /* Style ô nhập liệu: Viền xanh, nền xanh nhạt cho dễ nhận biết đang sửa */
+        .edit-input { 
+            border: 2px solid #3b82f6; 
+            background-color: #eff6ff; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            width: 100%; 
+            color: #1e3a8a; 
+            font-weight: bold; 
+            transition: all 0.2s;
+        }
+        .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; box-shadow: 0 0 5px rgba(245, 158, 11, 0.5); }
     </style>
 </head>
-<body class="bg-gray-100 font-sans text-sm min-h-screen pb-10">
+<body class="bg-gray-100 font-sans text-sm min-h-screen pb-20">
 
-    <div class="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-50 border-b-4 border-yellow-500">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-lg font-bold uppercase tracking-wider"><i class="fas fa-search mr-2"></i> Tra Cứu HS</h1>
-            <button id="btnAdmin" onclick="dangNhap()" class="bg-yellow-500 text-blue-900 px-3 py-1 rounded font-bold hover:bg-yellow-400 text-xs shadow transition">
-                <i class="fas fa-user-lock"></i> Admin
-            </button>
-        </div>
+    <div class="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-50 border-b-4 border-yellow-500 flex justify-between items-center">
+        <h1 class="text-lg font-bold uppercase tracking-wider"><i class="fas fa-search mr-2"></i> Tra Cứu HS</h1>
+        <button id="btnAdmin" onclick="dangNhap()" class="bg-yellow-500 text-blue-900 px-3 py-1 rounded font-bold hover:bg-yellow-400 text-xs shadow transition">
+            <i class="fas fa-user-lock"></i> Admin
+        </button>
     </div>
 
     <div class="container mx-auto mt-6 p-4 max-w-2xl">
         
-        <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+        <div class="bg-white p-5 rounded-xl shadow-sm mb-6">
             <div id="panelThem" class="hidden mb-4">
                  <button onclick="moFormThem()" class="w-full bg-green-600 text-white py-3 rounded-lg shadow hover:bg-green-700 font-bold uppercase transition flex justify-center items-center">
                     <i class="fas fa-plus-circle mr-2 text-xl"></i> Thêm Học Sinh Mới
@@ -35,9 +42,7 @@
                 <div class="border-b border-gray-100 my-4"></div>
             </div>
 
-            <label class="block text-gray-500 text-xs font-bold mb-2 uppercase tracking-wide">
-                Chọn học sinh:
-            </label>
+            <label class="block text-gray-500 text-xs font-bold mb-2 uppercase tracking-wide">Chọn học sinh:</label>
             <div class="relative">
                 <select id="selectHS" onchange="hienChiTiet()" class="block appearance-none w-full bg-gray-50 border border-gray-300 text-gray-800 py-3 px-4 pr-8 rounded-lg focus:outline-none focus:bg-white focus:border-blue-500 font-bold text-lg shadow-sm">
                     <option value="">-- Đang tải danh sách... --</option>
@@ -49,7 +54,7 @@
             <p id="loadingText" class="text-xs text-center text-gray-400 mt-2 italic">Đang kết nối dữ liệu...</p>
         </div>
 
-        <div id="infoCard" class="hidden bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 fade-in relative">
+        <div id="infoCard" class="hidden bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 fade-in relative transition-all">
             
             <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-center text-white relative">
                 <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-lg border-4 border-blue-200">
@@ -60,11 +65,10 @@
                     <h2 id="viewName" class="text-2xl font-bold uppercase tracking-wide block">--</h2>
                     <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
                 </div>
-                
                 <span id="cardID" class="text-blue-100 text-xs font-mono bg-blue-800 px-2 py-0.5 rounded-full bg-opacity-50">--</span>
                 
                 <div id="adminControls" class="hidden absolute top-4 right-4 flex flex-col space-y-2">
-                    <button id="btnToggleEdit" onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow transition" title="Sửa thông tin">
+                    <button id="btnEditMode" onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow transition" title="Bật chế độ sửa">
                         <i class="fas fa-pen"></i>
                     </button>
                     <button id="btnDelete" onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow transition" title="Xóa học sinh">
@@ -73,7 +77,7 @@
                 </div>
             </div>
 
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-5">
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
@@ -101,7 +105,7 @@
                             <a id="btnCallFather" href="#" class="text-blue-600 hover:text-blue-800"><i class="fas fa-phone-alt"></i></a>
                         </div>
                         <p id="viewFather" class="font-bold text-blue-900 text-lg ml-8 block">--</p>
-                        <input id="editFather" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT Cha">
+                        <input id="editFather" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Nhập số ĐT...">
                     </div>
 
                     <div class="bg-pink-50 p-3 rounded-lg border border-pink-100">
@@ -113,7 +117,7 @@
                             <a id="btnCallMother" href="#" class="text-pink-600 hover:text-pink-800"><i class="fas fa-phone-alt"></i></a>
                         </div>
                         <p id="viewMother" class="font-bold text-pink-900 text-lg ml-8 block">--</p>
-                        <input id="editMother" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT Mẹ">
+                        <input id="editMother" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Nhập số ĐT...">
                     </div>
                 </div>
 
@@ -132,18 +136,21 @@
                 </div>
             </div>
 
-            <div id="saveBar" class="hidden bg-white border-t p-4 flex justify-between items-center shadow-inner animate-pulse">
-                <span class="text-xs text-blue-600 font-bold"><i class="fas fa-info-circle"></i> Đang ở chế độ chỉnh sửa</span>
-                <div class="flex space-x-2">
-                    <button onclick="batCheDoSua(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded font-bold hover:bg-gray-300">Hủy</button>
-                    <button onclick="luuThayDoi()" class="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow-lg">LƯU LẠI</button>
-                </div>
+            <div id="savePanel" class="hidden p-4 bg-gray-50 border-t border-gray-200 flex space-x-3 animate-pulse">
+                <button onclick="batCheDoSua(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">
+                    <i class="fas fa-times mr-2"></i> Hủy
+                </button>
+                <button onclick="luuThayDoi()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 shadow-lg transition transform hover:scale-105">
+                    <i class="fas fa-save mr-2"></i> LƯU LẠI
+                </button>
             </div>
+
         </div>
     </div>
 
     <script>
         // ============================================
+        // DÁN LINK API CỦA THẦY VÀO DƯỚI
         const API_URL = "https://script.google.com/macros/s/AKfycbwePkzMhFSKMbeHZuzPCvfcfztbdrt716FJOwm34Ja99wKUy3XQdA_23d1ByzS745QnLQ/exec"; 
         // ============================================
 
@@ -152,42 +159,31 @@
         let dsHocSinh = []; 
         let currentHS = null;
 
-        // Tải danh sách
         async function taiDanhSach() {
             const select = document.getElementById('selectHS');
             const loading = document.getElementById('loadingText');
             try {
                 const res = await fetch(API_URL);
                 dsHocSinh = await res.json();
-                loading.innerText = "Sẵn sàng tra cứu " + dsHocSinh.length + " học sinh.";
+                loading.innerText = "Đã tải xong " + dsHocSinh.length + " học sinh.";
                 loading.className = "text-xs text-center text-green-600 mt-2 font-bold";
-                
                 select.innerHTML = '<option value="">-- Chọn tên học sinh --</option>';
-                dsHocSinh.forEach((hs, index) => {
-                    select.innerHTML += `<option value="${index}">${index+1}. ${hs.name}</option>`;
-                });
+                dsHocSinh.forEach((hs, index) => select.innerHTML += `<option value="${index}">${index+1}. ${hs.name}</option>`);
             } catch (err) { loading.innerText = "Lỗi kết nối!"; }
         }
 
-        // Hiện chi tiết
         function hienChiTiet() {
-            // Nếu đang sửa mà đổi tên thì tắt chế độ sửa đi
-            batCheDoSua(false);
-
+            batCheDoSua(false); // Reset về chế độ xem nếu đang sửa dở
             const index = document.getElementById('selectHS').value;
             const card = document.getElementById('infoCard');
 
-            if (index === "") {
-                card.classList.add('hidden');
-                currentHS = null;
-                return;
-            }
+            if (index === "") { card.classList.add('hidden'); currentHS = null; return; }
 
             const hs = dsHocSinh[index];
             currentHS = hs;
             const safe = (val) => (val && val !== "undefined") ? val : "";
 
-            // Đổ dữ liệu vào phần View (Xem)
+            // Điền dữ liệu VIEW
             document.getElementById('viewName').innerText = safe(hs.name) || "Chưa có tên";
             document.getElementById('cardID').innerText = safe(hs.id);
             document.getElementById('viewDob').innerText = safe(hs.dob) || "-";
@@ -197,25 +193,21 @@
             document.getElementById('viewAddress').innerText = safe(hs.address) || "Chưa cập nhật";
             document.getElementById('viewNote').innerText = safe(hs.note) || "Không";
 
-            // Cập nhật link gọi điện
             document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
             document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
 
             card.classList.remove('hidden');
-            
-            // Nếu là admin thì hiện nút sửa xóa
             if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
         }
 
-        // CHỨC NĂNG: BẬT/TẮT CHẾ ĐỘ SỬA
+        // BẬT / TẮT CHẾ ĐỘ SỬA
         function batCheDoSua(enable) {
             if(!currentHS) return;
-
             const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
             
             if (enable) {
-                // 1. Chuyển sang chế độ Sửa
-                // Đổ dữ liệu hiện tại vào các ô Input
+                // -> CHUYỂN SANG SỬA
+                // 1. Điền dữ liệu cũ vào ô input
                 document.getElementById('editName').value = currentHS.name;
                 document.getElementById('editDob').value = currentHS.dob;
                 document.getElementById('editGender').value = currentHS.gender;
@@ -224,37 +216,30 @@
                 document.getElementById('editAddress').value = currentHS.address;
                 document.getElementById('editNote').value = currentHS.note;
 
-                // Ẩn View, Hiện Edit
+                // 2. Ẩn Text, Hiện Input
                 fields.forEach(f => {
                     document.getElementById('view' + f).classList.add('hidden');
                     document.getElementById('edit' + f).classList.remove('hidden');
                 });
 
-                // Hiện thanh Lưu, Ẩn nút Sửa trên header
-                document.getElementById('saveBar').classList.remove('hidden');
-                document.getElementById('btnToggleEdit').classList.add('hidden');
-                document.getElementById('btnDelete').classList.add('hidden');
+                // 3. Ẩn nút Edit/Delete, Hiện thanh Save
+                document.getElementById('adminControls').classList.add('hidden');
+                document.getElementById('savePanel').classList.remove('hidden');
 
             } else {
-                // 2. Tắt chế độ Sửa (Về chế độ Xem)
-                // Ẩn Edit, Hiện View
+                // -> QUAY VỀ XEM
                 fields.forEach(f => {
                     document.getElementById('view' + f).classList.remove('hidden');
                     document.getElementById('edit' + f).classList.add('hidden');
                 });
-
-                // Ẩn thanh Lưu, Hiện lại nút Sửa
-                document.getElementById('saveBar').classList.add('hidden');
-                if(isAdmin) {
-                    document.getElementById('btnToggleEdit').classList.remove('hidden');
-                    document.getElementById('btnDelete').classList.remove('hidden');
-                }
+                // Hiện lại nút Edit/Delete, Ẩn thanh Save
+                if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
+                document.getElementById('savePanel').classList.add('hidden');
             }
         }
 
-        // CHỨC NĂNG: LƯU THAY ĐỔI
+        // LƯU THAY ĐỔI
         function luuThayDoi() {
-            // Lấy dữ liệu từ các ô Input
             let hsMoi = {
                 id: currentHS.id,
                 name: document.getElementById('editName').value,
@@ -265,28 +250,21 @@
                 address: document.getElementById('editAddress').value,
                 note: document.getElementById('editNote').value
             };
-
             guiYeuCau("sua", hsMoi);
         }
 
         function moFormThem() {
-            // Giữ nguyên logic thêm mới nhanh gọn
             let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return;
-            let hsMoi = {
-                id: "HS" + Date.now(),
-                name: ten,
-                dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: ""
-            };
+            let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "" };
             guiYeuCau("them", hsMoi);
         }
 
         function xoaHS() {
-            if(!currentHS) return;
             if(confirm("Xóa em " + currentHS.name + "?")) guiYeuCau("xoa", {id: currentHS.id});
         }
 
         async function guiYeuCau(action, data) {
-            document.getElementById('loadingText').innerText = "Đang xử lý...";
+            document.getElementById('loadingText').innerText = "Đang lưu...";
             await fetch(API_URL, {
                 method: 'POST', mode: 'no-cors',
                 body: JSON.stringify({action: action, data: data})
@@ -295,15 +273,13 @@
         }
 
         function dangNhap() {
-            if(!isAdmin) {
-                if(prompt("Mật khẩu Admin:") === PASS_ADMIN) {
-                    isAdmin = true;
-                    document.getElementById('panelThem').classList.remove('hidden');
-                    document.getElementById('btnAdmin').classList.add('hidden'); 
-                    if(currentHS) document.getElementById('adminControls').classList.remove('hidden');
-                    alert("Đã mở quyền Admin!");
-                } else alert("Sai mật khẩu!");
-            }
+            if(!isAdmin && prompt("Mật khẩu Admin:") === PASS_ADMIN) {
+                isAdmin = true;
+                document.getElementById('panelThem').classList.remove('hidden');
+                document.getElementById('btnAdmin').classList.add('hidden'); 
+                if(currentHS) document.getElementById('adminControls').classList.remove('hidden');
+                alert("Đã mở quyền Admin!");
+            } else if (!isAdmin) alert("Sai mật khẩu!");
         }
 
         taiDanhSach();
