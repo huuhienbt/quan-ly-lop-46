@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - Trường TH Phú Thọ</title>
+    <title>Lớp 4/6 - VioEdu Style (V24)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -17,11 +17,13 @@
         .edit-input { border: 2px solid #3b82f6; background-color: #eff6ff; padding: 4px 8px; border-radius: 8px; width: 100%; color: #1e3a8a; font-weight: bold; }
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .student-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .student-card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        
+        /* Rank Colors */
         .rank-1 { background-color: #fbbf24; color: white; border: 2px solid #f59e0b; }
         .rank-2 { background-color: #9ca3af; color: white; border: 2px solid #6b7280; }
         .rank-3 { background-color: #d97706; color: white; border: 2px solid #b45309; }
-        .rank-other { background-color: #e5e7eb; color: #6b7280; }
+        .rank-other { background-color: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
     </style>
 </head>
 <body class="bg-blue-50 text-sm min-h-screen font-sans">
@@ -66,7 +68,6 @@
                 </div>
 
                 <div class="flex items-center space-x-3 relative">
-                    
                     <div id="studentStats" class="hidden items-center space-x-2 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
                         <div class="flex items-center text-yellow-600 font-bold text-xs"><i class="fas fa-gem mr-1"></i> <span id="statDiamond">0</span></div>
                         <div class="w-px h-3 bg-gray-300"></div>
@@ -83,20 +84,14 @@
                     </div>
 
                     <div id="gvcnMenu" class="hidden absolute top-12 right-0 bg-white shadow-2xl rounded-xl w-64 border-2 border-blue-100 overflow-hidden z-50 text-left fade-in">
-                        <div class="bg-blue-50 p-3 border-b border-blue-100 text-xs font-bold text-blue-800 uppercase tracking-wider">
-                            Menu Giáo Viên
-                        </div>
+                        <div class="bg-blue-50 p-3 border-b border-blue-100 text-xs font-bold text-blue-800 uppercase tracking-wider">Menu Giáo Viên</div>
                         <div onclick="chuyenTrangQuanLy()" class="p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer flex items-center text-gray-700 font-bold transition">
-                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-users"></i></div>
-                            Thông tin học sinh
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3"><i class="fas fa-users"></i></div> Thông tin học sinh
                         </div>
                         <div onclick="chuyenTrangKetQua()" class="p-4 hover:bg-yellow-50 border-b border-gray-100 cursor-pointer flex items-center text-gray-700 font-bold transition">
-                            <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mr-3"><i class="fas fa-chart-line"></i></div>
-                            Kết quả học tập
+                            <div class="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center mr-3"><i class="fas fa-chart-line"></i></div> Kết quả học tập
                         </div>
-                        <div onclick="dangXuat()" class="p-3 hover:bg-red-50 cursor-pointer flex items-center text-red-500 text-xs font-bold justify-center bg-gray-50">
-                            <i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất
-                        </div>
+                        <div onclick="dangXuat()" class="p-3 hover:bg-red-50 cursor-pointer flex items-center text-red-500 text-xs font-bold justify-center bg-gray-50"><i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất</div>
                     </div>
                 </div>
             </div>
@@ -110,18 +105,13 @@
                     <p id="subWelcomeText" class="text-blue-100 opacity-90">Hôm nay con muốn chinh phục môn học nào?</p>
                 </div>
             </div>
-
             <div class="container mx-auto px-4 -mt-10 relative z-20 max-w-2xl">
                 <div class="grid grid-cols-2 gap-6">
                     <button onclick="alert('Đang soạn bài tập Toán...')" class="game-btn bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden transform hover:-translate-y-1">
-                        <div class="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
-                        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-3xl text-blue-600 mb-3 group-hover:scale-110 transition shadow-sm"><i class="fas fa-calculator"></i></div>
-                        <span class="font-bold text-lg text-gray-700 group-hover:text-blue-600">Toán</span>
+                        <div class="absolute top-0 left-0 w-full h-2 bg-blue-500"></div><div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center text-3xl text-blue-600 mb-3 group-hover:scale-110 transition shadow-sm"><i class="fas fa-calculator"></i></div><span class="font-bold text-lg text-gray-700 group-hover:text-blue-600">Toán</span>
                     </button>
                     <button onclick="alert('Đang soạn bài tập Tiếng Việt...')" class="game-btn bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl flex flex-col items-center group relative overflow-hidden transform hover:-translate-y-1">
-                        <div class="absolute top-0 left-0 w-full h-2 bg-green-500"></div>
-                        <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-3xl text-green-600 mb-3 group-hover:scale-110 transition shadow-sm"><i class="fas fa-book-open"></i></div>
-                        <span class="font-bold text-lg text-gray-700 group-hover:text-green-600">Tiếng Việt</span>
+                        <div class="absolute top-0 left-0 w-full h-2 bg-green-500"></div><div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center text-3xl text-green-600 mb-3 group-hover:scale-110 transition shadow-sm"><i class="fas fa-book-open"></i></div><span class="font-bold text-lg text-gray-700 group-hover:text-green-600">Tiếng Việt</span>
                     </button>
                 </div>
             </div>
@@ -134,19 +124,14 @@
                     <h2 class="text-xl font-black text-blue-900 uppercase">Quản Lý Hồ Sơ</h2>
                 </div>
                 <div class="flex w-full md:w-auto space-x-2">
-                    <div class="relative flex-1 md:w-64">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-blue-100 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Tìm tên học sinh...">
-                    </div>
-                    <button onclick="moFormThem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md game-btn whitespace-nowrap">
-                        <i class="fas fa-plus mr-1"></i> Thêm mới
-                    </button>
+                    <div class="relative flex-1 md:w-64"><i class="fas fa-search absolute left-3 top-3 text-gray-400"></i><input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-blue-100 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-gray-700" placeholder="Tìm tên học sinh..."></div>
+                    <button onclick="moFormThem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md game-btn whitespace-nowrap"><i class="fas fa-plus mr-1"></i> Thêm mới</button>
                 </div>
             </div>
             <div id="studentGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <div id="sectionResults" class="hidden container mx-auto px-4 mt-6 fade-in max-w-5xl">
+        <div id="sectionResults" class="hidden container mx-auto px-4 mt-6 fade-in max-w-4xl">
             <div class="flex flex-col md:flex-row justify-between items-center mb-6 bg-yellow-50 p-4 rounded-2xl shadow-md border border-yellow-200">
                 <div class="mb-4 md:mb-0 flex items-center">
                     <button onclick="veTrangChu()" class="bg-white hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl font-bold mr-4 transition shadow-sm border border-yellow-200"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
@@ -160,7 +145,7 @@
                     <input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh...">
                 </div>
             </div>
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            <div id="resultsGrid" class="grid grid-cols-1 gap-4"></div>
         </div>
 
     </div>
@@ -246,10 +231,10 @@
             document.getElementById('headerName').innerText = "Thầy Hiển";
             document.getElementById('welcomeText').innerText = "Chào Thầy, chúc một ngày dạy tốt!";
             
-            // XÓA HẲN CLASS FLEX, CHỈ ĐỂ HIDDEN ĐỂ ẨN TRÊN MỌI THIẾT BỊ
+            // XÓA FLEX, ẨN HOÀN TOÀN
             const stats = document.getElementById('studentStats');
             stats.classList.add('hidden');
-            stats.classList.remove('flex'); // Quan trọng: Xóa flex để nó không hiện lại
+            stats.classList.remove('flex');
             
             document.getElementById('subWelcomeText').classList.add('hidden');
             veDanhSachQuanLy(dsHocSinh);
@@ -264,10 +249,9 @@
             document.getElementById('headerName').innerText = hs.name;
             document.getElementById('welcomeText').innerText = `Chào ${hs.name}, hôm nay con học gì?`;
             
-            // HIỆN LẠI STATS CHO HỌC SINH
             const stats = document.getElementById('studentStats');
             stats.classList.remove('hidden');
-            stats.classList.add('flex'); // Thêm flex để hiện ngang hàng đẹp
+            stats.classList.add('flex'); // HS thì hiện lại
             
             document.getElementById('subWelcomeText').classList.remove('hidden');
             const diamonds = parseInt(hs.score) || 0;
@@ -342,7 +326,6 @@
 
         function locDanhSach() { const key = document.getElementById('searchInput').value.toLowerCase(); veDanhSachQuanLy(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
         function locDanhSachKetQua() { const key = document.getElementById('searchResultInput').value.toLowerCase(); veDanhSachKetQua(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
-        
         function xemChiTietTuQuanLy(id) { const hs = dsHocSinh.find(h => h.id === id); if(hs) { dienThongTinVaoModal(hs); document.getElementById('profileModal').classList.remove('hidden'); } }
         function suaDiem(id, delta) { if(!isAdmin) return; const hs = dsHocSinh.find(h => h.id === id); if(hs) { let newScore = (parseInt(hs.score) || 0) + delta; if(newScore < 0) newScore = 0; hs.score = newScore; veDanhSachKetQua(dsHocSinh); guiYeuCau("sua", {...hs, score: newScore}); } }
         function dongHoSo() { document.getElementById('profileModal').classList.add('hidden'); batCheDoSua(false); }
