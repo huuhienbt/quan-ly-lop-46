@@ -3,282 +3,354 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - Thầy Hiển (V9 - Tabs)</title>
+    <title>Lớp 4/6 - Đăng Nhập (V10)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .edit-input { 
             border: 2px solid #3b82f6; background-color: #eff6ff; 
             padding: 4px 8px; border-radius: 6px; width: 100%; 
             color: #1e3a8a; font-weight: bold; transition: all 0.2s;
         }
-        .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; box-shadow: 0 0 5px rgba(245, 158, 11, 0.5); }
-        
-        /* Style cho Tab Active */
+        .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         .tab-active { border-bottom: 4px solid #f59e0b; color: #1e3a8a; background-color: #eff6ff; }
         .tab-inactive { color: #6b7280; }
-        .tab-inactive:hover { color: #1e3a8a; background-color: #f3f4f6; }
+        
+        /* Màn hình chờ loading */
+        #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
 <body class="bg-gray-100 font-sans text-sm min-h-screen pb-20">
 
-    <div class="bg-blue-900 text-white shadow-md sticky top-0 z-50 border-b-4 border-yellow-500">
-        <div class="p-4 flex justify-between items-center">
-            <h1 class="text-lg font-bold uppercase tracking-wider"><i class="fas fa-school mr-2"></i> LỚP 4/6</h1>
-            <div>
-                <button id="btnLogin" onclick="dangNhap()" class="bg-yellow-500 text-blue-900 px-3 py-1 rounded font-bold hover:bg-yellow-400 text-xs shadow transition">
-                    <i class="fas fa-user-lock mr-1"></i> Admin
-                </button>
-                <div id="userArea" class="hidden flex items-center space-x-3">
-                    <span class="bg-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-600 shadow-inner">
-                        <i class="fas fa-user-tie mr-1 text-yellow-400"></i> GVCN
-                    </span>
-                    <button onclick="dangXuat()" class="bg-red-600 text-white px-3 py-1 rounded font-bold hover:bg-red-500 text-xs shadow transition">
-                        <i class="fas fa-sign-out-alt"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+    <div id="loader">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+        <p class="text-blue-800 font-bold animate-pulse">Đang kết nối dữ liệu lớp học...</p>
+    </div>
 
-        <div class="flex bg-white text-sm font-bold shadow-inner">
-            <button onclick="chuyenTab('tabHocSinh')" id="btnTabHS" class="flex-1 py-3 text-center transition duration-300 tab-active">
-                <i class="fas fa-address-book mr-2"></i> HỒ SƠ HỌC SINH
-            </button>
-            <button onclick="chuyenTab('tabOnTap')" id="btnTabOnTap" class="flex-1 py-3 text-center transition duration-300 tab-inactive">
-                <i class="fas fa-book-open mr-2"></i> GÓC ÔN TẬP
-            </button>
+    <div id="loginScreen" class="hidden fixed inset-0 bg-blue-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center fade-in">
+            <div class="w-24 h-24 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-5xl text-blue-600 mb-6 shadow-inner">
+                <i class="fas fa-school"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-800 mb-2 uppercase">Lớp 4/6 - Thầy Hiển</h1>
+            <p class="text-gray-500 mb-6 text-xs">Cổng thông tin điện tử & Ôn tập trực tuyến</p>
+
+            <div class="space-y-4">
+                <div class="relative">
+                    <i class="fas fa-phone-alt absolute left-4 top-3.5 text-gray-400"></i>
+                    <input id="inputLogin" type="number" class="w-full pl-10 p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-lg" placeholder="Nhập SĐT Cha hoặc Mẹ...">
+                </div>
+                
+                <button onclick="xuLyDangNhap()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transform transition active:scale-95 text-lg">
+                    ĐĂNG NHẬP
+                </button>
+            </div>
+
+            <div class="mt-6 border-t border-gray-100 pt-4">
+                <p class="text-xs text-gray-400 italic">Thầy giáo đăng nhập bằng Mật khẩu Admin</p>
+            </div>
         </div>
     </div>
 
-    <div class="container mx-auto mt-6 p-4 max-w-2xl">
+    <div id="mainApp" class="hidden">
         
-        <div id="tabHocSinh" class="fade-in">
-            <div class="bg-white p-5 rounded-xl shadow-sm mb-6">
-                <div id="panelThem" class="hidden mb-4">
-                     <button onclick="moFormThem()" class="w-full bg-green-600 text-white py-3 rounded-lg shadow hover:bg-green-700 font-bold uppercase transition flex justify-center items-center transform active:scale-95">
-                        <i class="fas fa-plus-circle mr-2 text-xl"></i> Thêm Học Sinh Mới
+        <div class="bg-blue-900 text-white shadow-md sticky top-0 z-40 border-b-4 border-yellow-500">
+            <div class="p-4 flex justify-between items-center">
+                <div class="flex items-center">
+                    <h1 class="text-lg font-bold uppercase tracking-wider mr-2"><i class="fas fa-graduation-cap"></i> LỚP 4/6</h1>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <span id="userLabel" class="bg-blue-800 px-3 py-1 rounded-full text-xs font-bold border border-blue-600 shadow-inner truncate max-w-[150px]">
+                        --
+                    </span>
+                    <button onclick="dangXuat()" class="bg-red-500 text-white w-8 h-8 rounded-full hover:bg-red-600 shadow flex items-center justify-center" title="Đăng xuất">
+                        <i class="fas fa-power-off"></i>
                     </button>
-                    <div class="border-b border-gray-100 my-4"></div>
                 </div>
-
-                <label class="block text-gray-500 text-xs font-bold mb-2 uppercase tracking-wide">Chọn học sinh:</label>
-                <div class="relative">
-                    <select id="selectHS" onchange="hienChiTiet()" class="block appearance-none w-full bg-gray-50 border border-gray-300 text-gray-800 py-3 px-4 pr-8 rounded-lg focus:outline-none focus:bg-white focus:border-blue-500 font-bold text-lg shadow-sm">
-                        <option value="">-- Đang tải danh sách... --</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <i class="fas fa-chevron-down"></i>
-                    </div>
-                </div>
-                <p id="loadingText" class="text-xs text-center text-gray-400 mt-2 italic">Đang kết nối dữ liệu...</p>
             </div>
 
-            <div id="infoCard" class="hidden bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 relative transition-all">
-                <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-center text-white relative">
-                    <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-lg border-4 border-blue-200">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <div class="mt-3">
-                        <h2 id="viewName" class="text-2xl font-bold uppercase tracking-wide block">--</h2>
-                        <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
-                    </div>
-                    <span id="cardID" class="text-blue-100 text-xs font-mono bg-blue-800 px-2 py-0.5 rounded-full bg-opacity-50">--</span>
-                    
-                    <div id="adminControls" class="hidden absolute top-4 right-4 flex flex-col space-y-2">
-                        <button id="btnEditMode" onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow transition" title="Bật chế độ sửa">
-                            <i class="fas fa-pen"></i>
-                        </button>
-                        <button id="btnDelete" onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow transition" title="Xóa học sinh">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+            <div class="flex bg-white text-sm font-bold shadow-inner">
+                <button onclick="chuyenTab('tabHocSinh')" id="btnTabHS" class="flex-1 py-3 text-center transition duration-300 tab-active">
+                    <i class="fas fa-user mr-2"></i> THÔNG TIN
+                </button>
+                <button onclick="chuyenTab('tabOnTap')" id="btnTabOnTap" class="flex-1 py-3 text-center transition duration-300 tab-inactive">
+                    <i class="fas fa-book-reader mr-2"></i> ÔN TẬP
+                </button>
+            </div>
+        </div>
+
+        <div class="container mx-auto mt-6 p-4 max-w-2xl">
+            
+            <div id="tabHocSinh" class="fade-in">
+                
+                <div id="adminSearchBox" class="hidden bg-white p-5 rounded-xl shadow-sm mb-6 border-l-4 border-yellow-500">
+                    <div id="panelThem" class="mb-4">
+                        <button onclick="moFormThem()" class="w-full bg-green-600 text-white py-2 rounded-lg shadow font-bold uppercase text-xs flex justify-center items-center">
+                           <i class="fas fa-plus-circle mr-2"></i> Thêm Học Sinh
+                       </button>
+                   </div>
+                    <label class="block text-gray-500 text-xs font-bold mb-2 uppercase">Tra cứu nhanh (Quyền Admin):</label>
+                    <div class="relative">
+                        <select id="selectHS" onchange="chonHocSinhTuList()" class="block w-full bg-gray-50 border border-gray-300 text-gray-800 py-3 px-4 pr-8 rounded-lg font-bold shadow-sm">
+                            <option value="">-- Chọn học sinh --</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"><i class="fas fa-chevron-down"></i></div>
                     </div>
                 </div>
 
-                <div class="p-6 space-y-5">
+                <div id="infoCard" class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-200 relative transition-all">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-500 p-6 text-center text-white relative">
+                        <div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-500 shadow-lg border-4 border-blue-200">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="mt-3">
+                            <h2 id="viewName" class="text-2xl font-bold uppercase tracking-wide block">--</h2>
+                            <input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-2 rounded w-3/4 mx-auto" placeholder="Nhập tên...">
+                        </div>
+                        <span id="cardID" class="text-blue-100 text-xs font-mono bg-blue-800 px-2 py-0.5 rounded-full bg-opacity-50">--</span>
+                        
+                        <div id="adminControls" class="hidden absolute top-4 right-4 flex flex-col space-y-2">
+                            <button onclick="batCheDoSua(true)" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 p-2 rounded-full shadow" title="Sửa"><i class="fas fa-pen"></i></button>
+                            <button onclick="xoaHS()" class="bg-red-500 hover:bg-red-400 text-white p-2 rounded-full shadow" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="p-6 space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Ngày sinh</p>
+                                <p id="viewDob" class="font-bold text-gray-800 text-base block">--</p>
+                                <input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy">
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">Giới tính</p>
+                                <p id="viewGender" class="font-bold text-gray-800 text-base block">--</p>
+                                <select id="editGender" class="hidden edit-input text-center"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center">
+                                        <div class="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs"><i class="fas fa-male"></i></div>
+                                        <span class="text-[10px] text-blue-800 font-bold uppercase">ĐT Cha</span>
+                                    </div>
+                                    <a id="btnCallFather" href="#" class="text-blue-600 hover:text-blue-800"><i class="fas fa-phone-alt"></i></a>
+                                </div>
+                                <p id="viewFather" class="font-bold text-blue-900 text-lg ml-8 block">--</p>
+                                <input id="editFather" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT...">
+                            </div>
+
+                            <div class="bg-pink-50 p-3 rounded-lg border border-pink-100">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="flex items-center">
+                                        <div class="bg-pink-500 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs"><i class="fas fa-female"></i></div>
+                                        <span class="text-[10px] text-pink-800 font-bold uppercase">ĐT Mẹ</span>
+                                    </div>
+                                    <a id="btnCallMother" href="#" class="text-pink-600 hover:text-pink-800"><i class="fas fa-phone-alt"></i></a>
+                                </div>
+                                <p id="viewMother" class="font-bold text-pink-900 text-lg ml-8 block">--</p>
+                                <input id="editMother" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT...">
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-100"></div>
+
+                        <div>
+                            <p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p>
+                            <p id="viewAddress" class="text-gray-800 font-medium ml-1 block">--</p>
+                            <input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ...">
+                        </div>
+
+                        <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                            <p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p>
+                            <p id="viewNote" class="text-gray-700 italic ml-1 text-sm block">--</p>
+                            <textarea id="editNote" class="hidden edit-input h-20" placeholder="Nhập ghi chú..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="savePanel" class="hidden p-4 bg-gray-50 border-t border-gray-200 flex space-x-3 animate-pulse">
+                        <button onclick="batCheDoSua(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold">Hủy</button>
+                        <button onclick="luuThayDoi()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold shadow-lg">LƯU LẠI</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabOnTap" class="hidden fade-in">
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 text-center">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 uppercase">Góc Bài Tập</h2>
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
-                            <p class="text-[10px] text-gray-400 uppercase font-bold">Ngày sinh</p>
-                            <p id="viewDob" class="font-bold text-gray-800 text-base block">--</p>
-                            <input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy">
-                        </div>
-                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
-                            <p class="text-[10px] text-gray-400 uppercase font-bold">Giới tính</p>
-                            <p id="viewGender" class="font-bold text-gray-800 text-base block">--</p>
-                            <select id="editGender" class="hidden edit-input text-center">
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                            </select>
-                        </div>
+                        <button onclick="alert('Tính năng đang phát triển!')" class="p-4 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition"><i class="fas fa-calculator text-3xl text-blue-600 mb-2 block"></i><span class="font-bold text-blue-800">Toán</span></button>
+                        <button onclick="alert('Tính năng đang phát triển!')" class="p-4 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition"><i class="fas fa-book text-3xl text-green-600 mb-2 block"></i><span class="font-bold text-green-800">Tiếng Việt</span></button>
+                        <button onclick="alert('Tính năng đang phát triển!')" class="p-4 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition"><i class="fas fa-globe-americas text-3xl text-purple-600 mb-2 block"></i><span class="font-bold text-purple-800">Tiếng Anh</span></button>
+                        <button onclick="alert('Tính năng đang phát triển!')" class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl hover:bg-yellow-100 transition"><i class="fas fa-flask text-3xl text-yellow-600 mb-2 block"></i><span class="font-bold text-yellow-800">Khoa Học</span></button>
                     </div>
-
-                    <div class="space-y-3">
-                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                            <div class="flex items-center justify-between mb-1">
-                                <div class="flex items-center">
-                                    <div class="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs"><i class="fas fa-male"></i></div>
-                                    <span class="text-[10px] text-blue-800 font-bold uppercase">ĐT Cha</span>
-                                </div>
-                                <a id="btnCallFather" href="#" class="text-blue-600 hover:text-blue-800"><i class="fas fa-phone-alt"></i></a>
-                            </div>
-                            <p id="viewFather" class="font-bold text-blue-900 text-lg ml-8 block">--</p>
-                            <input id="editFather" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT...">
-                        </div>
-
-                        <div class="bg-pink-50 p-3 rounded-lg border border-pink-100">
-                            <div class="flex items-center justify-between mb-1">
-                                <div class="flex items-center">
-                                    <div class="bg-pink-500 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs"><i class="fas fa-female"></i></div>
-                                    <span class="text-[10px] text-pink-800 font-bold uppercase">ĐT Mẹ</span>
-                                </div>
-                                <a id="btnCallMother" href="#" class="text-pink-600 hover:text-pink-800"><i class="fas fa-phone-alt"></i></a>
-                            </div>
-                            <p id="viewMother" class="font-bold text-pink-900 text-lg ml-8 block">--</p>
-                            <input id="editMother" type="number" class="hidden edit-input ml-8 w-[80%]" placeholder="Số ĐT...">
-                        </div>
-                    </div>
-
-                    <div class="border-t border-gray-100"></div>
-
-                    <div>
-                        <p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p>
-                        <p id="viewAddress" class="text-gray-800 font-medium ml-1 block">--</p>
-                        <input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ...">
-                    </div>
-
-                    <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                        <p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p>
-                        <p id="viewNote" class="text-gray-700 italic ml-1 text-sm block">--</p>
-                        <textarea id="editNote" class="hidden edit-input h-20" placeholder="Nhập ghi chú..."></textarea>
-                    </div>
-                </div>
-
-                <div id="savePanel" class="hidden p-4 bg-gray-50 border-t border-gray-200 flex space-x-3 animate-pulse">
-                    <button onclick="batCheDoSua(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-400 transition">Hủy</button>
-                    <button onclick="luuThayDoi()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 shadow-lg transition">LƯU LẠI</button>
                 </div>
             </div>
+
         </div>
-
-        <div id="tabOnTap" class="hidden fade-in">
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 text-center">
-                <div class="w-20 h-20 bg-orange-100 rounded-full mx-auto flex items-center justify-center text-4xl text-orange-500 mb-4">
-                    <i class="fas fa-book-reader"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Góc Ôn Tập Lớp 4</h2>
-                <p class="text-gray-500 mb-6">Chọn môn học để bắt đầu luyện tập</p>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <button class="p-4 bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100 transition flex flex-col items-center">
-                        <i class="fas fa-calculator text-3xl text-blue-600 mb-2"></i>
-                        <span class="font-bold text-blue-800">Toán</span>
-                    </button>
-                    <button class="p-4 bg-green-50 border border-green-200 rounded-xl hover:bg-green-100 transition flex flex-col items-center">
-                        <i class="fas fa-book text-3xl text-green-600 mb-2"></i>
-                        <span class="font-bold text-green-800">Tiếng Việt</span>
-                    </button>
-                    <button class="p-4 bg-purple-50 border border-purple-200 rounded-xl hover:bg-purple-100 transition flex flex-col items-center">
-                        <i class="fas fa-globe-americas text-3xl text-purple-600 mb-2"></i>
-                        <span class="font-bold text-purple-800">Tiếng Anh</span>
-                    </button>
-                    <button class="p-4 bg-yellow-50 border border-yellow-200 rounded-xl hover:bg-yellow-100 transition flex flex-col items-center">
-                        <i class="fas fa-flask text-3xl text-yellow-600 mb-2"></i>
-                        <span class="font-bold text-yellow-800">Khoa Học</span>
-                    </button>
-                </div>
-
-                <div class="mt-8 bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300">
-                    <p class="text-gray-400 italic text-xs">Tính năng đang được thầy Hiển xây dựng...</p>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwePkzMhFSKMbeHZuzPCvfcfztbdrt716FJOwm34Ja99wKUy3XQdA_23d1ByzS745QnLQ/exec"; 
         const PASS_ADMIN = "123456";
-        let isAdmin = false;
         let dsHocSinh = []; 
         let currentHS = null;
+        let isAdmin = false;
 
-        // --- XỬ LÝ CHUYỂN TAB ---
-        function chuyenTab(tabName) {
-            // Ẩn hết 2 tab
-            document.getElementById('tabHocSinh').classList.add('hidden');
-            document.getElementById('tabOnTap').classList.add('hidden');
-            
-            // Reset style nút
-            document.getElementById('btnTabHS').className = "flex-1 py-3 text-center transition duration-300 tab-inactive";
-            document.getElementById('btnTabOnTap').className = "flex-1 py-3 text-center transition duration-300 tab-inactive";
-
-            // Hiện tab được chọn
-            document.getElementById(tabName).classList.remove('hidden');
-
-            // Set active cho nút
-            if(tabName === 'tabHocSinh') {
-                document.getElementById('btnTabHS').className = "flex-1 py-3 text-center transition duration-300 tab-active";
+        // 1. KHỞI ĐỘNG
+        window.onload = async function() {
+            await taiDanhSach();
+            // Kiểm tra xem đã đăng nhập chưa
+            const savedRole = localStorage.getItem('userRole');
+            if (savedRole === 'admin') {
+                vaoGiaoDienAdmin();
             } else {
-                document.getElementById('btnTabOnTap').className = "flex-1 py-3 text-center transition duration-300 tab-active";
+                // Nếu chưa đăng nhập (hoặc là học sinh), hiện màn hình Login
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('loginScreen').classList.remove('hidden');
             }
-        }
-
-        // --- CÁC HÀM CŨ (GIỮ NGUYÊN) ---
-        function xuLyNgay(str) {
-            if (!str) return "";
-            if (str.toString().includes("T") && str.toString().includes("Z")) {
-                try { let d = new Date(str); return d.toLocaleDateString('vi-VN'); } catch (e) { return str; }
-            }
-            return str;
-        }
-
-        function checkLoginState() {
-            if (localStorage.getItem('isGVCN') === 'true') { isAdmin = true; capNhatGiaoDienAdmin(); }
-        }
+        };
 
         async function taiDanhSach() {
-            const select = document.getElementById('selectHS');
-            const loading = document.getElementById('loadingText');
             try {
                 const res = await fetch(API_URL);
                 dsHocSinh = await res.json();
-                loading.innerText = "Đã tải xong " + dsHocSinh.length + " học sinh.";
-                loading.className = "text-xs text-center text-green-600 mt-2 font-bold";
-                select.innerHTML = '<option value="">-- Chọn tên học sinh --</option>';
+                
+                // Đổ dữ liệu vào Dropdown (cho Admin)
+                const select = document.getElementById('selectHS');
+                select.innerHTML = '<option value="">-- Chọn học sinh --</option>';
                 dsHocSinh.forEach((hs, index) => select.innerHTML += `<option value="${index}">${index+1}. ${hs.name}</option>`);
-            } catch (err) { loading.innerText = "Lỗi kết nối!"; }
+
+            } catch (err) { alert("Lỗi kết nối Server!"); }
         }
 
-        function hienChiTiet() {
-            batCheDoSua(false); 
-            const index = document.getElementById('selectHS').value;
-            const card = document.getElementById('infoCard');
-            if (index === "") { card.classList.add('hidden'); currentHS = null; return; }
+        // 2. XỬ LÝ ĐĂNG NHẬP (QUAN TRỌNG)
+        function xuLyDangNhap() {
+            const input = document.getElementById('inputLogin').value.trim();
+            if(!input) return alert("Vui lòng nhập thông tin!");
 
-            const hs = dsHocSinh[index];
+            // TRƯỜNG HỢP 1: GIÁO VIÊN (Nhập Pass)
+            if (input === PASS_ADMIN) {
+                localStorage.setItem('userRole', 'admin');
+                vaoGiaoDienAdmin();
+                return;
+            }
+
+            // TRƯỜNG HỢP 2: HỌC SINH (Nhập SĐT)
+            // Tìm trong danh sách xem có số điện thoại nào khớp không
+            const hsTimThay = dsHocSinh.find(hs => 
+                (hs.fatherPhone && hs.fatherPhone.toString().includes(input)) || 
+                (hs.motherPhone && hs.motherPhone.toString().includes(input))
+            );
+
+            if (hsTimThay) {
+                // Đăng nhập thành công
+                localStorage.setItem('userRole', 'student'); // Lưu tạm
+                vaoGiaoDienHocSinh(hsTimThay);
+            } else {
+                alert("Số điện thoại không tồn tại trong danh sách lớp!");
+            }
+        }
+
+        function vaoGiaoDienAdmin() {
+            isAdmin = true;
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            
+            // Setup giao diện Admin
+            document.getElementById('userLabel').innerHTML = '<i class="fas fa-user-tie text-yellow-400 mr-1"></i> GVCN';
+            document.getElementById('adminSearchBox').classList.remove('hidden'); // Hiện ô tìm kiếm
+            
+            // Xóa dữ liệu cũ trên thẻ
+            resetInfoCard();
+        }
+
+        function vaoGiaoDienHocSinh(hs) {
+            isAdmin = false;
             currentHS = hs;
-            const safe = (val) => (val && val !== "undefined") ? val : "";
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
 
-            document.getElementById('viewName').innerText = safe(hs.name) || "Chưa có tên";
+            // Setup giao diện Học sinh
+            document.getElementById('userLabel').innerHTML = `<i class="fas fa-user-graduate mr-1"></i> ${hs.name}`;
+            document.getElementById('adminSearchBox').classList.add('hidden'); // Ẩn ô tìm kiếm
+            
+            // Hiển thị ngay thông tin của em đó
+            hienChiTiet(hs);
+        }
+
+        function dangXuat() {
+            if(confirm("Bạn muốn đăng xuất?")) {
+                localStorage.removeItem('userRole');
+                location.reload();
+            }
+        }
+
+        // 3. HIỂN THỊ CHI TIẾT
+        function chonHocSinhTuList() {
+            const index = document.getElementById('selectHS').value;
+            if(index === "") return resetInfoCard();
+            hienChiTiet(dsHocSinh[index]);
+        }
+
+        function hienChiTiet(hs) {
+            currentHS = hs;
+            batCheDoSua(false);
+
+            const safe = (val) => (val && val !== "undefined") ? val : "";
+            document.getElementById('viewName').innerText = safe(hs.name);
             document.getElementById('cardID').innerText = safe(hs.id);
             document.getElementById('viewDob').innerText = xuLyNgay(hs.dob) || "-";
             document.getElementById('viewGender').innerText = safe(hs.gender) || "-";
             document.getElementById('viewFather').innerText = safe(hs.fatherPhone) || "---";
             document.getElementById('viewMother').innerText = safe(hs.motherPhone) || "---";
-            document.getElementById('viewAddress').innerText = safe(hs.address) || "Chưa cập nhật";
+            document.getElementById('viewAddress').innerText = safe(hs.address) || "---";
             document.getElementById('viewNote').innerText = safe(hs.note) || "Không";
 
             document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
             document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
 
-            card.classList.remove('hidden');
+            // Chỉ hiện nút sửa xóa nếu là Admin
             if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
             else document.getElementById('adminControls').classList.add('hidden');
         }
 
+        // 4. CÁC HÀM TIỆN ÍCH KHÁC
+        function xuLyNgay(str) {
+            if (!str) return "";
+            if (str.toString().includes("T")) {
+                try { return new Date(str).toLocaleDateString('vi-VN'); } catch (e) {}
+            }
+            return str;
+        }
+
+        function resetInfoCard() {
+            document.getElementById('viewName').innerText = "--";
+            document.getElementById('cardID').innerText = "--";
+            // ... reset các trường khác nếu cần
+        }
+
+        function chuyenTab(tabName) {
+            document.getElementById('tabHocSinh').classList.add('hidden');
+            document.getElementById('tabOnTap').classList.add('hidden');
+            document.getElementById('btnTabHS').className = "flex-1 py-3 text-center transition duration-300 tab-inactive";
+            document.getElementById('btnTabOnTap').className = "flex-1 py-3 text-center transition duration-300 tab-inactive";
+
+            document.getElementById(tabName).classList.remove('hidden');
+            if(tabName === 'tabHocSinh') document.getElementById('btnTabHS').className = "flex-1 py-3 text-center transition duration-300 tab-active";
+            else document.getElementById('btnTabOnTap').className = "flex-1 py-3 text-center transition duration-300 tab-active";
+        }
+
+        // 5. CHỨC NĂNG ADMIN (Thêm, Sửa, Xóa)
         function batCheDoSua(enable) {
-            if(!currentHS) return;
+            if(!currentHS || !isAdmin) return;
             const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
             if (enable) {
                 document.getElementById('editName').value = currentHS.name;
@@ -300,12 +372,13 @@
                     document.getElementById('view' + f).classList.remove('hidden');
                     document.getElementById('edit' + f).classList.add('hidden');
                 });
-                if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
+                document.getElementById('adminControls').classList.remove('hidden');
                 document.getElementById('savePanel').classList.add('hidden');
             }
         }
 
         function luuThayDoi() {
+            if(!isAdmin) return;
             let hsMoi = {
                 id: currentHS.id,
                 name: document.getElementById('editName').value,
@@ -320,62 +393,29 @@
         }
 
         function moFormThem() {
+            if(!isAdmin) return;
             let ten = prompt("Nhập Họ và Tên HS mới:"); if(!ten) return;
             let hsMoi = { id: "HS" + Date.now(), name: ten, dob: "", gender: "Nam", fatherPhone: "", motherPhone: "", address: "", note: "" };
             guiYeuCau("them", hsMoi);
         }
 
         function xoaHS() {
+            if(!isAdmin) return;
             if(confirm("Xóa em " + currentHS.name + "?")) guiYeuCau("xoa", {id: currentHS.id});
         }
 
         async function guiYeuCau(action, data) {
-            document.getElementById('loadingText').innerText = "Đang lưu...";
-            await fetch(API_URL, {
-                method: 'POST', mode: 'no-cors',
-                body: JSON.stringify({action: action, data: data})
-            });
-
+            // Hiện loading nhẹ
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) });
             setTimeout(async () => {
-                if (action === 'xoa') { alert("Đã xóa!"); location.reload(); return; }
+                alert("Thành công!");
                 await taiDanhSach();
-                const idCanTim = data.id;
-                const index = dsHocSinh.findIndex(hs => hs.id === idCanTim);
-                if (index !== -1) {
-                    document.getElementById('selectHS').value = index;
-                    hienChiTiet();
-                    alert("Đã lưu thành công!");
-                } else { location.reload(); }
+                if(action === 'sua') { 
+                    const index = dsHocSinh.findIndex(hs => hs.id === data.id);
+                    if(index !== -1) { document.getElementById('selectHS').value = index; hienChiTiet(dsHocSinh[index]); }
+                } else location.reload();
             }, 1500);
         }
-
-        function dangNhap() {
-            let pass = prompt("Nhập mật khẩu GVCN:");
-            if (pass === PASS_ADMIN) {
-                isAdmin = true;
-                localStorage.setItem('isGVCN', 'true');
-                capNhatGiaoDienAdmin();
-                alert("Xin chào thầy Hiển!");
-            } else if (pass) alert("Sai mật khẩu!");
-        }
-
-        function dangXuat() {
-            if(confirm("Thầy có muốn đăng xuất?")) {
-                isAdmin = false;
-                localStorage.removeItem('isGVCN');
-                location.reload();
-            }
-        }
-
-        function capNhatGiaoDienAdmin() {
-            document.getElementById('btnLogin').classList.add('hidden');
-            document.getElementById('userArea').classList.remove('hidden');
-            document.getElementById('panelThem').classList.remove('hidden');
-            if(currentHS) document.getElementById('adminControls').classList.remove('hidden');
-        }
-
-        checkLoginState();
-        taiDanhSach();
     </script>
 </body>
 </html>
