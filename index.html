@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - V45 Flexible Image</title>
+    <title>Lớp 4/6 - V46 Admin Question</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
@@ -14,25 +14,19 @@
         .btn-3d { transition: all 0.1s; border-bottom: 6px solid rgba(0,0,0,0.15); transform: translateY(0); }
         .btn-3d:active { transform: translateY(4px); border-bottom: 2px solid rgba(0,0,0,0.15); }
         .btn-3d:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-        .edit-input { border: 2px solid #bfdbfe; background-color: #eff6ff; padding: 4px 10px; border-radius: 8px; width: 100%; color: #1e40af; font-weight: 800; font-size: 14px; }
+        .edit-input { border: 2px solid #bfdbfe; background-color: #eff6ff; padding: 8px 12px; border-radius: 8px; width: 100%; color: #1e40af; font-weight: 700; font-size: 14px; }
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .animated-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(120deg, #e0f2fe 0%, #f3e8ff 100%); }
         .header-gradient { background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 50%, #4f46e5 100%); background-size: 200% 200%; animation: gradientMove 10s ease infinite; }
         @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        
         .quiz-option { cursor: pointer; transition: all 0.2s; border: 2px solid #e5e7eb; }
         .quiz-option:hover { border-color: #3b82f6; background-color: #eff6ff; }
         .quiz-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #15803d; }
         .quiz-wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c; }
-
-        /* Zoom Ảnh */
-        .zoom-img { cursor: zoom-in; transition: transform 0.3s; display: block; margin: 10px auto; max-width: 100%; max-height: 250px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .zoom-img { cursor: zoom-in; transition: transform 0.3s; display: block; margin: 10px auto; max-width: 100%; max-height: 200px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
-        .zoom-overlay img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
-        
-        /* Style cho nội dung câu hỏi có ảnh chèn giữa */
-        .question-content { font-size: 1.25rem; font-weight: 700; color: #1f2937; line-height: 1.6; }
+        .zoom-overlay img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
     </style>
 </head>
 <body class="text-sm min-h-screen font-sans">
@@ -47,8 +41,7 @@
             <div class="-mt-10">
                 <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">Trường TH Phú Thọ</h3>
                 <h1 class="text-5xl font-black text-blue-900 mb-2 uppercase drop-shadow-sm tracking-tighter">LỚP 4/6</h1>
-                <p class="text-blue-500 font-bold mb-8 bg-blue-50 inline-block px-4 py-1 rounded-full">Năm học: 2025 - 2026</p>
-                <div class="space-y-4">
+                <div class="space-y-4 mt-6">
                     <input id="inputLogin" type="number" class="w-full pl-4 p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-xl text-gray-700 bg-gray-50 focus:bg-white transition text-center" placeholder="Nhập số điện thoại...">
                     <button onclick="xuLyDangNhap()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 rounded-xl font-black text-xl shadow-lg btn-3d uppercase">VÀO LỚP NGAY</button>
                 </div>
@@ -57,15 +50,11 @@
     </div>
 
     <div id="mainApp" class="hidden min-h-screen flex flex-col pb-10">
-        
         <div class="header-gradient text-white shadow-lg sticky top-0 z-40">
             <div class="w-full px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-3 cursor-pointer group" onclick="veTrangChu()">
-                    <div class="w-12 h-12 bg-white text-blue-700 rounded-2xl flex items-center justify-center font-black text-xl shadow-md border-2 border-blue-200 transform group-hover:rotate-6 transition">4/6</div>
-                    <div class="hidden md:block">
-                        <h1 class="font-extrabold leading-tight text-lg drop-shadow-md group-hover:text-yellow-300 transition">LỚP HỌC</h1>
-                        <p class="text-[10px] font-bold text-blue-200 uppercase bg-black/20 px-2 py-0.5 rounded-full w-fit">Trường TH Phú Thọ</p>
-                    </div>
+                    <div class="w-12 h-12 bg-white text-blue-700 rounded-2xl flex items-center justify-center font-black text-xl shadow-md border-2 border-blue-200">4/6</div>
+                    <div class="hidden md:block"><h1 class="font-extrabold leading-tight text-lg drop-shadow-md">LỚP HỌC</h1><p class="text-[10px] font-bold text-blue-200 uppercase bg-black/20 px-2 py-0.5 rounded-full w-fit">Trường TH Phú Thọ</p></div>
                 </div>
                 <div class="flex items-center space-x-3 relative">
                     <div id="studentStats" style="display: none;" class="items-center space-x-3 bg-black/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 text-white shadow-inner">
@@ -79,6 +68,7 @@
                         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 border-b border-blue-100"><p class="text-xs font-black text-blue-800 uppercase tracking-widest mb-1">Menu Giáo Viên</p></div>
                         <div class="p-2 space-y-1">
                             <div onclick="chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-xl cursor-pointer flex items-center text-gray-700 font-bold transition"><i class="fas fa-users w-8 text-blue-600"></i> Thông tin học sinh</div>
+                            <div onclick="moFormTaoCauHoi()" class="p-3 hover:bg-purple-50 rounded-xl cursor-pointer flex items-center text-gray-700 font-bold transition"><i class="fas fa-plus-circle w-8 text-purple-600"></i> Soạn câu hỏi Toán</div>
                             <div onclick="chuyenTrangKetQua()" class="p-3 hover:bg-yellow-50 rounded-xl cursor-pointer flex items-center text-gray-700 font-bold transition"><i class="fas fa-chart-line w-8 text-yellow-600"></i> Kết quả học tập</div>
                         </div>
                         <div class="border-t border-gray-100 p-2"><div onclick="dangXuat()" class="p-3 hover:bg-red-50 rounded-xl cursor-pointer flex items-center text-red-500 text-xs font-bold justify-center transition"><i class="fas fa-sign-out-alt mr-2"></i> Đăng xuất</div></div>
@@ -139,10 +129,43 @@
             </div>
         </div>
 
-        <div id="zoomModal" class="hidden zoom-overlay" onclick="this.classList.add('hidden')">
-            <img id="zoomImageSrc" src="" alt="Zoom">
+        <div id="createQuestionModal" class="hidden fixed inset-0 z-[80] modal-overlay flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg relative fade-in border-4 border-purple-100 overflow-hidden flex flex-col max-h-[95vh]">
+                <div class="bg-purple-600 p-4 text-center text-white relative">
+                    <button onclick="document.getElementById('createQuestionModal').classList.add('hidden')" class="absolute top-3 right-3 bg-white/20 hover:bg-white/40 text-white w-8 h-8 rounded-full flex items-center justify-center transition"><i class="fas fa-times"></i></button>
+                    <h2 class="text-xl font-black uppercase"><i class="fas fa-plus-circle mr-2"></i> Soạn Câu Hỏi Toán</h2>
+                </div>
+                <div class="p-6 overflow-y-auto space-y-4 bg-purple-50">
+                    <div>
+                        <label class="block text-purple-700 font-bold text-xs uppercase mb-1">Nội dung câu hỏi (Gõ [anh] nếu muốn chèn ảnh giữa)</label>
+                        <textarea id="inpQ_Content" class="edit-input h-20" placeholder="Ví dụ: 1 + 1 bằng mấy?"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án A</label><input id="inpQ_A" class="edit-input" placeholder="..."></div>
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án B</label><input id="inpQ_B" class="edit-input" placeholder="..."></div>
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án C</label><input id="inpQ_C" class="edit-input" placeholder="..."></div>
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án D</label><input id="inpQ_D" class="edit-input" placeholder="..."></div>
+                    </div>
+                    <div>
+                        <label class="block text-purple-700 font-bold text-xs uppercase mb-1">Đáp án đúng</label>
+                        <select id="inpQ_Correct" class="edit-input">
+                            <option value="a">A</option>
+                            <option value="b">B</option>
+                            <option value="c">C</option>
+                            <option value="d">D</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-purple-700 font-bold text-xs uppercase mb-1">Link Ảnh (Nếu có)</label>
+                        <input id="inpQ_Image" class="edit-input" placeholder="http://...">
+                    </div>
+                    <button onclick="luuCauHoiMoi()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold shadow-lg btn-3d mt-2">LƯU CÂU HỎI</button>
+                </div>
+            </div>
         </div>
 
+        <div id="zoomModal" class="hidden zoom-overlay" onclick="this.classList.add('hidden')"><img id="zoomImageSrc" src="" alt="Zoom"></div>
+        
         <div id="notificationModal" class="hidden fixed inset-0 z-[80] modal-overlay flex items-center justify-center p-4">
             <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg relative fade-in border-4 border-orange-100 overflow-hidden">
                 <div class="bg-orange-500 p-4 text-center text-white relative">
@@ -151,9 +174,7 @@
                 </div>
                 <div class="p-6 bg-orange-50">
                     <div class="bg-white p-4 rounded-lg text-gray-800 text-lg font-medium leading-relaxed min-h-[150px] shadow-sm border-l-4 border-orange-500" id="notificationContent">Loading...</div>
-                    <div id="adminNoticeControls" class="hidden mt-4 pt-4 border-t border-orange-200">
-                        <button onclick="suaThongBao()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-xl font-bold shadow transition"><i class="fas fa-edit mr-2"></i> Sửa nội dung</button>
-                    </div>
+                    <div id="adminNoticeControls" class="hidden mt-4 pt-4 border-t border-orange-200"><button onclick="suaThongBao()" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-xl font-bold shadow transition"><i class="fas fa-edit mr-2"></i> Sửa nội dung</button></div>
                 </div>
             </div>
         </div>
@@ -323,20 +344,17 @@
             }
 
             const q = dsCauHoiToan[index];
-            // XỬ LÝ ẢNH THÔNG MINH
             let imageTag = q.image ? `<img src="${q.image}" class="zoom-img" onclick="phongToAnh(this.src)" alt="Hình minh họa">` : '';
             let finalQuestion = q.question;
-
-            // Nếu trong câu hỏi có chứa [anh] -> Thay thế vào đó
             if (q.image && q.question.includes('[anh]')) {
                 finalQuestion = q.question.replace('[anh]', imageTag);
-                imageTag = ''; // Xóa ảnh ở dưới để tránh bị lặp
+                imageTag = ''; 
             }
 
             let html = `
                 <div class="mb-6">
                     <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase mb-2 inline-block">Câu ${index + 1}</span>
-                    <div class="question-content">${finalQuestion}</div>
+                    <div class="text-xl font-bold text-gray-800 mb-3">${finalQuestion}</div>
                     ${imageTag}
                 </div>
                 <div class="space-y-3">
@@ -349,11 +367,7 @@
             document.getElementById('quizContainer').innerHTML = html;
         }
 
-        function phongToAnh(src) {
-            document.getElementById('zoomImageSrc').src = src;
-            document.getElementById('zoomModal').classList.remove('hidden');
-        }
-
+        function phongToAnh(src) { document.getElementById('zoomImageSrc').src = src; document.getElementById('zoomModal').classList.remove('hidden'); }
         function kiemTraDapAn(el, correct, choice, index) {
             if (choice === correct) {
                 el.classList.add('quiz-correct');
@@ -369,6 +383,24 @@
             }
         }
 
+        // --- HÀM TẠO CÂU HỎI MỚI (V46) ---
+        function moFormTaoCauHoi() { document.getElementById('gvcnMenu').classList.add('hidden'); document.getElementById('createQuestionModal').classList.remove('hidden'); }
+        function luuCauHoiMoi() {
+            let q = {
+                question: document.getElementById('inpQ_Content').value,
+                a: document.getElementById('inpQ_A').value,
+                b: document.getElementById('inpQ_B').value,
+                c: document.getElementById('inpQ_C').value,
+                d: document.getElementById('inpQ_D').value,
+                correct: document.getElementById('inpQ_Correct').value,
+                image: document.getElementById('inpQ_Image').value
+            };
+            if(!q.question || !q.a || !q.b) { alert("Vui lòng nhập đủ câu hỏi và ít nhất 2 đáp án!"); return; }
+            
+            guiYeuCau("them_cau_hoi", q);
+            document.getElementById('createQuestionModal').classList.add('hidden');
+        }
+
         function chuyenTrangQuanLy() { anTatCaSection(); document.getElementById('sectionManager').classList.remove('hidden'); veDanhSachQuanLy(dsHocSinh); }
         function chuyenTrangKetQua() { anTatCaSection(); document.getElementById('sectionResults').classList.remove('hidden'); veDanhSachKetQua(dsHocSinh); }
         function veTrangChu() { anTatCaSection(); document.getElementById('sectionDashboard').classList.remove('hidden'); }
@@ -381,7 +413,6 @@
             document.getElementById('sectionQuiz').classList.add('hidden');
         }
 
-        // ... (Các hàm veDanhSach, locDanhSach, modal, xoaHS, dangXuat giữ nguyên như cũ) ...
         function veDanhSachQuanLy(data) { const grid = document.getElementById('studentGrid'); grid.innerHTML = ""; data.forEach(hs => { grid.innerHTML += `<div onclick="xemChiTietTuQuanLy('${hs.id}')" class="student-card bg-white p-4 rounded-xl border border-blue-100 shadow-sm cursor-pointer flex items-center space-x-4"><div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">${hs.name.charAt(0)}</div><div class="flex-1"><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-xs text-gray-500">${xuLyNgay(hs.dob)}</p></div><div class="text-gray-300"><i class="fas fa-chevron-right"></i></div></div>`; }); }
         function veDanhSachKetQua(data) { const grid = document.getElementById('resultsGrid'); grid.innerHTML = ""; const sorted = [...data].sort((a,b) => (b.score || 0) - (a.score || 0)); sorted.forEach((hs, index) => { const diamonds = parseInt(hs.score) || 0; const medals = Math.floor(diamonds / 100); let rankClass = "rank-other"; if(index === 0) rankClass = "rank-1"; if(index === 1) rankClass = "rank-2"; if(index === 2) rankClass = "rank-3"; grid.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-md border border-gray-200 flex items-center justify-between student-card"><div class="flex items-center space-x-4"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-lg shadow-sm ${rankClass}">${index + 1}</div><div><h3 class="font-bold text-gray-800 text-base">${hs.name}</h3><p class="text-[10px] text-gray-400 font-bold">Mã số: ${hs.id}</p></div></div><div class="flex items-center space-x-4"><div class="text-center"><div class="text-xs text-yellow-500 font-bold mb-1"><i class="fas fa-gem"></i> Kim cương</div><div class="flex items-center bg-gray-100 rounded-lg"><button onclick="suaDiem('${hs.id}', -10)" class="w-6 h-6 hover:bg-gray-300 rounded-l-lg text-gray-500 font-bold">-</button><span class="px-2 font-black text-blue-800 text-lg w-10 text-center">${diamonds}</span><button onclick="suaDiem('${hs.id}', 10)" class="w-6 h-6 hover:bg-gray-300 rounded-r-lg text-gray-500 font-bold">+</button></div></div><div class="text-center w-16"><div class="text-xs text-yellow-600 font-bold mb-1"><i class="fas fa-trophy"></i> Cúp</div><span class="font-black text-yellow-600 text-xl">${medals}</span></div></div></div>`; }); }
         function locDanhSach() { const key = document.getElementById('searchInput').value.toLowerCase(); veDanhSachQuanLy(dsHocSinh.filter(hs => hs.name.toLowerCase().includes(key))); }
