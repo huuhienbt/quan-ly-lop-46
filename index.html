@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - Đăng Nhập (V10)</title>
+    <title>Lớp 4/6 - Trường TH Phú Thọ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
@@ -17,8 +17,6 @@
         .edit-input:focus { outline: none; border-color: #f59e0b; background-color: white; }
         .tab-active { border-bottom: 4px solid #f59e0b; color: #1e3a8a; background-color: #eff6ff; }
         .tab-inactive { color: #6b7280; }
-        
-        /* Màn hình chờ loading */
         #loader { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
     </style>
 </head>
@@ -30,26 +28,32 @@
     </div>
 
     <div id="loginScreen" class="hidden fixed inset-0 bg-blue-900 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center fade-in">
-            <div class="w-24 h-24 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-5xl text-blue-600 mb-6 shadow-inner">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center fade-in border-4 border-blue-100">
+            <div class="w-20 h-20 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-4xl text-blue-600 mb-4 shadow-sm border border-blue-100">
                 <i class="fas fa-school"></i>
             </div>
-            <h1 class="text-2xl font-bold text-gray-800 mb-2 uppercase">Lớp 4/6 - Thầy Hiển</h1>
-            <p class="text-gray-500 mb-6 text-xs">Cổng thông tin điện tử & Ôn tập trực tuyến</p>
+            
+            <h1 class="text-3xl font-extrabold text-blue-900 mb-1 uppercase tracking-tight">LỚP 4/6</h1>
+            <h2 class="text-md font-bold text-orange-600 mb-1">Năm học: 2025 - 2026</h2>
+            <h3 class="text-sm font-bold text-gray-600 mb-6 uppercase tracking-wide border-b pb-4">Trường Tiểu học Phú Thọ</h3>
+            
+            <p class="text-gray-500 mb-4 text-xs italic bg-gray-50 p-2 rounded">
+                <i class="fas fa-info-circle mr-1"></i> Cổng thông tin điện tử & Ôn tập trực tuyến
+            </p>
 
             <div class="space-y-4">
                 <div class="relative">
                     <i class="fas fa-phone-alt absolute left-4 top-3.5 text-gray-400"></i>
-                    <input id="inputLogin" type="number" class="w-full pl-10 p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-lg" placeholder="Nhập SĐT Cha hoặc Mẹ...">
+                    <input id="inputLogin" type="number" class="w-full pl-10 p-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 font-bold text-lg text-center" placeholder="Nhập SĐT Phụ Huynh...">
                 </div>
                 
-                <button onclick="xuLyDangNhap()" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg transform transition active:scale-95 text-lg">
-                    ĐĂNG NHẬP
+                <button onclick="xuLyDangNhap()" class="w-full bg-blue-700 text-white p-3 rounded-xl font-bold hover:bg-blue-800 shadow-lg transform transition active:scale-95 text-lg uppercase tracking-wide">
+                    Đăng Nhập
                 </button>
             </div>
 
-            <div class="mt-6 border-t border-gray-100 pt-4">
-                <p class="text-xs text-gray-400 italic">Thầy giáo đăng nhập bằng Mật khẩu Admin</p>
+            <div class="mt-6 pt-4 border-t border-gray-100">
+                <p class="text-[10px] text-gray-400">Giáo viên chủ nhiệm: Thầy Nguyễn Hữu Hiển</p>
             </div>
         </div>
     </div>
@@ -202,15 +206,12 @@
         let currentHS = null;
         let isAdmin = false;
 
-        // 1. KHỞI ĐỘNG
         window.onload = async function() {
             await taiDanhSach();
-            // Kiểm tra xem đã đăng nhập chưa
             const savedRole = localStorage.getItem('userRole');
             if (savedRole === 'admin') {
                 vaoGiaoDienAdmin();
             } else {
-                // Nếu chưa đăng nhập (hoặc là học sinh), hiện màn hình Login
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('loginScreen').classList.remove('hidden');
             }
@@ -220,40 +221,32 @@
             try {
                 const res = await fetch(API_URL);
                 dsHocSinh = await res.json();
-                
-                // Đổ dữ liệu vào Dropdown (cho Admin)
                 const select = document.getElementById('selectHS');
                 select.innerHTML = '<option value="">-- Chọn học sinh --</option>';
                 dsHocSinh.forEach((hs, index) => select.innerHTML += `<option value="${index}">${index+1}. ${hs.name}</option>`);
-
             } catch (err) { alert("Lỗi kết nối Server!"); }
         }
 
-        // 2. XỬ LÝ ĐĂNG NHẬP (QUAN TRỌNG)
         function xuLyDangNhap() {
             const input = document.getElementById('inputLogin').value.trim();
             if(!input) return alert("Vui lòng nhập thông tin!");
 
-            // TRƯỜNG HỢP 1: GIÁO VIÊN (Nhập Pass)
             if (input === PASS_ADMIN) {
                 localStorage.setItem('userRole', 'admin');
                 vaoGiaoDienAdmin();
                 return;
             }
 
-            // TRƯỜNG HỢP 2: HỌC SINH (Nhập SĐT)
-            // Tìm trong danh sách xem có số điện thoại nào khớp không
             const hsTimThay = dsHocSinh.find(hs => 
                 (hs.fatherPhone && hs.fatherPhone.toString().includes(input)) || 
                 (hs.motherPhone && hs.motherPhone.toString().includes(input))
             );
 
             if (hsTimThay) {
-                // Đăng nhập thành công
-                localStorage.setItem('userRole', 'student'); // Lưu tạm
+                localStorage.setItem('userRole', 'student'); 
                 vaoGiaoDienHocSinh(hsTimThay);
             } else {
-                alert("Số điện thoại không tồn tại trong danh sách lớp!");
+                alert("Số điện thoại không khớp với dữ liệu học sinh!");
             }
         }
 
@@ -262,12 +255,8 @@
             document.getElementById('loader').style.display = 'none';
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            
-            // Setup giao diện Admin
             document.getElementById('userLabel').innerHTML = '<i class="fas fa-user-tie text-yellow-400 mr-1"></i> GVCN';
-            document.getElementById('adminSearchBox').classList.remove('hidden'); // Hiện ô tìm kiếm
-            
-            // Xóa dữ liệu cũ trên thẻ
+            document.getElementById('adminSearchBox').classList.remove('hidden'); 
             resetInfoCard();
         }
 
@@ -277,12 +266,8 @@
             document.getElementById('loader').style.display = 'none';
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-
-            // Setup giao diện Học sinh
             document.getElementById('userLabel').innerHTML = `<i class="fas fa-user-graduate mr-1"></i> ${hs.name}`;
-            document.getElementById('adminSearchBox').classList.add('hidden'); // Ẩn ô tìm kiếm
-            
-            // Hiển thị ngay thông tin của em đó
+            document.getElementById('adminSearchBox').classList.add('hidden'); 
             hienChiTiet(hs);
         }
 
@@ -293,7 +278,6 @@
             }
         }
 
-        // 3. HIỂN THỊ CHI TIẾT
         function chonHocSinhTuList() {
             const index = document.getElementById('selectHS').value;
             if(index === "") return resetInfoCard();
@@ -317,12 +301,10 @@
             document.getElementById('btnCallFather').href = "tel:" + safe(hs.fatherPhone);
             document.getElementById('btnCallMother').href = "tel:" + safe(hs.motherPhone);
 
-            // Chỉ hiện nút sửa xóa nếu là Admin
             if(isAdmin) document.getElementById('adminControls').classList.remove('hidden');
             else document.getElementById('adminControls').classList.add('hidden');
         }
 
-        // 4. CÁC HÀM TIỆN ÍCH KHÁC
         function xuLyNgay(str) {
             if (!str) return "";
             if (str.toString().includes("T")) {
@@ -334,7 +316,6 @@
         function resetInfoCard() {
             document.getElementById('viewName').innerText = "--";
             document.getElementById('cardID').innerText = "--";
-            // ... reset các trường khác nếu cần
         }
 
         function chuyenTab(tabName) {
@@ -348,7 +329,6 @@
             else document.getElementById('btnTabOnTap').className = "flex-1 py-3 text-center transition duration-300 tab-active";
         }
 
-        // 5. CHỨC NĂNG ADMIN (Thêm, Sửa, Xóa)
         function batCheDoSua(enable) {
             if(!currentHS || !isAdmin) return;
             const fields = ['Name', 'Dob', 'Gender', 'Father', 'Mother', 'Address', 'Note'];
@@ -405,7 +385,6 @@
         }
 
         async function guiYeuCau(action, data) {
-            // Hiện loading nhẹ
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) });
             setTimeout(async () => {
                 alert("Thành công!");
