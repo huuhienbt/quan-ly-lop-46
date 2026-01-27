@@ -3,69 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - V54 Phân Quyền</title>
+    <title>Lớp 4/6 - V55 Đa Môn Học</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: 'Nunito', sans-serif; overflow-x: hidden; background-color: #f0f9ff; }
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Hiệu ứng Nút bấm */
-        .btn-3d { transition: all 0.1s; border-bottom: 4px solid rgba(0,0,0,0.15); transform: translateY(0); }
-        .btn-3d:active { transform: translateY(4px); border-bottom: 1px solid rgba(0,0,0,0.15); }
-        .btn-3d:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-        
-        /* Ô nhập liệu thông minh */
-        .rich-input { 
-            border: 2px solid #e0e7ff; background-color: white; 
-            padding: 10px; border-radius: 8px; width: 100%; 
-            color: #1e40af; font-weight: 600; font-size: 15px; 
-            min-height: 48px; max-height: 200px; overflow-y: auto;
-            outline: none; transition: all 0.2s;
+        /* CẤU HÌNH GIAO DIỆN CHUNG */
+        body { 
+            font-family: 'Nunito', sans-serif; 
+            overflow-x: hidden; 
+            background-color: #f0f9ff; /* Màu nền xanh nhạt */
         }
-        .rich-input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+
+        /* Hiệu ứng hiện dần (Fade In) */
+        .fade-in { 
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        /* Hiệu ứng Nút bấm 3D */
+        .btn-3d { 
+            transition: all 0.1s; 
+            border-bottom: 4px solid rgba(0,0,0,0.15); 
+            transform: translateY(0); 
+        }
+        .btn-3d:active { 
+            transform: translateY(4px); 
+            border-bottom: 1px solid rgba(0,0,0,0.15); 
+        }
+        .btn-3d:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15); 
+        }
+        
+        /* Ô nhập liệu thông minh (Rich Input) cho phép dán ảnh */
+        .rich-input { 
+            border: 2px solid #e0e7ff; 
+            background-color: white; 
+            padding: 10px; 
+            border-radius: 8px; 
+            width: 100%; 
+            color: #1e40af; 
+            font-weight: 600; 
+            font-size: 15px; 
+            min-height: 48px; 
+            max-height: 200px; 
+            overflow-y: auto;
+            outline: none; 
+            transition: all 0.2s;
+        }
+        .rich-input:focus { 
+            border-color: #8b5cf6; 
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); 
+        }
+        /* Ảnh hiển thị trong ô nhập liệu */
         .rich-input img { 
-            max-height: 100px; border-radius: 6px; border: 1px solid #ddd; 
-            display: inline-block; margin: 4px; vertical-align: middle; cursor: pointer;
+            max-height: 100px; 
+            border-radius: 6px; 
+            border: 1px solid #ddd; 
+            display: inline-block; 
+            margin: 4px; 
+            vertical-align: middle; 
+            cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* Nút Upload */
-        .upload-wrapper { display: flex; align-items: flex-start; gap: 8px; }
-        .upload-btn { 
-            background: #f3f4f6; color: #6b7280; 
-            border-radius: 8px; cursor: pointer; transition: all 0.2s; 
-            display: flex; align-items: center; justify-content: center; 
-            width: 44px; height: 44px; flex-shrink: 0; border: 2px solid #e5e7eb;
+        /* Nút Upload Kẹp giấy */
+        .upload-wrapper { 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 8px; 
         }
-        .upload-btn:hover { background: #8b5cf6; color: white; border-color: #8b5cf6; }
-        .edit-input { border: 2px solid #bfdbfe; background-color: #eff6ff; padding: 8px 12px; border-radius: 8px; width: 100%; color: #1e40af; font-weight: 700; font-size: 14px; }
-        
-        /* Loader & Background */
-        #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .animated-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: linear-gradient(120deg, #e0f2fe 0%, #f3e8ff 100%); }
-        .header-gradient { background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%); }
-        
-        /* Quiz Option */
-        .quiz-option { cursor: pointer; transition: all 0.2s; border: 2px solid #e5e7eb; position: relative; overflow: hidden; }
-        .quiz-option:hover { border-color: #3b82f6; background-color: #eff6ff; }
-        .quiz-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #15803d; }
-        .quiz-wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c; }
-        .question-content img, .quiz-option img { max-height: 180px; border-radius: 8px; margin: 8px auto; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .disabled-option { pointer-events: none; opacity: 0.8; }
+        .upload-btn { 
+            background: #f3f4f6; 
+            color: #6b7280; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 44px; 
+            height: 44px; 
+            flex-shrink: 0; 
+            border: 2px solid #e5e7eb;
+        }
+        .upload-btn:hover { 
+            background: #8b5cf6; 
+            color: white; 
+            border-color: #8b5cf6; 
+        }
 
-        /* Zoom Image */
-        .zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
-        .zoom-overlay img { max-width: 95vw; max-height: 95vh; border-radius: 8px; animation: zoomIn 0.2s; }
-        @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        /* Input thường */
+        .edit-input { 
+            border: 2px solid #bfdbfe; 
+            background-color: #eff6ff; 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            width: 100%; 
+            color: #1e40af; 
+            font-weight: 700; 
+            font-size: 14px; 
+        }
+        
+        /* Màn hình chờ (Loader) */
+        #loader { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(5px); 
+            z-index: 9999; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            flex-direction: column; 
+        }
+        
+        /* Nền hoạt hình phía sau */
+        .animated-bg { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: -1; 
+            background: linear-gradient(120deg, #e0f2fe 0%, #f3e8ff 100%); 
+        }
+        
+        /* Thanh tiêu đề (Header) */
+        .header-gradient { 
+            background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%); 
+        }
+        
+        /* Các lựa chọn trắc nghiệm */
+        .quiz-option { 
+            cursor: pointer; 
+            transition: all 0.2s; 
+            border: 2px solid #e5e7eb; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        .quiz-option:hover { 
+            border-color: #3b82f6; 
+            background-color: #eff6ff; 
+        }
+        .quiz-correct { 
+            background-color: #dcfce7 !important; 
+            border-color: #22c55e !important; 
+            color: #15803d; 
+        }
+        .quiz-wrong { 
+            background-color: #fee2e2 !important; 
+            border-color: #ef4444 !important; 
+            color: #b91c1c; 
+        }
+        
+        /* Ảnh trong câu hỏi */
+        .question-content img, .quiz-option img { 
+            max-height: 180px; 
+            border-radius: 8px; 
+            margin: 8px auto; 
+            display: block; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        
+        /* Vô hiệu hóa nút khi đã chọn */
+        .disabled-option { 
+            pointer-events: none; 
+            opacity: 0.8; 
+        }
+
+        /* Chế độ xem ảnh phóng to (Zoom) */
+        .zoom-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 100; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: zoom-out; 
+        }
+        .zoom-overlay img { 
+            max-width: 95vw; 
+            max-height: 95vh; 
+            border-radius: 8px; 
+            animation: zoomIn 0.2s; 
+        }
+        @keyframes zoomIn { 
+            from { transform: scale(0.9); opacity: 0; } 
+            to { transform: scale(1); opacity: 1; } 
+        }
     </style>
 </head>
 <body class="text-sm min-h-screen font-sans text-gray-700">
 
     <div class="animated-bg"></div>
-    <div id="loader"><div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4 shadow-xl"></div><p class="text-blue-800 font-black text-lg animate-pulse uppercase tracking-widest mt-4">Đang kết nối dữ liệu...</p></div>
+    <div id="loader">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4 shadow-xl"></div>
+        <p class="text-blue-800 font-black text-lg animate-pulse uppercase tracking-widest mt-4">Đang kết nối dữ liệu...</p>
+    </div>
 
     <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-indigo-900/80 backdrop-blur-sm"></div>
@@ -83,6 +224,7 @@
     </div>
 
     <div id="mainApp" class="hidden min-h-screen flex flex-col pb-10">
+        
         <div class="header-gradient text-white shadow-lg sticky top-0 z-40">
             <div class="w-full px-4 py-3 flex justify-between items-center">
                 <div class="flex items-center space-x-3 cursor-pointer group" onclick="veTrangChu()">
@@ -102,11 +244,12 @@
         </div>
 
         <div id="sectionDashboard" class="fade-in">
-            <div class="bg-gradient-to-b from-[#4f46e5] to-transparent pt-8 pb-6 px-4 text-center">
-                <h2 id="welcomeText" class="text-2xl md:text-3xl font-black text-indigo-900 mb-2 drop-shadow-sm">Chào con, chúc một ngày tốt lành!</h2>
+            
+            <div id="welcomeText" class="bg-gradient-to-b from-[#4f46e5] to-transparent pt-8 pb-6 px-4 text-center hidden">
+                <h2 class="text-2xl md:text-3xl font-black text-indigo-900 mb-2 drop-shadow-sm">Chào con, chúc một ngày tốt lành!</h2>
             </div>
             
-            <div id="dashboardStudent" class="container mx-auto px-4 max-w-4xl pb-10 grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+            <div id="dashboardStudent" class="container mx-auto px-4 max-w-4xl pb-10 grid grid-cols-1 md:grid-cols-2 gap-6 hidden mt-6">
                 <button onclick="moThongBao()" class="group bg-white p-6 rounded-[2rem] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-2 border-b-8 border-orange-200 active:border-b-0 active:translate-y-2 relative overflow-hidden h-60 flex flex-col justify-center items-center">
                     <div class="absolute inset-0 bg-gradient-to-br from-white to-orange-50 opacity-50"></div>
                     <div class="relative z-10 flex flex-col items-center">
@@ -123,18 +266,25 @@
                 </button>
             </div>
 
-            <div id="dashboardTeacher" class="container mx-auto px-4 max-w-5xl pb-10 grid grid-cols-1 md:grid-cols-3 gap-4 hidden">
-                <button onclick="chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-b-4 border-blue-200 flex flex-col items-center btn-3d">
-                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mb-3"><i class="fas fa-users"></i></div>
-                    <span class="font-bold text-gray-800 uppercase">Quản lý Học sinh</span>
+            <div id="dashboardTeacher" class="container mx-auto px-4 max-w-5xl pb-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 hidden mt-8">
+                <button onclick="chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-b-4 border-blue-200 flex flex-col items-center btn-3d transition transform hover:-translate-y-1">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-sm"><i class="fas fa-users"></i></div>
+                    <span class="font-bold text-gray-800 uppercase text-sm">Quản lý Học sinh</span>
                 </button>
-                <button onclick="chuyenTrangNganHangCauHoi()" class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-b-4 border-purple-200 flex flex-col items-center btn-3d">
-                    <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-2xl mb-3"><i class="fas fa-layer-group"></i></div>
-                    <span class="font-bold text-gray-800 uppercase">Ngân hàng Câu hỏi</span>
+                
+                <button onclick="quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-b-4 border-purple-200 flex flex-col items-center btn-3d transition transform hover:-translate-y-1">
+                    <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-sm"><i class="fas fa-calculator"></i></div>
+                    <span class="font-bold text-gray-800 uppercase text-sm">Ngân hàng Toán</span>
                 </button>
-                <button onclick="chuyenTrangKetQua()" class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-b-4 border-yellow-200 flex flex-col items-center btn-3d">
-                    <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-2xl mb-3"><i class="fas fa-chart-pie"></i></div>
-                    <span class="font-bold text-gray-800 uppercase">Bảng điểm Lớp</span>
+                
+                <button onclick="quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-b-4 border-green-200 flex flex-col items-center btn-3d transition transform hover:-translate-y-1">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-sm"><i class="fas fa-book"></i></div>
+                    <span class="font-bold text-gray-800 uppercase text-sm">Ngân hàng TV</span>
+                </button>
+                
+                <button onclick="chuyenTrangKetQua()" class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl border-b-4 border-yellow-200 flex flex-col items-center btn-3d transition transform hover:-translate-y-1">
+                    <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-2xl mb-3 shadow-sm"><i class="fas fa-chart-pie"></i></div>
+                    <span class="font-bold text-gray-800 uppercase text-sm">Bảng điểm Lớp</span>
                 </button>
             </div>
         </div>
@@ -145,11 +295,11 @@
                 <h2 class="text-2xl font-black text-indigo-900 uppercase">Chọn môn học</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <button onclick="batDauLamToan()" class="group bg-white p-6 rounded-[2rem] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-2 border-b-8 border-blue-200 active:border-b-0 active:translate-y-2 h-52 flex flex-col justify-center items-center">
+                <button onclick="batDauLamToan('math')" class="group bg-white p-6 rounded-[2rem] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-2 border-b-8 border-blue-200 active:border-b-0 active:translate-y-2 h-52 flex flex-col justify-center items-center">
                     <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-3xl text-blue-600 mb-3"><i class="fas fa-calculator"></i></div>
                     <span class="font-extrabold text-xl text-blue-900">Môn Toán</span>
                 </button>
-                <button onclick="alert('Môn Tiếng Việt đang cập nhật...')" class="group bg-white p-6 rounded-[2rem] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-2 border-b-8 border-green-200 active:border-b-0 active:translate-y-2 h-52 flex flex-col justify-center items-center">
+                <button onclick="batDauLamToan('vietnamese')" class="group bg-white p-6 rounded-[2rem] shadow-xl hover:shadow-2xl transition transform hover:-translate-y-2 border-b-8 border-green-200 active:border-b-0 active:translate-y-2 h-52 flex flex-col justify-center items-center">
                     <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-3xl text-green-600 mb-3"><i class="fas fa-book-open"></i></div>
                     <span class="font-extrabold text-xl text-green-900">Tiếng Việt</span>
                 </button>
@@ -159,7 +309,7 @@
         <div id="sectionQuiz" class="hidden fade-in container mx-auto px-4 max-w-2xl pt-6 pb-20">
             <div class="flex items-center mb-4">
                 <button onclick="moGocHocTap()" class="bg-gray-200 hover:bg-gray-300 text-gray-600 w-10 h-10 rounded-full flex items-center justify-center font-bold mr-4"><i class="fas fa-times"></i></button>
-                <h2 class="text-xl font-black text-indigo-900">Bài tập Toán</h2>
+                <h2 class="text-xl font-black text-indigo-900" id="quizTitle">Bài tập</h2>
             </div>
             <div id="quizContainer" class="bg-white p-6 rounded-3xl shadow-xl border-4 border-indigo-50 min-h-[300px]">
                 <p class="text-center text-gray-500 italic mt-10">Đang tải câu hỏi...</p>
@@ -169,8 +319,8 @@
         <div id="sectionQuestionManager" class="hidden fade-in container mx-auto px-4 mt-6 max-w-4xl">
             <div class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-md border border-purple-100">
                 <div class="flex items-center">
-                    <button onclick="veTrangChu()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-xl font-bold mr-4 transition"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
-                    <h2 class="text-xl font-black text-purple-900 uppercase">Kho Câu Hỏi</h2>
+                    <button onclick="veTrangChu()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-xl font-bold mr-4 transition border border-gray-200"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
+                    <div><h2 class="text-xl font-black text-purple-900 uppercase" id="managerTitle">Kho Câu Hỏi</h2></div>
                 </div>
                 <button onclick="moModalCauHoi(null)" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl font-bold shadow-md btn-3d">
                     <i class="fas fa-plus-circle mr-2"></i> Tạo câu mới
@@ -245,7 +395,10 @@
                     <h2 class="text-xl font-black text-indigo-900 uppercase">Quản Lý Hồ Sơ</h2>
                 </div>
                 <div class="flex w-full md:w-auto space-x-2">
-                    <div class="relative flex-1 md:w-64"><i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i><input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-3 border-2 border-indigo-50 rounded-xl focus:outline-none focus:border-indigo-500 font-bold text-gray-700" placeholder="Tìm tên học sinh..."></div>
+                    <div class="relative flex-1 md:w-64">
+                        <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                        <input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-3 border-2 border-indigo-50 rounded-xl focus:outline-none focus:border-indigo-500 font-bold text-gray-700" placeholder="Tìm tên học sinh...">
+                    </div>
                     <button onclick="moFormThem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md btn-3d whitespace-nowrap"><i class="fas fa-plus mr-1"></i> Thêm</button>
                 </div>
             </div>
@@ -258,7 +411,10 @@
                     <button onclick="veTrangChu()" class="bg-white hover:bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl font-bold mr-4 transition shadow-sm border border-yellow-200"><i class="fas fa-arrow-left mr-2"></i> Quay lại</button>
                     <div><h2 class="text-xl font-black text-yellow-800 uppercase"><i class="fas fa-crown text-yellow-500 mr-2"></i> Bảng Vàng</h2><p class="text-xs text-yellow-600 font-bold">Thống kê Kim cương & Huy chương</p></div>
                 </div>
-                <div class="relative w-full md:w-64"><i class="fas fa-search absolute left-3 top-3 text-yellow-400"></i><input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh..."></div>
+                <div class="relative w-full md:w-64">
+                    <i class="fas fa-search absolute left-3 top-3 text-yellow-400"></i>
+                    <input id="searchResultInput" onkeyup="locDanhSachKetQua()" type="text" class="w-full pl-10 pr-4 py-2.5 border-2 border-yellow-200 rounded-xl focus:outline-none focus:border-yellow-500 font-bold text-yellow-800 bg-white" placeholder="Tìm tên học sinh...">
+                </div>
             </div>
             <div id="resultsGrid" class="grid grid-cols-1 gap-4"></div>
         </div>
@@ -297,23 +453,25 @@
     </div>
 
     <script>
-        // --- CẤU HÌNH ---
-        // Thay link này bằng Link Apps Script (V47 hoặc mới hơn)
+        // --- QUAN TRỌNG: CẬP NHẬT LINK WEB APP MỚI NHẤT ---
+        // Thầy nhớ triển khai Apps Script thành "Phiên bản mới" để lấy link
         const API_URL = "https://script.google.com/macros/s/AKfycbzyopuEiu58fVz45SDZOeUnNlDil94GAQhUENNcezPc1AccPeEVXYBiRMQylm10zJSQeg/exec"; 
         
         const PASS_ADMIN = "123456";
         let dsHocSinh = []; 
-        let dsCauHoiToan = []; 
+        let dsCauHoi = []; 
         let currentHS = null; 
         let isAdmin = false;
         let currentQIndex = 0; 
         let quizScore = 0; 
         let bankQuestions = []; // Ngân hàng câu hỏi
+        let currentSubject = 'math'; // 'math' hoặc 'vietnamese'
 
-        // --- KHỞI TẠO ---
+        // --- KHỞI TẠO HỆ THỐNG ---
         window.onload = async function() { 
             await taiDanhSach(); 
             const savedRole = localStorage.getItem('userRole'); 
+            
             if (savedRole === 'admin') {
                 vaoGiaoDienAdmin(); 
             } else if (savedRole === 'student') { 
@@ -334,7 +492,11 @@
             try { 
                 const res = await fetch(API_URL); 
                 const data = await res.json(); 
-                if (typeof data === 'string' && data.includes("LỖI")) { alert(data); } else { dsHocSinh = data; } 
+                if (typeof data === 'string' && data.includes("LỖI")) { 
+                    alert(data); 
+                } else { 
+                    dsHocSinh = data; 
+                } 
             } catch (err) { 
                 document.getElementById('loader').innerText = "Lỗi kết nối!"; 
             } 
@@ -361,6 +523,7 @@
                         img.src = url; 
                         img.onclick = function() { phongToAnh(url); }; 
                         targetDiv.appendChild(img); 
+                        
                         // Đặt con trỏ sau ảnh
                         const range = document.createRange(); 
                         const sel = window.getSelection(); 
@@ -368,9 +531,14 @@
                         range.collapse(true); 
                         sel.removeAllRanges(); 
                         sel.addRange(range); 
-                    } else { alert("Lỗi upload: " + url); } 
-                } catch(err) { alert("Lỗi kết nối upload! (File có thể quá lớn)"); } 
-                finally { btn.innerHTML = originalHtml; } 
+                    } else { 
+                        alert("Lỗi upload: " + url); 
+                    } 
+                } catch(err) { 
+                    alert("Lỗi kết nối upload! (File có thể quá lớn)"); 
+                } finally { 
+                    btn.innerHTML = originalHtml; 
+                } 
             }; 
             reader.readAsDataURL(file); 
         }
@@ -409,14 +577,14 @@
             const input = document.getElementById('inputLogin').value.trim(); 
             if(!input) return alert("Vui lòng nhập thông tin!"); 
             
-            // ADMIN LOGIN
+            // ĐĂNG NHẬP GIÁO VIÊN
             if (input === PASS_ADMIN) { 
                 localStorage.setItem('userRole', 'admin'); 
                 vaoGiaoDienAdmin(); 
                 return; 
             } 
             
-            // STUDENT LOGIN
+            // ĐĂNG NHẬP HỌC SINH
             const hsTimThay = dsHocSinh.find(hs => (hs.fatherPhone && hs.fatherPhone.toString().includes(input)) || (hs.motherPhone && hs.motherPhone.toString().includes(input))); 
             if (hsTimThay) { 
                 localStorage.setItem('userRole', 'student'); 
@@ -434,9 +602,11 @@
             document.getElementById('mainApp').classList.remove('hidden'); 
             document.getElementById('headerName').innerText = "Thầy Hiển (GVCN)"; 
             document.getElementById('studentStats').style.display = 'none'; 
-            // HIỆN Dashboard Admin, ẨN Dashboard Student
+            
+            // HIỆN Dashboard Admin, ẨN Dashboard Student, ẨN Lời chào
             document.getElementById('dashboardStudent').classList.add('hidden'); 
             document.getElementById('dashboardTeacher').classList.remove('hidden');
+            document.getElementById('welcomeText').classList.add('hidden'); 
         }
 
         function vaoGiaoDienHocSinh(hs) { 
@@ -448,9 +618,11 @@
             document.getElementById('headerName').innerText = hs.name; 
             document.getElementById('studentStats').style.display = 'flex'; 
             document.getElementById('statDiamond').innerText = parseInt(hs.score) || 0;
-            // HIỆN Dashboard Student, ẨN Dashboard Admin
+            
+            // HIỆN Dashboard Student, ẨN Dashboard Admin, HIỆN Lời chào
             document.getElementById('dashboardStudent').classList.remove('hidden'); 
             document.getElementById('dashboardTeacher').classList.add('hidden');
+            document.getElementById('welcomeText').classList.remove('hidden');
         }
 
         function xuLyClickProfile() { 
@@ -510,16 +682,23 @@
         }
 
         // --- QUIZ (DÀNH CHO HỌC SINH) ---
-        async function batDauLamToan() { 
+        async function batDauLamToan(subject) { 
+            currentSubject = subject; // Set môn hiện tại
             document.getElementById('sectionHomework').classList.add('hidden'); 
             document.getElementById('sectionQuiz').classList.remove('hidden'); 
+            
+            // Đổi tiêu đề theo môn
+            document.getElementById('quizTitle').innerText = subject === 'math' ? "Bài tập Toán" : "Bài tập Tiếng Việt";
             document.getElementById('quizContainer').innerHTML = '<p class="text-center text-blue-500 animate-pulse font-bold mt-10">Đang tải câu hỏi...</p>'; 
+            
             try { 
-                const res = await fetch(API_URL + "?type=math"); 
+                const res = await fetch(API_URL + "?type=" + subject); 
                 let allQuestions = await res.json(); 
-                // Trộn câu hỏi
+                
+                // Trộn câu hỏi ngẫu nhiên
                 allQuestions.sort(() => Math.random() - 0.5); 
-                dsCauHoiToan = allQuestions.slice(0, 10); 
+                dsCauHoi = allQuestions.slice(0, 10); // Lấy 10 câu
+                
                 currentQIndex = 0; 
                 quizScore = 0; 
                 hienThiCauHoi(currentQIndex); 
@@ -529,21 +708,27 @@
         }
 
         function hienThiCauHoi(index) {
-            if (index >= dsCauHoiToan.length) { 
-                // Kết thúc bài thi
-                let msg = quizScore >= 90 ? "Xuất sắc!" : "Cố gắng hơn nhé!";
+            if (index >= dsCauHoi.length) { 
+                // Kết thúc bài thi - Hiện bảng điểm
+                let msg = "";
+                if(quizScore >= 90) msg = "Xuất sắc! Con là thiên tài!";
+                else if(quizScore >= 70) msg = "Làm tốt lắm!";
+                else msg = "Cố gắng hơn lần sau nhé!";
+
                 if (!isAdmin && currentHS) { 
+                    // Cộng điểm và lưu lên server
                     currentHS.score = (parseInt(currentHS.score) || 0) + quizScore; 
                     document.getElementById('statDiamond').innerText = currentHS.score; 
                     guiYeuCau("sua", currentHS); 
                 }
+
                 document.getElementById('quizContainer').innerHTML = `
                 <div class="text-center pt-5 fade-in">
                     <div class="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center text-5xl text-yellow-500 mx-auto mb-4 animate-bounce"><i class="fas fa-trophy"></i></div>
                     <h3 class="text-2xl font-black text-blue-900 mb-2">KẾT QUẢ</h3>
                     <p class="text-gray-500 font-bold text-lg mb-6">${msg}</p>
                     <div class="bg-blue-50 rounded-2xl p-6 mb-6 inline-block w-full max-w-xs border-2 border-blue-100">
-                        <div class="flex justify-between items-center mb-2"><span class="text-gray-500 font-bold">Số câu đúng:</span> <span class="text-green-600 font-black text-xl">${quizScore/10}/${dsCauHoiToan.length}</span></div>
+                        <div class="flex justify-between items-center mb-2"><span class="text-gray-500 font-bold">Số câu đúng:</span> <span class="text-green-600 font-black text-xl">${quizScore/10}/${dsCauHoi.length}</span></div>
                         <div class="flex justify-between items-center"><span class="text-gray-500 font-bold">Tổng điểm:</span> <span class="text-yellow-500 font-black text-3xl">+${quizScore}</span></div>
                     </div>
                     <div><button onclick="moGocHocTap()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg btn-3d uppercase tracking-wide">Quay lại</button></div>
@@ -551,13 +736,16 @@
                 return; 
             }
             
-            const q = dsCauHoiToan[index];
+            const q = dsCauHoi[index];
             let finalQuestion = xuLyHienThiAnh(q.question); 
             if(q.image && !finalQuestion.includes('<img')) finalQuestion += `<img src="${q.image}" class="zoom-img" onclick="phongToAnh(this.src)">`;
             
             let html = `
             <div class="mb-6">
-                <div class="flex justify-between items-center mb-2"><span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide">Câu ${index + 1}/${dsCauHoiToan.length}</span><span class="text-yellow-500 font-black text-sm"><i class="fas fa-star mr-1"></i>${quizScore}</span></div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide">Câu ${index + 1}/${dsCauHoi.length}</span>
+                    <span class="text-yellow-500 font-black text-sm"><i class="fas fa-star mr-1"></i>${quizScore}</span>
+                </div>
                 <div class="text-xl font-bold text-gray-800 mb-3 question-content min-h-[60px]">${finalQuestion}</div>
             </div>
             <div class="space-y-3">
@@ -570,39 +758,67 @@
         }
 
         function kiemTraDapAn(el, correct, choice) { 
+            // Khóa click
             let options = document.querySelectorAll('.quiz-option'); 
             options.forEach(op => op.classList.add('disabled-option')); 
-            let correctIndex = ['a','b','c','d'].indexOf(correct); 
+            
+            // Tìm đáp án đúng để hiển thị nếu học sinh chọn sai
+            let correctIndex = -1;
+            if(correct == 'a') correctIndex = 0;
+            if(correct == 'b') correctIndex = 1;
+            if(correct == 'c') correctIndex = 2;
+            if(correct == 'd') correctIndex = 3;
             
             if (choice === correct) { 
                 el.classList.add('quiz-correct', 'border-green-500', 'bg-green-50'); 
                 el.querySelector('span').classList.replace('bg-gray-100', 'bg-green-200'); 
+                el.querySelector('span').classList.replace('text-gray-500', 'text-green-700'); 
                 quizScore += 10; 
             } else { 
                 el.classList.add('quiz-wrong', 'border-red-500', 'bg-red-50'); 
                 el.querySelector('span').classList.replace('bg-gray-100', 'bg-red-200'); 
-                if(correctIndex !== -1 && options[correctIndex]) options[correctIndex].classList.add('quiz-correct'); 
+                el.querySelector('span').classList.replace('text-gray-500', 'text-red-700'); 
+                
+                // Hiện đáp án đúng
+                if(correctIndex !== -1 && options[correctIndex]) {
+                    options[correctIndex].classList.add('quiz-correct');
+                }
             } 
-            setTimeout(() => { currentQIndex++; hienThiCauHoi(currentQIndex); }, 1500); 
+            
+            // Chuyển câu sau 1.5 giây
+            setTimeout(() => { 
+                currentQIndex++; 
+                hienThiCauHoi(currentQIndex); 
+            }, 1500); 
         }
 
         // --- QUẢN LÝ NGÂN HÀNG CÂU HỎI (DÀNH CHO GIÁO VIÊN) ---
-        async function chuyenTrangNganHangCauHoi() {
+        async function quanLyNganHang(subject) {
+            currentSubject = subject;
             anTatCaSection(); 
             document.getElementById('sectionQuestionManager').classList.remove('hidden');
+            
+            // Đổi tên tiêu đề quản lý
+            document.getElementById('managerTitle').innerText = subject === 'math' ? "KHO CÂU HỎI TOÁN" : "KHO CÂU HỎI TIẾNG VIỆT";
             document.getElementById('questionBankGrid').innerHTML = '<p class="text-center text-gray-500 animate-pulse">Đang tải ngân hàng câu hỏi...</p>';
+            
             try {
-                const res = await fetch(API_URL + "?type=math");
+                const res = await fetch(API_URL + "?type=" + subject);
                 bankQuestions = await res.json();
                 hienThiNganHangCauHoi();
-            } catch(e) { alert("Lỗi tải dữ liệu!"); }
+            } catch(e) { 
+                alert("Lỗi tải dữ liệu!"); 
+            }
         }
 
         function hienThiNganHangCauHoi() {
             const grid = document.getElementById('questionBankGrid'); 
             grid.innerHTML = "";
+            
             bankQuestions.forEach((q, idx) => {
+                // Rút gọn nội dung câu hỏi để hiển thị preview
                 let preview = xuLyHienThiAnh(q.question).replace(/<img[^>]*>/g, '[Ảnh]').substring(0, 60) + "...";
+                
                 grid.innerHTML += `
                 <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
                     <div class="flex-1">
@@ -621,12 +837,15 @@
         function moModalCauHoi(qId) {
             document.getElementById('createQuestionModal').classList.remove('hidden');
             // Reset form
-            document.getElementById('divQ_Content').innerHTML = ""; document.getElementById('divQ_A').innerHTML = ""; 
-            document.getElementById('divQ_B').innerHTML = ""; document.getElementById('divQ_C').innerHTML = ""; document.getElementById('divQ_D').innerHTML = "";
+            document.getElementById('divQ_Content').innerHTML = ""; 
+            document.getElementById('divQ_A').innerHTML = ""; 
+            document.getElementById('divQ_B').innerHTML = ""; 
+            document.getElementById('divQ_C').innerHTML = ""; 
+            document.getElementById('divQ_D').innerHTML = "";
             
-            if(qId) { // Chế độ Sửa
+            if(qId) { // CHẾ ĐỘ SỬA
                 let q = bankQuestions.find(i => i.id === qId);
-                document.getElementById('modalTitle').innerText = "Sửa Câu Hỏi";
+                document.getElementById('modalTitle').innerText = "Sửa Câu Hỏi (" + (currentSubject === 'math' ? "Toán" : "TV") + ")";
                 document.getElementById('editQ_ID').value = q.id;
                 document.getElementById('divQ_Content').innerHTML = xuLyHienThiAnh(q.question);
                 document.getElementById('divQ_A').innerHTML = xuLyHienThiAnh(q.a); 
@@ -634,8 +853,8 @@
                 document.getElementById('divQ_C').innerHTML = xuLyHienThiAnh(q.c); 
                 document.getElementById('divQ_D').innerHTML = xuLyHienThiAnh(q.d);
                 document.getElementById('inpQ_Correct').value = q.correct;
-            } else { // Chế độ Thêm mới
-                document.getElementById('modalTitle').innerText = "Soạn Câu Mới";
+            } else { // CHẾ ĐỘ THÊM MỚI
+                document.getElementById('modalTitle').innerText = "Soạn Câu Mới (" + (currentSubject === 'math' ? "Toán" : "TV") + ")";
                 document.getElementById('editQ_ID').value = "";
                 document.getElementById('inpQ_Correct').value = "a";
             }
@@ -645,7 +864,7 @@
         
         function xoaCauHoi(id) { 
             if(confirm("Thầy có chắc muốn xóa câu hỏi này?")) { 
-                guiYeuCau("xoa_cau_hoi", {id: id}); 
+                guiYeuCau("xoa_cau_hoi", {id: id, subject: currentSubject}); 
             } 
         }
 
@@ -653,6 +872,7 @@
             let id = document.getElementById('editQ_ID').value;
             let q = { 
                 id: id, 
+                subject: currentSubject, // Gửi kèm tên môn học
                 question: parseContent('divQ_Content'), 
                 a: parseContent('divQ_A'), 
                 b: parseContent('divQ_B'), 
@@ -786,7 +1006,7 @@
                 await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({action: action, data: data}) }); 
                 setTimeout(async () => { 
                     if(action === 'sua_cau_hoi' || action === 'them_cau_hoi' || action === 'xoa_cau_hoi') { 
-                        chuyenTrangNganHangCauHoi(); 
+                        quanLyNganHang(currentSubject); // Tải lại đúng ngân hàng môn học đang mở
                     } else if(action === 'sua') { 
                         veDanhSachQuanLy(dsHocSinh); 
                         dienThongTinVaoModal(dsHocSinh.find(h => h.id === data.id)); 
