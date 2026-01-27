@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lớp 4/6 - V51 Stable</title>
+    <title>Lớp 4/6 - V52 Bug Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
@@ -26,17 +26,14 @@
             outline: none; transition: all 0.2s;
         }
         .rich-input:focus { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
-        /* Ảnh trong ô soạn thảo */
         .rich-input img { 
             max-height: 100px; border-radius: 6px; border: 1px solid #ddd; 
             display: inline-block; margin: 4px; vertical-align: middle; cursor: pointer;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* Nút Upload Kẹp Tệp */
-        .upload-wrapper {
-            display: flex; align-items: flex-start; gap: 8px;
-        }
+        /* Nút Upload */
+        .upload-wrapper { display: flex; align-items: flex-start; gap: 8px; }
         .upload-btn { 
             background: #f3f4f6; color: #6b7280; 
             border-radius: 8px; cursor: pointer; transition: all 0.2s; 
@@ -45,7 +42,6 @@
         }
         .upload-btn:hover { background: #8b5cf6; color: white; border-color: #8b5cf6; }
 
-        /* Input thường */
         .edit-input { border: 2px solid #bfdbfe; background-color: #eff6ff; padding: 8px 12px; border-radius: 8px; width: 100%; color: #1e40af; font-weight: 700; font-size: 14px; }
         
         #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
@@ -57,10 +53,8 @@
         .quiz-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #15803d; }
         .quiz-wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c; }
         
-        /* Hiển thị ảnh khi làm bài */
         .question-content img, .quiz-option img { max-height: 180px; border-radius: 8px; margin: 8px auto; display: block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        /* Zoom Ảnh */
         .zoom-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; cursor: zoom-out; }
         .zoom-overlay img { max-width: 95vw; max-height: 95vh; border-radius: 8px; animation: zoomIn 0.2s; }
         @keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -173,54 +167,16 @@
                     <h2 class="text-lg font-black uppercase"><i class="fas fa-plus-circle mr-2"></i> Soạn Câu Hỏi Toán</h2>
                 </div>
                 <div class="p-5 overflow-y-auto space-y-4 bg-purple-50">
-                    
-                    <div>
-                        <label class="block text-purple-700 font-bold text-xs uppercase mb-1">Nội dung câu hỏi</label>
-                        <div class="upload-wrapper">
-                            <div id="divQ_Content" contenteditable="true" class="rich-input" placeholder="Nhập câu hỏi..."></div>
-                            <label class="upload-btn" title="Chèn ảnh"><i class="fas fa-paperclip"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_Content')"></label>
-                        </div>
-                    </div>
-                    
+                    <div><label class="block text-purple-700 font-bold text-xs uppercase mb-1">Nội dung câu hỏi</label><div class="upload-wrapper"><div id="divQ_Content" contenteditable="true" class="rich-input" placeholder="Nhập câu hỏi..."></div><label class="upload-btn" title="Chèn ảnh"><i class="fas fa-paperclip"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_Content')"></label></div></div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-purple-700 font-bold text-xs mb-1">Đáp án A</label>
-                            <div class="upload-wrapper">
-                                <div id="divQ_A" contenteditable="true" class="rich-input h-12 min-h-0"></div>
-                                <label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_A')"></label>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-purple-700 font-bold text-xs mb-1">Đáp án B</label>
-                            <div class="upload-wrapper">
-                                <div id="divQ_B" contenteditable="true" class="rich-input h-12 min-h-0"></div>
-                                <label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_B')"></label>
-                            </div>
-                        </div>
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án A</label><div class="upload-wrapper"><div id="divQ_A" contenteditable="true" class="rich-input h-12 min-h-0"></div><label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_A')"></label></div></div>
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án B</label><div class="upload-wrapper"><div id="divQ_B" contenteditable="true" class="rich-input h-12 min-h-0"></div><label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_B')"></label></div></div>
                     </div>
-                    
                     <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-purple-700 font-bold text-xs mb-1">Đáp án C</label>
-                            <div class="upload-wrapper">
-                                <div id="divQ_C" contenteditable="true" class="rich-input h-12 min-h-0"></div>
-                                <label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_C')"></label>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-purple-700 font-bold text-xs mb-1">Đáp án D</label>
-                            <div class="upload-wrapper">
-                                <div id="divQ_D" contenteditable="true" class="rich-input h-12 min-h-0"></div>
-                                <label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_D')"></label>
-                            </div>
-                        </div>
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án C</label><div class="upload-wrapper"><div id="divQ_C" contenteditable="true" class="rich-input h-12 min-h-0"></div><label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_C')"></label></div></div>
+                        <div><label class="block text-purple-700 font-bold text-xs mb-1">Đáp án D</label><div class="upload-wrapper"><div id="divQ_D" contenteditable="true" class="rich-input h-12 min-h-0"></div><label class="upload-btn w-10 h-10" title="Chèn ảnh"><i class="fas fa-paperclip text-xs"></i><input type="file" class="hidden" onchange="uploadImage(this, 'divQ_D')"></label></div></div>
                     </div>
-
-                    <div>
-                        <label class="block text-purple-700 font-bold text-xs uppercase mb-1">Đáp án đúng</label>
-                        <select id="inpQ_Correct" class="edit-input w-full"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option></select>
-                    </div>
-
+                    <div><label class="block text-purple-700 font-bold text-xs uppercase mb-1">Đáp án đúng</label><select id="inpQ_Correct" class="edit-input w-full"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option></select></div>
                     <button onclick="luuCauHoiMoi()" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-bold shadow-lg btn-3d mt-2 uppercase tracking-wide">Lưu Câu Hỏi</button>
                 </div>
             </div>
@@ -248,10 +204,7 @@
                     <h2 class="text-xl font-black text-indigo-900 uppercase">Quản Lý Hồ Sơ</h2>
                 </div>
                 <div class="flex w-full md:w-auto space-x-2">
-                    <div class="relative flex-1 md:w-64">
-                        <i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
-                        <input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-3 border-2 border-indigo-50 rounded-xl focus:outline-none focus:border-indigo-500 font-bold text-gray-700" placeholder="Tìm tên học sinh...">
-                    </div>
+                    <div class="relative flex-1 md:w-64"><i class="fas fa-search absolute left-3 top-3.5 text-gray-400"></i><input id="searchInput" onkeyup="locDanhSach()" type="text" class="w-full pl-10 pr-4 py-3 border-2 border-indigo-50 rounded-xl focus:outline-none focus:border-indigo-500 font-bold text-gray-700" placeholder="Tìm tên học sinh..."></div>
                     <button onclick="moFormThem()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow-md btn-3d whitespace-nowrap"><i class="fas fa-plus mr-1"></i> Thêm</button>
                 </div>
             </div>
@@ -262,7 +215,6 @@
         <div id="profileModal" class="hidden fixed inset-0 z-[70] modal-overlay flex items-center justify-center p-4"><div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg relative fade-in border-4 border-white overflow-hidden flex flex-col max-h-[95vh]"><button onclick="dongHoSo()" class="absolute top-3 right-3 bg-white/80 hover:bg-white text-gray-500 w-8 h-8 rounded-full flex items-center justify-center z-10 transition shadow-sm border"><i class="fas fa-times"></i></button><div id="cardContent" class="overflow-y-auto"><div class="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-center text-white relative rounded-t-2xl"><button id="btnEditHeader" onclick="batCheDoSua(true)" class="hidden absolute top-4 left-4 bg-yellow-400 hover:bg-yellow-300 text-yellow-900 w-10 h-10 rounded-full shadow-lg items-center justify-center transition transform hover:scale-110 z-20 border-2 border-white" title="Sửa thông tin"><i class="fas fa-pen text-sm"></i></button><div class="w-20 h-20 bg-white rounded-full mx-auto flex items-center justify-center text-4xl text-blue-600 shadow-xl border-4 border-blue-200 mb-3"><i class="fas fa-user-astronaut"></i></div><h2 id="viewName" class="text-xl font-black uppercase tracking-wide block drop-shadow-md">--</h2><input id="editName" type="text" class="hidden text-center text-blue-900 font-bold text-xl p-1 rounded w-3/4 mx-auto" placeholder="Nhập tên..."><span id="cardID" class="text-blue-100 text-[10px] font-mono bg-white/20 px-3 py-1 rounded-full mt-1 inline-block">--</span></div><div class="p-5 space-y-3"><div class="grid grid-cols-2 gap-3"><div class="bg-blue-50 p-2 rounded-xl border border-blue-100 shadow-sm text-center"><p class="text-[10px] text-blue-400 uppercase font-bold mb-1">Ngày sinh</p><p id="viewDob" class="font-bold text-gray-800 text-sm">--</p><input id="editDob" type="text" class="hidden edit-input text-center" placeholder="dd/mm/yyyy"></div><div class="bg-blue-50 p-2 rounded-xl border border-blue-100 shadow-sm text-center"><p class="text-[10px] text-blue-400 uppercase font-bold mb-1">Giới tính</p><p id="viewGender" class="font-bold text-gray-800 text-sm">--</p><select id="editGender" class="hidden edit-input text-center"><option value="Nam">Nam</option><option value="Nữ">Nữ</option></select></div></div><div class="grid grid-cols-2 gap-3"><div class="bg-gray-50 p-3 rounded-xl border border-gray-200 flex flex-col justify-between shadow-sm"><div class="flex justify-between items-center mb-1"><span class="text-[10px] text-gray-400 font-bold uppercase"><i class="fas fa-male text-blue-500 mr-1"></i>Cha</span><a id="btnCallFather" href="#" class="text-white bg-green-500 w-6 h-6 rounded-full flex items-center justify-center hover:bg-green-600 shadow-sm"><i class="fas fa-phone-alt text-xs"></i></a></div><span id="viewFather" class="font-bold text-gray-800 text-sm truncate">--</span><input id="editFather" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div><div class="bg-gray-50 p-3 rounded-xl border border-gray-200 flex flex-col justify-between shadow-sm"><div class="flex justify-between items-center mb-1"><span class="text-[10px] text-gray-400 font-bold uppercase"><i class="fas fa-female text-pink-500 mr-1"></i>Mẹ</span><a id="btnCallMother" href="#" class="text-white bg-green-500 w-6 h-6 rounded-full flex items-center justify-center hover:bg-green-600 shadow-sm"><i class="fas fa-phone-alt text-xs"></i></a></div><span id="viewMother" class="font-bold text-gray-800 text-sm truncate">--</span><input id="editMother" type="number" class="hidden edit-input" placeholder="Số ĐT..."></div></div><div class="bg-gray-50 p-3 rounded-xl border border-gray-200 shadow-sm"><p class="text-[10px] text-gray-400 uppercase font-bold mb-1"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i> Chỗ ở</p><p id="viewAddress" class="text-gray-800 font-bold text-sm leading-tight">--</p><input id="editAddress" type="text" class="hidden edit-input" placeholder="Nhập địa chỉ..."></div><div class="bg-yellow-50 p-3 rounded-xl border border-yellow-200 shadow-sm"><p class="text-[10px] text-yellow-700 uppercase font-bold mb-1"><i class="fas fa-sticky-note mr-1"></i> Ghi chú</p><p id="viewNote" class="text-gray-700 italic text-sm leading-tight">--</p><textarea id="editNote" class="hidden edit-input h-16" placeholder="Nhập ghi chú..."></textarea></div></div><div class="bg-gray-50 p-4 border-t border-gray-200 flex flex-col space-y-2"><div id="savePanel" class="hidden flex space-x-3"><button onclick="batCheDoSua(false)" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-bold text-sm shadow-sm">Hủy</button><button onclick="luuThayDoi()" class="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg btn-3d text-sm">LƯU LẠI</button></div><button id="btnDeleteFooter" onclick="xoaHS()" class="hidden w-full bg-red-100 text-red-500 py-3 rounded-xl font-bold hover:bg-red-500 hover:text-white transition text-xs uppercase tracking-wide border border-red-200 shadow-sm"><i class="fas fa-trash-alt mr-2"></i> Xóa hồ sơ này</button><button id="btnLogoutModal" onclick="dangXuat()" class="hidden w-full text-gray-400 py-2 font-bold hover:text-red-500 transition text-[10px]"><i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất tài khoản</button></div></div></div></div>
 
     <script>
-        // --- QUAN TRỌNG: LINK MỚI ĐÃ ĐƯỢC CẬP NHẬT ---
         const API_URL = "https://script.google.com/macros/s/AKfycbzyopuEiu58fVz45SDZOeUnNlDil94GAQhUENNcezPc1AccPeEVXYBiRMQylm10zJSQeg/exec"; 
         
         const PASS_ADMIN = "123456";
@@ -288,28 +240,16 @@
                 const payload = { action: "upload", data: { file: base64, name: file.name, mimeType: file.type } };
                 
                 try {
-                    // Dùng fetch request thường
                     const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
                     const url = await res.text();
-                    
                     if(url.startsWith("http")) {
-                        // CHÈN ẢNH VÀO DIV (Visual)
                         const targetDiv = document.getElementById(targetId);
                         const img = document.createElement('img');
                         img.src = url;
                         img.onclick = function() { phongToAnh(url); };
                         targetDiv.appendChild(img);
-                        
-                        // Đưa con trỏ xuống cuối
-                        const range = document.createRange();
-                        const sel = window.getSelection();
-                        range.setStartAfter(img);
-                        range.collapse(true);
-                        sel.removeAllRanges();
-                        sel.addRange(range);
-                    } else {
-                        alert("Lỗi upload: " + url);
-                    }
+                        const range = document.createRange(); const sel = window.getSelection(); range.setStartAfter(img); range.collapse(true); sel.removeAllRanges(); sel.addRange(range);
+                    } else { alert("Lỗi upload: " + url); }
                 } catch(err) { alert("Lỗi kết nối upload! (File có thể quá lớn)"); } 
                 finally { btn.innerHTML = originalHtml; }
             };
@@ -335,12 +275,12 @@
             return content.trim();
         }
 
+        // --- HÀM ĐÃ SỬA LỖI ĐỂ NHẬN DẠNG SỐ VÀ CHỮ ---
         function xuLyHienThiAnh(text) {
-            if(!text) return "";
-            return text.replace(/\[img:(.*?)\]/g, '<img src="$1" class="zoom-img" onclick="phongToAnh(this.src)">').replace(/\n/g, '<br>');
+            if(text === null || text === undefined) return "";
+            return text.toString().replace(/\[img:(.*?)\]/g, '<img src="$1" class="zoom-img" onclick="phongToAnh(this.src)">').replace(/\n/g, '<br>');
         }
 
-        // --- CÁC HÀM CŨ ---
         function xuLyDangNhap() { const input = document.getElementById('inputLogin').value.trim(); if(!input) return alert("Vui lòng nhập thông tin!"); if (input === PASS_ADMIN) { localStorage.setItem('userRole', 'admin'); vaoGiaoDienAdmin(); return; } const hsTimThay = dsHocSinh.find(hs => (hs.fatherPhone && hs.fatherPhone.toString().includes(input)) || (hs.motherPhone && hs.motherPhone.toString().includes(input))); if (hsTimThay) { localStorage.setItem('userRole', 'student'); localStorage.setItem('studentID', hsTimThay.id); vaoGiaoDienHocSinh(hsTimThay); } else { alert("Số điện thoại chưa đúng!"); } }
         function vaoGiaoDienAdmin() { isAdmin = true; document.getElementById('loader').style.display = 'none'; document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); document.getElementById('headerName').innerText = "Thầy Hiển"; document.getElementById('studentStats').style.display = 'none'; veDanhSachQuanLy(dsHocSinh); }
         function vaoGiaoDienHocSinh(hs) { isAdmin = false; currentHS = hs; document.getElementById('loader').style.display = 'none'; document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('mainApp').classList.remove('hidden'); document.getElementById('headerName').innerText = hs.name; document.getElementById('studentStats').style.display = 'flex'; const diamonds = parseInt(hs.score) || 0; document.getElementById('statDiamond').innerText = diamonds; }
@@ -355,6 +295,7 @@
             if (index >= dsCauHoiToan.length) { document.getElementById('quizContainer').innerHTML = '<div class="text-center pt-10"><h3 class="text-2xl font-bold text-blue-600 mb-4">Chúc mừng! Con đã hoàn thành bài tập!</h3><button onclick="moGocHocTap()" class="bg-blue-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg btn-3d">Quay lại</button></div>'; return; }
             const q = dsCauHoiToan[index];
             
+            // Xử lý hiển thị (đã có toString() ở hàm con)
             let finalQuestion = xuLyHienThiAnh(q.question);
             let a = xuLyHienThiAnh(q.a); let b = xuLyHienThiAnh(q.b); let c = xuLyHienThiAnh(q.c); let d = xuLyHienThiAnh(q.d);
             
