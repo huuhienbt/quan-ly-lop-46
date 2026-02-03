@@ -1,23 +1,19 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 SIÊU TỐC (CÓ GỌI ĐIỆN & ZALO)
+// NÃO BỘ XỬ LÝ - V68 SIÊU TỐC (CÓ GIỚI TÍNH, ZALO, GỌI ĐIỆN)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 const AD_PASS = "123456";
 
-// Dữ liệu tạm (Cache)
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null;
 
-// --- 2. KHỞI ĐỘNG VÀ KẾT NỐI ---
 window.onload = async () => {
     try {
         const r = await fetch(API_URL + "?type=students&t=" + Date.now());
         Data.hs = await r.json();
-        
         document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu thành công!";
         document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
-        
         const role = localStorage.getItem('role');
         if(role === 'admin') loginAdmin();
         else if(role === 'student') {
@@ -67,7 +63,6 @@ function setupUI() {
     else document.getElementById('menuStudent').classList.remove('hidden');
 }
 
-// --- 3. ĐIỀU KHIỂN GIAO DIỆN (UI ROUTING) ---
 const contentArea = document.getElementById('content');
 
 function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
@@ -80,8 +75,6 @@ function veTrangChu() {
     if(currentUser.role === 'admin') renderDashboardAdmin();
     else renderDashboardStudent();
 }
-
-// --- 4. RENDER CÁC MÀN HÌNH CHÍNH ---
 
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
@@ -104,12 +97,10 @@ function renderDashboardStudent() {
     `;
 }
 
-// --- 5. CÁC TÍNH NĂNG GIÁO VIÊN ---
 async function moDonTu() {
     closeMenu();
     contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải...</h2>`;
     const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json();
-    
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600">HỘP THƯ ĐƠN TỪ</h2></div><div class="space-y-4">`;
     html += leaves.map(l => `
         <div class="bg-white p-4 rounded-xl border shadow-sm flex gap-3">
@@ -122,15 +113,11 @@ async function moDonTu() {
 async function moTienDo() {
     closeMenu();
     contentArea.innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tính toán...</h2>`;
-    
     const math = await (await fetch(API_URL+"?type=math")).json();
     const vietnamese = await (await fetch(API_URL+"?type=vietnamese")).json();
     const total = [...new Set(math.map(x=>x.group))].length + [...new Set(vietnamese.map(x=>x.group))].length;
-    
     const logs = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json();
-
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP (${total} BÀI)</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    
     html += Data.hs.map(h => {
         const userL = logs.filter(l => l.id === h.id);
         const done = new Set(userL.map(l => l.subject+l.group)).size;
@@ -155,12 +142,12 @@ function chuyenTrangQuanLy() {
     contentArea.innerHTML = html + "</div>";
 }
 
-// 🎯 HÀM RENDER HỒ SƠ HS (ĐÃ NÂNG CẤP)
+// 🎯 HÀM RENDER HỒ SƠ HS (CÓ GIỚI TÍNH, GỌI ĐIỆN, ZALO)
 function viewProfile(id) {
     const s = Data.hs.find(x => x.id === id);
     document.getElementById("pfName").innerText = s.name;
     
-    // Hàm phụ trợ: Tạo nút Gọi và Zalo cho một SĐT
+    // Tự động tạo nút Gọi & Zalo từ SĐT
     const renderPhoneActions = (phone) => {
         if(!phone || phone === 'undefined') return '<span class="text-gray-400 italic font-normal">Chưa cập nhật</span>';
         const cleanPhone = phone.toString().replace(/\D/g, ''); // Lọc chỉ lấy số
@@ -173,6 +160,7 @@ function viewProfile(id) {
         `;
     };
 
+    // Chèn dữ liệu vào bảng
     document.getElementById("pfContent").innerHTML = `
         <div class="space-y-4 text-sm text-slate-600">
             <div class="flex justify-between items-center border-b pb-2">
@@ -213,7 +201,6 @@ async function quanLyNganHang(sub) {
     contentArea.innerHTML = html + "</div>";
 }
 
-// --- 6. CÁC TÍNH NĂNG HỌC SINH ---
 function moXinPhep() {
     closeMenu();
     contentArea.innerHTML = `
