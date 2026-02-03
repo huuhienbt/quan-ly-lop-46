@@ -2,50 +2,29 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>Lớp 4/6 - V67 Final</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lớp 4/6 - V68 Siêu Tốc</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Nunito', sans-serif; background: #f0f7ff; color: #334155; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .btn-3d { border-bottom: 4px solid rgba(0,0,0,0.15); transition: 0.1s; }
-        .btn-3d:active { border-bottom: 0; transform: translateY(4px); }
-        .rich-input { border: 2px solid #e2e8f0; background: white; padding: 10px; border-radius: 12px; width: 100%; min-height: 50px; outline: none; }
-        .rich-input:focus { border-color: #6366f1; }
-        .rich-input img { max-height: 100px; border-radius: 8px; margin: 5px 0; }
-        .edit-input { width: 100%; padding: 10px; border-radius: 10px; border: 2px solid #e2e8f0; outline: none; font-weight: 700; }
-        .edit-input:focus { border-color: #6366f1; background: white; }
-        #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .header-bg { background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); }
-        .lesson-card { border: 1px solid #e2e8f0; transition: 0.2s; }
-        .lesson-card:hover { transform: translateY(-3px); border-color: #6366f1; }
-        .lesson-done { border-left: 5px solid #22c55e; background: #f0fdf4; }
-        .quiz-option { border: 2px solid #e2e8f0; background: white; transition: 0.2s; }
-        .quiz-correct { background: #dcfce7 !important; border-color: #22c55e !important; }
-        .quiz-wrong { background: #fee2e2 !important; border-color: #ef4444 !important; }
-        .disabled-option { pointer-events: none; opacity: 0.7; }
-        .stat-tab { flex: 1; text-align: center; padding: 12px; font-weight: 800; color: #94a3b8; border-bottom: 3px solid transparent; cursor: pointer; }
-        .stat-tab.active { color: #4f46e5; border-color: #4f46e5; background: #eef2ff; }
-        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-top: 6px; }
-        .progress-fill { height: 100%; transition: width 1s; }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
 </head>
-<body>
+<body class="antialiased">
 
     <div id="loader">
         <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
-        <p class="font-black text-indigo-900 animate-pulse">V67 LOADING...</p>
+        <p class="font-black text-indigo-900 animate-pulse tracking-widest">ĐANG KẾT NỐI...</p>
     </div>
 
-    <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/90">
+    <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center fade-in">
             <h1 class="text-3xl font-black text-indigo-900 mb-6">LỚP 4/6</h1>
-            <input id="inputLogin" type="number" class="w-full p-4 border-2 border-indigo-100 rounded-xl font-bold text-xl text-center mb-4 focus:border-indigo-500 outline-none" placeholder="Mật khẩu / SĐT...">
+            <input id="inputLogin" type="number" class="w-full p-4 border-2 border-indigo-100 rounded-xl font-bold text-xl text-center mb-4 focus:border-indigo-500 outline-none transition" placeholder="Mật khẩu / SĐT...">
             <button onclick="login()" class="w-full bg-indigo-600 text-white p-4 rounded-xl font-bold text-lg btn-3d">ĐĂNG NHẬP</button>
-            <p id="connStatus" class="mt-4 text-xs font-bold text-gray-400">Đang kiểm tra kết nối...</p>
+            <p id="connStatus" class="mt-4 text-xs font-bold text-gray-400">Kiểm tra kết nối...</p>
         </div>
     </div>
 
@@ -61,6 +40,7 @@
                         <span id="headerName" class="font-bold text-xs hidden sm:block">--</span>
                         <i class="fas fa-user-circle text-2xl"></i>
                     </div>
+                    
                     <div id="appMenu" class="hidden absolute top-12 right-0 bg-white text-slate-700 shadow-xl rounded-xl w-60 border border-slate-100 overflow-hidden z-50 fade-in">
                         <div class="bg-slate-50 p-3 border-b"><p class="text-xs font-bold text-slate-400 uppercase">Tài khoản</p><p class="font-black text-slate-800 truncate" id="menuName">--</p></div>
                         <div class="p-2 space-y-1">
@@ -72,7 +52,7 @@
                                 <div onclick="quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-book text-green-600 w-6"></i> Kho Tiếng Việt</div>
                             </div>
                             <div id="menuStudent" class="hidden">
-                                <div onclick="viewProfile(currentUser.id)" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-id-card text-yellow-600 w-6"></i> Hồ sơ</div>
+                                <div onclick="alert('Tính năng đang cập nhật'); closeMenu();" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-id-card text-yellow-600 w-6"></i> Hồ sơ</div>
                                 <div onclick="moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-pen-to-square text-red-600 w-6"></i> Xin nghỉ</div>
                             </div>
                         </div>
@@ -83,308 +63,7 @@
         </div>
 
         <div id="content" class="container mx-auto px-4 pt-6 max-w-5xl fade-in">
-            
-            <div id="viewDashboard">
-                <div id="dashTeacher" class="hidden">
-                    <div class="bg-gradient-to-r from-indigo-600 to-blue-500 rounded-3xl p-6 text-white mb-8 shadow-lg">
-                        <div onclick="toggleStats()" class="flex justify-between items-center cursor-pointer">
-                            <h3 class="font-bold uppercase tracking-wider"><i class="fas fa-calendar-day mr-2"></i>Tình hình hôm nay</h3>
-                            <i id="iconStats" class="fas fa-chevron-down bg-white/20 w-8 h-8 rounded-full flex items-center justify-center"></i>
-                        </div>
-                        <div id="statsContent" class="hidden mt-6 border-t border-white/20 pt-4 fade-in">
-                            <div class="grid grid-cols-3 gap-4 text-center mb-4">
-                                <div class="bg-white/10 p-2 rounded-xl"><p class="text-xs opacity-70">Tổng vắng</p><p class="text-2xl font-black" id="stTotal">0</p></div>
-                                <div class="bg-red-500/20 p-2 rounded-xl border border-red-400/30"><p class="text-xs opacity-70">Nghỉ học</p><p class="text-2xl font-black" id="stOff">0</p></div>
-                                <div class="bg-yellow-500/20 p-2 rounded-xl border border-yellow-400/30"><p class="text-xs opacity-70">Cắt cơm</p><p class="text-2xl font-black" id="stLunch">0</p></div>
-                            </div>
-                            <button onclick="moChiTietVang()" class="w-full bg-white/20 hover:bg-white/30 py-2 rounded-lg text-xs font-bold transition">Xem danh sách & Copy báo cáo</button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <button onclick="chuyenTrangQuanLy()" class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-blue-100 hover:border-blue-300 transition flex flex-col items-center gap-2 btn-3d"><i class="fas fa-user-graduate text-3xl text-blue-600"></i><span class="font-bold text-slate-700 text-sm">Học sinh</span></button>
-                        <button onclick="moDonTu()" class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-red-100 hover:border-red-300 transition flex flex-col items-center gap-2 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700 text-sm">Đơn từ</span></button>
-                        <button onclick="moTienDo()" class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-purple-100 hover:border-purple-300 transition flex flex-col items-center gap-2 btn-3d"><i class="fas fa-chart-pie text-3xl text-purple-600"></i><span class="font-bold text-slate-700 text-sm">Tiến độ</span></button>
-                        <button onclick="quanLyNganHang('math')" class="bg-white p-5 rounded-2xl shadow-sm border-b-4 border-indigo-100 hover:border-indigo-300 transition flex flex-col items-center gap-2 btn-3d"><i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700 text-sm">Kho Toán</span></button>
-                    </div>
-                </div>
-
-                <div id="dashStudent" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="text-center col-span-1 md:col-span-2 mb-4"><h2 class="text-2xl font-black text-slate-800">Chào, <span id="welcomeName" class="text-indigo-600">--</span>!</h2></div>
-                    <button onclick="moThongBao()" class="relative h-56 bg-white border-4 border-orange-100 rounded-[2rem] shadow-xl flex flex-col items-center justify-center hover:-translate-y-2 transition"><i class="fas fa-bullhorn text-5xl text-orange-500 mb-3"></i><span class="font-black text-2xl text-slate-700">THÔNG BÁO</span><span id="badgeNoti" class="absolute top-4 right-4 w-4 h-4 bg-red-500 rounded-full animate-ping hidden"></span></button>
-                    <button onclick="moGocHocTap()" class="relative h-56 bg-white border-4 border-indigo-100 rounded-[2rem] shadow-xl flex flex-col items-center justify-center hover:-translate-y-2 transition"><i class="fas fa-rocket text-5xl text-indigo-600 mb-3"></i><span class="font-black text-2xl text-slate-700">GÓC HỌC TẬP</span></button>
-                </div>
             </div>
-
-            <div id="viewDonTu" class="hidden">
-                <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-lg shadow mr-4"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="text-2xl font-black text-red-600 uppercase">HỘP THƯ ĐƠN TỪ</h2></div>
-                <div id="listLeaves" class="space-y-4"></div>
-            </div>
-
-            <div id="viewTienDo" class="hidden">
-                <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-lg shadow mr-4"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="text-2xl font-black text-purple-600 uppercase">TIẾN ĐỘ HỌC TẬP</h2></div>
-                <div class="bg-white p-4 rounded-xl shadow-sm mb-6 border-l-4 border-indigo-500"><p class="text-xs font-bold text-gray-400 uppercase">TỔNG BÀI TRÊN HỆ THỐNG</p><p class="text-3xl font-black text-indigo-900" id="totalEx">0</p></div>
-                <div id="gridProgress" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-            </div>
-
-            <div id="viewManager" class="hidden"><div class="flex justify-between mb-4"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow"><i class="fas fa-arrow-left"></i></button><button onclick="moFormThem()" class="bg-green-500 text-white px-4 py-2 rounded-lg font-bold">Thêm HS</button></div><div id="listStudents" class="space-y-3"></div></div>
-            <div id="viewQManager" class="hidden"><div class="flex justify-between mb-4"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow"><i class="fas fa-arrow-left"></i></button><button onclick="moModalQ(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold">Soạn bài</button></div><select id="filterQ" onchange="renderQ()" class="w-full p-3 rounded-lg border mb-4 font-bold"><option value="all">Tất cả</option></select><div id="listQuestions" class="space-y-3"></div></div>
-            <div id="viewHomework" class="hidden"><div class="flex mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-4"><i class="fas fa-arrow-left"></i></button><h2>CHỌN MÔN</h2></div><div class="grid grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="h-40 bg-blue-500 text-white rounded-2xl font-black text-2xl shadow-lg btn-3d">TOÁN</button><button onclick="loadSubject('vietnamese')" class="h-40 bg-green-500 text-white rounded-2xl font-black text-2xl shadow-lg btn-3d">TIẾNG VIỆT</button></div></div>
-            <div id="viewTopics" class="hidden"><div class="flex mb-4"><button onclick="moGocHocTap()" class="bg-white p-2 rounded shadow mr-4"><i class="fas fa-arrow-left"></i></button><h2 id="topicTitle" class="font-black text-xl uppercase">...</h2></div><div id="listTopics" class="space-y-3"></div></div>
-            <div id="viewQuiz" class="hidden"><div class="sticky top-20 bg-[#f0f7ff] z-30 py-2 flex justify-between items-center mb-4"><button onclick="backToTopics()" class="bg-white w-10 h-10 rounded-full shadow font-bold text-slate-500">X</button><span class="bg-white px-4 py-1 rounded-full font-bold text-indigo-600 shadow border" id="quizTimer">00:00</span></div><div id="quizBox" class="bg-white p-6 rounded-3xl shadow-xl border-4 border-white min-h-[400px]"></div></div>
-        </div>
-
-        <div id="modalStats" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60"><div class="bg-white rounded-2xl w-full max-w-md overflow-hidden"><div class="bg-indigo-600 p-3 text-white flex justify-between"><span class="font-bold">CHI TIẾT VẮNG</span><button onclick="closeModal('modalStats')">✕</button></div><div id="listAbsent" class="p-4 max-h-[60vh] overflow-y-auto space-y-2"></div><button onclick="copyStats()" class="w-full bg-green-600 text-white py-3 font-bold">COPY BÁO CÁO</button></div></div>
-        <div id="modalLeave" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60"><div class="bg-white rounded-2xl p-6 w-full max-w-md"><h2 class="text-xl font-black text-red-600 mb-4 text-center">GỬI ĐƠN</h2><input type="date" id="leaveDate" class="edit-input mb-3 text-center"><div class="grid grid-cols-2 gap-3 mb-3"><label class="border-2 p-2 rounded-lg flex justify-center font-bold cursor-pointer"><input type="radio" name="lType" value="Nghỉ cả ngày" checked> Nghỉ học</label><label class="border-2 p-2 rounded-lg flex justify-center font-bold cursor-pointer"><input type="radio" name="lType" value="Cắt cơm trưa"> Cắt cơm</label></div><textarea id="leaveMsg" class="edit-input mb-4" placeholder="Lý do..."></textarea><div class="flex gap-2"><button onclick="closeModal('modalLeave')" class="flex-1 bg-slate-200 py-3 rounded-lg font-bold">Hủy</button><button onclick="sendLeave()" class="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold shadow-lg">GỬI</button></div></div></div>
-        <div id="modalQ" class="hidden fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60"><div class="bg-white rounded-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"><div class="bg-indigo-600 p-3 text-white font-bold text-center">SOẠN CÂU HỎI <button onclick="closeModal('modalQ')" class="absolute right-4">✕</button></div><div class="p-4 overflow-y-auto space-y-3 bg-slate-50 flex-1"><input type="hidden" id="mqID"><input list="dlG" id="mqG" class="edit-input" placeholder="Tên Bài (Tuần 1...)"><datalist id="dlG"></datalist><div class="flex gap-2"><div id="mqQ" contenteditable="true" class="rich-input"></div><label class="bg-gray-200 w-10 flex items-center justify-center rounded cursor-pointer"><i class="fas fa-image"></i><input type="file" hidden onchange="upImg(this,'mqQ')"></label></div><div class="grid grid-cols-2 gap-2"><div>A <div id="mqA" contenteditable="true" class="rich-input h-10"></div></div><div>B <div id="mqB" contenteditable="true" class="rich-input h-10"></div></div><div>C <div id="mqC" contenteditable="true" class="rich-input h-10"></div></div><div>D <div id="mqD" contenteditable="true" class="rich-input h-10"></div></div></div><select id="mqCrr" class="edit-input"><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option></select></div><button onclick="saveQ()" class="w-full bg-indigo-600 text-white py-3 font-bold">LƯU</button></div></div>
-        <div id="modalProfile" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60"><div class="bg-white rounded-2xl w-full max-w-md p-6"><div class="text-center mb-4"><div class="w-16 h-16 bg-blue-100 rounded-full mx-auto flex items-center justify-center text-3xl mb-2">👤</div><h2 id="pfName" class="font-black text-xl">--</h2></div><div id="pfInfo" class="space-y-2 text-sm bg-slate-50 p-4 rounded-xl"></div><button onclick="closeModal('modalProfile')" class="w-full mt-4 bg-slate-200 py-2 rounded-lg font-bold">Đóng</button></div></div>
     </div>
-
-    <script>
-        // --- 1. CONFIG ---
-        const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
-        const AD_PASS = "123456";
-        let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [] };
-        let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null;
-
-        // --- 2. INIT ---
-        window.onload = async () => {
-            try {
-                const r = await fetch(API_URL + "?type=students&t=" + Date.now());
-                const d = await r.json();
-                if(d.error) throw d.error;
-                Data.hs = d;
-                document.getElementById('connStatus').innerText = "Đã kết nối";
-                document.getElementById('connStatus').className = "text-green-500 font-bold text-xs mt-2";
-                
-                const role = localStorage.getItem('role');
-                if(role === 'admin') loginAdmin();
-                else if(role === 'student') {
-                    const u = Data.hs.find(x => x.id === localStorage.getItem('uid'));
-                    if(u) loginStudent(u); else showLogin();
-                } else showLogin();
-            } catch(e) {
-                document.getElementById('connStatus').innerText = "Lỗi kết nối!";
-                alert("Không thể tải dữ liệu. Kiểm tra mạng hoặc Link API!");
-            }
-        };
-
-        function showLogin() { document.getElementById('loader').style.display='none'; document.getElementById('loginScreen').classList.remove('hidden'); }
-        
-        function login() {
-            const v = document.getElementById('inputLogin').value.trim();
-            if(v === AD_PASS) { localStorage.setItem('role','admin'); loginAdmin(); return; }
-            const u = Data.hs.find(s => s.fatherPhone.includes(v) || s.motherPhone.includes(v));
-            if(u) { localStorage.setItem('role','student'); localStorage.setItem('uid',u.id); loginStudent(u); }
-            else alert("Sai thông tin!");
-        }
-
-        function loginAdmin() {
-            currentUser = { role: 'admin', name: "Thầy Hiển" };
-            setupUI();
-            document.getElementById('dashTeacher').classList.remove('hidden');
-            document.getElementById('menuTeacher').classList.remove('hidden');
-            loadStats();
-        }
-
-        async function loginStudent(u) {
-            currentUser = { ...u, role: 'student' };
-            setupUI();
-            document.getElementById('dashStudent').classList.remove('hidden');
-            document.getElementById('menuStudent').classList.remove('hidden');
-            document.getElementById('welcomeText').classList.remove('hidden');
-            document.getElementById('welcomeName').innerText = u.name;
-            // Load logs
-            const r = await fetch(API_URL + "?type=history&studentId=" + u.id);
-            Data.log = await r.json();
-        }
-
-        function setupUI() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('loader').style.display='none';
-            document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('menuName').innerText = currentUser.name;
-            document.getElementById('headerName').innerText = currentUser.role==='admin'?'GV':currentUser.name;
-        }
-
-        // --- MENU NAVIGATION ---
-        function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
-        function closeMenu() { document.getElementById('appMenu').classList.add('hidden'); }
-        function navTo(id) {
-            closeMenu();
-            clearInterval(timer);
-            document.querySelectorAll('#content > div').forEach(d => d.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-        }
-        function veTrangChu() { navTo('viewDashboard'); }
-        function logout() { localStorage.clear(); location.reload(); }
-
-        // --- TEACHER FUNCTIONS ---
-        async function loadStats() {
-            const r = await fetch(API_URL + "?type=dashboard_stats&t=" + Date.now());
-            Data.stats = await r.json();
-            document.getElementById('stTotal').innerText = Data.stats.vắng_học + Data.stats.cắt_cơm;
-            document.getElementById('stOff').innerText = Data.stats.vắng_học;
-            document.getElementById('stLunch').innerText = Data.stats.cắt_cơm;
-        }
-        function toggleStats() { document.getElementById('statsContent').classList.toggle('hidden'); }
-        
-        function moChiTietVang() {
-            const l = Data.stats.danh_sách;
-            if(!l.length) return alert("Không có dữ liệu");
-            document.getElementById('listAbsent').innerHTML = l.map((i,x) => `
-                <div class="border-b pb-2 mb-2">
-                    <div class="flex justify-between font-bold"><span>${x+1}. ${i.name}</span><span class="${i.type.includes('Nghỉ')?'text-red-500':'text-blue-500'}">${i.type}</span></div>
-                    <div class="text-xs text-gray-500">${i.reason}</div>
-                </div>`).join('');
-            document.getElementById('modalStats').classList.remove('hidden');
-        }
-        function copyStats() {
-            let t = `THỐNG KÊ ${new Date().toLocaleDateString('vi-VN')}\n`;
-            Data.stats.danh_sách.forEach((i,x) => t+=`${x+1}. ${i.name}: ${i.type} (${i.reason})\n`);
-            navigator.clipboard.writeText(t).then(()=>alert("Đã copy"));
-        }
-
-        async function moDonTu() {
-            navTo('viewDonTu');
-            document.getElementById('listLeaves').innerHTML = '<p class="text-center">Đang tải...</p>';
-            const r = await fetch(API_URL + "?type=absent_list&t=" + Date.now());
-            const l = await r.json();
-            document.getElementById('listLeaves').innerHTML = l.length ? l.map(i => `
-                <div class="bg-white p-4 rounded-xl shadow-sm border mb-3">
-                    <div class="flex justify-between font-bold"><span>${i.name}</span><span class="bg-gray-100 px-2 rounded text-xs">${i.dateOff}</span></div>
-                    <div class="text-sm font-bold text-indigo-600">${i.type}</div>
-                    <div class="text-xs text-gray-500 italic">"${i.reason}"</div>
-                </div>`).join('') : '<p class="text-center text-gray-400">Trống</p>';
-        }
-
-        async function moTienDo() {
-            navTo('viewTienDo');
-            document.getElementById('gridProgress').innerHTML = '<p class="text-center">Đang tính toán...</p>';
-            
-            // 1. Get Questions Count
-            const m = await (await fetch(API_URL+"?type=math")).json();
-            const t = await (await fetch(API_URL+"?type=vietnamese")).json();
-            const total = [...new Set(m.map(x=>x.group))].length + [...new Set(t.map(x=>x.group))].length;
-            document.getElementById('totalEx').innerText = total;
-
-            // 2. Get All Logs
-            const logs = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json();
-
-            // 3. Render
-            document.getElementById('gridProgress').innerHTML = Data.hs.map(h => {
-                const userL = logs.filter(l => l.id == h.id);
-                const done = new Set(userL.map(l => l.subject+l.group)).size;
-                const pct = total ? Math.round((done/total)*100) : 0;
-                return `
-                <div class="bg-white p-3 rounded-xl border flex items-center justify-between">
-                    <div class="flex items-center gap-2"><div class="w-8 h-8 bg-gray-100 rounded-full flex justify-center items-center font-bold text-xs">${h.name[0]}</div><span class="font-bold text-sm">${h.name}</span></div>
-                    <div class="w-24 text-right"><div class="text-xs font-bold mb-1">${done}/${total} (${pct}%)</div><div class="progress-bar"><div class="progress-fill ${pct==100?'bg-green-500':'bg-blue-500'}" style="width:${pct}%"></div></div></div>
-                </div>`;
-            }).join('');
-        }
-
-        function chuyenTrangQuanLy() { navTo('viewManager'); renderHS(); }
-        function renderHS() {
-            document.getElementById('listStudents').innerHTML = Data.hs.map(h => `
-                <div onclick="viewProfile('${h.id}')" class="bg-white p-3 rounded-lg border flex justify-between items-center cursor-pointer">
-                    <div><span class="font-bold">${h.name}</span><br><span class="text-xs text-gray-400">${h.dob}</span></div>
-                    <i class="fas fa-chevron-right text-gray-300"></i>
-                </div>`).join('');
-        }
-        function viewProfile(id) {
-            const h = Data.hs.find(x=>x.id==id);
-            document.getElementById('pfName').innerText = h.name;
-            document.getElementById('pfInfo').innerHTML = `<p>Ngày sinh: <b>${h.dob}</b></p><p>Cha: <b>${h.fatherPhone}</b></p><p>Mẹ: <b>${h.motherPhone}</b></p><p>Đ/c: ${h.address}</p>`;
-            document.getElementById('modalProfile').classList.remove('hidden');
-        }
-
-        // --- STUDENT FUNCTIONS ---
-        function moXinPhep() { 
-            closeMenu();
-            document.getElementById('leaveDate').valueAsDate = new Date(Date.now()+86400000);
-            document.getElementById('modalLeave').classList.remove('hidden'); 
-        }
-        async function sendLeave() {
-            const d = document.getElementById('leaveDate').value;
-            const r = document.getElementById('leaveMsg').value;
-            if(!d || !r) return alert("Nhập đủ!");
-            document.getElementById('loader').style.display = 'flex';
-            document.getElementById('modalLeave').classList.add('hidden');
-            await postAPI('gui_xin_phep', { id: currentUser.id, name: currentUser.name, dateOff: d, type: document.querySelector('input[name="lType"]:checked').value, reason: r });
-            alert("Đã gửi!");
-            document.getElementById('loader').style.display = 'none';
-        }
-
-        function moGocHocTap() { navTo('viewHomework'); }
-        async function loadSubject(sub) {
-            curSub = sub; navTo('viewTopics');
-            document.getElementById('topicTitle').innerText = sub=='math'?'TOÁN':'TIẾNG VIỆT';
-            const qs = await (await fetch(API_URL+"?type="+sub)).json();
-            Data[sub] = qs;
-            const grps = [...new Set(qs.map(x=>x.group))].sort();
-            document.getElementById('listTopics').innerHTML = grps.map(g => {
-                const done = Data.log.some(l => l.subject==sub && l.group==g);
-                return `<div onclick="startQuiz('${g}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer ${done?'lesson-done':'lesson-card'}">
-                    <span class="font-bold">${g}</span>
-                    ${done?'<i class="fas fa-check text-green-600"></i>':'<span class="text-xs bg-red-500 text-white px-2 rounded">Mới</span>'}
-                </div>`;
-            }).join('');
-        }
-
-        function startQuiz(g) {
-            curGrp = g; navTo('viewQuiz');
-            const qs = Data[curSub].filter(x => x.group == g).sort(()=>Math.random()-0.5).slice(0,10);
-            quiz = qs; currentQIndex = 0; score = 0;
-            renderQ(0);
-            let t = (qs[0].time||10)*60;
-            timer = setInterval(() => {
-                let m=Math.floor(t/60), s=t%60;
-                document.getElementById('quizTimer').innerText = `${m}:${s<10?'0'+s:s}`;
-                if(t-- < 0) endQuiz();
-            }, 1000);
-        }
-
-        function renderQ(i) {
-            if(i >= quiz.length) { endQuiz(); return; }
-            const q = quiz[i];
-            document.getElementById('quizBox').innerHTML = `
-                <div class="font-bold text-xl mb-4">${parseImg(q.question)}</div>
-                <div class="space-y-3">${['a','b','c','d'].map(k => `<div onclick="checkAns(this,'${k}','${q.correct}',${i})" class="quiz-option p-3 rounded-lg flex gap-3 font-bold text-slate-600"><span class="bg-gray-100 w-8 h-8 flex justify-center items-center rounded uppercase">${k}</span>${parseImg(q[k])}</div>`).join('')}</div>
-            `;
-        }
-
-        function checkAns(el, k, corr, i) {
-            document.querySelectorAll('.quiz-option').forEach(x => x.classList.add('disabled-option'));
-            if(k === corr) { el.classList.add('quiz-correct'); score+=10; } else el.classList.add('quiz-wrong');
-            setTimeout(() => renderQ(i+1), 1500);
-        }
-
-        async function endQuiz() {
-            clearInterval(timer);
-            document.getElementById('quizBox').innerHTML = `<div class="text-center py-10"><div class="text-6xl mb-4">🏆</div><h3 class="font-black text-3xl text-indigo-900">KẾT QUẢ: ${score}</h3><button onclick="loadSubject(curSub)" class="mt-6 bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold">Quay lại</button></div>`;
-            if(currentUser.role === 'student') {
-                await postAPI('nop_bai', { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score });
-                Data.log.push({subject: curSub, group: curGrp});
-            }
-        }
-
-        // --- HELPERS ---
-        async function postAPI(act, d) { return fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({action:act, data:d}) }); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1">').replace(/\n/g,'<br>'); }
-        // Các hàm quản lý câu hỏi (rút gọn hiển thị, logic giữ nguyên)
-        async function quanLyNganHang(sub) { curSub=sub; navTo('viewQManager'); const qs = await (await fetch(API_URL+"?type="+sub)).json(); renderQList(qs); }
-        function renderQList(l) { document.getElementById('listQuestions').innerHTML = l.map(q => `<div class="bg-white p-3 rounded border flex justify-between"><div><span class="bg-indigo-100 text-xs px-2 rounded">${q.group}</span><div class="font-bold">${parseImg(q.question)}</div></div><div class="flex gap-2"><button onclick="editQ('${q.id}')" class="text-blue-500"><i class="fas fa-edit"></i></button><button onclick="delQ('${q.id}')" class="text-red-500"><i class="fas fa-trash"></i></button></div></div>`).join(''); }
-        function moModalQ(id) { document.getElementById('modalQ').classList.remove('hidden'); }
-        async function saveQ() { 
-            const d = { id: document.getElementById('mqID').value, subject: curSub, group: document.getElementById('mqG').value, time: 10, question: getContent('mqQ'), a: getContent('mqA'), b: getContent('mqB'), c: getContent('mqC'), d: getContent('mqD'), correct: document.getElementById('mqCrr').value, image: "" };
-            await postAPI(d.id?"sua_cau_hoi":"them_cau_hoi", d); alert("OK"); location.reload();
-        }
-        async function delQ(id) { if(confirm("Xóa?")) await postAPI("xoa_cau_hoi", {id, subject: curSub}); alert("OK"); location.reload(); }
-        function getContent(id) { return document.getElementById(id).innerText; }
-        function upImg(i,t) { /* Upload logic */ }
-    </script>
 </body>
 </html>
-
