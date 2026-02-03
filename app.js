@@ -1,5 +1,7 @@
-// --- CẤU HÌNH ---
-// THẦY KIỂM TRA LẠI LINK API NHÉ
+// ==========================================
+// NÃO BỘ XỬ LÝ - V68 SIÊU TỐC (CÓ GỌI ĐIỆN & ZALO)
+// ==========================================
+
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 const AD_PASS = "123456";
 
@@ -7,16 +9,15 @@ const AD_PASS = "123456";
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null;
 
-// --- KHỞI ĐỘNG VÀ KẾT NỐI ---
+// --- 2. KHỞI ĐỘNG VÀ KẾT NỐI ---
 window.onload = async () => {
     try {
         const r = await fetch(API_URL + "?type=students&t=" + Date.now());
         Data.hs = await r.json();
         
-        document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu";
+        document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu thành công!";
         document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
         
-        // Tự động đăng nhập
         const role = localStorage.getItem('role');
         if(role === 'admin') loginAdmin();
         else if(role === 'student') {
@@ -24,7 +25,7 @@ window.onload = async () => {
             if(u) loginStudent(u); else showLogin();
         } else showLogin();
     } catch(e) {
-        document.getElementById('connStatus').innerText = "Lỗi mạng hoặc Link API";
+        document.getElementById('connStatus').innerText = "Lỗi mạng hoặc Link API bị sai!";
         document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-red-500";
     }
 };
@@ -52,7 +53,6 @@ async function loginStudent(u) {
     currentUser = { ...u, role: 'student' };
     setupUI();
     renderDashboardStudent();
-    // Tải ngầm lịch sử học sinh
     const r = await fetch(API_URL + "?type=history&studentId=" + u.id);
     Data.log = await r.json();
 }
@@ -67,7 +67,7 @@ function setupUI() {
     else document.getElementById('menuStudent').classList.remove('hidden');
 }
 
-// --- ĐIỀU KHIỂN GIAO DIỆN (UI ROUTING) ---
+// --- 3. ĐIỀU KHIỂN GIAO DIỆN (UI ROUTING) ---
 const contentArea = document.getElementById('content');
 
 function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
@@ -81,7 +81,8 @@ function veTrangChu() {
     else renderDashboardStudent();
 }
 
-// --- RENDER MÀN HÌNH ---
+// --- 4. RENDER CÁC MÀN HÌNH CHÍNH ---
+
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
@@ -103,7 +104,7 @@ function renderDashboardStudent() {
     `;
 }
 
-// --- CÁC CHỨC NĂNG GV ---
+// --- 5. CÁC TÍNH NĂNG GIÁO VIÊN ---
 async function moDonTu() {
     closeMenu();
     contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải...</h2>`;
@@ -146,28 +147,81 @@ async function moTienDo() {
 function chuyenTrangQuanLy() {
     closeMenu();
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`;
-    html += Data.hs.map(h => `<div class="bg-white p-4 rounded-xl border flex justify-between items-center"><span class="font-bold">${h.name}</span><span class="text-xs text-gray-500">${h.dob}</span></div>`).join('');
+    html += Data.hs.map(h => `
+        <div onclick="viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition">
+            <span class="font-bold text-slate-700">${h.name}</span>
+            <span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span>
+        </div>`).join('');
     contentArea.innerHTML = html + "</div>";
 }
 
+// 🎯 HÀM RENDER HỒ SƠ HS (ĐÃ NÂNG CẤP)
+function viewProfile(id) {
+    const s = Data.hs.find(x => x.id === id);
+    document.getElementById("pfName").innerText = s.name;
+    
+    // Hàm phụ trợ: Tạo nút Gọi và Zalo cho một SĐT
+    const renderPhoneActions = (phone) => {
+        if(!phone || phone === 'undefined') return '<span class="text-gray-400 italic font-normal">Chưa cập nhật</span>';
+        const cleanPhone = phone.toString().replace(/\D/g, ''); // Lọc chỉ lấy số
+        return `
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-800">${phone}</span>
+                <a href="tel:${cleanPhone}" class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-sm hover:bg-green-600 hover:text-white transition" title="Gọi điện"><i class="fas fa-phone-alt"></i></a>
+                <a href="https://zalo.me/${cleanPhone}" target="_blank" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-600 hover:text-white transition" title="Nhắn Zalo"><i class="fas fa-comment"></i></a>
+            </div>
+        `;
+    };
+
+    document.getElementById("pfContent").innerHTML = `
+        <div class="space-y-4 text-sm text-slate-600">
+            <div class="flex justify-between items-center border-b pb-2">
+                <span class="font-bold text-gray-400 uppercase text-xs">Giới tính</span>
+                <span class="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">${s.gender || 'Chưa rõ'}</span>
+            </div>
+            <div class="flex justify-between items-center border-b pb-2">
+                <span class="font-bold text-gray-400 uppercase text-xs">Ngày sinh</span>
+                <b class="text-slate-800">${s.dob || 'Chưa cập nhật'}</b>
+            </div>
+            <div class="flex justify-between items-center border-b pb-2">
+                <span class="font-bold text-gray-400 uppercase text-xs">SĐT Cha</span>
+                ${renderPhoneActions(s.fatherPhone)}
+            </div>
+            <div class="flex justify-between items-center border-b pb-2">
+                <span class="font-bold text-gray-400 uppercase text-xs">SĐT Mẹ</span>
+                ${renderPhoneActions(s.motherPhone)}
+            </div>
+            <div class="flex justify-between items-start border-b pb-2">
+                <span class="font-bold text-gray-400 uppercase text-xs w-20">Địa chỉ</span>
+                <b class="text-slate-800 text-right flex-1 leading-tight">${s.address || 'Chưa cập nhật'}</b>
+            </div>
+            ${s.note ? `<div class="bg-yellow-50 p-3 rounded-xl text-yellow-800 italic border border-yellow-100"><i class="fas fa-sticky-note mr-2"></i>${s.note}</div>` : ''}
+        </div>
+    `;
+
+    document.getElementById("modalProfile").classList.remove("hidden");
+}
+
+function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+
 async function quanLyNganHang(sub) {
     closeMenu();
-    contentArea.innerHTML = `<p class="text-center">Đang tải câu hỏi...</p>`;
+    contentArea.innerHTML = `<p class="text-center font-bold text-indigo-600 mt-10"><i class="fas fa-spinner fa-spin mr-2"></i> Đang tải câu hỏi...</p>`;
     const qs = await (await fetch(API_URL+"?type="+sub)).json();
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">KHO ${sub=='math'?'TOÁN':'TIẾNG VIỆT'}</h2></div><div class="space-y-4">`;
     html += qs.map(q => `<div class="bg-white p-4 rounded-xl border"><span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold">${q.group}</span><div class="mt-2 font-bold">${q.question.replace(/\n/g,'<br>')}</div></div>`).join('');
     contentArea.innerHTML = html + "</div>";
 }
 
-// --- CÁC CHỨC NĂNG HỌC SINH ---
+// --- 6. CÁC TÍNH NĂNG HỌC SINH ---
 function moXinPhep() {
     closeMenu();
     contentArea.innerHTML = `
         <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600">GỬI ĐƠN PHÉP</h2></div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-            <div><label class="font-bold text-gray-600">Ngày</label><input type="date" id="lDate" class="edit-input w-full"></div>
-            <div><label class="font-bold text-gray-600">Lý do</label><textarea id="lReason" class="edit-input w-full" rows="3"></textarea></div>
-            <button onclick="sendLeave()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold btn-3d">GỬI ĐƠN</button>
+            <div><label class="font-bold text-gray-600">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full mt-1"></div>
+            <div><label class="font-bold text-gray-600">Lý do</label><textarea id="lReason" class="edit-input w-full mt-1" rows="3" placeholder="Nhập lý do nghỉ..."></textarea></div>
+            <button onclick="sendLeave()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold btn-3d shadow-lg mt-4">GỬI ĐƠN</button>
         </div>
     `;
     document.getElementById('lDate').valueAsDate = new Date(Date.now()+86400000);
@@ -175,8 +229,24 @@ function moXinPhep() {
 
 async function sendLeave() {
     const d = document.getElementById('lDate').value, r = document.getElementById('lReason').value;
-    if(!d || !r) return alert("Nhập đủ thông tin!");
+    if(!d || !r) return alert("Vui lòng nhập đủ thông tin!");
+    
     document.getElementById('loader').style.display='flex';
-    await fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:'Nghỉ cả ngày', reason:r } }) });
-    alert("Gửi thành công!"); document.getElementById('loader').style.display='none'; veTrangChu();
+    try {
+        await fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:'Nghỉ cả ngày', reason:r } }) });
+        alert("Gửi đơn thành công!"); 
+        veTrangChu();
+    } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); }
+    document.getElementById('loader').style.display='none'; 
+}
+
+function moGocHocTap() {
+    closeMenu();
+    contentArea.innerHTML = `
+        <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">GÓC HỌC TẬP</h2></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button onclick="alert('Tính năng làm bài trắc nghiệm đang được nạp vào V68...');" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d">TOÁN</button>
+            <button onclick="alert('Tính năng làm bài trắc nghiệm đang được nạp vào V68...');" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d">TIẾNG VIỆT</button>
+        </div>
+    `;
 }
