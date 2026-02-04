@@ -1,23 +1,21 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 SIÊU TỐC (UPDATE: ĐÃ CÓ LÀM BÀI)
+// NÃO BỘ XỬ LÝ - V68 SIÊU TỐC (UPDATE: FIX ẢNH & UI TRẮC NGHIỆM)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
-const AD_PASS = "123456"; // Lưu ý: Lộ password ở client là không bảo mật, nhưng chấp nhận được với quy mô lớp học nhỏ.
+const AD_PASS = "123456"; 
 
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null;
 
-// --- KHỞI TẠO ---
+// --- 1. KHỞI TẠO & KẾT NỐI ---
 window.onload = async () => {
     try {
-        // Tải danh sách HS ngay khi vào để đối chiếu đăng nhập
         const r = await fetch(API_URL + "?type=students&t=" + Date.now());
         Data.hs = await r.json();
-        document.getElementById('connStatus').innerText = "Đã kết nối máy chủ!";
+        document.getElementById('connStatus').innerText = "Đã kết nối máy chủ thành công!";
         document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
         
-        // Kiểm tra phiên đăng nhập cũ
         const role = localStorage.getItem('role');
         if(role === 'admin') loginAdmin();
         else if(role === 'student') {
@@ -30,7 +28,7 @@ window.onload = async () => {
     }
 };
 
-// --- CÁC HÀM ĐĂNG NHẬP ---
+// --- 2. HỆ THỐNG ĐĂNG NHẬP ---
 function showLogin() { 
     document.getElementById('loader').style.display = 'none'; 
     document.getElementById('loginScreen').classList.remove('hidden'); 
@@ -40,10 +38,10 @@ function login() {
     const v = document.getElementById('inputLogin').value.trim();
     if(v === AD_PASS) { localStorage.setItem('role','admin'); loginAdmin(); return; }
     
-    // Tìm HS có SĐT khớp (sửa logic một chút để chính xác hơn)
+    // Tìm HS có SĐT khớp (sửa logic cho chính xác hơn)
     const u = Data.hs.find(s => 
-        (s.fatherPhone && s.fatherPhone.includes(v)) || 
-        (s.motherPhone && s.motherPhone.includes(v))
+        (s.fatherPhone && s.fatherPhone.toString().includes(v)) || 
+        (s.motherPhone && s.motherPhone.toString().includes(v))
     );
     
     if(u) { 
@@ -51,7 +49,7 @@ function login() {
         localStorage.setItem('uid',u.id); 
         loginStudent(u); 
     } else {
-        alert("Sai SĐT hoặc SĐT chưa được đăng ký trong danh sách!");
+        alert("Sai mật khẩu hoặc SĐT chưa đăng ký!");
     }
 }
 
@@ -65,7 +63,6 @@ async function loginStudent(u) {
     currentUser = { ...u, role: 'student' };
     setupUI();
     renderDashboardStudent();
-    // Tải lịch sử làm bài của HS này
     const r = await fetch(API_URL + "?type=history&studentId=" + u.id);
     Data.log = await r.json();
 }
@@ -93,12 +90,11 @@ function logout() { localStorage.clear(); location.reload(); }
 
 function veTrangChu() {
     closeMenu();
-    clearInterval(timer); // Dừng đếm giờ nếu đang làm bài
     if(currentUser.role === 'admin') renderDashboardAdmin();
     else renderDashboardStudent();
 }
 
-// --- GIAO DIỆN ADMIN ---
+// --- 3. GIAO DIỆN DASHBOARD ---
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
@@ -110,7 +106,6 @@ function renderDashboardAdmin() {
     `;
 }
 
-// --- GIAO DIỆN HỌC SINH ---
 function renderDashboardStudent() {
     contentArea.innerHTML = `
         <div class="text-center mb-6 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>
@@ -127,30 +122,33 @@ function renderDashboardStudent() {
     `;
 }
 
-// ---------------------------------------------------------
-// [UPDATE] TÍNH NĂNG LÀM BÀI TẬP (QUAN TRỌNG NHẤT)
-// ---------------------------------------------------------
+// --- 4. TÍNH NĂNG HỌC TẬP (ĐÃ SỬA LỖI UI) ---
+
+// Hàm xử lý link ảnh Google Drive
+function fixImgUrl(url) {
+    if (!url) return "";
+    const idMatch = url.match(/[-\w]{25,}/); 
+    if (idMatch) return "https://lh3.googleusercontent.com/d/" + idMatch[0]; // Link direct server Google
+    return url;
+}
 
 async function moGocHocTap() {
     closeMenu();
     contentArea.innerHTML = `<h2 class="text-xl font-black text-indigo-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải bài tập...</h2>`;
     
-    // Tải dữ liệu câu hỏi nếu chưa có
     if(Data.math.length === 0) Data.math = await (await fetch(API_URL+"?type=math")).json();
     if(Data.tv.length === 0) Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json();
     
-    // Lấy danh sách các nhóm bài (ví dụ: Tuan1, Tuan2)
     const groupsMath = [...new Set(Data.math.map(x=>x.group))];
     const groupsTV = [...new Set(Data.tv.map(x=>x.group))];
     
     let html = `
     <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">CHỌN BÀI TẬP</h2></div>
     
-    <div class="mb-4"><h3 class="font-bold text-lg text-blue-600 border-b-2 border-blue-100 pb-2 mb-3">MÔN TOÁN</h3>
+    <div class="mb-6"><h3 class="font-bold text-lg text-blue-600 border-b-2 border-blue-100 pb-2 mb-3">MÔN TOÁN</h3>
     <div class="grid grid-cols-2 gap-3">`;
     
     html += groupsMath.map(g => {
-        // Kiểm tra xem bài này làm chưa
         const daLam = Data.log.find(l => l.subject === 'Toán' && l.group === g);
         const statusClass = daLam ? "bg-green-100 text-green-700 border-green-200" : "bg-white border-blue-100 text-slate-700 hover:bg-blue-50";
         const icon = daLam ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-play"></i>';
@@ -170,48 +168,59 @@ async function moGocHocTap() {
     }).join('');
     
     html += `</div></div>`;
-    
     contentArea.innerHTML = html;
 }
 
 function vaoHoc(subject, group) {
     curSub = subject === 'math' ? 'Toán' : 'Tiếng Việt';
     curGrp = group;
-    
-    // Lọc câu hỏi thuộc nhóm này
     const source = subject === 'math' ? Data.math : Data.tv;
     quiz = source.filter(x => x.group === group);
-    
     if(quiz.length === 0) return alert("Bài này chưa có câu hỏi!");
-    
     renderQuiz();
 }
 
 function renderQuiz() {
     let html = `
-    <div class="sticky top-0 bg-[#f0f7ff] pt-2 pb-4 z-10 border-b border-indigo-100 mb-4 flex justify-between items-center">
+    <div class="sticky top-0 bg-[#f0f7ff] pt-2 pb-4 z-10 border-b border-indigo-100 mb-4 flex justify-between items-center shadow-sm px-2">
         <div>
-            <button onclick="moGocHocTap()" class="text-gray-500 mr-2"><i class="fas fa-times"></i> Thoát</button>
+            <button onclick="moGocHocTap()" class="text-gray-500 mr-2 hover:text-red-500"><i class="fas fa-times"></i> Thoát</button>
             <span class="font-black text-indigo-800 text-lg">${curSub} - ${curGrp}</span>
         </div>
         <button onclick="nopBai()" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-indigo-700 transition">NỘP BÀI</button>
     </div>
-    <div class="space-y-6 pb-20">`;
+    <div class="space-y-8 pb-24 px-1">`;
     
     html += quiz.map((q, idx) => `
-        <div class="bg-white p-5 rounded-2xl shadow-sm border-2 border-transparent hover:border-indigo-100 transition question-box" id="qbox-${idx}">
-            <div class="flex gap-3 mb-3">
-                <span class="bg-indigo-100 text-indigo-700 font-bold w-8 h-8 flex items-center justify-center rounded-full text-sm">${idx+1}</span>
-                <div class="flex-1 font-bold text-slate-800 text-lg">${q.question.replace(/\n/g,'<br>')}</div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border-2 border-transparent hover:border-indigo-100 transition question-box relative" id="qbox-${idx}">
+            <div class="absolute -left-3 -top-3 bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md z-10">
+                ${idx+1}
             </div>
-            ${q.image ? `<img src="${q.image}" class="max-w-full rounded-lg mb-3 mx-auto max-h-60" />` : ''}
+            
+            <div class="mt-2 font-bold text-slate-800 text-lg leading-relaxed mb-4">
+                ${q.question.replace(/\n/g,'<br>')}
+            </div>
+
+            ${q.image ? `
+                <div class="mb-4 text-center bg-gray-50 rounded-lg p-2 border border-gray-100">
+                    <img src="${fixImgUrl(q.image)}" class="max-w-full rounded h-auto mx-auto max-h-60 object-contain" alt="Hình minh họa" loading="lazy" />
+                </div>
+            ` : ''}
+
             <div class="grid grid-cols-1 gap-3">
                 ${['a','b','c','d'].map(opt => q[opt] ? `
-                    <label class="cursor-pointer relative">
+                    <label class="cursor-pointer relative group">
                         <input type="radio" name="q-${idx}" value="${opt}" class="peer sr-only">
-                        <div class="p-3 rounded-xl bg-slate-50 border-2 border-slate-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-700 font-medium transition flex items-center">
-                            <span class="w-6 h-6 border-2 border-slate-300 rounded-full mr-3 flex items-center justify-center peer-checked:border-indigo-500 peer-checked:bg-indigo-500"><i class="fas fa-check text-white text-xs opacity-0 peer-checked:opacity-100"></i></span>
-                            ${opt.toUpperCase()}. ${q[opt]}
+                        <div class="p-4 rounded-xl bg-slate-50 border-2 border-slate-200 
+                                    group-hover:bg-slate-100 transition-all
+                                    peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-900 flex items-center">
+                            
+                            <div class="w-6 h-6 rounded-full border-2 border-slate-400 mr-4 flex items-center justify-center 
+                                        peer-checked:border-indigo-600 bg-white shrink-0">
+                                <div class="w-3 h-3 rounded-full bg-indigo-600 scale-0 peer-checked:scale-100 transition-transform duration-200"></div>
+                            </div>
+                            
+                            <span class="font-medium text-lg">${q[opt]}</span>
                         </div>
                     </label>
                 ` : '').join('')}
@@ -226,53 +235,35 @@ async function nopBai() {
     if(!confirm("Con có chắc chắn muốn nộp bài không?")) return;
     
     let score = 0;
-    let detail = [];
-    
-    // Chấm điểm
     quiz.forEach((q, idx) => {
         const selected = document.querySelector(`input[name="q-${idx}"]:checked`);
-        const val = selected ? selected.value : "";
-        const isCorrect = val === q.correct;
-        if(isCorrect) score++;
-        detail.push({ q: idx+1, correct: isCorrect, ans: val, rightAns: q.correct });
+        if(selected && selected.value === q.correct) score++;
     });
     
-    // Tính điểm thang 10
     const finalScore = Math.round((score / quiz.length) * 10);
     
     document.getElementById('loader').style.display = 'flex';
     document.getElementById('loader').innerHTML = `<div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600 mb-4"></div><p class="font-bold text-indigo-900">ĐANG CHẤM ĐIỂM...</p>`;
     
     try {
-        // Gửi kết quả về Server
         await fetch(API_URL, {
             method: 'POST',
-            mode: 'no-cors', // Quan trọng
+            mode: 'no-cors',
             body: JSON.stringify({
                 action: 'nop_bai',
-                data: {
-                    id_hs: currentUser.id,
-                    subject: curSub,
-                    group: curGrp,
-                    score_earned: finalScore
-                }
+                data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: finalScore }
             })
         });
-        
-        // Cập nhật log cục bộ để không cần tải lại
         Data.log.push({ subject: curSub, group: curGrp });
-        
-        // Hiện kết quả
         document.getElementById('loader').style.display = 'none';
-        hienKetQua(finalScore, score, quiz.length, detail);
-        
+        hienKetQua(finalScore, score, quiz.length);
     } catch(e) {
         alert("Lỗi kết nối! Kết quả có thể chưa được lưu.");
         document.getElementById('loader').style.display = 'none';
     }
 }
 
-function hienKetQua(score, right, total, detail) {
+function hienKetQua(score, right, total) {
     let msg = score >= 9 ? "XUẤT SẮC! 🎉" : (score >= 7 ? "LÀM TỐT LẮM! 😊" : "CỐ GẮNG HƠN NHÉ! 💪");
     let color = score >= 5 ? "text-green-600" : "text-red-600";
     
@@ -285,21 +276,12 @@ function hienKetQua(score, right, total, detail) {
             
             <div class="flex justify-center gap-4">
                 <button onclick="moGocHocTap()" class="bg-gray-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-300">Quay lại</button>
-                <button onclick="xemLoiGiai()" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700">Xem đáp án</button>
             </div>
         </div>
     `;
-    // Lưu tạm detail để xem lời giải nếu cần (logic này có thể phát triển thêm)
 }
 
-function xemLoiGiai() {
-    alert("Tính năng xem lại bài làm chi tiết sẽ cập nhật sau!");
-    moGocHocTap();
-}
-
-// ---------------------------------------------------------
-// CÁC HÀM CŨ (GIỮ NGUYÊN HOẶC SỬA NHẸ)
-// ---------------------------------------------------------
+// --- 5. CÁC TÍNH NĂNG KHÁC (GIÁO VIÊN & ĐƠN TỪ) ---
 
 async function moDonTu() {
     closeMenu();
@@ -319,15 +301,10 @@ async function moTienDo() {
     contentArea.innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tính toán...</h2>`;
     const math = await (await fetch(API_URL+"?type=math")).json();
     const vietnamese = await (await fetch(API_URL+"?type=vietnamese")).json();
-    
-    const groupsMath = [...new Set(math.map(x=>"Toán"+x.group))];
-    const groupsTV = [...new Set(vietnamese.map(x=>"Tiếng Việt"+x.group))];
-    const total = groupsMath.length + groupsTV.length;
-    
+    const total = [...new Set(math.map(x=>x.group))].length + [...new Set(vietnamese.map(x=>x.group))].length;
     const logs = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json();
     
-    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP (${total} BÀI)</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    
+    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
     html += Data.hs.map(h => {
         const userL = logs.filter(l => l.id === h.id);
         const done = new Set(userL.map(l => l.subject+l.group)).size;
@@ -354,27 +331,23 @@ function chuyenTrangQuanLy() {
 
 function viewProfile(id) {
     const s = Data.hs.find(x => x.id === id);
-    // Code tạo modal profile như cũ... (Bạn giữ nguyên đoạn code viewProfile cũ ở đây nhé để tiết kiệm dòng)
-    // Tôi viết tắt lại đoạn này vì logic cũ đã ổn.
-    // ... Copy đoạn viewProfile cũ ...
-    
-    // DEMO đoạn renderPhoneActions để code chạy được
-     const renderPhoneActions = (phone) => {
+    const renderPhoneActions = (phone) => {
         if(!phone || phone === 'undefined') return '<span class="text-gray-400 italic font-normal">Chưa cập nhật</span>';
         const cleanPhone = phone.toString().replace(/\D/g, ''); 
         return `<div class="flex items-center gap-2"><span class="font-bold text-slate-800">${phone}</span><a href="tel:${cleanPhone}" class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center"><i class="fas fa-phone-alt"></i></a></div>`;
     };
     
-     document.getElementById("modalProfile").classList.remove("hidden");
-     document.getElementById("pfName").innerText = s.name;
-     document.getElementById("pfContent").innerHTML = `
+    document.getElementById("modalProfile").classList.remove("hidden");
+    document.getElementById("pfName").innerText = s.name;
+    document.getElementById("pfContent").innerHTML = `
         <div class="space-y-4 text-sm text-slate-600">
              <div class="flex justify-between border-b pb-2"><span>Giới tính</span><b>${s.gender}</b></div>
              <div class="flex justify-between border-b pb-2"><span>SĐT Cha</span>${renderPhoneActions(s.fatherPhone)}</div>
              <div class="flex justify-between border-b pb-2"><span>SĐT Mẹ</span>${renderPhoneActions(s.motherPhone)}</div>
              <div class="flex justify-between border-b pb-2"><span>Địa chỉ</span><b class="text-right">${s.address}</b></div>
+             ${s.note ? `<div class="bg-yellow-50 p-2 rounded border border-yellow-200 text-yellow-800 mt-2"><b>Ghi chú:</b> ${s.note}</div>` : ''}
         </div>
-     `;
+    `;
 }
 
 function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
