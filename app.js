@@ -1,5 +1,6 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 BẢN HOÀN CHỈNH 100%
+// NÃO BỘ XỬ LÝ - V68 BẢN FINAL TỔNG HỢP 
+// (Đầy đủ: Làm bài tập, Zalo/Gọi điện, Ngày tháng thông báo)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -83,9 +84,9 @@ function renderDashboardAdmin() {
     contentArea.innerHTML = `
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
             <button onclick="chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-users text-3xl text-blue-600"></i><span class="font-bold text-slate-700">Học sinh</span></button>
-            <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Thông báo</span></button>
-            <button onclick="moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Hộp thư</span></button>
+            <button onclick="moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Đơn từ</span></button>
             <button onclick="moTienDo()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-purple-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-chart-line text-3xl text-purple-600"></i><span class="font-bold text-slate-700">Tiến độ</span></button>
+            <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Thông báo</span></button>
             <button onclick="quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-indigo-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700">Kho Toán</span></button>
             <button onclick="quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-book text-3xl text-green-600"></i><span class="font-bold text-slate-700">Kho T.Việt</span></button>
         </div>
@@ -99,7 +100,7 @@ function renderDashboardStudent() {
     contentArea.innerHTML = `
         <div class="text-center mb-6 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
-            <button onclick="moThongBao()" class="col-span-1 md:col-span-2 relative h-32 bg-gradient-to-r from-orange-400 to-amber-500 rounded-3xl shadow-lg flex items-center p-6 btn-3d border-2 border-white">
+            <button onclick="moThongBao()" class="col-span-1 md:col-span-2 relative h-32 bg-gradient-to-r from-orange-400 to-amber-500 rounded-3xl shadow-lg flex items-center p-6 btn-3d border-2 border-white overflow-hidden group">
                 <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white text-3xl mr-4"><i class="fas fa-bullhorn"></i></div>
                 <div class="text-left"><h3 class="font-black text-2xl text-white tracking-wide">THÔNG BÁO</h3><p class="text-orange-100 text-sm font-bold mt-1">Tin nhắn từ GVCN</p></div>
                 ${hasNoti ? '<span class="absolute top-4 right-4 w-4 h-4 bg-red-500 rounded-full animate-ping border-2 border-white"></span>' : ''}
@@ -108,6 +109,50 @@ function renderDashboardStudent() {
             <button onclick="moXinPhep()" class="relative h-48 bg-white border-4 border-red-50 rounded-3xl shadow-xl flex flex-col items-center justify-center btn-3d"><div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-red-500 text-4xl mb-3"><i class="fas fa-envelope-open-text"></i></div><span class="font-black text-xl text-slate-700">GỬI ĐƠN PHÉP</span></button>
         </div>
     `;
+}
+
+// ==========================================
+// TÍNH NĂNG: THÔNG BÁO TỪ LỚP (CÓ HIỂN THỊ THỜI GIAN)
+// ==========================================
+function moThongBao() {
+    closeMenu();
+    const msg = localStorage.getItem("clsMsg") || "Hiện tại chưa có thông báo mới từ GVCN.";
+    const timeStr = localStorage.getItem("clsMsgTime") || "Đang chờ cập nhật..."; 
+    let btnSua = currentUser.role === 'admin' ? `<button onclick="editNoti()" class="w-full mt-6 bg-orange-100 text-orange-700 py-3 rounded-xl font-bold shadow-sm btn-3d border border-orange-200"><i class="fas fa-edit"></i> Soạn thông báo mới</button>` : '';
+
+    contentArea.innerHTML = `
+        <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="font-black text-xl text-orange-500 uppercase">THÔNG BÁO LỚP</h2></div>
+        <div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-orange-400 fade-in">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-2xl shrink-0"><i class="fas fa-bell"></i></div>
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-lg">Tin nhắn từ GVCN</h3>
+                        <p class="text-xs font-bold text-slate-400 mt-0.5"><i class="fas fa-clock mr-1"></i> ${timeStr}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-orange-50 p-5 rounded-2xl text-slate-700 font-medium leading-relaxed whitespace-pre-wrap min-h-[120px] border border-orange-100 text-lg">${msg}</div>
+            ${btnSua}
+        </div>
+    `;
+}
+
+function editNoti() {
+    const n = prompt("Nhập nội dung thông báo mới:", localStorage.getItem("clsMsg") || "");
+    if(n !== null && n.trim() !== "") { 
+        // Tính Ngày và Tuần hiện tại
+        const d = new Date();
+        const dateStr = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
+        const firstDay = new Date(d.getFullYear(), 0, 1);
+        const pastDaysOfYear = (d - firstDay) / 86400000;
+        const weekNum = Math.ceil((pastDaysOfYear + firstDay.getDay() + 1) / 7);
+        const timeStr = `Ngày ${dateStr} - Tuần ${weekNum}`;
+
+        localStorage.setItem("clsMsg", n); 
+        localStorage.setItem("clsMsgTime", timeStr);
+        moThongBao(); 
+    }
 }
 
 // ==========================================
@@ -128,7 +173,6 @@ async function loadSubject(sub) {
     curSub = sub;
     contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`;
     
-    // Tải dữ liệu từ Google Sheet
     const qs = await (await fetch(API_URL + "?type=" + sub + "&t=" + Date.now())).json();
     Data[sub] = qs;
     
@@ -166,7 +210,6 @@ async function loadSubject(sub) {
 
 function startQuiz(group, timeMins) {
     curGrp = group;
-    // Lọc lấy câu hỏi của bài này và xáo trộn ngẫu nhiên tối đa 10 câu
     const questions = Data[curSub].filter(q => q.group === group);
     quiz = questions.sort(() => Math.random() - 0.5).slice(0, 10);
     currentQIndex = 0;
@@ -214,16 +257,13 @@ function renderQuestion(index) {
 }
 
 function checkAns(el, selected, correct, index) {
-    // Vô hiệu hóa các nút khác
     document.querySelectorAll('.quiz-option').forEach(x => x.classList.add('pointer-events-none', 'opacity-70'));
-    
     if (selected === correct.toLowerCase()) {
         el.classList.add('!bg-green-100', '!border-green-500', '!text-green-800');
         score += 10;
     } else {
         el.classList.add('!bg-red-100', '!border-red-500', '!text-red-800');
     }
-    
     setTimeout(() => renderQuestion(index + 1), 1200);
 }
 
@@ -249,13 +289,12 @@ async function finishQuiz() {
         </div>
     `;
     
-    // Lưu kết quả về Google Sheet
     if(currentUser.role === 'student') {
         await fetch(API_URL, { 
             method: 'POST', mode: 'no-cors', 
             body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score } }) 
         });
-        Data.log.push({ subject: curSub, group: curGrp }); // Cập nhật local
+        Data.log.push({ subject: curSub, group: curGrp }); 
     }
 }
 
@@ -281,7 +320,7 @@ async function quanLyNganHang(sub) {
         <select id="qFilter" onchange="filterQuestions()" class="w-full p-3 rounded-xl border-2 border-slate-200 mb-6 font-bold text-slate-700 outline-none focus:border-indigo-500">${filterOptions}</select>
         <div id="listQuestions" class="space-y-4"></div>
     `;
-    filterQuestions(); // Render lần đầu
+    filterQuestions(); 
 }
 
 function filterQuestions() {
@@ -304,12 +343,9 @@ function filterQuestions() {
 
 function renderFormCauHoi(id) {
     const q = id ? Data[curSub].find(x => x.id === id) : { group: '', time: 10, question: '', a: '', b: '', c: '', d: '', correct: 'a' };
-    
-    // Danh sách gợi ý tên bài
     const groups = [...new Set(Data[curSub].map(x => x.group))];
     const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`;
     
-    // HTML form sửa trực tiếp trên màn hình (thay vì modal bị kẹt màn hình)
     contentArea.innerHTML = `
         <div class="flex items-center mb-6"><button onclick="quanLyNganHang('${curSub}')" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">${id ? 'SỬA CÂU HỎI' : 'TẠO CÂU HỎI MỚI'}</h2></div>
         <div class="bg-white p-5 rounded-3xl shadow border space-y-4 fade-in">
@@ -318,16 +354,13 @@ function renderFormCauHoi(id) {
                 <div class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase">Tên Bài Tập</label><input type="text" id="frmG" list="groupList" value="${q.group}" class="edit-input w-full mt-1" placeholder="Ví dụ: Tuần 1..."></div>
                 <div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div>
             </div>
-            
             <div><label class="text-xs font-bold text-slate-500 uppercase">Nội dung câu hỏi</label><textarea id="frmQ" rows="3" class="edit-input w-full mt-1">${q.question}</textarea></div>
-            
             <div class="grid grid-cols-2 gap-3">
                 <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
                 <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
                 <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
                 <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
             </div>
-            
             <div>
                 <label class="text-xs font-bold text-slate-500 uppercase">Chọn Đáp Án Đúng</label>
                 <select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200">
@@ -337,7 +370,6 @@ function renderFormCauHoi(id) {
                     <option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option>
                 </select>
             </div>
-            
             <button onclick="luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-4">LƯU CÂU HỎI LÊN HỆ THỐNG</button>
         </div>
     `;
@@ -369,27 +401,32 @@ async function xoaCauHoi(id) {
 }
 
 // ==========================================
-// CÁC TÍNH NĂNG CHUNG (Hồ sơ, Thông báo, Tiến độ...)
+// TÍNH NĂNG: QUẢN LÝ LỚP HỌC (SỈ SỐ, TIẾN ĐỘ, HỒ SƠ)
 // ==========================================
-
-function moThongBao() {
+async function moDonTu() {
     closeMenu();
-    const msg = localStorage.getItem("clsMsg") || "Hiện tại chưa có thông báo mới từ GVCN.";
-    let btnSua = currentUser.role === 'admin' ? `<button onclick="editNoti()" class="w-full mt-6 bg-orange-100 text-orange-700 py-3 rounded-xl font-bold shadow-sm btn-3d border border-orange-200"><i class="fas fa-edit"></i> Soạn thông báo mới</button>` : '';
-
-    contentArea.innerHTML = `
-        <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="font-black text-xl text-orange-500 uppercase">THÔNG BÁO LỚP</h2></div>
-        <div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-orange-400 fade-in">
-            <div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-2xl"><i class="fas fa-bell"></i></div><h3 class="font-bold text-slate-800 text-lg">Tin nhắn từ GVCN</h3></div>
-            <div class="bg-orange-50 p-5 rounded-2xl text-slate-700 font-medium leading-relaxed whitespace-pre-wrap min-h-[120px] border border-orange-100 text-lg">${msg}</div>
-            ${btnSua}
-        </div>
-    `;
+    contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải...</h2>`;
+    const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json();
+    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600">HỘP THƯ ĐƠN TỪ</h2></div><div class="space-y-4">`;
+    html += leaves.map(l => `<div class="bg-white p-4 rounded-xl border shadow-sm flex gap-3"><div class="w-10 h-10 bg-red-50 text-red-500 rounded-full flex justify-center items-center"><i class="fas fa-bed"></i></div><div class="flex-1"><div class="flex justify-between font-bold"><span>${l.name}</span><span class="text-xs bg-gray-100 px-2 rounded">${l.dateOff}</span></div><p class="text-sm font-bold text-indigo-600">${l.type}</p><p class="text-xs text-gray-500 italic mt-1">"${l.reason}"</p></div></div>`).join('') || '<p class="text-center text-gray-400">Trống</p>';
+    contentArea.innerHTML = html + "</div>";
 }
 
-function editNoti() {
-    const n = prompt("Nhập nội dung thông báo mới:", localStorage.getItem("clsMsg") || "");
-    if(n !== null) { localStorage.setItem("clsMsg", n); moThongBao(); }
+async function moTienDo() {
+    closeMenu();
+    contentArea.innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tính toán...</h2>`;
+    const math = await (await fetch(API_URL+"?type=math")).json();
+    const vietnamese = await (await fetch(API_URL+"?type=vietnamese")).json();
+    const total = [...new Set(math.map(x=>x.group))].length + [...new Set(vietnamese.map(x=>x.group))].length;
+    const logs = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json();
+    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP (${total} BÀI)</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+    html += Data.hs.map(h => {
+        const userL = logs.filter(l => l.id === h.id);
+        const done = new Set(userL.map(l => l.subject+l.group)).size;
+        const pct = total ? Math.round((done/total)*100) : 0;
+        return `<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><span class="font-bold text-sm">${h.name}</span><div class="w-1/2 text-right"><div class="text-xs font-bold mb-1">${done}/${total} (${pct}%)</div><div class="progress-bar"><div class="progress-fill ${pct==100?'bg-green-500':'bg-blue-500'}" style="width:${pct}%"></div></div></div></div>`;
+    }).join('');
+    contentArea.innerHTML = html + "</div>";
 }
 
 function chuyenTrangQuanLy() {
@@ -403,41 +440,60 @@ function chuyenTrangQuanLy() {
     contentArea.innerHTML = html + "</div>";
 }
 
+// 🎯 HỒ SƠ HS ĐẦY ĐỦ (CÓ NÚT ZALO & GỌI ĐIỆN)
 function viewProfile(id) {
     closeMenu();
     const s = Data.hs.find(x => x.id === id);
     if(!s) return;
     
-    const renderPhone = (phone) => {
-        if(!phone || phone.trim() === '') return '<span class="text-gray-400 italic text-xs">Chưa có</span>';
+    document.getElementById("pfName").innerText = s.name;
+    
+    const renderPhoneActions = (phone) => {
+        if(!phone || phone === 'undefined' || phone.trim() === '') return '<span class="text-gray-400 italic font-normal text-xs">Chưa cập nhật</span>';
         const cleanPhone = phone.toString().replace(/\D/g, ''); 
         return `
             <div class="flex items-center gap-2">
-                <span class="font-bold">${phone}</span>
-                <a href="tel:${cleanPhone}" class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-600 hover:text-white"><i class="fas fa-phone-alt"></i></a>
-                <a href="https://zalo.me/${cleanPhone}" target="_blank" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white"><i class="fas fa-comment"></i></a>
+                <span class="font-bold text-slate-800">${phone}</span>
+                <a href="tel:${cleanPhone}" class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-sm hover:bg-green-600 hover:text-white transition" title="Gọi điện"><i class="fas fa-phone-alt"></i></a>
+                <a href="https://zalo.me/${cleanPhone}" target="_blank" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-600 hover:text-white transition" title="Nhắn Zalo"><i class="fas fa-comment"></i></a>
             </div>
         `;
     };
 
-    contentArea.innerHTML = `
-        <div class="flex items-center mb-6"><button onclick="${currentUser.role==='admin'?'chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ HỌC SINH</h2></div>
-        <div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-500 fade-in">
-            <div class="text-center mb-6">
-                <div class="w-24 h-24 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-4xl text-blue-400 mb-3 border-4 border-white shadow-md"><i class="fas fa-user-graduate"></i></div>
-                <h2 class="text-2xl font-black text-slate-800">${s.name}</h2>
-                <p class="text-sm font-mono text-slate-400 mt-1">ID: ${s.id}</p>
+    document.getElementById("pfContent").innerHTML = `
+        <div class="space-y-4 text-sm text-slate-600">
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Mã Học Sinh</span>
+                <span class="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">${s.id}</span>
             </div>
-            <div class="space-y-4 text-sm bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                <div class="flex justify-between items-center border-b border-slate-200 pb-2"><span class="font-bold text-slate-400 uppercase text-[10px]">Giới tính</span><b class="text-slate-800">${s.gender || '-'}</b></div>
-                <div class="flex justify-between items-center border-b border-slate-200 pb-2"><span class="font-bold text-slate-400 uppercase text-[10px]">Ngày sinh</span><b class="text-slate-800">${s.dob || '-'}</b></div>
-                <div class="flex justify-between items-center border-b border-slate-200 pb-2"><span class="font-bold text-slate-400 uppercase text-[10px]">Cha</span>${renderPhone(s.fatherPhone)}</div>
-                <div class="flex justify-between items-center border-b border-slate-200 pb-2"><span class="font-bold text-slate-400 uppercase text-[10px]">Mẹ</span>${renderPhone(s.motherPhone)}</div>
-                <div class="flex justify-between items-center border-b border-slate-200 pb-2"><span class="font-bold text-slate-400 uppercase text-[10px]">Điểm rèn luyện</span><span class="bg-yellow-100 text-yellow-700 font-black px-2 py-1 rounded"><i class="fas fa-gem"></i> ${s.score || 0}</span></div>
-                <div class="flex flex-col gap-1"><span class="font-bold text-slate-400 uppercase text-[10px]">Địa chỉ</span><b class="text-slate-800">${s.address || '-'}</b></div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Giới tính</span>
+                <span class="font-bold text-slate-800">${s.gender || 'Chưa rõ'}</span>
             </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Ngày sinh</span>
+                <b class="text-slate-800">${s.dob || 'Chưa cập nhật'}</b>
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">SĐT Cha</span>
+                ${renderPhoneActions(s.fatherPhone)}
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">SĐT Mẹ</span>
+                ${renderPhoneActions(s.motherPhone)}
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Điểm Rèn Luyện</span>
+                <div class="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded text-yellow-600 font-black border border-yellow-200"><i class="fas fa-gem"></i> ${s.score || 0} Kim cương</div>
+            </div>
+            <div class="flex flex-col border-b pb-2 border-slate-100 gap-1">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Địa chỉ thường trú</span>
+                <b class="text-slate-800 leading-snug">${s.address || 'Chưa cập nhật'}</b>
+            </div>
+            ${s.note ? `<div class="bg-blue-50 p-3 rounded-xl text-blue-800 italic border border-blue-100 text-xs"><i class="fas fa-info-circle mr-1"></i> Ghi chú: ${s.note}</div>` : ''}
         </div>
     `;
+    document.getElementById("modalProfile").classList.remove("hidden");
 }
 
 function moXinPhep() {
@@ -463,33 +519,6 @@ async function sendLeave() {
         veTrangChu();
     } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); }
     document.getElementById('loader').style.display='none'; 
-}
-
-// CÁC HÀM PHỤ TRỢ (Thống kê & Utilities)
-async function moDonTu() {
-    closeMenu();
-    contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải...</h2>`;
-    const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json();
-    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600">HỘP THƯ ĐƠN TỪ</h2></div><div class="space-y-4">`;
-    html += leaves.map(l => `<div class="bg-white p-4 rounded-xl border shadow-sm flex gap-3"><div class="w-10 h-10 bg-red-50 text-red-500 rounded-full flex justify-center items-center"><i class="fas fa-bed"></i></div><div class="flex-1"><div class="flex justify-between font-bold"><span>${l.name}</span><span class="text-xs bg-gray-100 px-2 rounded">${l.dateOff}</span></div><p class="text-sm font-bold text-indigo-600">${l.type}</p><p class="text-xs text-gray-500 italic mt-1">"${l.reason}"</p></div></div>`).join('') || '<p class="text-center text-gray-400">Trống</p>';
-    contentArea.innerHTML = html + "</div>";
-}
-
-async function moTienDo() {
-    closeMenu();
-    contentArea.innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tính toán...</h2>`;
-    const math = await (await fetch(API_URL+"?type=math")).json();
-    const vietnamese = await (await fetch(API_URL+"?type=vietnamese")).json();
-    const total = [...new Set(math.map(x=>x.group))].length + [...new Set(vietnamese.map(x=>x.group))].length;
-    const logs = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json();
-    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP (${total} BÀI)</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    html += Data.hs.map(h => {
-        const userL = logs.filter(l => l.id === h.id);
-        const done = new Set(userL.map(l => l.subject+l.group)).size;
-        const pct = total ? Math.round((done/total)*100) : 0;
-        return `<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><span class="font-bold text-sm">${h.name}</span><div class="w-1/2 text-right"><div class="text-xs font-bold mb-1">${done}/${total} (${pct}%)</div><div class="progress-bar"><div class="progress-fill ${pct==100?'bg-green-500':'bg-blue-500'}" style="width:${pct}%"></div></div></div></div>`;
-    }).join('');
-    contentArea.innerHTML = html + "</div>";
 }
 
 function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" class="rounded border my-2">').replace(/\n/g,'<br>'); }
