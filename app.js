@@ -1,8 +1,7 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 (THÊM HOẠT ĐỘNG & FIX ẢNH)
+// NÃO BỘ XỬ LÝ - V68 (ĐỔI TÊN NGẮN GỌN: THÔNG BÁO / HOẠT ĐỘNG)
 // ==========================================
 
-// THẦY DÁN LINK API MỚI VÀO ĐÂY:
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 const AD_PASS = "0982827538";
 
@@ -103,7 +102,6 @@ function moThongBao() {
     
     let sortedList = [...Data.notiList].sort((a, b) => { 
         const getVal = (item) => { 
-            // Cắt phần loại bài viết ra để lấy đúng ngày tháng so sánh
             let rawT = item.time.includes('|||') ? item.time.split('|||')[1] : item.time;
             const m = String(rawT).match(/(\d{2})\/(\d{2})\/(\d{4})/); 
             return m ? parseInt(m[3] + m[2] + m[1]) : 0; 
@@ -120,8 +118,7 @@ function moThongBao() {
             let adminButtons = currentUser && currentUser.role === 'admin' ? `<div class="flex gap-2 mt-4 pt-3 border-t border-orange-100"><button onclick="editNotiUI('${tb.id}')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Sửa</button><button onclick="xoaThongBao('${tb.id}')" class="flex-1 bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-trash-alt"></i> Xóa</button></div>` : ''; 
             let cleanContent = tb.content ? tb.content.replace(/<button[^>]*>.*?<\/button>/gi, '') : ""; 
             
-            // Xử lý Giao diện: Tách "Loại bài" và "Thời gian"
-            let typeStr = "THÔNG BÁO TỪ GVCN";
+            let typeStr = "Thông báo";
             let displayTime = tb.time;
             let iconHtml = '<i class="fas fa-bullhorn"></i>';
             let colorTheme = 'bg-orange-100 text-orange-600';
@@ -130,7 +127,12 @@ function moThongBao() {
                 let parts = tb.time.split('|||');
                 typeStr = parts[0];
                 displayTime = parts[1];
-                if (typeStr === 'HOẠT ĐỘNG LỚP 4/6') {
+                
+                // Đồng bộ hóa các tên cũ về tên mới gọn hơn
+                if(typeStr === 'THÔNG BÁO TỪ GVCN') typeStr = 'Thông báo';
+                if(typeStr === 'HOẠT ĐỘNG LỚP 4/6') typeStr = 'Hoạt động';
+
+                if (typeStr === 'Hoạt động') {
                     iconHtml = '<i class="fas fa-camera-retro"></i>';
                     colorTheme = 'bg-green-100 text-green-600';
                 }
@@ -153,22 +155,25 @@ function moThongBao() {
     contentArea.innerHTML = `${getNavHtml('bangtin')}${btnTaoMoi}<div class="space-y-4 pb-10">${listHtml}</div>`; 
 }
 
-// 🎯 FORM TẠO BÀI VIẾT (CÓ CHỌN LOẠI THÔNG BÁO HAY HOẠT ĐỘNG)
+// 🎯 FORM TẠO BÀI VIẾT 
 function editNotiUI(idToEdit) { 
     const isEdit = idToEdit != null; const tb = isEdit ? Data.notiList.find(x => x.id === idToEdit) : null; 
     const d = new Date(); const dateStr = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear(); 
     const firstDay = new Date(d.getFullYear(), 0, 1); const weekNum = Math.ceil((((d - firstDay) / 86400000) + firstDay.getDay() + 1) / 7); 
     
     let defaultTimeStr = `Ngày ${dateStr} - Tuần ${weekNum}`; 
-    let defaultType = 'THÔNG BÁO TỪ GVCN';
+    let defaultType = 'Thông báo';
     
     if (isEdit) {
         if (tb.time.includes('|||')) {
             let parts = tb.time.split('|||');
             defaultType = parts[0];
             defaultTimeStr = parts[1];
+            // Đồng bộ tên cũ cho Menu Dropdown
+            if(defaultType === 'THÔNG BÁO TỪ GVCN') defaultType = 'Thông báo';
+            if(defaultType === 'HOẠT ĐỘNG LỚP 4/6') defaultType = 'Hoạt động';
         } else {
-            defaultTimeStr = tb.time; // Bài cũ chưa có |||
+            defaultTimeStr = tb.time; 
         }
     }
 
@@ -183,8 +188,8 @@ function editNotiUI(idToEdit) {
             <div>
                 <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại bài viết</label>
                 <select id="frmNotiType" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-orange-400 transition">
-                    <option value="THÔNG BÁO TỪ GVCN" ${defaultType === 'THÔNG BÁO TỪ GVCN' ? 'selected' : ''}>📣 Thông báo chung</option>
-                    <option value="HOẠT ĐỘNG LỚP 4/6" ${defaultType === 'HOẠT ĐỘNG LỚP 4/6' ? 'selected' : ''}>📸 Hoạt động lớp</option>
+                    <option value="Thông báo" ${defaultType === 'Thông báo' ? 'selected' : ''}>📣 Thông báo</option>
+                    <option value="Hoạt động" ${defaultType === 'Hoạt động' ? 'selected' : ''}>📸 Hoạt động</option>
                 </select>
             </div>
             <div>
@@ -219,12 +224,9 @@ function editNotiUI(idToEdit) {
 
 async function luuThongBaoLenServer() { 
     const id = document.getElementById("frmNotiId").value; 
-    
-    // Gộp loại bài viết và thời gian lại để lưu vào Sheet chung 1 cột
     const typeStr = document.getElementById("frmNotiType").value;
     const timeVal = document.getElementById("frmNotiTime").value;
     const finalTimeStr = typeStr + "|||" + timeVal; 
-
     const contentHTML = document.getElementById("frmNotiContent").innerHTML; 
     
     if(!timeVal || !contentHTML.trim()) return alert("Vui lòng nhập nội dung!"); 
