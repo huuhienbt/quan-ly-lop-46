@@ -1,5 +1,5 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 FINAL (THÊM CĂN LỀ VĂN BẢN)
+// NÃO BỘ XỬ LÝ - V68 FINAL (TRÌNH SOẠN THẢO CHUYÊN NGHIỆP)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -88,32 +88,30 @@ function renderDashboardStudent() {
 }
 
 // ==========================================
-// 🎯 BẢNG TIN LỚP 
+// 🎯 BẢNG TIN & TRÌNH SOẠN THẢO (CÓ CĂN LỀ & KHÓA VIỀN)
 // ==========================================
 function moThongBao() {
     closeMenu();
-    let btnTaoMoi = currentUser.role === 'admin' ? 
-        `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO THÔNG BÁO MỚI</button>` : '';
+    let btnTaoMoi = currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO THÔNG BÁO MỚI</button>` : '';
 
     let listHtml = "";
     if (Data.notiList.length === 0) {
         listHtml = `<div class="text-center py-10 opacity-60"><i class="fas fa-inbox text-6xl text-slate-300 mb-3"></i><p class="font-bold text-slate-400">Chưa có thông báo nào.</p></div>`;
     } else {
         listHtml = Data.notiList.map(tb => {
-            let adminButtons = "";
-            if (currentUser.role === 'admin') {
-                adminButtons = `
-                    <div class="flex gap-2 mt-4 pt-3 border-t border-orange-100">
-                        <button onclick="editNotiUI('${tb.id}')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Sửa</button>
-                        <button onclick="xoaThongBao('${tb.id}')" class="flex-1 bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-trash-alt"></i> Xóa</button>
-                    </div>
-                `;
-            }
+            let adminButtons = currentUser.role === 'admin' ? `
+                <div class="flex gap-2 mt-4 pt-3 border-t border-orange-100">
+                    <button onclick="editNotiUI('${tb.id}')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Sửa</button>
+                    <button onclick="xoaThongBao('${tb.id}')" class="flex-1 bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-trash-alt"></i> Xóa</button>
+                </div>
+            ` : '';
 
+            // Lọc bỏ nút bấm rác
             let cleanContent = tb.content ? tb.content.replace(/<button[^>]*>.*?<\/button>/gi, '') : "";
 
+            // Khóa viền hiển thị: Thêm w-full overflow-hidden break-words để văn bản/ảnh không lọt ra ngoài
             return `
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative overflow-hidden fade-in hover:shadow-md transition">
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative fade-in hover:shadow-md transition w-full overflow-hidden">
                 <div class="flex items-center gap-3 mb-3">
                     <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-lg shrink-0"><i class="fas fa-bullhorn"></i></div>
                     <div>
@@ -121,7 +119,7 @@ function moThongBao() {
                         <p class="text-[11px] font-bold text-slate-400"><i class="fas fa-clock mr-1"></i> ${tb.time}</p>
                     </div>
                 </div>
-                <div class="text-slate-700 text-base leading-relaxed pl-1 [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2 [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">
+                <div class="text-slate-700 text-base w-full overflow-hidden break-words pl-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-3 [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">
                     ${cleanContent}
                 </div>
                 ${adminButtons} 
@@ -136,6 +134,21 @@ function moThongBao() {
     `;
 }
 
+// Khởi tạo chức năng Dãn dòng
+window.changeLineSpacing = function(val) {
+    if(!val) return;
+    document.execCommand('formatBlock', false, 'DIV'); // Biến cụm văn bản thành block
+    const sel = window.getSelection();
+    if(sel.rangeCount > 0) {
+        let node = sel.anchorNode;
+        if(node.nodeType === 3) node = node.parentNode;
+        while(node && node.id !== 'frmNotiContent') {
+            if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; }
+            node = node.parentNode;
+        }
+    }
+};
+
 function editNotiUI(idToEdit) {
     const isEdit = idToEdit != null;
     const tb = isEdit ? Data.notiList.find(x => x.id === idToEdit) : null;
@@ -145,49 +158,69 @@ function editNotiUI(idToEdit) {
     const firstDay = new Date(d.getFullYear(), 0, 1);
     const weekNum = Math.ceil((((d - firstDay) / 86400000) + firstDay.getDay() + 1) / 7);
     const defaultTimeStr = isEdit ? tb.time : `Ngày ${dateStr} - Tuần ${weekNum}`;
-    
     const currentContent = isEdit && tb.content ? tb.content.replace(/<button[^>]*>.*?<\/button>/gi, '') : "";
 
     contentArea.innerHTML = `
         <div class="flex items-center mb-6"><button onclick="moThongBao()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-times text-slate-500"></i></button><h2 class="font-black text-xl text-orange-600 uppercase">${isEdit ? 'SỬA THÔNG BÁO' : 'TẠO THÔNG BÁO MỚI'}</h2></div>
         
-        <div class="bg-white p-6 rounded-[2rem] shadow-lg border space-y-5 fade-in">
+        <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-lg border space-y-5 fade-in w-full overflow-hidden">
             <input type="hidden" id="frmNotiId" value="${idToEdit || ''}">
             <div>
                 <label class="text-xs font-black text-slate-400 uppercase tracking-wider">Thời gian hiển thị</label>
                 <input type="text" id="frmNotiTime" class="edit-input w-full mt-1 bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700" value="${defaultTimeStr}">
             </div>
 
-            <div>
-                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung</label>
-                <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200">
-                    <button onclick="document.execCommand('bold', false, null)" class="w-9 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 font-black" title="In đậm">B</button>
-                    <button onclick="document.execCommand('italic', false, null)" class="w-9 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 italic font-serif" title="In nghiêng">I</button>
-                    <div class="relative flex items-center bg-white rounded-lg shadow-sm px-2 hover:bg-slate-200" title="Màu chữ"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer"></div>
+            <div class="w-full">
+                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung (Bôi đen chữ để căn chỉnh)</label>
+                
+                <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200 items-center">
+                    <button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black">B</button>
+                    <button onclick="document.execCommand('italic', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 italic font-serif">I</button>
+                    <div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer" title="Màu chữ"></div>
                     
-                    <div class="w-px bg-slate-300 mx-1 my-1"></div>
+                    <div class="w-px h-6 bg-slate-300 mx-1"></div>
                     
-                    <button onclick="document.execCommand('justifyLeft', false, null)" class="w-9 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-slate-600" title="Căn trái"><i class="fas fa-align-left"></i></button>
-                    <button onclick="document.execCommand('justifyCenter', false, null)" class="w-9 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-slate-600" title="Căn giữa"><i class="fas fa-align-center"></i></button>
-                    <button onclick="document.execCommand('justifyRight', false, null)" class="w-9 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-slate-600" title="Căn phải"><i class="fas fa-align-right"></i></button>
-                    
-                    <div class="w-px bg-slate-300 mx-1 my-1"></div>
+                    <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn trái"><i class="fas fa-align-left"></i></button>
+                    <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn giữa"><i class="fas fa-align-center"></i></button>
+                    <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn phải"><i class="fas fa-align-right"></i></button>
+                    <button onclick="document.execCommand('justifyFull', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn đều 2 bên"><i class="fas fa-align-justify"></i></button>
 
-                    <button onclick="chenAnhVaoThongBao()" class="px-2 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-indigo-600 font-bold text-xs flex items-center gap-1" title="Chèn link ảnh"><i class="fas fa-image"></i> Ảnh</button>
-                    <button onclick="chenFileVaoThongBao()" class="px-2 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-blue-600 font-bold text-xs flex items-center gap-1" title="Chèn link website/file"><i class="fas fa-link"></i> Link</button>
+                    <div class="w-px h-6 bg-slate-300 mx-1"></div>
+
+                    <select onchange="changeLineSpacing(this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Giãn dòng">
+                        <option value="">Giãn dòng</option>
+                        <option value="1.2">Nhỏ (1.2)</option>
+                        <option value="1.6">Vừa (1.6)</option>
+                        <option value="2.0">Rộng (2.0)</option>
+                    </select>
+
+                    <div class="w-px h-6 bg-slate-300 mx-1"></div>
+
+                    <button onclick="chenAnhVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-indigo-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-image"></i> Ảnh</button>
+                    <button onclick="chenFileVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-blue-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-link"></i> Link</button>
                 </div>
-                <div id="frmNotiContent" contenteditable="true" class="w-full min-h-[200px] bg-white border-2 border-slate-200 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base leading-relaxed [&_img]:max-w-full [&_img]:rounded-lg [&_a]:text-blue-600 [&_a]:underline">
+
+                <div id="frmNotiContent" contenteditable="true" class="w-full min-h-[200px] bg-white border-2 border-slate-200 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_a]:text-blue-600 [&_a]:underline">
                     ${currentContent}
                 </div>
             </div>
 
-            <button onclick="luuThongBaoLenServer()" class="w-full bg-orange-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-orange-700 transition">${isEdit ? 'LƯU THAY ĐỔI' : 'ĐĂNG NGAY'}</button>
+            <button onclick="luuThongBaoLenServer()" class="w-full bg-orange-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-orange-700 transition">${isEdit ? 'LƯU THAY ĐỔI' : 'ĐĂNG LÊN HỆ THỐNG'}</button>
         </div>
     `;
 }
 
-function chenAnhVaoThongBao() { const url = prompt("Dán đường link hình ảnh:"); if(url) { document.getElementById("frmNotiContent").focus(); document.execCommand('insertImage', false, url); } }
-function chenFileVaoThongBao() { const url = prompt("Dán đường link (Drive, YouTube...):"); if(url) { const tenLink = prompt("Nhập tên hiển thị:", "Xem chi tiết"); if(tenLink) { document.getElementById("frmNotiContent").focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${tenLink}</a>`); } } }
+// Chèn hình ảnh - Đã làm cho nó mặc định ra giữa để đẹp nhất!
+function chenAnhVaoThongBao() { 
+    const url = prompt("Dán đường link hình ảnh (Hoặc copy ảnh dán trực tiếp vào khung dưới):"); 
+    if(url) { 
+        document.getElementById("frmNotiContent").focus(); 
+        const htmlAnh = `<div style="text-align: center;"><img src="${url}" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block;"></div><br>`;
+        document.execCommand('insertHTML', false, htmlAnh); 
+    } 
+}
+
+function chenFileVaoThongBao() { const url = prompt("Dán đường link (Drive, YouTube...):"); if(url) { const tenLink = prompt("Nhập tên hiển thị:", "Bấm vào đây để xem"); if(tenLink) { document.getElementById("frmNotiContent").focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${tenLink}</a>`); } } }
 
 async function luuThongBaoLenServer() {
     const id = document.getElementById("frmNotiId").value;
@@ -221,7 +254,7 @@ async function xoaThongBao(id) {
     }
 }
 
-// CÁC CHỨC NĂNG CÒN LẠI
+// CÁC CHỨC NĂNG CÒN LẠI (Góc học tập, Điểm số, v.v...)
 function moGocHocTap() { closeMenu(); contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">CHỌN MÔN HỌC</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; }
 async function loadSubject(sub) { curSub = sub; contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; const qs = await (await fetch(API_URL + "?type=" + sub + "&t=" + Date.now())).json(); Data[sub] = qs; const grps = [...new Set(qs.map(x => x.group))].sort(); let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; else grps.forEach(g => { const isDone = Data.log.some(l => l.subject === sub && l.group === g); const time = qs.find(q => q.group === g).time || 10; const count = qs.filter(q => q.group === g).length; html += `<div onclick="startQuiz('${g}', ${time})" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/30' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${!isDone ? '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : ''}</div>`; }); contentArea.innerHTML = html + `</div>`; }
 function startQuiz(group, timeMins) { curGrp = group; quiz = Data[curSub].filter(q => q.group === group).sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; renderQuizFrame(); renderQuestion(0); startTimer(timeMins * 60); }
