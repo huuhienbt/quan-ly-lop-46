@@ -1,5 +1,5 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 FINAL (NÂNG CẤP ĐƠN XIN PHÉP)
+// NÃO BỘ XỬ LÝ - V68 FINAL (ĐƠN XIN PHÉP THÔNG MINH)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -88,7 +88,7 @@ function renderDashboardStudent() {
 }
 
 // ==========================================
-// 🎯 HỆ THỐNG XIN NGHỈ PHÉP NÂNG CẤP
+// 🎯 HỆ THỐNG XIN NGHỈ PHÉP (MENU THÔNG MINH)
 // ==========================================
 function moXinPhep() {
     closeMenu(); 
@@ -104,17 +104,17 @@ function moXinPhep() {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại xin phép</label>
-                    <select id="lType" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition">
-                        <option value="Nghỉ học & Bán trú">Nghỉ Học & Bán Trú</option>
-                        <option value="Chỉ nghỉ Bán trú">Chỉ cắt cơm Bán Trú</option>
+                    <select id="lType" onchange="changeLeaveType()" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition">
+                        <option value="Nghỉ học và bán trú">Nghỉ học và bán trú</option>
+                        <option value="Nghỉ Bán trú">Nghỉ Bán trú</option>
                     </select>
                 </div>
                 <div>
                     <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian nghỉ</label>
                     <select id="lSession" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition">
                         <option value="Cả ngày">Cả ngày</option>
-                        <option value="Buổi sáng">Chỉ buổi sáng</option>
-                        <option value="Buổi chiều">Chỉ buổi chiều</option>
+                        <option value="Chỉ buổi sáng">Chỉ buổi sáng</option>
+                        <option value="Chỉ buổi chiều">Chỉ buổi chiều</option>
                     </select>
                 </div>
             </div>
@@ -127,9 +127,26 @@ function moXinPhep() {
             <button onclick="sendLeave()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-red-700 transition"><i class="fas fa-paper-plane mr-2"></i> GỬI ĐƠN CHO GVCN</button>
         </div>
     `; 
-    // Tự động gán ngày mai
     document.getElementById('lDate').valueAsDate = new Date(Date.now()+86400000); 
 }
+
+// Hàm đổi Menu thông minh
+window.changeLeaveType = function() {
+    const type = document.getElementById('lType').value;
+    const session = document.getElementById('lSession');
+    if (type === 'Nghỉ Bán trú') {
+        session.innerHTML = `
+            <option value="Ăn trưa và Không ngủ trưa">Ăn trưa và Không ngủ trưa</option>
+            <option value="Không ăn trưa và không ngủ trưa">Không ăn trưa và không ngủ trưa</option>
+        `;
+    } else {
+        session.innerHTML = `
+            <option value="Cả ngày">Cả ngày</option>
+            <option value="Chỉ buổi sáng">Chỉ buổi sáng</option>
+            <option value="Chỉ buổi chiều">Chỉ buổi chiều</option>
+        `;
+    }
+};
 
 async function sendLeave() { 
     const d = document.getElementById('lDate').value;
@@ -139,8 +156,7 @@ async function sendLeave() {
 
     if(!d || !r) return alert("Vui lòng chọn Ngày nghỉ và Nhập Lý do!"); 
 
-    // Gộp loại nghỉ và thời gian lại để gửi lên sheet dễ quản lý
-    const combinedType = `${type} - ${session}`;
+    const combinedType = `${type} (${session})`;
 
     document.getElementById('loader').style.display='flex'; 
     try { 
@@ -157,18 +173,15 @@ async function sendLeave() {
     document.getElementById('loader').style.display='none'; 
 }
 
-// 🎯 HỘP THƯ ĐƠN TỪ (GIAO DIỆN GIÁO VIÊN)
 async function moDonTu() { 
-    closeMenu(); 
-    contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</h2>`; 
-    
+    closeMenu(); contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải...</h2>`; 
     const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json(); 
     
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600 uppercase">HỘP THƯ ĐƠN TỪ</h2></div><div class="space-y-4 pb-10">`; 
     
     html += leaves.map(l => {
-        // Phân tích loại nghỉ để tô màu cho nổi bật
-        const isBanTru = l.type.includes('Chỉ nghỉ Bán trú');
+        // Phân biệt màu sắc cho thông báo
+        const isBanTru = l.type.startsWith('Nghỉ Bán trú') || l.type.includes('Chỉ nghỉ Bán trú');
         const badgeColor = isBanTru ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-red-100 text-red-700 border-red-200';
         const icon = isBanTru ? 'fa-utensils' : 'fa-bed';
         const iconBg = isBanTru ? 'bg-orange-50 text-orange-500' : 'bg-red-50 text-red-500';
@@ -194,7 +207,7 @@ async function moDonTu() {
 }
 
 // ==========================================
-// CÁC CHỨC NĂNG CÒN LẠI DƯỚI ĐÂY GIỮ NGUYÊN
+// 🎯 BẢNG TIN LỚP & TRÌNH SOẠN THẢO (GIỮ NGUYÊN)
 // ==========================================
 function moThongBao() {
     closeMenu();
@@ -276,9 +289,9 @@ async function luuThongBaoLenServer() {
         document.getElementById('loader').style.display = 'none'; alert("Thành công!"); moThongBao(); 
     } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng!"); }
 }
-
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
+// CÁC HÀM CÒN LẠI 
 function moGocHocTap() { closeMenu(); contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">CHỌN MÔN HỌC</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; }
 async function loadSubject(sub) { curSub = sub; contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; const qs = await (await fetch(API_URL + "?type=" + sub + "&t=" + Date.now())).json(); Data[sub] = qs; const grps = [...new Set(qs.map(x => x.group))].sort(); let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; else grps.forEach(g => { const isDone = Data.log.some(l => l.subject === sub && l.group === g); const time = qs.find(q => q.group === g).time || 10; const count = qs.filter(q => q.group === g).length; html += `<div onclick="startQuiz('${g}', ${time})" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/30' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${!isDone ? '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : ''}</div>`; }); contentArea.innerHTML = html + `</div>`; }
 function startQuiz(group, timeMins) { curGrp = group; quiz = Data[curSub].filter(q => q.group === group).sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; renderQuizFrame(); renderQuestion(0); startTimer(timeMins * 60); }
@@ -292,7 +305,6 @@ function filterQuestions() { const val = document.getElementById("qFilter").valu
 function renderFormCauHoi(id) { const q = id ? Data[curSub].find(x => x.id === id) : { group: '', time: 10, question: '', a: '', b: '', c: '', d: '', correct: 'a' }; const groups = [...new Set(Data[curSub].map(x => x.group))]; const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`; contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="quanLyNganHang('${curSub}')" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">${id ? 'SỬA CÂU HỎI' : 'TẠO CÂU HỎI MỚI'}</h2></div><div class="bg-white p-5 rounded-3xl shadow border space-y-4 fade-in">${dl}<div class="grid grid-cols-3 gap-3"><div class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase">Tên Bài Tập</label><input type="text" id="frmG" list="groupList" value="${q.group}" class="edit-input w-full mt-1" placeholder="Ví dụ: Tuần 1..."></div><div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div></div><div><label class="text-xs font-bold text-slate-500 uppercase">Nội dung câu hỏi</label><textarea id="frmQ" rows="3" class="edit-input w-full mt-1">${q.question}</textarea></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div></div><div><label class="text-xs font-bold text-slate-500 uppercase">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200"><option value="a" ${q.correct=='a'?'selected':''}>Đáp án A</option><option value="b" ${q.correct=='b'?'selected':''}>Đáp án B</option><option value="c" ${q.correct=='c'?'selected':''}>Đáp án C</option><option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option></select></div><button onclick="luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-4">LƯU CÂU HỎI LÊN HỆ THỐNG</button></div>`; }
 async function luuCauHoi(id) { const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: document.getElementById("frmQ").value, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" }; if(!data.group || !data.question) return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); alert("Lưu thành công!"); document.getElementById('loader').style.display = 'none'; quanLyNganHang(curSub); }
 async function xoaCauHoi(id) { if(confirm("Thầy có chắc chắn muốn xóa câu hỏi này không?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); alert("Đã xóa!"); document.getElementById('loader').style.display = 'none'; quanLyNganHang(curSub); } }
-
 async function moTienDo() { closeMenu(); contentArea.innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tính toán...</h2>`; const math = await (await fetch(API_URL+"?type=math")).json(); const vietnamese = await (await fetch(API_URL+"?type=vietnamese")).json(); const total = [...new Set(math.map(x=>x.group))].length + [...new Set(vietnamese.map(x=>x.group))].length; const logs = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP (${total} BÀI)</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`; html += Data.hs.map(h => { const userL = logs.filter(l => l.id === h.id); const done = new Set(userL.map(l => l.subject+l.group)).size; const pct = total ? Math.round((done/total)*100) : 0; return `<div class="bg-white p-3 rounded-xl border flex justify-between items-center"><span class="font-bold text-sm">${h.name}</span><div class="w-1/2 text-right"><div class="text-xs font-bold mb-1">${done}/${total} (${pct}%)</div><div class="progress-bar"><div class="progress-fill ${pct==100?'bg-green-500':'bg-blue-500'}" style="width:${pct}%"></div></div></div></div>`; }).join(''); contentArea.innerHTML = html + "</div>"; }
 function chuyenTrangQuanLy() { closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); contentArea.innerHTML = html + "</div>"; }
 function viewProfile(id) { closeMenu(); const s = Data.hs.find(x => x.id === id); if(!s) return; document.getElementById("pfName").innerText = s.name; const renderPhoneActions = (phone) => { if(!phone || phone === 'undefined' || phone.trim() === '') return '<span class="text-gray-400 italic font-normal text-xs">Chưa cập nhật</span>'; const cleanPhone = phone.toString().replace(/\D/g, ''); return `<div class="flex items-center gap-2"><span class="font-bold text-slate-800">${phone}</span><a href="tel:${cleanPhone}" class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-sm hover:bg-green-600 hover:text-white transition" title="Gọi điện"><i class="fas fa-phone-alt"></i></a><a href="https://zalo.me/${cleanPhone}" target="_blank" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-600 hover:text-white transition" title="Nhắn Zalo"><i class="fas fa-comment"></i></a></div>`; }; document.getElementById("pfContent").innerHTML = `<div class="space-y-4 text-sm text-slate-600"><div class="flex justify-between items-center border-b pb-2 border-slate-100"><span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Mã Học Sinh</span><span class="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">${s.id}</span></div><div class="flex justify-between items-center border-b pb-2 border-slate-100"><span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Giới tính</span><span class="font-bold text-slate-800">${s.gender || 'Chưa rõ'}</span></div><div class="flex justify-between items-center border-b pb-2 border-slate-100"><span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Ngày sinh</span><b class="text-slate-800">${s.dob || 'Chưa cập nhật'}</b></div><div class="flex justify-between items-center border-b pb-2 border-slate-100"><span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">SĐT Cha</span>${renderPhoneActions(s.fatherPhone)}</div><div class="flex justify-between items-center border-b pb-2 border-slate-100"><span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">SĐT Mẹ</span>${renderPhoneActions(s.motherPhone)}</div><div class="flex justify-between items-center border-b pb-2 border-slate-100"><span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Điểm Rèn Luyện</span><div class="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded text-yellow-600 font-black border border-yellow-200"><i class="fas fa-gem"></i> ${s.score || 0} Kim cương</div></div><div class="flex flex-col border-b pb-2 border-slate-100 gap-1"><span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Địa chỉ thường trú</span><b class="text-slate-800 leading-snug">${s.address || 'Chưa cập nhật'}</b></div>${s.note ? `<div class="bg-blue-50 p-3 rounded-xl text-blue-800 italic border border-blue-100 text-xs"><i class="fas fa-info-circle mr-1"></i> Ghi chú: ${s.note}</div>` : ''}</div>`; document.getElementById("modalProfile").classList.remove("hidden"); }
