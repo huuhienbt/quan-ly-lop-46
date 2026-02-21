@@ -1,7 +1,8 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 (BỘ NÉN ẢNH SIÊU TỐC TRƯỚC KHI TẢI LÊN)
+// NÃO BỘ XỬ LÝ - V68 (THÊM HOẠT ĐỘNG & FIX ẢNH)
 // ==========================================
 
+// THẦY DÁN LINK API MỚI VÀO ĐÂY:
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 const AD_PASS = "0982827538";
 
@@ -93,38 +94,161 @@ function getNavHtml(active) {
     return `${headerGreeting}<div class="flex items-center gap-6 sm:gap-10 mb-6 border-b-2 border-slate-100 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide"><button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">BẢNG TIN LỚP</button><button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">GÓC HỌC TẬP</button><button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">HỘP THƯ</button></div>`;
 }
 
+// ==========================================
+// 🎯 BẢNG TIN VÀ THUẬT TOÁN TÁCH LOẠI BÀI VIẾT
+// ==========================================
 function moThongBao() { 
     closeMenu(); 
-    let btnTaoMoi = currentUser && currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO THÔNG BÁO MỚI</button>` : ''; 
-    let sortedList = [...Data.notiList].sort((a, b) => { const getVal = (item) => { const m = String(item.time).match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? parseInt(m[3] + m[2] + m[1]) : 0; }; let dateA = getVal(a), dateB = getVal(b); if (dateA !== dateB) return dateB - dateA; return (parseInt(String(b.id).replace(/\D/g,''))||0) - (parseInt(String(a.id).replace(/\D/g,''))||0); }); 
+    let btnTaoMoi = currentUser && currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO BÀI VIẾT MỚI</button>` : ''; 
+    
+    let sortedList = [...Data.notiList].sort((a, b) => { 
+        const getVal = (item) => { 
+            // Cắt phần loại bài viết ra để lấy đúng ngày tháng so sánh
+            let rawT = item.time.includes('|||') ? item.time.split('|||')[1] : item.time;
+            const m = String(rawT).match(/(\d{2})\/(\d{2})\/(\d{4})/); 
+            return m ? parseInt(m[3] + m[2] + m[1]) : 0; 
+        }; 
+        let dateA = getVal(a), dateB = getVal(b); 
+        if (dateA !== dateB) return dateB - dateA; 
+        return (parseInt(String(b.id).replace(/\D/g,''))||0) - (parseInt(String(a.id).replace(/\D/g,''))||0); 
+    }); 
+    
     let listHtml = ""; 
-    if (sortedList.length === 0) listHtml = `<div class="text-center py-10 opacity-60"><i class="fas fa-inbox text-6xl text-slate-300 mb-3"></i><p class="font-bold text-slate-400">Chưa có thông báo nào.</p></div>`; 
+    if (sortedList.length === 0) listHtml = `<div class="text-center py-10 opacity-60"><i class="fas fa-inbox text-6xl text-slate-300 mb-3"></i><p class="font-bold text-slate-400">Chưa có bài viết nào.</p></div>`; 
     else { 
         listHtml = sortedList.map(tb => { 
             let adminButtons = currentUser && currentUser.role === 'admin' ? `<div class="flex gap-2 mt-4 pt-3 border-t border-orange-100"><button onclick="editNotiUI('${tb.id}')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Sửa</button><button onclick="xoaThongBao('${tb.id}')" class="flex-1 bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-trash-alt"></i> Xóa</button></div>` : ''; 
             let cleanContent = tb.content ? tb.content.replace(/<button[^>]*>.*?<\/button>/gi, '') : ""; 
-            return `<div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative fade-in hover:shadow-md transition w-full overflow-hidden"><div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-lg shrink-0"><i class="fas fa-bullhorn"></i></div><div><h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">Thông báo từ GVCN</h3><p class="text-[11px] font-bold text-slate-400"><i class="fas fa-clock mr-1"></i> ${tb.time}</p></div></div><div class="text-slate-700 text-base w-full overflow-hidden break-words pl-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-3 [&_img]:inline-block [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">${cleanContent}</div>${adminButtons}</div>`; 
+            
+            // Xử lý Giao diện: Tách "Loại bài" và "Thời gian"
+            let typeStr = "THÔNG BÁO TỪ GVCN";
+            let displayTime = tb.time;
+            let iconHtml = '<i class="fas fa-bullhorn"></i>';
+            let colorTheme = 'bg-orange-100 text-orange-600';
+
+            if (tb.time.includes('|||')) {
+                let parts = tb.time.split('|||');
+                typeStr = parts[0];
+                displayTime = parts[1];
+                if (typeStr === 'HOẠT ĐỘNG LỚP 4/6') {
+                    iconHtml = '<i class="fas fa-camera-retro"></i>';
+                    colorTheme = 'bg-green-100 text-green-600';
+                }
+            }
+
+            return `
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative fade-in hover:shadow-md transition w-full overflow-hidden">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 ${colorTheme} rounded-full flex items-center justify-center text-lg shrink-0">${iconHtml}</div>
+                    <div>
+                        <h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">${typeStr}</h3>
+                        <p class="text-[11px] font-bold text-slate-400"><i class="fas fa-clock mr-1"></i> ${displayTime}</p>
+                    </div>
+                </div>
+                <div class="text-slate-700 text-base w-full overflow-hidden break-words pl-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-3 [&_img]:inline-block [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">${cleanContent}</div>
+                ${adminButtons}
+            </div>`; 
         }).join(''); 
     } 
     contentArea.innerHTML = `${getNavHtml('bangtin')}${btnTaoMoi}<div class="space-y-4 pb-10">${listHtml}</div>`; 
 }
 
-function moGocHocTap() { 
-    closeMenu(); 
-    contentArea.innerHTML = `${getNavHtml('hoctap')}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; 
-}
-
+// 🎯 FORM TẠO BÀI VIẾT (CÓ CHỌN LOẠI THÔNG BÁO HAY HOẠT ĐỘNG)
 function editNotiUI(idToEdit) { 
     const isEdit = idToEdit != null; const tb = isEdit ? Data.notiList.find(x => x.id === idToEdit) : null; 
     const d = new Date(); const dateStr = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear(); 
     const firstDay = new Date(d.getFullYear(), 0, 1); const weekNum = Math.ceil((((d - firstDay) / 86400000) + firstDay.getDay() + 1) / 7); 
-    const defaultTimeStr = isEdit ? tb.time : `Ngày ${dateStr} - Tuần ${weekNum}`; 
+    
+    let defaultTimeStr = `Ngày ${dateStr} - Tuần ${weekNum}`; 
+    let defaultType = 'THÔNG BÁO TỪ GVCN';
+    
+    if (isEdit) {
+        if (tb.time.includes('|||')) {
+            let parts = tb.time.split('|||');
+            defaultType = parts[0];
+            defaultTimeStr = parts[1];
+        } else {
+            defaultTimeStr = tb.time; // Bài cũ chưa có |||
+        }
+    }
+
     const currentContent = isEdit && tb.content ? tb.content.replace(/<button[^>]*>.*?<\/button>/gi, '') : ""; 
-    contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="moThongBao()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-times text-slate-500"></i></button><h2 class="font-black text-xl text-orange-600 uppercase">${isEdit ? 'SỬA THÔNG BÁO' : 'TẠO THÔNG BÁO MỚI'}</h2></div><div class="bg-white p-4 sm:p-6 rounded-[2rem] shadow-lg border space-y-4 fade-in w-full overflow-hidden"><input type="hidden" id="frmNotiId" value="${idToEdit || ''}"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider">Thời gian hiển thị (Giữ định dạng Ngày DD/MM/YYYY)</label><input type="text" id="frmNotiTime" class="edit-input w-full mt-1 bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700" value="${defaultTimeStr}"></div><div class="w-full"><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung</label><div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200 items-center"><button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black">B</button><button onclick="document.execCommand('italic', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 italic font-serif">I</button><div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8" title="Màu chữ"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer"></div><div class="w-px h-6 bg-slate-300 mx-1"></div><button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn trái"><i class="fas fa-align-left"></i></button><button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn giữa"><i class="fas fa-align-center"></i></button><button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn phải"><i class="fas fa-align-right"></i></button><button onclick="document.execCommand('justifyFull', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn đều 2 bên"><i class="fas fa-align-justify"></i></button><div class="w-px h-6 bg-slate-300 mx-1"></div><select onchange="document.execCommand('fontSize', false, this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ chữ</option><option value="1">Rất nhỏ</option><option value="2">Nhỏ</option><option value="3">Vừa</option><option value="4">Lớn</option><option value="5">Rất Lớn</option><option value="6">Khổng lồ</option></select><select onchange="changeLineSpacing(this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Giãn dòng</option><option value="1.2">Nhỏ (1.2)</option><option value="1.6">Vừa (1.6)</option><option value="2.0">Rộng (2.0)</option></select><div class="w-px h-6 bg-slate-300 mx-1"></div><button onclick="chenAnhVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-indigo-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-upload"></i> Upload Ảnh</button><button onclick="chenFileVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-blue-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-link"></i> Link</button></div><div id="frmNotiContent" contenteditable="true" class="w-full min-h-[200px] bg-white border-2 border-slate-200 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:inline-block [&_a]:text-blue-600 [&_a]:underline">${currentContent}</div></div><button onclick="luuThongBaoLenServer()" class="w-full bg-orange-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-orange-700 transition">${isEdit ? 'LƯU THAY ĐỔI' : 'ĐĂNG LÊN HỆ THỐNG'}</button></div>`; 
+    
+    contentArea.innerHTML = `
+    <div class="flex items-center mb-6"><button onclick="moThongBao()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-times text-slate-500"></i></button><h2 class="font-black text-xl text-orange-600 uppercase">${isEdit ? 'SỬA BÀI VIẾT' : 'TẠO BÀI VIẾT MỚI'}</h2></div>
+    <div class="bg-white p-4 sm:p-6 rounded-[2rem] shadow-lg border space-y-4 fade-in w-full overflow-hidden">
+        <input type="hidden" id="frmNotiId" value="${idToEdit || ''}">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại bài viết</label>
+                <select id="frmNotiType" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-orange-400 transition">
+                    <option value="THÔNG BÁO TỪ GVCN" ${defaultType === 'THÔNG BÁO TỪ GVCN' ? 'selected' : ''}>📣 Thông báo chung</option>
+                    <option value="HOẠT ĐỘNG LỚP 4/6" ${defaultType === 'HOẠT ĐỘNG LỚP 4/6' ? 'selected' : ''}>📸 Hoạt động lớp</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian hiển thị</label>
+                <input type="text" id="frmNotiTime" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-orange-400" value="${defaultTimeStr}">
+            </div>
+        </div>
+
+        <div class="w-full">
+            <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung</label>
+            <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200 items-center">
+                <button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black">B</button>
+                <button onclick="document.execCommand('italic', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 italic font-serif">I</button>
+                <div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8" title="Màu chữ"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer"></div>
+                <div class="w-px h-6 bg-slate-300 mx-1"></div>
+                <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn trái"><i class="fas fa-align-left"></i></button>
+                <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn giữa"><i class="fas fa-align-center"></i></button>
+                <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn phải"><i class="fas fa-align-right"></i></button>
+                <button onclick="document.execCommand('justifyFull', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn đều 2 bên"><i class="fas fa-align-justify"></i></button>
+                <div class="w-px h-6 bg-slate-300 mx-1"></div>
+                <select onchange="document.execCommand('fontSize', false, this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ chữ</option><option value="1">Rất nhỏ</option><option value="2">Nhỏ</option><option value="3">Vừa</option><option value="4">Lớn</option><option value="5">Rất Lớn</option><option value="6">Khổng lồ</option></select>
+                <select onchange="changeLineSpacing(this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Giãn dòng</option><option value="1.2">Nhỏ (1.2)</option><option value="1.6">Vừa (1.6)</option><option value="2.0">Rộng (2.0)</option></select>
+                <div class="w-px h-6 bg-slate-300 mx-1"></div>
+                <button onclick="chenAnhVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-indigo-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-upload"></i> Upload Ảnh</button>
+                <button onclick="chenFileVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-blue-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-link"></i> Link</button>
+            </div>
+            <div id="frmNotiContent" contenteditable="true" class="w-full min-h-[200px] bg-white border-2 border-slate-200 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:inline-block [&_a]:text-blue-600 [&_a]:underline">${currentContent}</div>
+        </div>
+        <button onclick="luuThongBaoLenServer()" class="w-full bg-orange-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-orange-700 transition">${isEdit ? 'LƯU THAY ĐỔI' : 'ĐĂNG LÊN HỆ THỐNG'}</button>
+    </div>`; 
 }
 
+async function luuThongBaoLenServer() { 
+    const id = document.getElementById("frmNotiId").value; 
+    
+    // Gộp loại bài viết và thời gian lại để lưu vào Sheet chung 1 cột
+    const typeStr = document.getElementById("frmNotiType").value;
+    const timeVal = document.getElementById("frmNotiTime").value;
+    const finalTimeStr = typeStr + "|||" + timeVal; 
+
+    const contentHTML = document.getElementById("frmNotiContent").innerHTML; 
+    
+    if(!timeVal || !contentHTML.trim()) return alert("Vui lòng nhập nội dung!"); 
+    
+    document.getElementById('loader').style.display = 'flex'; 
+    try { 
+        const act = id ? 'sua_thong_bao' : 'dang_thong_bao'; 
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: act, data: { id: id, time: finalTimeStr, content: contentHTML } }) }); 
+        
+        if(id) { 
+            const idx = Data.notiList.findIndex(x => x.id === id); 
+            if(idx > -1) { Data.notiList[idx].time = finalTimeStr; Data.notiList[idx].content = contentHTML; } 
+        } else { 
+            Data.notiList.unshift({ id: "TB"+Date.now(), time: finalTimeStr, content: contentHTML }); 
+        } 
+        document.getElementById('loader').style.display = 'none'; 
+        alert("Đăng bài thành công!"); 
+        moThongBao(); 
+    } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng!"); } 
+}
+
+
 // ==========================================
-// 🎯 BỘ NÉN VÀ UPLOAD ẢNH (CHỐNG LỖI)
+// 🎯 BỘ NÉN VÀ UPLOAD ẢNH NHANH
 // ==========================================
 function chenAnhVaoThongBao() { 
     const input = document.createElement('input');
@@ -140,7 +264,6 @@ function chenAnhVaoThongBao() {
         reader.onload = function(event) {
             const img = new Image();
             img.onload = async function() {
-                // Thu nhỏ ảnh còn tối đa 800px để gửi cực nhanh
                 const canvas = document.createElement('canvas');
                 const MAX_WIDTH = 800;
                 let scaleSize = 1;
@@ -152,7 +275,6 @@ function chenAnhVaoThongBao() {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-                // Ép thành định dạng JPEG và nén còn 70% chất lượng
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                 const base64Data = dataUrl.split(',')[1];
 
@@ -182,11 +304,16 @@ function chenAnhVaoThongBao() {
 
 function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(url) { const tenLink = prompt("Nhập tên hiển thị:", "Bấm vào đây"); if(tenLink) { document.getElementById("frmNotiContent").focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${tenLink}</a>`); } } }
 
+// ==========================================
 // CÁC HÀM CÒN LẠI KHÔNG ĐỔI
+// ==========================================
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
-async function luuThongBaoLenServer() { const id = document.getElementById("frmNotiId").value; const timeStr = document.getElementById("frmNotiTime").value; const contentHTML = document.getElementById("frmNotiContent").innerHTML; if(!timeStr || !contentHTML.trim()) return alert("Vui lòng nhập nội dung!"); document.getElementById('loader').style.display = 'flex'; try { const act = id ? 'sua_thong_bao' : 'dang_thong_bao'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: act, data: { id: id, time: timeStr, content: contentHTML } }) }); if(id) { const idx = Data.notiList.findIndex(x => x.id === id); if(idx > -1) { Data.notiList[idx].time = timeStr; Data.notiList[idx].content = contentHTML; } } else { Data.notiList.unshift({ id: "TB"+Date.now(), time: timeStr, content: contentHTML }); } document.getElementById('loader').style.display = 'none'; alert("Thành công!"); moThongBao(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng!"); } }
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
+function moGocHocTap() { 
+    closeMenu(); 
+    contentArea.innerHTML = `${getNavHtml('hoctap')}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; 
+}
 async function loadSubject(sub) { 
     if(!currentUser) return showLogin(); 
     curSub = sub; 
