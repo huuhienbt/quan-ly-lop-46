@@ -1,5 +1,5 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 FINAL (SẮP XẾP THÔNG BÁO CHUẨN THỜI GIAN)
+// NÃO BỘ XỬ LÝ - V68 FINAL (FIX SẮP XẾP THÔNG BÁO CHUẨN NGÀY)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -88,17 +88,27 @@ function renderDashboardStudent() {
 }
 
 // ==========================================
-// 🎯 BẢNG TIN LỚP (ĐÃ THÊM TỰ ĐỘNG SẮP XẾP THEO NGÀY)
+// 🎯 BẢNG TIN LỚP (BỘ LỌC ĐỌC NGÀY THÁNG THÔNG MINH)
 // ==========================================
 function moThongBao() {
     closeMenu();
     let btnTaoMoi = currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO THÔNG BÁO MỚI</button>` : '';
 
-    // LỌC VÀ SẮP XẾP LẠI THÔNG BÁO (Mới nhất lên đầu dựa vào ID chứa Timestamp)
+    // DÒNG CODE VÀNG: Đọc ngày tháng và ép sắp xếp mới nhất lên đầu
     let sortedList = [...Data.notiList].sort((a, b) => {
-        let timeA = parseInt(String(a.id).replace(/\D/g, '')) || 0;
-        let timeB = parseInt(String(b.id).replace(/\D/g, '')) || 0;
-        return timeB - timeA;
+        const getVal = (item) => {
+            // Tìm chuỗi DD/MM/YYYY trong phần thời gian
+            const m = String(item.time).match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            // Ghép lại thành dạng Năm-Tháng-Ngày (vd: 20260209) để so sánh toán học
+            return m ? parseInt(m[3] + m[2] + m[1]) : 0; 
+        };
+        let dateA = getVal(a), dateB = getVal(b);
+        
+        // Nếu khác ngày, ngày nào lớn hơn (mới hơn) nằm trên
+        if (dateA !== dateB) return dateB - dateA; 
+        
+        // Nếu cùng ngày, cái nào tạo sau cùng (ID lớn) nằm trên
+        return (parseInt(String(b.id).replace(/\D/g,''))||0) - (parseInt(String(a.id).replace(/\D/g,''))||0);
     });
 
     let listHtml = "";
@@ -170,12 +180,12 @@ function editNotiUI(idToEdit) {
         <div class="bg-white p-4 sm:p-6 rounded-[2rem] shadow-lg border space-y-4 fade-in w-full overflow-hidden">
             <input type="hidden" id="frmNotiId" value="${idToEdit || ''}">
             <div>
-                <label class="text-xs font-black text-slate-400 uppercase tracking-wider">Thời gian hiển thị</label>
+                <label class="text-xs font-black text-slate-400 uppercase tracking-wider">Thời gian hiển thị (Giữ đúng định dạng Ngày DD/MM/YYYY)</label>
                 <input type="text" id="frmNotiTime" class="edit-input w-full mt-1 bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700" value="${defaultTimeStr}">
             </div>
 
             <div class="w-full">
-                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung (Bôi đen chữ để căn chỉnh)</label>
+                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung</label>
                 
                 <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200 items-center">
                     <button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black">B</button>
@@ -195,7 +205,7 @@ function editNotiUI(idToEdit) {
                         <option value="">Cỡ chữ</option>
                         <option value="1">Rất nhỏ</option>
                         <option value="2">Nhỏ</option>
-                        <option value="3">Vừa (Chuẩn)</option>
+                        <option value="3">Vừa</option>
                         <option value="4">Lớn</option>
                         <option value="5">Rất Lớn</option>
                         <option value="6">Khổng lồ</option>
@@ -267,6 +277,7 @@ async function xoaThongBao(id) {
     }
 }
 
+// CÁC CHỨC NĂNG CÒN LẠI (GIỮ NGUYÊN)
 function moGocHocTap() { closeMenu(); contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">CHỌN MÔN HỌC</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; }
 async function loadSubject(sub) { curSub = sub; contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; const qs = await (await fetch(API_URL + "?type=" + sub + "&t=" + Date.now())).json(); Data[sub] = qs; const grps = [...new Set(qs.map(x => x.group))].sort(); let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; else grps.forEach(g => { const isDone = Data.log.some(l => l.subject === sub && l.group === g); const time = qs.find(q => q.group === g).time || 10; const count = qs.filter(q => q.group === g).length; html += `<div onclick="startQuiz('${g}', ${time})" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/30' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${!isDone ? '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : ''}</div>`; }); contentArea.innerHTML = html + `</div>`; }
 function startQuiz(group, timeMins) { curGrp = group; quiz = Data[curSub].filter(q => q.group === group).sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; renderQuizFrame(); renderQuestion(0); startTimer(timeMins * 60); }
