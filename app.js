@@ -1,19 +1,20 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 SIÊU TỐC (UPDATE: FIX ẢNH & UI TRẮC NGHIỆM)
+// NÃO BỘ XỬ LÝ - V68 SIÊU TỐC (CẬP NHẬT HỒ SƠ & THÔNG BÁO)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
-const AD_PASS = "123456"; 
+const AD_PASS = "123456";
 
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null;
 
-// --- 1. KHỞI TẠO & KẾT NỐI ---
+// --- KHỞI ĐỘNG VÀ KẾT NỐI ---
 window.onload = async () => {
     try {
         const r = await fetch(API_URL + "?type=students&t=" + Date.now());
         Data.hs = await r.json();
-        document.getElementById('connStatus').innerText = "Đã kết nối máy chủ thành công!";
+        
+        document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu thành công!";
         document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
         
         const role = localStorage.getItem('role');
@@ -23,12 +24,11 @@ window.onload = async () => {
             if(u) loginStudent(u); else showLogin();
         } else showLogin();
     } catch(e) {
-        document.getElementById('connStatus').innerText = "Lỗi kết nối! Hãy tải lại trang.";
+        document.getElementById('connStatus').innerText = "Lỗi mạng hoặc Link API bị sai!";
         document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-red-500";
     }
 };
 
-// --- 2. HỆ THỐNG ĐĂNG NHẬP ---
 function showLogin() { 
     document.getElementById('loader').style.display = 'none'; 
     document.getElementById('loginScreen').classList.remove('hidden'); 
@@ -37,20 +37,9 @@ function showLogin() {
 function login() {
     const v = document.getElementById('inputLogin').value.trim();
     if(v === AD_PASS) { localStorage.setItem('role','admin'); loginAdmin(); return; }
-    
-    // Tìm HS có SĐT khớp (sửa logic cho chính xác hơn)
-    const u = Data.hs.find(s => 
-        (s.fatherPhone && s.fatherPhone.toString().includes(v)) || 
-        (s.motherPhone && s.motherPhone.toString().includes(v))
-    );
-    
-    if(u) { 
-        localStorage.setItem('role','student'); 
-        localStorage.setItem('uid',u.id); 
-        loginStudent(u); 
-    } else {
-        alert("Sai mật khẩu hoặc SĐT chưa đăng ký!");
-    }
+    const u = Data.hs.find(s => s.fatherPhone.includes(v) || s.motherPhone.includes(v));
+    if(u) { localStorage.setItem('role','student'); localStorage.setItem('uid',u.id); loginStudent(u); }
+    else alert("Sai SĐT hoặc mật khẩu!");
 }
 
 function loginAdmin() {
@@ -72,217 +61,139 @@ function setupUI() {
     document.getElementById('loader').style.display='none';
     document.getElementById('mainApp').classList.remove('hidden');
     document.getElementById('menuName').innerText = currentUser.name;
-    document.getElementById('headerName').innerText = currentUser.role === 'admin' ? 'GV' : currentUser.name;
-    
-    if(currentUser.role === 'admin') {
-        document.getElementById('menuTeacher').classList.remove('hidden');
-        document.getElementById('menuStudent').classList.add('hidden');
-    } else {
-        document.getElementById('menuStudent').classList.remove('hidden');
-        document.getElementById('menuTeacher').classList.add('hidden');
-    }
+    document.getElementById('headerName').innerText = currentUser.role === 'admin' ? 'GV' : currentUser.name.split(" ").pop();
+    if(currentUser.role === 'admin') document.getElementById('menuTeacher').classList.remove('hidden');
+    else document.getElementById('menuStudent').classList.remove('hidden');
 }
 
+// --- ĐIỀU KHIỂN GIAO DIỆN (UI ROUTING) ---
 const contentArea = document.getElementById('content');
+
 function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
 function closeMenu() { document.getElementById('appMenu').classList.add('hidden'); }
 function logout() { localStorage.clear(); location.reload(); }
 
 function veTrangChu() {
     closeMenu();
+    clearInterval(timer);
     if(currentUser.role === 'admin') renderDashboardAdmin();
     else renderDashboardStudent();
 }
 
-// --- 3. GIAO DIỆN DASHBOARD ---
+// --- RENDER MÀN HÌNH ---
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
             <button onclick="chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-users text-3xl text-blue-600"></i><span class="font-bold text-slate-700">Học sinh</span></button>
             <button onclick="moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Đơn từ</span></button>
             <button onclick="moTienDo()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-purple-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-chart-line text-3xl text-purple-600"></i><span class="font-bold text-slate-700">Tiến độ</span></button>
+            <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Thông báo</span></button>
             <button onclick="quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-indigo-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700">Kho Toán</span></button>
+            <button onclick="quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-book text-3xl text-green-600"></i><span class="font-bold text-slate-700">Kho T.Việt</span></button>
         </div>
     `;
 }
 
+// 🎯 GIAO DIỆN HỌC SINH MỚI CÓ MỤC THÔNG BÁO
 function renderDashboardStudent() {
     contentArea.innerHTML = `
         <div class="text-center mb-6 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in">
-            <button onclick="moGocHocTap()" class="h-60 bg-gradient-to-br from-indigo-100 to-white border-4 border-white rounded-[2rem] shadow-xl flex flex-col items-center justify-center btn-3d">
-                <i class="fas fa-rocket text-6xl text-indigo-600 mb-4 animate-bounce"></i>
-                <span class="font-black text-2xl text-slate-700">GÓC HỌC TẬP</span>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-in">
+            
+            <button onclick="moThongBao()" class="col-span-1 md:col-span-2 relative h-32 bg-gradient-to-r from-orange-400 to-amber-500 rounded-3xl shadow-lg shadow-orange-200 flex items-center p-6 hover:-translate-y-1 transition btn-3d border-2 border-white overflow-hidden group">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white text-3xl mr-4 backdrop-blur-sm border border-white/30"><i class="fas fa-bullhorn"></i></div>
+                <div class="text-left"><h3 class="font-black text-2xl text-white tracking-wide">THÔNG BÁO</h3><p class="text-orange-100 text-sm font-bold mt-1">Tin nhắn từ GVCN</p></div>
+                <span id="badgeNoti" class="absolute top-4 right-4 w-4 h-4 bg-red-500 rounded-full animate-ping hidden border-2 border-white"></span>
             </button>
-            <button onclick="moXinPhep()" class="h-60 bg-gradient-to-br from-orange-100 to-white border-4 border-white rounded-[2rem] shadow-xl flex flex-col items-center justify-center btn-3d">
-                <i class="fas fa-envelope text-6xl text-orange-500 mb-4"></i>
-                <span class="font-black text-2xl text-slate-700">GỬI ĐƠN PHÉP</span>
-            </button>
+
+            <button onclick="moGocHocTap()" class="relative h-48 bg-white border-4 border-indigo-50 rounded-3xl shadow-xl flex flex-col items-center justify-center hover:-translate-y-1 transition btn-3d"><div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-4xl mb-3"><i class="fas fa-rocket"></i></div><span class="font-black text-xl text-slate-700">GÓC HỌC TẬP</span></button>
+            
+            <button onclick="moXinPhep()" class="relative h-48 bg-white border-4 border-red-50 rounded-3xl shadow-xl flex flex-col items-center justify-center hover:-translate-y-1 transition btn-3d"><div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center text-red-500 text-4xl mb-3"><i class="fas fa-envelope-open-text"></i></div><span class="font-black text-xl text-slate-700">GỬI ĐƠN PHÉP</span></button>
         </div>
     `;
-}
-
-// --- 4. TÍNH NĂNG HỌC TẬP (ĐÃ SỬA LỖI UI) ---
-
-// Hàm xử lý link ảnh Google Drive
-function fixImgUrl(url) {
-    if (!url) return "";
-    const idMatch = url.match(/[-\w]{25,}/); 
-    if (idMatch) return "https://lh3.googleusercontent.com/d/" + idMatch[0]; // Link direct server Google
-    return url;
-}
-
-async function moGocHocTap() {
-    closeMenu();
-    contentArea.innerHTML = `<h2 class="text-xl font-black text-indigo-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải bài tập...</h2>`;
     
-    if(Data.math.length === 0) Data.math = await (await fetch(API_URL+"?type=math")).json();
-    if(Data.tv.length === 0) Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json();
-    
-    const groupsMath = [...new Set(Data.math.map(x=>x.group))];
-    const groupsTV = [...new Set(Data.tv.map(x=>x.group))];
-    
-    let html = `
-    <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">CHỌN BÀI TẬP</h2></div>
-    
-    <div class="mb-6"><h3 class="font-bold text-lg text-blue-600 border-b-2 border-blue-100 pb-2 mb-3">MÔN TOÁN</h3>
-    <div class="grid grid-cols-2 gap-3">`;
-    
-    html += groupsMath.map(g => {
-        const daLam = Data.log.find(l => l.subject === 'Toán' && l.group === g);
-        const statusClass = daLam ? "bg-green-100 text-green-700 border-green-200" : "bg-white border-blue-100 text-slate-700 hover:bg-blue-50";
-        const icon = daLam ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-play"></i>';
-        return `<button onclick="vaoHoc('math', '${g}')" class="${statusClass} p-4 rounded-xl border-2 font-bold shadow-sm flex justify-between items-center transition">${g} ${icon}</button>`;
-    }).join('');
-    
-    html += `</div></div>
-    
-    <div class="mb-4"><h3 class="font-bold text-lg text-green-600 border-b-2 border-green-100 pb-2 mb-3">TIẾNG VIỆT</h3>
-    <div class="grid grid-cols-2 gap-3">`;
-    
-    html += groupsTV.map(g => {
-        const daLam = Data.log.find(l => l.subject === 'Tiếng Việt' && l.group === g);
-        const statusClass = daLam ? "bg-green-100 text-green-700 border-green-200" : "bg-white border-green-100 text-slate-700 hover:bg-green-50";
-        const icon = daLam ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-play"></i>';
-        return `<button onclick="vaoHoc('vietnamese', '${g}')" class="${statusClass} p-4 rounded-xl border-2 font-bold shadow-sm flex justify-between items-center transition">${g} ${icon}</button>`;
-    }).join('');
-    
-    html += `</div></div>`;
-    contentArea.innerHTML = html;
-}
-
-function vaoHoc(subject, group) {
-    curSub = subject === 'math' ? 'Toán' : 'Tiếng Việt';
-    curGrp = group;
-    const source = subject === 'math' ? Data.math : Data.tv;
-    quiz = source.filter(x => x.group === group);
-    if(quiz.length === 0) return alert("Bài này chưa có câu hỏi!");
-    renderQuiz();
-}
-
-function renderQuiz() {
-    let html = `
-    <div class="sticky top-0 bg-[#f0f7ff] pt-2 pb-4 z-10 border-b border-indigo-100 mb-4 flex justify-between items-center shadow-sm px-2">
-        <div>
-            <button onclick="moGocHocTap()" class="text-gray-500 mr-2 hover:text-red-500"><i class="fas fa-times"></i> Thoát</button>
-            <span class="font-black text-indigo-800 text-lg">${curSub} - ${curGrp}</span>
-        </div>
-        <button onclick="nopBai()" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-indigo-700 transition">NỘP BÀI</button>
-    </div>
-    <div class="space-y-8 pb-24 px-1">`;
-    
-    html += quiz.map((q, idx) => `
-        <div class="bg-white p-5 rounded-2xl shadow-sm border-2 border-transparent hover:border-indigo-100 transition question-box relative" id="qbox-${idx}">
-            <div class="absolute -left-3 -top-3 bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shadow-md z-10">
-                ${idx+1}
-            </div>
-            
-            <div class="mt-2 font-bold text-slate-800 text-lg leading-relaxed mb-4">
-                ${q.question.replace(/\n/g,'<br>')}
-            </div>
-
-            ${q.image ? `
-                <div class="mb-4 text-center bg-gray-50 rounded-lg p-2 border border-gray-100">
-                    <img src="${fixImgUrl(q.image)}" class="max-w-full rounded h-auto mx-auto max-h-60 object-contain" alt="Hình minh họa" loading="lazy" />
-                </div>
-            ` : ''}
-
-            <div class="grid grid-cols-1 gap-3">
-                ${['a','b','c','d'].map(opt => q[opt] ? `
-                    <label class="cursor-pointer relative group">
-                        <input type="radio" name="q-${idx}" value="${opt}" class="peer sr-only">
-                        <div class="p-4 rounded-xl bg-slate-50 border-2 border-slate-200 
-                                    group-hover:bg-slate-100 transition-all
-                                    peer-checked:border-indigo-600 peer-checked:bg-indigo-50 peer-checked:text-indigo-900 flex items-center">
-                            
-                            <div class="w-6 h-6 rounded-full border-2 border-slate-400 mr-4 flex items-center justify-center 
-                                        peer-checked:border-indigo-600 bg-white shrink-0">
-                                <div class="w-3 h-3 rounded-full bg-indigo-600 scale-0 peer-checked:scale-100 transition-transform duration-200"></div>
-                            </div>
-                            
-                            <span class="font-medium text-lg">${q[opt]}</span>
-                        </div>
-                    </label>
-                ` : '').join('')}
-            </div>
-        </div>
-    `).join('');
-    
-    contentArea.innerHTML = html + "</div>";
-}
-
-async function nopBai() {
-    if(!confirm("Con có chắc chắn muốn nộp bài không?")) return;
-    
-    let score = 0;
-    quiz.forEach((q, idx) => {
-        const selected = document.querySelector(`input[name="q-${idx}"]:checked`);
-        if(selected && selected.value === q.correct) score++;
-    });
-    
-    const finalScore = Math.round((score / quiz.length) * 10);
-    
-    document.getElementById('loader').style.display = 'flex';
-    document.getElementById('loader').innerHTML = `<div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600 mb-4"></div><p class="font-bold text-indigo-900">ĐANG CHẤM ĐIỂM...</p>`;
-    
-    try {
-        await fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify({
-                action: 'nop_bai',
-                data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: finalScore }
-            })
-        });
-        Data.log.push({ subject: curSub, group: curGrp });
-        document.getElementById('loader').style.display = 'none';
-        hienKetQua(finalScore, score, quiz.length);
-    } catch(e) {
-        alert("Lỗi kết nối! Kết quả có thể chưa được lưu.");
-        document.getElementById('loader').style.display = 'none';
+    // Nếu có thông báo thì hiện chấm đỏ
+    if(localStorage.getItem("clsMsg") && localStorage.getItem("clsMsg").length > 0) {
+        document.getElementById("badgeNoti")?.classList.remove("hidden");
     }
 }
 
-function hienKetQua(score, right, total) {
-    let msg = score >= 9 ? "XUẤT SẮC! 🎉" : (score >= 7 ? "LÀM TỐT LẮM! 😊" : "CỐ GẮNG HƠN NHÉ! 💪");
-    let color = score >= 5 ? "text-green-600" : "text-red-600";
-    
+// --- THÔNG BÁO TỪ LỚP ---
+function moThongBao() {
+    closeMenu();
+    const msg = localStorage.getItem("clsMsg") || "Hiện tại chưa có thông báo mới từ GVCN.";
+    let btnSua = currentUser.role === 'admin' ? `<button onclick="editNoti()" class="w-full mt-6 bg-orange-100 text-orange-700 py-3 rounded-xl font-bold shadow-sm btn-3d border border-orange-200"><i class="fas fa-edit"></i> Soạn thông báo mới</button>` : '';
+
     contentArea.innerHTML = `
-        <div class="text-center mt-10 fade-in">
-            <div class="text-6xl mb-4">🏆</div>
-            <h2 class="text-3xl font-black ${color} mb-2">${score} ĐIỂM</h2>
-            <p class="font-bold text-slate-500 text-lg mb-6">${msg}</p>
-            <p class="mb-6">Con làm đúng <b class="text-slate-800">${right}/${total}</b> câu.</p>
-            
-            <div class="flex justify-center gap-4">
-                <button onclick="moGocHocTap()" class="bg-gray-200 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-300">Quay lại</button>
-            </div>
+        <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="font-black text-xl text-orange-500 uppercase">THÔNG BÁO LỚP</h2></div>
+        <div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-orange-400 fade-in">
+            <div class="flex items-center gap-3 mb-4"><div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-2xl"><i class="fas fa-bell"></i></div><h3 class="font-bold text-slate-800 text-lg">Tin nhắn từ GVCN</h3></div>
+            <div class="bg-orange-50 p-5 rounded-2xl text-slate-700 font-medium leading-relaxed whitespace-pre-wrap min-h-[120px] border border-orange-100 text-lg">${msg}</div>
+            ${btnSua}
         </div>
     `;
 }
 
-// --- 5. CÁC TÍNH NĂNG KHÁC (GIÁO VIÊN & ĐƠN TỪ) ---
+function editNoti() {
+    const n = prompt("Nhập nội dung thông báo mới:", localStorage.getItem("clsMsg") || "");
+    if(n !== null) { localStorage.setItem("clsMsg", n); moThongBao(); }
+}
 
+// 🎯 HỒ SƠ HS BỔ SUNG ĐẦY ĐỦ THÔNG TIN
+function viewProfile(id) {
+    closeMenu();
+    const s = Data.hs.find(x => x.id === id);
+    document.getElementById("pfName").innerText = s.name;
+    
+    const renderPhoneActions = (phone) => {
+        if(!phone || phone === 'undefined' || phone.trim() === '') return '<span class="text-gray-400 italic font-normal text-xs">Chưa cập nhật</span>';
+        const cleanPhone = phone.toString().replace(/\D/g, ''); 
+        return `
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-800">${phone}</span>
+                <a href="tel:${cleanPhone}" class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-sm hover:bg-green-600 hover:text-white transition" title="Gọi điện"><i class="fas fa-phone-alt"></i></a>
+                <a href="https://zalo.me/${cleanPhone}" target="_blank" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center shadow-sm hover:bg-blue-600 hover:text-white transition" title="Nhắn Zalo"><i class="fas fa-comment"></i></a>
+            </div>
+        `;
+    };
+
+    document.getElementById("pfContent").innerHTML = `
+        <div class="space-y-4 text-sm text-slate-600">
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Mã Học Sinh</span>
+                <span class="font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">${s.id}</span>
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Giới tính</span>
+                <span class="font-bold text-slate-800">${s.gender || 'Chưa rõ'}</span>
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Ngày sinh</span>
+                <b class="text-slate-800">${s.dob || 'Chưa cập nhật'}</b>
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">SĐT Cha</span>
+                ${renderPhoneActions(s.fatherPhone)}
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">SĐT Mẹ</span>
+                ${renderPhoneActions(s.motherPhone)}
+            </div>
+            <div class="flex justify-between items-center border-b pb-2 border-slate-100">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Điểm Rèn Luyện</span>
+                <div class="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded text-yellow-600 font-black border border-yellow-200"><i class="fas fa-gem"></i> ${s.score || 0} Kim cương</div>
+            </div>
+            <div class="flex flex-col border-b pb-2 border-slate-100 gap-1">
+                <span class="font-bold text-slate-400 uppercase text-[10px] tracking-wider">Địa chỉ thường trú</span>
+                <b class="text-slate-800 leading-snug">${s.address || 'Chưa cập nhật'}</b>
+            </div>
+            ${s.note ? `<div class="bg-blue-50 p-3 rounded-xl text-blue-800 italic border border-blue-100 text-xs"><i class="fas fa-info-circle mr-1"></i> Ghi chú: ${s.note}</div>` : ''}
+        </div>
+    `;
+    document.getElementById("modalProfile").classList.remove("hidden");
+}
+
+// --- CÁC TÍNH NĂNG CHUNG ---
 async function moDonTu() {
     closeMenu();
     contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải...</h2>`;
@@ -303,8 +214,7 @@ async function moTienDo() {
     const vietnamese = await (await fetch(API_URL+"?type=vietnamese")).json();
     const total = [...new Set(math.map(x=>x.group))].length + [...new Set(vietnamese.map(x=>x.group))].length;
     const logs = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json();
-    
-    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ HỌC TẬP (${total} BÀI)</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
     html += Data.hs.map(h => {
         const userL = logs.filter(l => l.id === h.id);
         const done = new Set(userL.map(l => l.subject+l.group)).size;
@@ -329,35 +239,12 @@ function chuyenTrangQuanLy() {
     contentArea.innerHTML = html + "</div>";
 }
 
-function viewProfile(id) {
-    const s = Data.hs.find(x => x.id === id);
-    const renderPhoneActions = (phone) => {
-        if(!phone || phone === 'undefined') return '<span class="text-gray-400 italic font-normal">Chưa cập nhật</span>';
-        const cleanPhone = phone.toString().replace(/\D/g, ''); 
-        return `<div class="flex items-center gap-2"><span class="font-bold text-slate-800">${phone}</span><a href="tel:${cleanPhone}" class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center"><i class="fas fa-phone-alt"></i></a></div>`;
-    };
-    
-    document.getElementById("modalProfile").classList.remove("hidden");
-    document.getElementById("pfName").innerText = s.name;
-    document.getElementById("pfContent").innerHTML = `
-        <div class="space-y-4 text-sm text-slate-600">
-             <div class="flex justify-between border-b pb-2"><span>Giới tính</span><b>${s.gender}</b></div>
-             <div class="flex justify-between border-b pb-2"><span>SĐT Cha</span>${renderPhoneActions(s.fatherPhone)}</div>
-             <div class="flex justify-between border-b pb-2"><span>SĐT Mẹ</span>${renderPhoneActions(s.motherPhone)}</div>
-             <div class="flex justify-between border-b pb-2"><span>Địa chỉ</span><b class="text-right">${s.address}</b></div>
-             ${s.note ? `<div class="bg-yellow-50 p-2 rounded border border-yellow-200 text-yellow-800 mt-2"><b>Ghi chú:</b> ${s.note}</div>` : ''}
-        </div>
-    `;
-}
-
-function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
-
 async function quanLyNganHang(sub) {
     closeMenu();
     contentArea.innerHTML = `<p class="text-center font-bold text-indigo-600 mt-10"><i class="fas fa-spinner fa-spin mr-2"></i> Đang tải câu hỏi...</p>`;
     const qs = await (await fetch(API_URL+"?type="+sub)).json();
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">KHO ${sub=='math'?'TOÁN':'TIẾNG VIỆT'}</h2></div><div class="space-y-4">`;
-    html += qs.map(q => `<div class="bg-white p-4 rounded-xl border"><span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold">${q.group}</span><div class="mt-2 font-bold">${q.question.replace(/\n/g,'<br>')}</div><div class="mt-2 text-sm text-green-600 font-bold">Đ.án: ${q.correct.toUpperCase()}</div></div>`).join('');
+    html += qs.map(q => `<div class="bg-white p-4 rounded-xl border"><span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded font-bold">${q.group}</span><div class="mt-2 font-bold">${q.question.replace(/\n/g,'<br>')}</div></div>`).join('');
     contentArea.innerHTML = html + "</div>";
 }
 
@@ -366,8 +253,8 @@ function moXinPhep() {
     contentArea.innerHTML = `
         <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600">GỬI ĐƠN PHÉP</h2></div>
         <div class="bg-white p-6 rounded-2xl shadow-sm border space-y-4">
-            <div><label class="font-bold text-gray-600">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full mt-1 border p-2 rounded"></div>
-            <div><label class="font-bold text-gray-600">Lý do</label><textarea id="lReason" class="edit-input w-full mt-1 border p-2 rounded" rows="3" placeholder="Nhập lý do nghỉ..."></textarea></div>
+            <div><label class="font-bold text-gray-600">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full mt-1"></div>
+            <div><label class="font-bold text-gray-600">Lý do</label><textarea id="lReason" class="edit-input w-full mt-1" rows="3" placeholder="Nhập lý do nghỉ..."></textarea></div>
             <button onclick="sendLeave()" class="w-full bg-red-600 text-white py-3 rounded-xl font-bold btn-3d shadow-lg mt-4">GỬI ĐƠN</button>
         </div>
     `;
@@ -377,7 +264,6 @@ function moXinPhep() {
 async function sendLeave() {
     const d = document.getElementById('lDate').value, r = document.getElementById('lReason').value;
     if(!d || !r) return alert("Vui lòng nhập đủ thông tin!");
-    
     document.getElementById('loader').style.display='flex';
     try {
         await fetch(API_URL, { method:'POST', mode:'no-cors', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:'Nghỉ cả ngày', reason:r } }) });
@@ -385,4 +271,15 @@ async function sendLeave() {
         veTrangChu();
     } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); }
     document.getElementById('loader').style.display='none'; 
+}
+
+function moGocHocTap() {
+    closeMenu();
+    contentArea.innerHTML = `
+        <div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">GÓC HỌC TẬP</h2></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button onclick="alert('Tính năng làm bài đang được nạp...');" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d">TOÁN</button>
+            <button onclick="alert('Tính năng làm bài đang được nạp...');" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d">TIẾNG VIỆT</button>
+        </div>
+    `;
 }
