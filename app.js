@@ -1,8 +1,7 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 (BẢNG TIN ĐA THÔNG BÁO)
+// NÃO BỘ XỬ LÝ - V68 FINAL (FIX LỖI NÚT SỬA & PHÂN QUYỀN)
 // ==========================================
 
-// THẦY DÁN LINK API MỚI VÀO ĐÂY:
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 const AD_PASS = "123456";
 
@@ -89,39 +88,43 @@ function renderDashboardStudent() {
 }
 
 // ==========================================
-// 🎯 BẢNG TIN ĐA THÔNG BÁO (HIỂN THỊ CHUẨN)
+// 🎯 BẢNG TIN ĐA THÔNG BÁO (ĐÃ FIX LỖI NÚT BẤM)
 // ==========================================
 function moThongBao() {
     closeMenu();
-    let btnTaoMoi = currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition"><i class="fas fa-plus mr-2"></i> TẠO THÔNG BÁO MỚI</button>` : '';
+    // Chỉ Admin mới thấy nút tạo mới
+    let btnTaoMoi = currentUser.role === 'admin' ? 
+        `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO THÔNG BÁO MỚI</button>` : '';
 
     let listHtml = "";
     if (Data.notiList.length === 0) {
-        listHtml = `<p class="text-center text-slate-400 italic">Hiện chưa có thông báo nào từ Giáo viên.</p>`;
+        listHtml = `<div class="text-center py-10 opacity-60"><i class="fas fa-inbox text-6xl text-slate-300 mb-3"></i><p class="font-bold text-slate-400">Chưa có thông báo nào.</p></div>`;
     } else {
-        // Render từng thông báo (Mới nhất lên đầu)
         listHtml = Data.notiList.map(tb => {
-            let adminButtons = currentUser.role === 'admin' ? `
-                <div class="flex gap-2 mt-4 pt-3 border-t border-orange-100 justify-end">
-                    <button onclick="editNotiUI('${tb.id}')" class="bg-blue-100 text-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition text-sm"><i class="fas fa-edit mr-1"></i> Sửa</button>
-                    <button onclick="xoaThongBao('${tb.id}')" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl font-bold hover:bg-red-600 hover:text-white transition text-sm"><i class="fas fa-trash mr-1"></i> Xóa</button>
-                </div>
-            ` : '';
+            // QUAN TRỌNG: Chỉ hiện nút Sửa/Xóa nếu là ADMIN
+            let adminButtons = "";
+            if (currentUser.role === 'admin') {
+                adminButtons = `
+                    <div class="flex gap-2 mt-4 pt-3 border-t border-orange-100">
+                        <button onclick="editNotiUI('${tb.id}')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Sửa</button>
+                        <button onclick="xoaThongBao('${tb.id}')" class="flex-1 bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-trash-alt"></i> Xóa</button>
+                    </div>
+                `;
+            }
 
             return `
-            <div class="bg-white p-5 rounded-3xl shadow border-2 border-orange-50 mb-5 relative overflow-hidden fade-in">
-                <div class="absolute top-0 left-0 w-1.5 h-full bg-orange-400"></div>
+            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative overflow-hidden fade-in hover:shadow-md transition">
                 <div class="flex items-center gap-3 mb-3">
-                    <div class="w-10 h-10 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fas fa-bell"></i></div>
+                    <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-lg shrink-0"><i class="fas fa-bullhorn"></i></div>
                     <div>
-                        <h3 class="font-black text-slate-800">Thông báo từ GVCN</h3>
-                        <p class="text-[11px] font-bold text-slate-400 mt-0.5"><i class="fas fa-clock mr-1"></i> ${tb.time}</p>
+                        <h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">Thông báo từ GVCN</h3>
+                        <p class="text-[11px] font-bold text-slate-400"><i class="fas fa-clock mr-1"></i> ${tb.time}</p>
                     </div>
                 </div>
-                <div class="bg-orange-50/50 p-4 rounded-2xl text-slate-800 text-[15px] border border-orange-100 [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-3 [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold leading-relaxed">
+                <div class="text-slate-700 text-base leading-relaxed pl-1 [&_img]:max-w-full [&_img]:rounded-lg [&_img]:my-2 [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">
                     ${tb.content}
                 </div>
-                ${adminButtons}
+                ${adminButtons} 
             </div>`;
         }).join('');
     }
@@ -133,12 +136,10 @@ function moThongBao() {
     `;
 }
 
-// 🎯 GIAO DIỆN SOẠN THẢO THÔNG BÁO (THÊM / SỬA)
 function editNotiUI(idToEdit) {
     const isEdit = idToEdit != null;
     const tb = isEdit ? Data.notiList.find(x => x.id === idToEdit) : null;
     
-    // Auto tính ngày tuần nếu là tạo mới
     const d = new Date();
     const dateStr = ("0" + d.getDate()).slice(-2) + "/" + ("0" + (d.getMonth() + 1)).slice(-2) + "/" + d.getFullYear();
     const firstDay = new Date(d.getFullYear(), 0, 1);
@@ -153,38 +154,31 @@ function editNotiUI(idToEdit) {
             <input type="hidden" id="frmNotiId" value="${idToEdit || ''}">
             <div>
                 <label class="text-xs font-black text-slate-400 uppercase tracking-wider">Thời gian hiển thị</label>
-                <input type="text" id="frmNotiTime" class="edit-input w-full mt-1 bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold" value="${defaultTimeStr}">
+                <input type="text" id="frmNotiTime" class="edit-input w-full mt-1 bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700" value="${defaultTimeStr}">
             </div>
 
             <div>
-                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung thông báo</label>
-                <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-100 rounded-xl border border-slate-200">
-                    <button onclick="document.execCommand('bold', false, null)" class="w-10 h-10 bg-white rounded-lg shadow-sm hover:bg-slate-200 font-black">B</button>
-                    <button onclick="document.execCommand('italic', false, null)" class="w-10 h-10 bg-white rounded-lg shadow-sm hover:bg-slate-200 italic font-serif">I</button>
-                    <div class="relative flex items-center bg-white rounded-lg shadow-sm px-2 hover:bg-slate-200">
-                        <i class="fas fa-palette text-slate-500 mr-1"></i>
-                        <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer">
-                    </div>
+                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung</label>
+                <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                    <button onclick="document.execCommand('bold', false, null)" class="w-9 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 font-black">B</button>
+                    <button onclick="document.execCommand('italic', false, null)" class="w-9 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 italic font-serif">I</button>
+                    <div class="relative flex items-center bg-white rounded-lg shadow-sm px-2 hover:bg-slate-200"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer"></div>
                     <div class="w-px bg-slate-300 mx-1 my-1"></div>
-                    <button onclick="chenAnhVaoThongBao()" class="px-3 h-10 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-indigo-600 font-bold flex items-center gap-2"><i class="fas fa-image"></i> Ảnh</button>
-                    <button onclick="chenFileVaoThongBao()" class="px-3 h-10 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-blue-600 font-bold flex items-center gap-2"><i class="fas fa-link"></i> Link</button>
+                    <button onclick="chenAnhVaoThongBao()" class="px-2 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-indigo-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-image"></i> Ảnh</button>
+                    <button onclick="chenFileVaoThongBao()" class="px-2 h-9 bg-white rounded-lg shadow-sm hover:bg-slate-200 text-blue-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-link"></i> Link</button>
                 </div>
-
-                <div id="frmNotiContent" contenteditable="true" class="w-full min-h-[200px] bg-slate-50 border-2 border-slate-200 p-4 rounded-xl outline-none focus:border-orange-400 transition text-lg leading-relaxed [&_img]:max-w-full [&_img]:rounded-lg [&_a]:text-blue-600 [&_a]:underline">
+                <div id="frmNotiContent" contenteditable="true" class="w-full min-h-[200px] bg-white border-2 border-slate-200 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base leading-relaxed [&_img]:max-w-full [&_img]:rounded-lg [&_a]:text-blue-600 [&_a]:underline">
                     ${currentContent}
                 </div>
             </div>
 
-            <button onclick="luuThongBaoLenServer()" class="w-full bg-orange-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-orange-700 transition">${isEdit ? 'LƯU THAY ĐỔI' : 'ĐĂNG LÊN BẢNG TIN'}</button>
+            <button onclick="luuThongBaoLenServer()" class="w-full bg-orange-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-orange-700 transition">${isEdit ? 'LƯU THAY ĐỔI' : 'ĐĂNG NGAY'}</button>
         </div>
     `;
 }
 
 function chenAnhVaoThongBao() { const url = prompt("Dán đường link hình ảnh:"); if(url) { document.getElementById("frmNotiContent").focus(); document.execCommand('insertImage', false, url); } }
-function chenFileVaoThongBao() {
-    const url = prompt("Dán đường link (Drive, YouTube...):");
-    if(url) { const tenLink = prompt("Nhập tên hiển thị:", "Xem chi tiết tại đây"); if(tenLink) { document.getElementById("frmNotiContent").focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${tenLink}</a>`); } }
-}
+function chenFileVaoThongBao() { const url = prompt("Dán đường link (Drive, YouTube...):"); if(url) { const tenLink = prompt("Nhập tên hiển thị:", "Xem chi tiết"); if(tenLink) { document.getElementById("frmNotiContent").focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${tenLink}</a>`); } } }
 
 async function luuThongBaoLenServer() {
     const id = document.getElementById("frmNotiId").value;
@@ -198,7 +192,7 @@ async function luuThongBaoLenServer() {
         const act = id ? 'sua_thong_bao' : 'dang_thong_bao';
         await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: act, data: { id: id, time: timeStr, content: contentHTML } }) });
         
-        // Cập nhật lại giao diện ngay
+        // Cập nhật lại giao diện ngay lập tức
         if(id) {
             const idx = Data.notiList.findIndex(x => x.id === id);
             if(idx > -1) { Data.notiList[idx].time = timeStr; Data.notiList[idx].content = contentHTML; }
@@ -206,7 +200,7 @@ async function luuThongBaoLenServer() {
             Data.notiList.unshift({ id: "TB"+Date.now(), time: timeStr, content: contentHTML });
         }
 
-        document.getElementById('loader').style.display = 'none'; alert("Lưu thành công!"); moThongBao(); 
+        document.getElementById('loader').style.display = 'none'; alert("Thành công!"); moThongBao(); 
     } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng!"); }
 }
 
@@ -219,7 +213,7 @@ async function xoaThongBao(id) {
     }
 }
 
-// CÁC HÀM CŨ GIỮ NGUYÊN BÊN DƯỚI...
+// CÁC HÀM CŨ GIỮ NGUYÊN...
 function moGocHocTap() { closeMenu(); contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">CHỌN MÔN HỌC</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; }
 async function loadSubject(sub) { curSub = sub; contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; const qs = await (await fetch(API_URL + "?type=" + sub + "&t=" + Date.now())).json(); Data[sub] = qs; const grps = [...new Set(qs.map(x => x.group))].sort(); let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; else grps.forEach(g => { const isDone = Data.log.some(l => l.subject === sub && l.group === g); const time = qs.find(q => q.group === g).time || 10; const count = qs.filter(q => q.group === g).length; html += `<div onclick="startQuiz('${g}', ${time})" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/30' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${!isDone ? '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : ''}</div>`; }); contentArea.innerHTML = html + `</div>`; }
 function startQuiz(group, timeMins) { curGrp = group; quiz = Data[curSub].filter(q => q.group === group).sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; renderQuizFrame(); renderQuestion(0); startTimer(timeMins * 60); }
