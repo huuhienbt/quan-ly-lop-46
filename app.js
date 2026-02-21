@@ -1,5 +1,5 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 FINAL (THÊM CỠ CHỮ & FIX CĂN GIỮA ẢNH)
+// NÃO BỘ XỬ LÝ - V68 FINAL (SẮP XẾP THÔNG BÁO CHUẨN THỜI GIAN)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -88,17 +88,24 @@ function renderDashboardStudent() {
 }
 
 // ==========================================
-// 🎯 BẢNG TIN LỚP (HIỂN THỊ)
+// 🎯 BẢNG TIN LỚP (ĐÃ THÊM TỰ ĐỘNG SẮP XẾP THEO NGÀY)
 // ==========================================
 function moThongBao() {
     closeMenu();
     let btnTaoMoi = currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO THÔNG BÁO MỚI</button>` : '';
 
+    // LỌC VÀ SẮP XẾP LẠI THÔNG BÁO (Mới nhất lên đầu dựa vào ID chứa Timestamp)
+    let sortedList = [...Data.notiList].sort((a, b) => {
+        let timeA = parseInt(String(a.id).replace(/\D/g, '')) || 0;
+        let timeB = parseInt(String(b.id).replace(/\D/g, '')) || 0;
+        return timeB - timeA;
+    });
+
     let listHtml = "";
-    if (Data.notiList.length === 0) {
+    if (sortedList.length === 0) {
         listHtml = `<div class="text-center py-10 opacity-60"><i class="fas fa-inbox text-6xl text-slate-300 mb-3"></i><p class="font-bold text-slate-400">Chưa có thông báo nào.</p></div>`;
     } else {
-        listHtml = Data.notiList.map(tb => {
+        listHtml = sortedList.map(tb => {
             let adminButtons = currentUser.role === 'admin' ? `
                 <div class="flex gap-2 mt-4 pt-3 border-t border-orange-100">
                     <button onclick="editNotiUI('${tb.id}')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Sửa</button>
@@ -108,7 +115,6 @@ function moThongBao() {
 
             let cleanContent = tb.content ? tb.content.replace(/<button[^>]*>.*?<\/button>/gi, '') : "";
 
-            // Thêm [&_img]:inline-block để ảnh ngoan ngoãn tuân theo lệnh text-align (Căn giữa)
             return `
             <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative fade-in hover:shadow-md transition w-full overflow-hidden">
                 <div class="flex items-center gap-3 mb-3">
@@ -133,7 +139,6 @@ function moThongBao() {
     `;
 }
 
-// Khởi tạo chức năng Dãn dòng
 window.changeLineSpacing = function(val) {
     if(!val) return;
     document.execCommand('formatBlock', false, 'DIV'); 
@@ -148,7 +153,6 @@ window.changeLineSpacing = function(val) {
     }
 };
 
-// 🎯 GIAO DIỆN SOẠN THẢO (THÊM CỠ CHỮ & CĂN LỀ ẢNH)
 function editNotiUI(idToEdit) {
     const isEdit = idToEdit != null;
     const tb = isEdit ? Data.notiList.find(x => x.id === idToEdit) : null;
@@ -171,7 +175,7 @@ function editNotiUI(idToEdit) {
             </div>
 
             <div class="w-full">
-                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung</label>
+                <label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-2">Nội dung (Bôi đen chữ để căn chỉnh)</label>
                 
                 <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200 items-center">
                     <button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black">B</button>
@@ -263,7 +267,6 @@ async function xoaThongBao(id) {
     }
 }
 
-// CÁC CHỨC NĂNG CÒN LẠI (GIỮ NGUYÊN)
 function moGocHocTap() { closeMenu(); contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">CHỌN MÔN HỌC</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; }
 async function loadSubject(sub) { curSub = sub; contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; const qs = await (await fetch(API_URL + "?type=" + sub + "&t=" + Date.now())).json(); Data[sub] = qs; const grps = [...new Set(qs.map(x => x.group))].sort(); let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; else grps.forEach(g => { const isDone = Data.log.some(l => l.subject === sub && l.group === g); const time = qs.find(q => q.group === g).time || 10; const count = qs.filter(q => q.group === g).length; html += `<div onclick="startQuiz('${g}', ${time})" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/30' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${!isDone ? '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : ''}</div>`; }); contentArea.innerHTML = html + `</div>`; }
 function startQuiz(group, timeMins) { curGrp = group; quiz = Data[curSub].filter(q => q.group === group).sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; renderQuizFrame(); renderQuestion(0); startTimer(timeMins * 60); }
