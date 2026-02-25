@@ -1,5 +1,5 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 BẢN CHUẨN (KHÔI PHỤC NÚT LINK)
+// NÃO BỘ XỬ LÝ - V68 BẢN CHUẨN (GOM GỌN MỤC CỠ ẢNH VÀO DROPDOWN)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -122,7 +122,7 @@ function moGocHocTap() {
 }
 
 // ==========================================
-// 🎯 FORM TẠO BÀI (ĐÃ CÓ LẠI NÚT LINK)
+// 🎯 FORM TẠO BÀI (THIẾT KẾ LẠI THANH CÔNG CỤ CỠ ẢNH)
 // ==========================================
 window.currentSelectedImg = null;
 
@@ -160,19 +160,22 @@ function editNotiUI(idToEdit) {
                 <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn phải"><i class="fas fa-align-right"></i></button>
                 <button onclick="document.execCommand('justifyFull', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn đều 2 bên"><i class="fas fa-align-justify"></i></button>
                 <div class="w-px h-6 bg-slate-300 mx-1"></div>
+                
                 <select onchange="document.execCommand('fontSize', false, this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ chữ</option><option value="1">Rất nhỏ</option><option value="2">Nhỏ</option><option value="3">Vừa</option><option value="4">Lớn</option><option value="5">Rất Lớn</option><option value="6">Khổng lồ</option></select>
                 <select onchange="changeLineSpacing(this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Giãn dòng</option><option value="1.2">Nhỏ (1.2)</option><option value="1.6">Vừa (1.6)</option><option value="2.0">Rộng (2.0)</option></select>
-                <div class="w-px h-6 bg-slate-300 mx-1"></div>
                 
+                <div class="w-px h-6 bg-slate-300 mx-1"></div>
                 <button onclick="chenAnhVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-indigo-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-upload"></i> Thêm Ảnh</button>
+                
+                <select onchange="resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1">
+                    <option value="">Cỡ ảnh</option>
+                    <option value="30%">Nhỏ (30%)</option>
+                    <option value="60%">Vừa (60%)</option>
+                    <option value="100%">Lớn (100%)</option>
+                </select>
                 
                 <button onclick="chenFileVaoThongBao()" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-blue-600 font-bold text-xs flex items-center gap-1"><i class="fas fa-link"></i> Link</button>
 
-                <div class="w-px h-6 bg-slate-300 mx-1"></div>
-                <span class="text-[10px] text-slate-400 font-bold ml-1">Cỡ ảnh:</span>
-                <button onclick="resizeImg('30%')" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-orange-100 text-slate-700 font-bold text-[11px]" title="Ảnh nhỏ">Nhỏ</button>
-                <button onclick="resizeImg('60%')" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-orange-100 text-slate-700 font-bold text-[11px]" title="Ảnh vừa">Vừa</button>
-                <button onclick="resizeImg('100%')" class="px-2 h-8 bg-white rounded shadow-sm hover:bg-orange-100 text-slate-700 font-bold text-[11px]" title="Ảnh lớn">Lớn</button>
             </div>
             <div id="frmNotiContent" onclick="handleEditorClick(event)" contenteditable="true" class="w-full min-h-[200px] bg-white border-2 border-slate-200 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:inline-block [&_img]:cursor-pointer [&_a]:text-blue-600 [&_a]:underline">${currentContent}</div>
         </div>
@@ -190,6 +193,7 @@ window.handleEditorClick = function(e) {
 };
 
 window.resizeImg = function(size) {
+    if(!size) return; // Nếu chọn lại chữ "Cỡ ảnh" thì bỏ qua
     if(!window.currentSelectedImg) return alert("Thầy hãy bấm chọn một tấm ảnh ở dưới trước khi chỉnh kích thước nhé!");
     window.currentSelectedImg.style.width = size;
     window.currentSelectedImg.style.height = 'auto';
@@ -247,9 +251,6 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); localStorage.setItem('L46_Data_Cache', JSON.stringify(Data)); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
-// ==========================================
-// 🎯 KHO CÂU HỎI THEO TUẦN (GIỮ NGUYÊN)
-// ==========================================
 async function quanLyNganHang(sub) { 
     closeMenu(); curSub = sub; 
     contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>`; 
@@ -295,7 +296,6 @@ function renderFormCauHoi(id) { const q = id ? Data[curSub].find(x => x.id === i
 async function luuCauHoi(id) { const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: document.getElementById("frmQ").value, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" }; if(!data.group || !data.question) return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); alert("Lưu thành công!"); document.getElementById('loader').style.display = 'none'; quanLyNganHang(curSub); }
 async function xoaCauHoi(id) { if(confirm("Thầy có chắc chắn muốn xóa câu hỏi này không?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); alert("Đã xóa!"); document.getElementById('loader').style.display = 'none'; quanLyNganHang(curSub); } }
 
-// CÁC HÀM XỬ LÝ SINH VIÊN VÀ BÀI TẬP BÊN DƯỚI GIỮ NGUYÊN
 async function loadSubject(sub) { 
     if(!currentUser) return showLogin(); 
     curSub = sub; 
