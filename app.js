@@ -1,5 +1,5 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 BẢN CHUẨN (GOM GỌN MỤC CỠ ẢNH VÀO DROPDOWN)
+// NÃO BỘ XỬ LÝ - V68 BẢN CHUẨN (FIX LỖI BỊ THOÁT KHI ĐANG LÀM BÀI)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -10,16 +10,72 @@ let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null, s
 let wrongAnswersLog = []; 
 
 window.onload = async () => {
+    setupUI(); 
+    const cachedData = localStorage.getItem('L46_Data_Cache');
+    if (cachedData) {
+        try {
+            Data = JSON.parse(cachedData);
+            checkAutoLogin(); 
+            if (!currentUser) moThongBao(); 
+        } catch (e) { console.log("Lỗi cache:", e); }
+    } else {
+        document.getElementById('content').innerHTML = `<div class="text-center mt-20"><i class="fas fa-spinner fa-spin text-4xl text-orange-500"></i><p class="mt-3 text-slate-500 font-bold">Đang kết nối máy chủ lớp học...</p></div>`;
+    }
+
     try {
-        const [resHs, resNoti] = await Promise.all([fetch(API_URL + "?type=students&t=" + Date.now()), fetch(API_URL + "?type=thong_bao&t=" + Date.now())]);
-        Data.hs = await resHs.json(); Data.notiList = await resNoti.json();
-        document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu thành công!"; document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
-        const role = localStorage.getItem('role');
-        if(role === 'admin') loginAdmin(); else if(role === 'student') { const u = Data.hs.find(x => x.id === localStorage.getItem('uid')); if(u) loginStudent(u); else loginGuest(); } else loginGuest();
-    } catch(e) { document.getElementById('connStatus').innerText = "Lỗi mạng hoặc Link API bị sai!"; document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-red-500"; loginGuest(); }
+        const [resHs, resNoti, resLog, resMath, resTv, resLeave] = await Promise.all([
+            fetch(API_URL + "?type=students&t=" + Date.now()),
+            fetch(API_URL + "?type=thong_bao&t=" + Date.now()),
+            fetch(API_URL + "?type=history_all&t=" + Date.now()),
+            fetch(API_URL + "?type=math&t=" + Date.now()),
+            fetch(API_URL + "?type=vietnamese&t=" + Date.now()),
+            fetch(API_URL + "?type=absent_list&t=" + Date.now())
+        ]);
+        
+        Data.hs = await resHs.json(); Data.notiList = await resNoti.json(); Data.log = await resLog.json();
+        Data.math = await resMath.json(); Data.tv = await resTv.json(); Data.leaves = await resLeave.json();
+
+        localStorage.setItem('L46_Data_Cache', JSON.stringify(Data));
+        document.getElementById('connStatus').innerText = "Đã đồng bộ dữ liệu mới nhất!";
+        document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
+
+        checkAutoLogin();
+        
+        // BẢO VỆ PHÒNG THI: Nếu đang ở màn hình Quiz thì tuyệt đối không tải lại trang
+        if(document.querySelector('button.text-orange-500') && !document.getElementById('quizBox')) {
+            moThongBao();
+        }
+
+    } catch(e) {
+        document.getElementById('connStatus').innerText = "Đang xem ở chế độ Offline";
+        document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-slate-400";
+        if (!Data.hs.length) loginGuest(); 
+    }
 };
 
-function loginGuest() { currentUser = null; setupUI(); moThongBao(); }
+function checkAutoLogin() {
+    const role = localStorage.getItem('role');
+    const uid = localStorage.getItem('uid');
+    if (role === 'admin') { 
+        loginAdmin(); 
+    } else if (role === 'student' && uid && Data.hs.length > 0) {
+        // FIX LỖI ÉP KIỂU DỮ LIỆU ĐỂ KHÔNG BỊ VĂNG RA
+        const u = Data.hs.find(x => String(x.id) === String(uid)); 
+        if (u) {
+            currentUser = { ...u, role: 'student' };
+            const headerNameEl = document.getElementById('headerName');
+            if(headerNameEl) headerNameEl.innerText = u.name.split(" ").pop();
+            // Cập nhật ngầm Header, không reload vùng làm bài
+            if(!document.getElementById('quizBox')) setupUI(); 
+        } else {
+            loginGuest(); 
+        }
+    } else {
+        loginGuest();
+    }
+}
+
+function loginGuest() { currentUser = null; setupUI(); if(!localStorage.getItem('L46_Data_Cache') && !document.getElementById('quizBox')) moThongBao(); }
 
 function showLogin() { 
     closeMenu(); document.getElementById('mainApp').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); 
@@ -121,9 +177,6 @@ function moGocHocTap() {
     contentArea.innerHTML = `${getNavHtml('hoctap')}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; 
 }
 
-// ==========================================
-// 🎯 FORM TẠO BÀI (THIẾT KẾ LẠI THANH CÔNG CỤ CỠ ẢNH)
-// ==========================================
 window.currentSelectedImg = null;
 
 function editNotiUI(idToEdit) { 
@@ -193,7 +246,7 @@ window.handleEditorClick = function(e) {
 };
 
 window.resizeImg = function(size) {
-    if(!size) return; // Nếu chọn lại chữ "Cỡ ảnh" thì bỏ qua
+    if(!size) return; 
     if(!window.currentSelectedImg) return alert("Thầy hãy bấm chọn một tấm ảnh ở dưới trước khi chỉnh kích thước nhé!");
     window.currentSelectedImg.style.width = size;
     window.currentSelectedImg.style.height = 'auto';
@@ -251,6 +304,9 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); localStorage.setItem('L46_Data_Cache', JSON.stringify(Data)); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
+// ==========================================
+// 🎯 KHO CÂU HỎI THEO TUẦN VÀ BÀI LÀM
+// ==========================================
 async function quanLyNganHang(sub) { 
     closeMenu(); curSub = sub; 
     contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>`; 
