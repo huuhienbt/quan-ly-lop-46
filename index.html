@@ -10,13 +10,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css">
-    <script src="app.js?v=71" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <script src="app.js?v=72" defer></script>
 </head>
 <body class="antialiased bg-slate-50 text-slate-800">
 
-    <div id="loader">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-indigo-600 mb-4"></div>
-        <p class="font-black text-indigo-900 animate-pulse tracking-widest">ĐANG KẾT NỐI...</p>
+    <div id="loader" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-50 transition-opacity duration-300">
+        <div class="rainbow-spinner mb-5 shadow-[0_0_15px_rgba(0,0,0,0.1)]"></div>
+        <p class="font-black text-indigo-900 animate-pulse tracking-widest text-sm">ĐANG TẢI DỮ LIỆU...</p>
     </div>
 
     <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm">
@@ -31,7 +33,6 @@
     </div>
 
     <div id="mainApp" class="hidden min-h-screen flex flex-col pb-20">
-        
         <div class="header-bg text-white sticky top-0 z-40 shadow-lg">
             <div class="px-4 py-3 flex justify-between items-center max-w-5xl mx-auto">
                 <div class="flex items-center gap-3 cursor-pointer" onclick="veTrangChu()">
@@ -86,8 +87,7 @@
                 <button onclick="closeModal('modalProfile')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"><i class="fas fa-times"></i></button>
             </div>
             
-            <div id="pfContent" class="p-5">
-                </div>
+            <div id="pfContent" class="p-5"></div>
             
             <div class="bg-slate-50 p-3 text-center border-t">
                 <button onclick="closeModal('modalProfile')" class="text-slate-500 font-bold text-sm hover:text-slate-800">Đóng cửa sổ</button>
@@ -96,6 +96,7 @@
     </div>
 
     <style>
+        /* MENU ITEM STYLE */
         .menu-item {
             padding: 12px;
             border-radius: 8px;
@@ -111,53 +112,34 @@
             color: #2563eb;
             transform: translateX(4px);
         }
+
+        /* --- CSS MÁY BẮN PHÁO CẦU VỒNG HIỆN ĐẠI --- */
+        .rainbow-spinner {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            /* Dải 7 màu cầu vồng: Đỏ, Cam, Vàng, Lục, Lam, Chàm, Tím */
+            background: conic-gradient(
+                #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444
+            );
+            /* Quay 1 giây một vòng đều đặn */
+            animation: rainbowSpin 1s linear infinite;
+            position: relative;
+        }
+
+        /* Khoét lỗ ở giữa để biến nó thành cái "Vòng (Ring)" thay vì "Bánh (Pie)" */
+        .rainbow-spinner::before {
+            content: "";
+            position: absolute;
+            inset: 6px; /* Độ dày của đường viền cầu vồng (6px) */
+            background-color: #f8fafc; /* Trùng với màu nền web để tạo hiệu ứng rỗng */
+            border-radius: 50%;
+        }
+
+        @keyframes rainbowSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
