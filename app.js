@@ -1,5 +1,5 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V68 BẢN CHUẨN (TỐI ƯU TẢI DỮ LIỆU & HIỆU ỨNG THÁC NƯỚC)
+// NÃO BỘ XỬ LÝ - BẢN ỔN ĐỊNH CÓ HIỆU ỨNG THÁC NƯỚC RÕ RÀNG
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
@@ -9,59 +9,30 @@ let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [], notiLis
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null, score = 0, currentQIndex = 0;
 let wrongAnswersLog = []; 
 
-// 🎯 BƯỚC 1: KHỞI ĐỘNG SIÊU TỐC & TẠO CSS HIỆU ỨNG
-window.onload = async () => {
-    // Tiêm CSS Hiệu ứng "Thác nước" cho Bảng tin
-    if(!document.getElementById('animStyle')) {
-        const style = document.createElement('style');
-        style.id = 'animStyle';
-        style.innerHTML = `
-            @keyframes slideDownFade { 
-                0% { opacity: 0; transform: translateY(-30px); } 
-                100% { opacity: 1; transform: translateY(0); } 
-            } 
-            .stagger-item { 
-                opacity: 0; 
-                animation: slideDownFade 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
-            }
-        `;
-        document.head.appendChild(style);
+// Chèn CSS Hiệu ứng Thác nước có độ nảy nhẹ (Bounce)
+const style = document.createElement('style');
+style.innerHTML = `
+    @keyframes cascadeDrop { 
+        0% { opacity: 0; transform: translateY(-40px) scale(0.95); } 
+        100% { opacity: 1; transform: translateY(0) scale(1); } 
+    } 
+    .stagger-item { 
+        opacity: 0; 
+        /* cubic-bezier tạo cảm giác rớt xuống và nảy lên nhẹ rất thật */
+        animation: cascadeDrop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
     }
+`;
+document.head.appendChild(style);
 
-    const role = localStorage.getItem('role');
-    
+window.onload = async () => {
+    localStorage.removeItem('L46_Data_Cache'); // Đảm bảo sạch rác cache cũ
     try {
-        if (role) {
-            // NẾU ĐÃ ĐĂNG NHẬP: Tải Bảng tin + Danh sách học sinh (để phục hồi tài khoản)
-            const [resHs, resNoti] = await Promise.all([
-                fetch(API_URL + "?type=students&t=" + Date.now()), 
-                fetch(API_URL + "?type=thong_bao&t=" + Date.now())
-            ]);
-            Data.hs = await resHs.json(); 
-            Data.notiList = await resNoti.json();
-            
-            document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu thành công!"; 
-            document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
-            
-            if(role === 'admin') loginAdmin(); 
-            else if(role === 'student') { 
-                const u = Data.hs.find(x => x.id === localStorage.getItem('uid')); 
-                if(u) loginStudent(u); else loginGuest(); 
-            }
-        } else {
-            // NẾU LÀ KHÁCH: CHỈ TẢI ĐÚNG BẢNG TIN CHO NHANH MƯỢT
-            const resNoti = await fetch(API_URL + "?type=thong_bao&t=" + Date.now());
-            Data.notiList = await resNoti.json();
-            
-            document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu Bảng tin!"; 
-            document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-blue-500";
-            loginGuest();
-        }
-    } catch(e) { 
-        document.getElementById('connStatus').innerText = "Lỗi mạng hoặc Link API bị sai!"; 
-        document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-red-500"; 
-        loginGuest(); 
-    }
+        const [resHs, resNoti] = await Promise.all([fetch(API_URL + "?type=students&t=" + Date.now()), fetch(API_URL + "?type=thong_bao&t=" + Date.now())]);
+        Data.hs = await resHs.json(); Data.notiList = await resNoti.json();
+        document.getElementById('connStatus').innerText = "Đã kết nối dữ liệu thành công!"; document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-green-500";
+        const role = localStorage.getItem('role');
+        if(role === 'admin') loginAdmin(); else if(role === 'student') { const u = Data.hs.find(x => x.id === localStorage.getItem('uid')); if(u) loginStudent(u); else loginGuest(); } else loginGuest();
+    } catch(e) { document.getElementById('connStatus').innerText = "Lỗi mạng hoặc Link API bị sai!"; document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-red-500"; loginGuest(); }
 };
 
 function loginGuest() { currentUser = null; setupUI(); moThongBao(); }
@@ -78,29 +49,11 @@ function showLogin() {
     }
 }
 
-// 🎯 BƯỚC 2: KHI BẤM ĐĂNG NHẬP MỚI TẢI DANH SÁCH HỌC SINH
-async function login() {
+function login() {
     const v = document.getElementById('inputLogin').value.trim();
-    if(!v) return alert("Vui lòng nhập SĐT hoặc Mật khẩu!");
-
-    // Nếu chưa có danh sách HS (vì nãy tải dưới quyền Khách), giờ mới bắt đầu tải
-    if (Data.hs.length === 0) {
-        document.getElementById('loader').style.display = 'flex'; // Bật màn hình loading
-        try {
-            const resHs = await fetch(API_URL + "?type=students&t=" + Date.now());
-            Data.hs = await resHs.json();
-        } catch(e) {
-            document.getElementById('loader').style.display = 'none';
-            return alert("Lỗi mạng khi lấy dữ liệu học sinh!");
-        }
-        document.getElementById('loader').style.display = 'none';
-    }
-
-    // Xử lý kiểm tra mật khẩu/SĐT
     if(v === AD_PASS) { localStorage.setItem('role','admin'); loginAdmin(); return; }
     const u = Data.hs.find(s => s.fatherPhone.includes(v) || s.motherPhone.includes(v));
-    if(u) { localStorage.setItem('role','student'); localStorage.setItem('uid',u.id); loginStudent(u); } 
-    else alert("Sai SĐT hoặc mật khẩu!");
+    if(u) { localStorage.setItem('role','student'); localStorage.setItem('uid',u.id); loginStudent(u); } else alert("Sai SĐT hoặc mật khẩu!");
 }
 
 function loginAdmin() { currentUser = { role: 'admin', name: "Thầy Hiển" }; setupUI(); renderDashboardAdmin(); }
@@ -156,7 +109,6 @@ function getNavHtml(active) {
     return `${headerGreeting}<div class="flex items-center gap-6 sm:gap-10 mb-6 border-b-2 border-slate-100 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide"><button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">BẢNG TIN LỚP</button><button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">GÓC HỌC TẬP</button><button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">HỘP THƯ</button></div>`;
 }
 
-// 🎯 BƯỚC 3: XỬ LÝ HIỆU ỨNG THÁC NƯỚC KHI HIỂN THỊ TIN
 function moThongBao() { 
     closeMenu(); 
     let btnTaoMoi = currentUser && currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO BÀI VIẾT MỚI</button>` : ''; 
@@ -176,19 +128,11 @@ function moThongBao() {
                 if(typeStr === 'HOẠT ĐỘNG LỚP 4/6' || typeStr === 'Hoạt động lớp') typeStr = 'Hoạt động'; 
                 if (typeStr === 'Hoạt động') { iconHtml = '<i class="fas fa-camera-retro"></i>'; colorTheme = 'bg-green-100 text-green-600'; } 
             } else { displayTime = tb.time; }
-            
-            // Tính toán thời gian trễ (delay) cho từng bài viết: bài 1 trễ 0s, bài 2 trễ 0.15s, bài 3 trễ 0.3s...
-            let delay = index * 0.15;
 
-            // Gắn class "stagger-item" và thời gian trễ vào từng khung
-            return `<div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative stagger-item hover:shadow-md transition w-full overflow-hidden" style="animation-delay: ${delay}s;">
-                        <div class="flex items-center gap-3 mb-3">
-                            <div class="w-10 h-10 ${colorTheme} rounded-full flex items-center justify-center text-lg shrink-0">${iconHtml}</div>
-                            <div><h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">${typeStr}</h3><p class="text-[11px] font-bold text-slate-400"><i class="fas fa-clock mr-1"></i> ${displayTime}</p></div>
-                        </div>
-                        <div class="text-slate-700 text-base w-full overflow-hidden break-words pl-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-3 [&_img]:inline-block [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">${cleanContent}</div>
-                        ${adminButtons}
-                    </div>`; 
+            // 🎯 ĐIỂM NHẤN HIỆU ỨNG THÁC NƯỚC Ở ĐÂY: Mỗi khung cách nhau 0.2 giây
+            let delay = index * 0.2;
+
+            return `<div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative hover:shadow-md transition w-full overflow-hidden stagger-item" style="animation-delay: ${delay}s;"><div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 ${colorTheme} rounded-full flex items-center justify-center text-lg shrink-0">${iconHtml}</div><div><h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">${typeStr}</h3><p class="text-[11px] font-bold text-slate-400"><i class="fas fa-clock mr-1"></i> ${displayTime}</p></div></div><div class="text-slate-700 text-base w-full overflow-hidden break-words pl-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-3 [&_img]:inline-block [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">${cleanContent}</div>${adminButtons}</div>`; 
         }).join(''); 
     } 
     contentArea.innerHTML = `${getNavHtml('bangtin')}${btnTaoMoi}<div class="space-y-4 pb-10">${listHtml}</div>`; 
