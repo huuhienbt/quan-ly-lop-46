@@ -115,7 +115,18 @@ async function login() {
 }
 
 function loginAdmin() { currentUser = { role: 'admin', name: "Thầy Hiển" }; setupUI(); renderDashboardAdmin(); }
-async function loginStudent(u) { currentUser = { ...u, role: 'student' }; setupUI(); moThongBao(); }
+// --- CẬP NHẬT HÀM ĐĂNG NHẬP CỦA HỌC SINH ---
+async function loginStudent(u) { 
+    currentUser = { ...u, role: 'student' }; 
+    setupUI(); 
+    moThongBao(); 
+    
+    // Kích hoạt bẫy kiểm tra sinh nhật (đợi 1 giây để giao diện tải xong)
+    setTimeout(checkSinhNhat, 1000);
+}
+
+
+{ currentUser = { ...u, role: 'student' }; setupUI(); moThongBao(); }
 
 function setupUI() {
     document.getElementById('loginScreen').classList.add('hidden'); 
@@ -574,3 +585,85 @@ function viewProfile(id) { closeMenu(); const s = Data.hs.find(x => x.id === id)
 
 // Lazy Loading Hình ảnh
 function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); }
+
+// ==========================================
+// 🎂 HỆ THỐNG CHÚC MỪNG SINH NHẬT TỰ ĐỘNG
+// ==========================================
+function checkSinhNhat() {
+    if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return;
+    
+    // Đảm bảo chỉ hiện 1 lần trong suốt phiên đăng nhập (tránh làm phiền khi lướt web)
+    if (sessionStorage.getItem('hpbdShown_' + currentUser.id)) return;
+
+    let dobStr = currentUser.dob;
+    let bDay = 0, bMonth = 0;
+
+    // Bộ não phân tích ngày sinh từ Google Sheets (Hỗ trợ nhiều định dạng)
+    try {
+        if (dobStr.includes('T')) {
+            let dt = new Date(dobStr);
+            bDay = dt.getDate(); bMonth = dt.getMonth() + 1;
+        } else if (dobStr.includes('/')) {
+            let parts = dobStr.split('/');
+            bDay = parseInt(parts[0]); bMonth = parseInt(parts[1]);
+        } else if (dobStr.includes('-')) {
+            let parts = dobStr.split('-');
+            bDay = parseInt(parts[2]); bMonth = parseInt(parts[1]);
+        }
+    } catch(e) { return; } // Nếu ngày sinh lỗi, bỏ qua
+
+    let today = new Date();
+    // Nếu hôm nay đúng là ngày sinh nhật của học sinh
+    if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) {
+        showHappyBirthdayUI();
+        sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); // Đánh dấu là đã tổ chức sinh nhật
+    }
+}
+
+function showHappyBirthdayUI() {
+    // 1. Dựng rạp (Thiết kế tấm thiệp Modal)
+    let overlay = document.createElement('div');
+    overlay.id = "hpbdModal";
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
+    overlay.innerHTML = `
+        <div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]">
+            <div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden">
+                <button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button>
+                
+                <div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div>
+                
+                <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">
+                    CHÚC MỪNG SINH NHẬT
+                </h2>
+                <h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3>
+                
+                <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-6 relative">
+                    <i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i>
+                    <p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">
+                        Hôm nay là một ngày thật đặc biệt! Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖
+                    </p>
+                </div>
+                
+                <button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">
+                    CẢM ƠN THẦY Ạ!
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // 2. Bắn pháo giấy ăn mừng trong 4 giây
+    var duration = 4 * 1000;
+    var animationEnd = Date.now() + duration;
+    var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 105 }; // Nằm trên cả Modal
+
+    function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+
+    var interval = setInterval(function() {
+        var timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) { return clearInterval(interval); }
+        var particleCount = 50 * (timeLeft / duration);
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+    }, 250);
+}
