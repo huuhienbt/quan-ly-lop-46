@@ -1,8 +1,7 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - BẢN HOÀN CHỈNH NHẤT
+// NÃO BỘ XỬ LÝ - BẢN HOÀN CHỈNH VÀ CHUẨN XÁC NHẤT
 // ==========================================
 
-// ⚠️ THẦY DÁN ĐƯỜNG LINK API MỚI NHẤT VÀO ĐÂY:
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [], notiList: [] };
@@ -115,18 +114,14 @@ async function login() {
 }
 
 function loginAdmin() { currentUser = { role: 'admin', name: "Thầy Hiển" }; setupUI(); renderDashboardAdmin(); }
-// --- CẬP NHẬT HÀM ĐĂNG NHẬP CỦA HỌC SINH ---
+
 async function loginStudent(u) { 
     currentUser = { ...u, role: 'student' }; 
     setupUI(); 
     moThongBao(); 
-    
-    // Kích hoạt bẫy kiểm tra sinh nhật (đợi 1 giây để giao diện tải xong)
+    // Kích hoạt kiểm tra sinh nhật
     setTimeout(checkSinhNhat, 1000);
 }
-
-
-{ currentUser = { ...u, role: 'student' }; setupUI(); moThongBao(); }
 
 function setupUI() {
     document.getElementById('loginScreen').classList.add('hidden'); 
@@ -332,7 +327,7 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
-// --- GÓC HỌC TẬP & BẢNG VÀNG VINH DANH (SÁNG MÀU, >1500, "ĐIỂM") ---
+// --- GÓC HỌC TẬP & BẢNG VÀNG VINH DANH ---
 function moGocHocTap() { 
     closeMenu(); 
     
@@ -583,7 +578,7 @@ window.xemLoiSai = function(studentName, group, detailsHtml) { document.getEleme
 function chuyenTrangQuanLy() { closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); contentArea.innerHTML = html + "</div>"; }
 function viewProfile(id) { closeMenu(); const s = Data.hs.find(x => x.id === id); if(!s) return; const avatar = s.gender === 'Nữ' ? '<div class="w-24 h-24 bg-pink-100 text-pink-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-graduate"></i></div>' : '<div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-astronaut"></i></div>'; let cleanDob = s.dob || 'Chưa cập nhật'; if(cleanDob.includes('T') && cleanDob.includes('.000Z')) { const dt = new Date(cleanDob); cleanDob = ("0" + dt.getDate()).slice(-2) + "/" + ("0" + (dt.getMonth() + 1)).slice(-2) + "/" + dt.getFullYear(); } const renderPhone = (phone, label) => { if(!phone || phone.trim() === '') return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><span class="text-slate-400 italic text-xs">Chưa cập nhật</span></div>`; const cleanPhone = phone.toString().replace(/\D/g, ''); return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${phone}</span><a href="tel:${cleanPhone}" class="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs hover:bg-green-600 hover:text-white transition"><i class="fas fa-phone"></i></a></div></div>`; }; contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="${currentUser && currentUser.role==='admin'?'chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ CÁ NHÂN</h2></div><div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-500 fade-in relative overflow-hidden"><div class="text-center mb-6 relative z-10">${avatar}<h2 class="text-2xl font-black text-slate-800">${s.name}</h2><span class="bg-blue-50 text-blue-600 font-mono font-bold px-3 py-1 rounded-full text-xs mt-2 inline-block">ID: ${s.id}</span></div><div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right"><p class="text-xs font-bold opacity-90 uppercase">Xếp hạng</p><p class="text-lg font-bold"><i class="fas fa-trophy mr-1"></i> Thành viên</p></div></div><div class="space-y-1"><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Ngày sinh</span><b class="text-slate-700">${cleanDob}</b></div><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Giới tính</span><b class="text-slate-700">${s.gender || '-'}</b></div>${renderPhone(s.fatherPhone, "SĐT Cha")}${renderPhone(s.motherPhone, "SĐT Mẹ")}<div class="py-2"><span class="text-slate-400 font-bold uppercase text-[10px] block mb-1">Địa chỉ</span><b class="text-slate-700 text-sm leading-snug">${s.address || 'Chưa cập nhật'}</b></div></div></div>`; }
 
-// Lazy Loading Hình ảnh
+// --- HỖ TRỢ LAZY LOAD ẢNH ---
 function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); }
 
 // ==========================================
@@ -591,14 +586,11 @@ function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img
 // ==========================================
 function checkSinhNhat() {
     if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return;
-    
-    // Đảm bảo chỉ hiện 1 lần trong suốt phiên đăng nhập (tránh làm phiền khi lướt web)
     if (sessionStorage.getItem('hpbdShown_' + currentUser.id)) return;
 
     let dobStr = currentUser.dob;
     let bDay = 0, bMonth = 0;
 
-    // Bộ não phân tích ngày sinh từ Google Sheets (Hỗ trợ nhiều định dạng)
     try {
         if (dobStr.includes('T')) {
             let dt = new Date(dobStr);
@@ -610,18 +602,16 @@ function checkSinhNhat() {
             let parts = dobStr.split('-');
             bDay = parseInt(parts[2]); bMonth = parseInt(parts[1]);
         }
-    } catch(e) { return; } // Nếu ngày sinh lỗi, bỏ qua
+    } catch(e) { return; } 
 
     let today = new Date();
-    // Nếu hôm nay đúng là ngày sinh nhật của học sinh
     if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) {
         showHappyBirthdayUI();
-        sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); // Đánh dấu là đã tổ chức sinh nhật
+        sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); 
     }
 }
 
 function showHappyBirthdayUI() {
-    // 1. Dựng rạp (Thiết kế tấm thiệp Modal)
     let overlay = document.createElement('div');
     overlay.id = "hpbdModal";
     overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
@@ -629,21 +619,17 @@ function showHappyBirthdayUI() {
         <div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]">
             <div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden">
                 <button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button>
-                
                 <div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div>
-                
                 <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">
                     CHÚC MỪNG SINH NHẬT
                 </h2>
                 <h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3>
-                
                 <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-6 relative">
                     <i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i>
                     <p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">
                         Hôm nay là một ngày thật đặc biệt! Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖
                     </p>
                 </div>
-                
                 <button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">
                     CẢM ƠN THẦY Ạ!
                 </button>
@@ -652,10 +638,9 @@ function showHappyBirthdayUI() {
     `;
     document.body.appendChild(overlay);
 
-    // 2. Bắn pháo giấy ăn mừng trong 4 giây
     var duration = 4 * 1000;
     var animationEnd = Date.now() + duration;
-    var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 105 }; // Nằm trên cả Modal
+    var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 105 };
 
     function randomInRange(min, max) { return Math.random() * (max - min) + min; }
 
