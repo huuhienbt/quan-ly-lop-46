@@ -332,7 +332,7 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
-// --- XỬ LÝ GÓC HỌC TẬP & BẢNG VÀNG VINH DANH ---
+// --- XỬ LÝ GÓC HỌC TẬP & BẢNG VÀNG VINH DANH (MỐC 1500 ĐIỂM) ---
 function moGocHocTap() { 
     closeMenu(); 
     
@@ -343,12 +343,13 @@ function moGocHocTap() {
         <button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button>
     </div>`;
     
-    // 2. TÍNH TOÁN & VẼ BẢNG VÀNG
-    let sortedStudents = [...Data.hs].sort((a, b) => (b.score || 0) - (a.score || 0));
+    // 2. LỌC ĐIỂM > 1500 VÀ VẼ BẢNG VÀNG
+    let eligibleStudents = Data.hs.filter(s => (s.score || 0) > 1500); // Chỉ lấy HS > 1500 điểm
+    let sortedStudents = eligibleStudents.sort((a, b) => (b.score || 0) - (a.score || 0));
     let top5 = sortedStudents.slice(0, 5); 
     let leaderboardHtml = "";
     
-    if (top5.length > 0 && top5[0].score > 0) {
+    if (top5.length > 0) {
         let listHtml = top5.map((s, index) => {
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${index + 1}</span>`;
             let rowBg = "bg-slate-50 border-slate-100";
@@ -372,22 +373,25 @@ function moGocHocTap() {
         // Lời nhắn nhủ cá nhân
         let personalMsg = "";
         if (currentUser && currentUser.role === 'student') {
-            let myIndex = sortedStudents.findIndex(x => x.id === currentUser.id);
-            let myRank = myIndex + 1;
             let myScore = currentUser.score || 0;
+            let myRank = Data.hs.filter(s => (s.score || 0) > myScore).length + 1; // Tính hạng thực tế toàn lớp
             
-            if (myRank <= 5 && myScore > 0) {
-                personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} toàn lớp!</p></div>`;
+            if (myScore > 1500) {
+                if (myRank <= 5) {
+                    personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`;
+                } else {
+                    personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`;
+                }
             } else {
-                personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đang có ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, chăm chỉ làm bài để lên Bảng Vàng nào!</p></div>`;
+                personalMsg = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Vạch xuất phát là 1500 điểm.<br>Hãy làm bài tập để vượt mốc này và ghi danh nhé!</p></div>`;
             }
         }
 
         leaderboardHtml = `
         <div class="mt-8 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in">
             <div class="text-center mb-5">
-                <h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP BỐN 6</h3>
-                <p class="text-xs text-slate-400 font-bold mt-1">TOP 5 CHIẾN BINH XUẤT SẮC NHẤT</p>
+                <h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3>
+                <p class="text-xs text-slate-400 font-bold mt-1">TOP CHIẾN BINH VƯỢT MỐC 1500 ĐIỂM</p>
             </div>
             <div class="flex flex-col">
                 ${listHtml}
@@ -395,10 +399,18 @@ function moGocHocTap() {
             ${personalMsg}
         </div>`;
     } else {
+        // Trường hợp chưa có ai vượt 1500 điểm
+        let personalMsgEmpty = "";
+        if (currentUser && currentUser.role === 'student') {
+            personalMsgEmpty = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Hãy làm bài tập để trở thành người đầu tiên vượt mốc 1500 điểm nhé!</p></div>`;
+        }
+        
         leaderboardHtml = `
-        <div class="mt-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-70">
+        <div class="mt-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80">
             <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i>
-            <p class="font-bold text-slate-400">Bảng Vàng đang chờ những chiến binh đầu tiên ghi danh!</p>
+            <p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p>
+            <p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>
+            ${personalMsgEmpty}
         </div>`;
     }
     
