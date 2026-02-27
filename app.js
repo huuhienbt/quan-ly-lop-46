@@ -332,7 +332,7 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
-// --- XỬ LÝ GÓC HỌC TẬP & BẢNG VÀNG VINH DANH (ĐÃ CHỈNH SỬA GIAO DIỆN) ---
+// --- XỬ LÝ GÓC HỌC TẬP & BẢNG VÀNG VINH DANH (ĐÃ BỎ ICON GIỚI TÍNH) ---
 function moGocHocTap() { 
     closeMenu(); 
     
@@ -359,12 +359,10 @@ function moGocHocTap() {
             else if (index === 1) { rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; rowBg = "bg-gray-50 border-gray-200"; }
             else if (index === 2) { rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; rowBg = "bg-orange-50 border-orange-100"; }
             
-            let avatarIcon = s.gender === 'Nữ' ? '<i class="fas fa-child-dress text-pink-400"></i>' : '<i class="fas fa-child-reaching text-blue-400"></i>';
-            
             return `<div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
                 <div class="flex items-center gap-3">
                     <div class="w-10 text-center flex justify-center">${rankIcon}</div>
-                    <div class="font-bold ${nameColor} text-sm sm:text-base">${avatarIcon} ${s.name}</div>
+                    <div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div>
                 </div>
                 <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div>
             </div>`;
