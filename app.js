@@ -1,10 +1,10 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN HOÀN CHỈNH ĐẦY ĐỦ CÁC DÒNG)
-// Tích hợp: Bảng Vàng >1500, Chống Spam, Sinh nhật, Hộp thư bí mật, Đồng bộ
+// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ CÁC DÒNG)
+// Đã cấu hình: Ẩn "Lời muốn nói" khi chưa đăng nhập
 // ==========================================
 
 // ⚠️ THẦY DÁN ĐƯỜNG LINK API MỚI NHẤT VÀO ĐÂY:
-const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [], notiList: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null, score = 0, currentQIndex = 0;
@@ -257,15 +257,25 @@ function renderDashboardAdmin() {
     `;
 }
 
+// ----------------------------------------------------
+// TÍNH NĂNG ĐIỀU CHỈNH THANH MENU 
+// Chỉ hiển thị "Lời muốn nói" khi học sinh đăng nhập
+// ----------------------------------------------------
 function getNavHtml(active) {
+    // 1. Dành cho Admin (Thầy giáo)
     if (currentUser && currentUser.role === 'admin') { 
         let title = active === 'bangtin' ? 'BẢNG TIN LỚP' : (active === 'hoctap' ? 'GÓC HỌC TẬP' : 'HỘP THƯ'); 
         return `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-orange-500 uppercase">${title}</h2></div>`; 
     }
     
+    // 2. Dành cho Học sinh và Khách chưa đăng nhập
     let headerGreeting = ""; 
+    let thuBiMatBtn = ""; // Nút Hộp thư bí mật mặc định ẩn
+    
     if (currentUser && currentUser.role === 'student') {
         headerGreeting = `<div class="mb-5 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>`;
+        // Chỉ khi có tài khoản student mới gắn nút Lời Muốn Nói
+        thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">💌 LỜI MUỐN NÓI</button>`;
     }
     
     return `
@@ -274,7 +284,7 @@ function getNavHtml(active) {
             <button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">BẢNG TIN</button>
             <button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">HỌC TẬP</button>
             <button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">XIN NGHỈ</button>
-            <button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">💌 LỜI MUỐN NÓI</button>
+            ${thuBiMatBtn}
         </div>
     `;
 }
