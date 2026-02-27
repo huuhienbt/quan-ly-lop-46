@@ -332,10 +332,77 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
-// --- XỬ LÝ GÓC HỌC TẬP & KHO BÀI TẬP ---
+// --- XỬ LÝ GÓC HỌC TẬP & BẢNG VÀNG VINH DANH ---
 function moGocHocTap() { 
     closeMenu(); 
-    contentArea.innerHTML = `${getNavHtml('hoctap')}<div class="grid grid-cols-1 md:grid-cols-2 gap-4"><button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button><button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button></div>`; 
+    
+    // 1. NÚT CHỌN MÔN HỌC
+    let htmlTop = `${getNavHtml('hoctap')}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button>
+        <button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button>
+    </div>`;
+    
+    // 2. TÍNH TOÁN & VẼ BẢNG VÀNG
+    let sortedStudents = [...Data.hs].sort((a, b) => (b.score || 0) - (a.score || 0));
+    let top5 = sortedStudents.slice(0, 5); 
+    let leaderboardHtml = "";
+    
+    if (top5.length > 0 && top5[0].score > 0) {
+        let listHtml = top5.map((s, index) => {
+            let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${index + 1}</span>`;
+            let rowBg = "bg-slate-50 border-slate-100";
+            let nameColor = "text-slate-700";
+            
+            if (index === 0) { rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; rowBg = "bg-yellow-50 border-yellow-200 scale-[1.02] shadow-sm z-10"; nameColor = "text-yellow-700"; }
+            else if (index === 1) { rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; rowBg = "bg-gray-50 border-gray-200"; }
+            else if (index === 2) { rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; rowBg = "bg-orange-50 border-orange-100"; }
+            
+            let avatarIcon = s.gender === 'Nữ' ? '<i class="fas fa-child-dress text-pink-400"></i>' : '<i class="fas fa-child-reaching text-blue-400"></i>';
+            
+            return `<div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 text-center flex justify-center">${rankIcon}</div>
+                    <div class="font-bold ${nameColor} text-sm sm:text-base">${avatarIcon} ${s.name}</div>
+                </div>
+                <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-400">đ</span></div>
+            </div>`;
+        }).join('');
+
+        // Lời nhắn nhủ cá nhân
+        let personalMsg = "";
+        if (currentUser && currentUser.role === 'student') {
+            let myIndex = sortedStudents.findIndex(x => x.id === currentUser.id);
+            let myRank = myIndex + 1;
+            let myScore = currentUser.score || 0;
+            
+            if (myRank <= 5 && myScore > 0) {
+                personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} toàn lớp!</p></div>`;
+            } else {
+                personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đang có ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, chăm chỉ làm bài để lên Bảng Vàng nào!</p></div>`;
+            }
+        }
+
+        leaderboardHtml = `
+        <div class="mt-8 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in">
+            <div class="text-center mb-5">
+                <h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP BỐN 6</h3>
+                <p class="text-xs text-slate-400 font-bold mt-1">TOP 5 CHIẾN BINH XUẤT SẮC NHẤT</p>
+            </div>
+            <div class="flex flex-col">
+                ${listHtml}
+            </div>
+            ${personalMsg}
+        </div>`;
+    } else {
+        leaderboardHtml = `
+        <div class="mt-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-70">
+            <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i>
+            <p class="font-bold text-slate-400">Bảng Vàng đang chờ những chiến binh đầu tiên ghi danh!</p>
+        </div>`;
+    }
+    
+    contentArea.innerHTML = htmlTop + leaderboardHtml; 
 }
 
 // TỐI ƯU CỰC NHANH: Không tải lại nếu thầy bấm "Quay lại"
