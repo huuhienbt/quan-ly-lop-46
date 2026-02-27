@@ -1,19 +1,16 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - V75 (BẢN HOÀN CHỈNH & BẢO MẬT ĐÁM MÂY)
-// Tích hợp: Thác nước, Lazy Load, Pháo giấy, Tối ưu Cache, Cloud Auth
+// NÃO BỘ XỬ LÝ - BẢN HOÀN CHỈNH NHẤT
 // ==========================================
 
 // ⚠️ THẦY DÁN ĐƯỜNG LINK API MỚI NHẤT VÀO ĐÂY:
 const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
-
-// Đã xóa AD_PASS ở đây để bảo mật tuyệt đối. Mật khẩu hiện nằm trên Google Apps Script.
 
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [], notiList: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null, score = 0, currentQIndex = 0;
 let wrongAnswersLog = []; 
 window.currentSelectedImg = null;
 
-// --- CSS Hiệu ứng Thác nước (Cascading) ---
+// --- CSS Hiệu ứng Thác nước ---
 const style = document.createElement('style');
 style.innerHTML = `
     @keyframes cascadeDrop { 
@@ -29,7 +26,7 @@ document.head.appendChild(style);
 
 // --- KHỞI ĐỘNG HỆ THỐNG ---
 window.onload = async () => {
-    localStorage.removeItem('L46_Data_Cache'); // Xóa rác phiên bản rất cũ nếu có
+    localStorage.removeItem('L46_Data_Cache'); 
     try {
         const [resHs, resNoti] = await Promise.all([
             fetch(API_URL + "?type=students&t=" + Date.now()), 
@@ -76,7 +73,6 @@ async function login() {
     const v = document.getElementById('inputLogin').value.trim();
     if(!v) return alert("Vui lòng nhập SĐT hoặc Mật khẩu!");
 
-    // Nếu chưa tải danh sách học sinh thì tải về trước
     if (Data.hs.length === 0) {
         document.getElementById('loader').style.display = 'flex';
         try {
@@ -89,7 +85,6 @@ async function login() {
         document.getElementById('loader').style.display = 'none';
     }
 
-    // 1. Kiểm tra SĐT học sinh
     const u = Data.hs.find(s => s.fatherPhone.includes(v) || s.motherPhone.includes(v));
     if(u) { 
         localStorage.setItem('role','student'); 
@@ -98,7 +93,6 @@ async function login() {
         return;
     }
 
-    // 2. Gửi lên đám mây nhờ Google kiểm tra mật khẩu Admin
     document.getElementById('loader').style.display = 'flex';
     try {
         const response = await fetch(API_URL, { 
@@ -176,7 +170,7 @@ function getNavHtml(active) {
     return `${headerGreeting}<div class="flex items-center gap-6 sm:gap-10 mb-6 border-b-2 border-slate-100 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide"><button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">BẢNG TIN LỚP</button><button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">GÓC HỌC TẬP</button><button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">HỘP THƯ</button></div>`;
 }
 
-// --- XỬ LÝ BẢNG TIN LỚP ---
+// --- BẢNG TIN LỚP ---
 function moThongBao() { 
     closeMenu(); 
     let btnTaoMoi = currentUser && currentUser.role === 'admin' ? `<button onclick="editNotiUI(null)" class="w-full mb-6 bg-orange-600 text-white py-4 rounded-2xl font-black shadow-lg btn-3d hover:bg-orange-700 transition flex items-center justify-center gap-2"><i class="fas fa-plus-circle text-xl"></i> TẠO BÀI VIẾT MỚI</button>` : ''; 
@@ -187,10 +181,7 @@ function moThongBao() {
     else { 
         listHtml = sortedList.map((tb, index) => { 
             let adminButtons = currentUser && currentUser.role === 'admin' ? `<div class="flex gap-2 mt-4 pt-3 border-t border-orange-100"><button onclick="editNotiUI('${tb.id}')" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl font-bold hover:bg-blue-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-edit"></i> Sửa</button><button onclick="xoaThongBao('${tb.id}')" class="flex-1 bg-red-50 text-red-600 py-2 rounded-xl font-bold hover:bg-red-100 transition text-sm flex items-center justify-center gap-1"><i class="fas fa-trash-alt"></i> Xóa</button></div>` : ''; 
-            
-            // LAZY LOADING CHO ẢNH
             let cleanContent = tb.content ? tb.content.replace(/<button[^>]*>.*?<\/button>/gi, '').replace(/<img /gi, '<img loading="lazy" ') : ""; 
-            
             let typeStr = "Thông báo"; let displayTime = tb.time; let iconHtml = '<i class="fas fa-bullhorn"></i>'; let colorTheme = 'bg-orange-100 text-orange-600';
             
             if (tb.time.includes('|||')) { 
@@ -200,9 +191,7 @@ function moThongBao() {
                 if (typeStr === 'Hoạt động') { iconHtml = '<i class="fas fa-camera-retro"></i>'; colorTheme = 'bg-green-100 text-green-600'; } 
             } else { displayTime = tb.time; }
 
-            // HIỆU ỨNG THÁC NƯỚC (Rơi lần lượt)
             let delay = index * 0.2;
-
             return `<div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-5 relative hover:shadow-md transition w-full overflow-hidden stagger-item" style="animation-delay: ${delay}s;"><div class="flex items-center gap-3 mb-3"><div class="w-10 h-10 ${colorTheme} rounded-full flex items-center justify-center text-lg shrink-0">${iconHtml}</div><div><h3 class="font-black text-slate-800 text-sm uppercase tracking-wide">${typeStr}</h3><p class="text-[11px] font-bold text-slate-400"><i class="fas fa-clock mr-1"></i> ${displayTime}</p></div></div><div class="text-slate-700 text-base w-full overflow-hidden break-words pl-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-lg [&_img]:my-3 [&_img]:inline-block [&_a]:text-blue-600 [&_a]:underline [&_a]:font-bold">${cleanContent}</div>${adminButtons}</div>`; 
         }).join(''); 
     } 
@@ -332,65 +321,91 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
-// --- XỬ LÝ TẢI DANH SÁCH BÀI TẬP (CÓ CHỐNG SPAM & KHÓA BÀI) ---
-async function loadSubject(sub) { 
-    if(!currentUser) return showLogin(); 
-    curSub = sub; 
-    contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; 
+// --- GÓC HỌC TẬP & BẢNG VÀNG VINH DANH (SÁNG MÀU, >1500, "ĐIỂM") ---
+function moGocHocTap() { 
+    closeMenu(); 
     
-    const [qsRes, logRes] = await Promise.all([fetch(API_URL + "?type=" + sub + "&t=" + Date.now()), fetch(API_URL + "?type=history_all&t=" + Date.now())]);
-    const qs = await qsRes.json(); Data[sub] = qs; Data.log = await logRes.json();
-    const grps = [...new Set(qs.map(x => x.group))].sort(); 
+    let htmlTop = `${getNavHtml('hoctap')}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button>
+        <button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button>
+    </div>`;
     
-    let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; 
+    let eligibleStudents = Data.hs.filter(s => (s.score || 0) > 1500); 
+    let sortedStudents = eligibleStudents.sort((a, b) => (b.score || 0) - (a.score || 0));
+    let top5 = sortedStudents.slice(0, 5); 
+    let leaderboardHtml = "";
     
-    if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; 
-    else grps.forEach(g => { 
-        // Kiểm tra xem học sinh này đã làm bài này chưa
-        const isDone = Data.log.some(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g); 
-        const time = qs.find(q => q.group === g).time || 10; 
-        const count = qs.filter(q => q.group === g).length; 
-        
-        // 🔒 CƠ CHẾ KHÓA BÀI CHỐNG SPAM
-        let clickAction = `startQuiz('${g}', ${time})`; // Mặc định là cho phép làm bài
-        
-        if (isDone && currentUser.role === 'student') {
-            // Nếu là học sinh và ĐÃ LÀM -> Khóa nút, bấm vào chỉ hiện cảnh báo
-            clickAction = `alert('Con đã hoàn thành bài tập này và điểm đã được ghi nhận rồi! Hãy làm các bài tập khác để leo Bảng Vàng nhé!')`;
+    if (top5.length > 0) {
+        let listHtml = top5.map((s, index) => {
+            let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${index + 1}</span>`;
+            let rowBg = "bg-slate-50 border-slate-100";
+            let nameColor = "text-slate-700";
+            
+            if (index === 0) { rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; rowBg = "bg-yellow-50 border-yellow-200 scale-[1.02] shadow-sm z-10"; nameColor = "text-yellow-700"; }
+            else if (index === 1) { rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; rowBg = "bg-gray-50 border-gray-200"; }
+            else if (index === 2) { rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; rowBg = "bg-orange-50 border-orange-100"; }
+            
+            return `<div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 text-center flex justify-center">${rankIcon}</div>
+                    <div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div>
+                </div>
+                <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div>
+            </div>`;
+        }).join('');
+
+        let personalMsg = "";
+        if (currentUser && currentUser.role === 'student') {
+            let myScore = currentUser.score || 0;
+            let myRank = Data.hs.filter(s => (s.score || 0) > myScore).length + 1; 
+            
+            if (myScore > 1500) {
+                if (myRank <= 5) {
+                    personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`;
+                } else {
+                    personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`;
+                }
+            } else {
+                personalMsg = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Vạch xuất phát là 1500 điểm.<br>Hãy làm bài tập để vượt mốc này và ghi danh nhé!</p></div>`;
+            }
         }
-        // Ghi chú: Nếu là Thầy (admin) thì vẫn bấm vào làm thử được nhiều lần để test đề.
 
-        // Đổi nhãn "MỚI" thành nhãn "ĐÃ LÀM" kèm ổ khóa
-        let badgeHtml = !isDone ? 
-            '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : 
-            '<span class="bg-slate-200 text-slate-500 text-[10px] font-black px-2 py-1 rounded"><i class="fas fa-lock text-xs mr-1"></i>ĐÃ LÀM</span>';
-
-        html += `<div onclick="${clickAction}" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/40 opacity-80' : 'border-indigo-50'}">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}">
-                    <i class="fas ${isDone ? 'fa-check-circle' : 'fa-star'}"></i>
-                </div>
-                <div>
-                    <h3 class="font-black text-lg text-slate-700">${g}</h3>
-                    <p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p>
-                </div>
+        leaderboardHtml = `
+        <div class="mt-8 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in">
+            <div class="text-center mb-5">
+                <h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3>
             </div>
-            ${badgeHtml}
-        </div>`; 
-    }); 
-    contentArea.innerHTML = html + `</div>`; 
+            <div class="flex flex-col">
+                ${listHtml}
+            </div>
+            ${personalMsg}
+        </div>`;
+    } else {
+        let personalMsgEmpty = "";
+        if (currentUser && currentUser.role === 'student') {
+            personalMsgEmpty = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Hãy làm bài tập để trở thành người đầu tiên vượt mốc 1500 điểm nhé!</p></div>`;
+        }
+        
+        leaderboardHtml = `
+        <div class="mt-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80">
+            <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i>
+            <p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p>
+            <p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>
+            ${personalMsgEmpty}
+        </div>`;
+    }
+    
+    contentArea.innerHTML = htmlTop + leaderboardHtml; 
 }
 
-
-// TỐI ƯU CỰC NHANH: Không tải lại nếu thầy bấm "Quay lại"
+// --- QUẢN LÝ KHO BÀI TẬP ---
 async function quanLyNganHang(sub, forceReload = false) { 
     closeMenu(); curSub = sub; 
-    
     if (!forceReload && Data[sub] && Data[sub].length > 0) {
         renderGiaoDienKho(sub);
         return;
     }
-
     contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>`; 
     try {
         const qs = await (await fetch(API_URL+"?type="+sub+"&t="+Date.now())).json(); 
@@ -451,7 +466,7 @@ async function luuCauHoi(id) {
     await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); 
     alert("Lưu thành công!"); 
     document.getElementById('loader').style.display = 'none'; 
-    quanLyNganHang(curSub, true); // Ép tải lại
+    quanLyNganHang(curSub, true); 
 }
 
 async function xoaCauHoi(id) { 
@@ -460,24 +475,49 @@ async function xoaCauHoi(id) {
         await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); 
         alert("Đã xóa!"); 
         document.getElementById('loader').style.display = 'none'; 
-        quanLyNganHang(curSub, true); // Ép tải lại
+        quanLyNganHang(curSub, true); 
     } 
 }
 
-// --- THI THỬ & LÀM BÀI ---
+// --- THI THỬ & LÀM BÀI (CHỐNG SPAM) ---
 async function loadSubject(sub) { 
     if(!currentUser) return showLogin(); 
     curSub = sub; 
     contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; 
+    
     const [qsRes, logRes] = await Promise.all([fetch(API_URL + "?type=" + sub + "&t=" + Date.now()), fetch(API_URL + "?type=history_all&t=" + Date.now())]);
     const qs = await qsRes.json(); Data[sub] = qs; Data.log = await logRes.json();
     const grps = [...new Set(qs.map(x => x.group))].sort(); 
+    
     let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; 
+    
     if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; 
     else grps.forEach(g => { 
         const isDone = Data.log.some(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g); 
-        const time = qs.find(q => q.group === g).time || 10; const count = qs.filter(q => q.group === g).length; 
-        html += `<div onclick="startQuiz('${g}', ${time})" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/30' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${!isDone ? '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : ''}</div>`; 
+        const time = qs.find(q => q.group === g).time || 10; 
+        const count = qs.filter(q => q.group === g).length; 
+        
+        let clickAction = `startQuiz('${g}', ${time})`; 
+        if (isDone && currentUser.role === 'student') {
+            clickAction = `alert('Con đã hoàn thành bài tập này và điểm đã được ghi nhận rồi! Hãy làm bài khác để leo Bảng Vàng nhé!')`;
+        }
+
+        let badgeHtml = !isDone ? 
+            '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : 
+            '<span class="bg-slate-200 text-slate-500 text-[10px] font-black px-2 py-1 rounded"><i class="fas fa-lock text-xs mr-1"></i>ĐÃ LÀM</span>';
+
+        html += `<div onclick="${clickAction}" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/40 opacity-80' : 'border-indigo-50'}">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}">
+                    <i class="fas ${isDone ? 'fa-check-circle' : 'fa-star'}"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-lg text-slate-700">${g}</h3>
+                    <p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p>
+                </div>
+            </div>
+            ${badgeHtml}
+        </div>`; 
     }); 
     contentArea.innerHTML = html + `</div>`; 
 }
@@ -497,7 +537,6 @@ function startTimer(seconds) { clearInterval(timer); let t = seconds; timer = se
 async function finishQuiz() { 
     clearInterval(timer); 
     
-    // HIỆU ỨNG BẮN PHÁO GIẤY
     const maxPossibleScore = quiz.length * 10; 
     if (score > 0 && score === maxPossibleScore) {
         var duration = 3 * 1000; 
@@ -520,18 +559,18 @@ async function finishQuiz() {
     } 
 }
 
-// --- XỬ LÝ ĐƠN TỪ XIN PHÉP ---
+// --- ĐƠN XIN PHÉP ---
 function moXinPhep() { if(!currentUser) return showLogin(); closeMenu(); contentArea.innerHTML = `${getNavHtml('hopthu')}<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 fade-in"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại xin phép</label><select id="lType" onchange="changeLeaveType()" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Nghỉ học và bán trú">Nghỉ học và bán trú</option><option value="Nghỉ Bán trú">Nghỉ Bán trú</option></select></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian nghỉ</label><select id="lSession" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option></select></div></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lý do (Bệnh, việc gia đình...)</label><textarea id="lReason" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-medium text-slate-700 outline-none focus:border-red-400 transition" rows="3" placeholder="Nhập lý do chi tiết..."></textarea></div><button onclick="sendLeave()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-red-700 transition"><i class="fas fa-paper-plane mr-2"></i> GỬI ĐƠN CHO GVCN</button></div>`; document.getElementById('lDate').valueAsDate = new Date(Date.now()+86400000); }
 window.changeLeaveType = function() { const type = document.getElementById('lType').value; const session = document.getElementById('lSession'); if (type === 'Nghỉ Bán trú') { session.innerHTML = `<option value="Ăn trưa và Không ngủ trưa">Ăn trưa và Không ngủ trưa</option><option value="Không ăn trưa và không ngủ trưa">Không ăn trưa và không ngủ trưa</option>`; } else { session.innerHTML = `<option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option>`; } };
 async function sendLeave() { const d = document.getElementById('lDate').value; const r = document.getElementById('lReason').value; const type = document.getElementById('lType').value; const session = document.getElementById('lSession').value; if(!d || !r) return alert("Vui lòng chọn Ngày nghỉ và Nhập Lý do!"); const combinedType = `${type} (${session})`; document.getElementById('loader').style.display='flex'; try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:combinedType, reason:r } }) }); alert("Gửi đơn xin phép thành công! Giáo viên đã nhận được."); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); } document.getElementById('loader').style.display='none'; }
 async function moDonTu() { closeMenu(); contentArea.innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</h2>`; const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="font-black text-xl text-red-600 uppercase">HỘP THƯ ĐƠN TỪ</h2></div>`; if (leaves.length === 0) { html += `<p class="text-center text-slate-400 font-medium py-10"><i class="fas fa-check-circle text-4xl mb-3 text-green-200 block"></i>Lớp đi học đầy đủ, không có đơn xin phép nào.</p>`; } else { const groupedLeaves = {}; leaves.forEach(l => { let fDate = l.dateOff; if (fDate.includes('-')) { const parts = fDate.split('-'); if(parts.length === 3) fDate = `${parts[2]}/${parts[1]}/${parts[0]}`; } if (!groupedLeaves[fDate]) groupedLeaves[fDate] = []; groupedLeaves[fDate].push(l); }); html += `<div class="space-y-6 pb-10">`; for (const [dateStr, items] of Object.entries(groupedLeaves)) { html += `<div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-red-500 fade-in relative overflow-hidden"><div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3"><div class="flex items-center gap-2"><i class="fas fa-calendar-alt text-red-500 text-xl"></i><h3 class="font-black text-lg text-slate-800">Xin nghỉ ngày: ${dateStr}</h3></div><span class="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">${items.length} đơn</span></div><div class="space-y-4">`; items.forEach(l => { const isBanTru = l.type.startsWith('Nghỉ Bán trú') || l.type.includes('Chỉ nghỉ Bán trú'); const badgeColor = isBanTru ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-red-100 text-red-700 border-red-200'; const icon = isBanTru ? 'fa-utensils' : 'fa-bed'; const iconBg = isBanTru ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'; let timeSent = ""; try { let d = new Date(l.time); if(isNaN(d)) timeSent = l.time; else timeSent = d.toLocaleString('vi-VN'); } catch(e) { timeSent = l.time; } html += `<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex gap-4 hover:border-slate-300 transition"><div class="w-10 h-10 ${iconBg} rounded-full flex justify-center items-center text-lg shrink-0"><i class="fas ${icon}"></i></div><div class="flex-1"><div class="flex justify-between items-start mb-1"><span class="font-black text-slate-800">${l.name}</span></div><div class="mb-2"><span class="text-[11px] font-black inline-block px-2 py-1 rounded border ${badgeColor}">${l.type}</span></div><p class="text-[13px] text-slate-700 italic bg-white p-3 rounded-xl border border-slate-100">" ${l.reason} "</p><p class="text-[10px] text-slate-400 mt-2 text-right">Gửi lúc: ${timeSent}</p></div></div>`; }); html += `</div></div>`; } html += `</div>`; } contentArea.innerHTML = html; }
 
-// --- QUẢN LÝ HỌC SINH & TIẾN ĐỘ ---
+// --- THEO DÕI TIẾN ĐỘ ---
 async function moTienDo() { closeMenu(); contentArea.innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu toàn lớp...</h2>`; Data.math = await (await fetch(API_URL+"?type=math")).json(); Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json(); Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); const mathGroups = [...new Set(Data.math.map(x=>x.group))]; const tvGroups = [...new Set(Data.tv.map(x=>x.group))]; const total = mathGroups.length + tvGroups.length; let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ CHUNG (${total} BÀI)</h2></div><p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-hand-pointer mr-1"></i> Bấm vào tên học sinh để xem chi tiết điểm số & lỗi sai</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">`; html += Data.hs.map(h => { const userL = Data.log.filter(l => l.id === h.id); const done = new Set(userL.map(l => l.subject+l.group)).size; const pct = total ? Math.round((done/total)*100) : 0; return `<div onclick="xemChiTietTienDo('${h.id}', '${h.name}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 hover:shadow-md transition"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div><span class="font-bold text-slate-700">${h.name}</span></div><div class="w-1/3 text-right"><div class="text-[11px] font-black mb-1 text-slate-500">${done}/${total} BÀI (${pct}%)</div><div class="progress-bar h-1.5"><div class="progress-fill ${pct==100?'bg-green-500':'bg-purple-500'}" style="width:${pct}%"></div></div></div></div>`; }).join(''); contentArea.innerHTML = html + "</div>"; }
 window.xemChiTietTienDo = function(studentId, studentName) { const userLogs = Data.log.filter(l => l.id === studentId); const mathGroups = [...new Set(Data.math.map(x=>x.group))].sort(); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].sort(); const renderSubjectProgress = (subjectCode, groupsList) => { if(groupsList.length === 0) return `<p class="text-sm text-slate-400 italic py-2">Chưa có bài tập</p>`; return groupsList.map(grp => { const log = userLogs.find(l => l.subject === subjectCode && l.group === grp); if(log) { const safeDetails = log.details ? log.details.replace(/'/g, "\\'").replace(/"/g, "&quot;") : ""; const btnChiTiet = log.details ? `<button onclick="xemLoiSai('${studentName}', '${grp}', '${safeDetails}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-1 rounded hover:bg-red-600 hover:text-white transition">Xem lỗi sai</button>` : `<span class="text-[10px] text-green-500 font-bold px-2 py-1"><i class="fas fa-check-circle"></i> Tuyệt đối</span>`; return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500 text-lg"></i><span class="font-bold text-slate-700 text-sm">${grp}</span></div><div class="flex items-center gap-3"><span class="font-black text-indigo-600 text-lg">${log.score}đ</span>${btnChiTiet}</div></div>`; } else { return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; } }).join(''); }; contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="moTienDo()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div><div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>`; };
 window.xemLoiSai = function(studentName, group, detailsHtml) { document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = detailsHtml || '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); };
 function chuyenTrangQuanLy() { closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); contentArea.innerHTML = html + "</div>"; }
 function viewProfile(id) { closeMenu(); const s = Data.hs.find(x => x.id === id); if(!s) return; const avatar = s.gender === 'Nữ' ? '<div class="w-24 h-24 bg-pink-100 text-pink-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-graduate"></i></div>' : '<div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-astronaut"></i></div>'; let cleanDob = s.dob || 'Chưa cập nhật'; if(cleanDob.includes('T') && cleanDob.includes('.000Z')) { const dt = new Date(cleanDob); cleanDob = ("0" + dt.getDate()).slice(-2) + "/" + ("0" + (dt.getMonth() + 1)).slice(-2) + "/" + dt.getFullYear(); } const renderPhone = (phone, label) => { if(!phone || phone.trim() === '') return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><span class="text-slate-400 italic text-xs">Chưa cập nhật</span></div>`; const cleanPhone = phone.toString().replace(/\D/g, ''); return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${phone}</span><a href="tel:${cleanPhone}" class="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs hover:bg-green-600 hover:text-white transition"><i class="fas fa-phone"></i></a></div></div>`; }; contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="${currentUser && currentUser.role==='admin'?'chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left text-slate-500"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ CÁ NHÂN</h2></div><div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-500 fade-in relative overflow-hidden"><div class="text-center mb-6 relative z-10">${avatar}<h2 class="text-2xl font-black text-slate-800">${s.name}</h2><span class="bg-blue-50 text-blue-600 font-mono font-bold px-3 py-1 rounded-full text-xs mt-2 inline-block">ID: ${s.id}</span></div><div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right"><p class="text-xs font-bold opacity-90 uppercase">Xếp hạng</p><p class="text-lg font-bold"><i class="fas fa-trophy mr-1"></i> Thành viên</p></div></div><div class="space-y-1"><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Ngày sinh</span><b class="text-slate-700">${cleanDob}</b></div><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Giới tính</span><b class="text-slate-700">${s.gender || '-'}</b></div>${renderPhone(s.fatherPhone, "SĐT Cha")}${renderPhone(s.motherPhone, "SĐT Mẹ")}<div class="py-2"><span class="text-slate-400 font-bold uppercase text-[10px] block mb-1">Địa chỉ</span><b class="text-slate-700 text-sm leading-snug">${s.address || 'Chưa cập nhật'}</b></div></div></div>`; }
 
-// Tích hợp Lazy Loading cho ảnh
+// Lazy Loading Hình ảnh
 function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); }
