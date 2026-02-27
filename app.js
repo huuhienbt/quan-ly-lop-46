@@ -332,86 +332,56 @@ function chenFileVaoThongBao() { const url = prompt("Dán đường link:"); if(
 window.changeLineSpacing = function(val) { if(!val) return; document.execCommand('formatBlock', false, 'DIV'); const sel = window.getSelection(); if(sel.rangeCount > 0) { let node = sel.anchorNode; if(node.nodeType === 3) node = node.parentNode; while(node && node.id !== 'frmNotiContent') { if(node.nodeName === 'DIV' || node.nodeName === 'P') { node.style.lineHeight = val; break; } node = node.parentNode; } } };
 async function xoaThongBao(id) { if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } }
 
-// --- XỬ LÝ GÓC HỌC TẬP & BẢNG VÀNG VINH DANH (PHIÊN BẢN SÁNG MÀU, HIỆN ĐẠI) ---
-function moGocHocTap() { 
-    closeMenu(); 
+// --- XỬ LÝ TẢI DANH SÁCH BÀI TẬP (CÓ CHỐNG SPAM & KHÓA BÀI) ---
+async function loadSubject(sub) { 
+    if(!currentUser) return showLogin(); 
+    curSub = sub; 
+    contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; 
     
-    // 1. NÚT CHỌN MÔN HỌC
-    let htmlTop = `${getNavHtml('hoctap')}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button>
-        <button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button>
-    </div>`;
+    const [qsRes, logRes] = await Promise.all([fetch(API_URL + "?type=" + sub + "&t=" + Date.now()), fetch(API_URL + "?type=history_all&t=" + Date.now())]);
+    const qs = await qsRes.json(); Data[sub] = qs; Data.log = await logRes.json();
+    const grps = [...new Set(qs.map(x => x.group))].sort(); 
     
-    // 2. LỌC ĐIỂM > 1500 VÀ VẼ BẢNG VÀNG
-    let eligibleStudents = Data.hs.filter(s => (s.score || 0) > 1500); 
-    let sortedStudents = eligibleStudents.sort((a, b) => (b.score || 0) - (a.score || 0));
-    let top5 = sortedStudents.slice(0, 5); 
-    let leaderboardHtml = "";
+    let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; 
     
-    if (top5.length > 0) {
-        let listHtml = top5.map((s, index) => {
-            let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${index + 1}</span>`;
-            let rowBg = "bg-slate-50 border-slate-100";
-            let nameColor = "text-slate-700";
-            
-            if (index === 0) { rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; rowBg = "bg-yellow-50 border-yellow-200 scale-[1.02] shadow-sm z-10"; nameColor = "text-yellow-700"; }
-            else if (index === 1) { rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; rowBg = "bg-gray-50 border-gray-200"; }
-            else if (index === 2) { rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; rowBg = "bg-orange-50 border-orange-100"; }
-            
-            return `<div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 text-center flex justify-center">${rankIcon}</div>
-                    <div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div>
-                </div>
-                <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div>
-            </div>`;
-        }).join('');
-
-        // Lời nhắn nhủ cá nhân
-        let personalMsg = "";
-        if (currentUser && currentUser.role === 'student') {
-            let myScore = currentUser.score || 0;
-            let myRank = Data.hs.filter(s => (s.score || 0) > myScore).length + 1; 
-            
-            if (myScore > 1500) {
-                if (myRank <= 5) {
-                    personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`;
-                } else {
-                    personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`;
-                }
-            } else {
-                personalMsg = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Vạch xuất phát là 1500 điểm.<br>Hãy làm bài tập để vượt mốc này và ghi danh nhé!</p></div>`;
-            }
-        }
-
-        leaderboardHtml = `
-        <div class="mt-8 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in">
-            <div class="text-center mb-5">
-                <h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3>
-            </div>
-            <div class="flex flex-col">
-                ${listHtml}
-            </div>
-            ${personalMsg}
-        </div>`;
-    } else {
-        let personalMsgEmpty = "";
-        if (currentUser && currentUser.role === 'student') {
-            personalMsgEmpty = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Hãy làm bài tập để trở thành người đầu tiên vượt mốc 1500 điểm nhé!</p></div>`;
-        }
+    if(grps.length === 0) html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; 
+    else grps.forEach(g => { 
+        // Kiểm tra xem học sinh này đã làm bài này chưa
+        const isDone = Data.log.some(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g); 
+        const time = qs.find(q => q.group === g).time || 10; 
+        const count = qs.filter(q => q.group === g).length; 
         
-        leaderboardHtml = `
-        <div class="mt-8 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80">
-            <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i>
-            <p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p>
-            <p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>
-            ${personalMsgEmpty}
-        </div>`;
-    }
-    
-    contentArea.innerHTML = htmlTop + leaderboardHtml; 
+        // 🔒 CƠ CHẾ KHÓA BÀI CHỐNG SPAM
+        let clickAction = `startQuiz('${g}', ${time})`; // Mặc định là cho phép làm bài
+        
+        if (isDone && currentUser.role === 'student') {
+            // Nếu là học sinh và ĐÃ LÀM -> Khóa nút, bấm vào chỉ hiện cảnh báo
+            clickAction = `alert('Con đã hoàn thành bài tập này và điểm đã được ghi nhận rồi! Hãy làm các bài tập khác để leo Bảng Vàng nhé!')`;
+        }
+        // Ghi chú: Nếu là Thầy (admin) thì vẫn bấm vào làm thử được nhiều lần để test đề.
+
+        // Đổi nhãn "MỚI" thành nhãn "ĐÃ LÀM" kèm ổ khóa
+        let badgeHtml = !isDone ? 
+            '<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>' : 
+            '<span class="bg-slate-200 text-slate-500 text-[10px] font-black px-2 py-1 rounded"><i class="fas fa-lock text-xs mr-1"></i>ĐÃ LÀM</span>';
+
+        html += `<div onclick="${clickAction}" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-green-100 bg-green-50/40 opacity-80' : 'border-indigo-50'}">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-green-100 text-green-600' : 'bg-indigo-100 text-indigo-600'}">
+                    <i class="fas ${isDone ? 'fa-check-circle' : 'fa-star'}"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-lg text-slate-700">${g}</h3>
+                    <p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p>
+                </div>
+            </div>
+            ${badgeHtml}
+        </div>`; 
+    }); 
+    contentArea.innerHTML = html + `</div>`; 
 }
+
+
 // TỐI ƯU CỰC NHANH: Không tải lại nếu thầy bấm "Quay lại"
 async function quanLyNganHang(sub, forceReload = false) { 
     closeMenu(); curSub = sub; 
