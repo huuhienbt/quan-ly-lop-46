@@ -1,6 +1,6 @@
 // ==========================================
 // NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
-// Cập nhật: Bảng Vàng hiển thị TOP 10, Hiển thị chi tiết nội dung đáp án sai
+// Cập nhật: Bảng Vàng TOP 10, Nâng cấp Lỗi sai, Bỏ icon trái tim dễ gây hiểu nhầm
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -270,7 +270,7 @@ function getNavHtml(active) {
     
     if (currentUser && currentUser.role === 'student') {
         headerGreeting = `<div class="mb-5 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>`;
-        thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">💌 LỜI MUỐN NÓI</button>`;
+        thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">LỜI MUỐN NÓI</button>`;
     }
     
     return `
@@ -285,7 +285,7 @@ function getNavHtml(active) {
 }
 
 // ==========================================
-// 💌 TÍNH NĂNG HỘP THƯ BÍ MẬT 
+// 💬 TÍNH NĂNG LỜI MUỐN NÓI 
 // ==========================================
 function moHopThuBiMat() {
     if(!currentUser) return showLogin(); 
@@ -676,8 +676,6 @@ function moGocHocTap() {
     
     let eligibleStudents = Data.hs.filter(s => (s.score || 0) > 1500); 
     let sortedStudents = eligibleStudents.sort((a, b) => (b.score || 0) - (a.score || 0)); 
-    
-    // ĐÃ SỬA: LẤY TOP 10 THAY VÌ TOP 5
     let top10 = sortedStudents.slice(0, 10); 
     let leaderboardHtml = ""; 
     
@@ -1019,7 +1017,6 @@ function checkAns(el, selected, correct, index) {
     } else { 
         el.classList.add('!bg-red-100', '!border-red-500', '!text-red-800'); 
         
-        // CẬP NHẬT: LẤY CHI TIẾT NỘI DUNG ĐÁP ÁN ĐỂ HIỂN THỊ
         let qText = parseImg(q.question);
         let wrongAnsText = parseImg(q[selected]);
         let correctAnsText = parseImg(q[correct]);
