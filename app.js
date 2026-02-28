@@ -1,6 +1,6 @@
 // ==========================================
 // NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
-// Cập nhật: Bảng Vàng TOP 10, Nâng cấp Lỗi sai, Bỏ icon trái tim dễ gây hiểu nhầm
+// Cập nhật: Vòng quay miễn phí mỗi ngày (Tỉ lệ: -10đ, +10đ, Thêm lượt, Mất lượt)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -216,30 +216,10 @@ function setupUI() {
 
 const contentArea = document.getElementById('content');
 
-function toggleMenu() { 
-    document.getElementById('appMenu').classList.toggle('hidden'); 
-}
-
-function closeMenu() { 
-    document.getElementById('appMenu').classList.add('hidden'); 
-}
-
-function logout() { 
-    localStorage.clear(); 
-    location.reload(); 
-}
-
-function veTrangChu() { 
-    closeMenu(); 
-    clearInterval(timer); 
-    if(!currentUser) {
-        moThongBao(); 
-    } else if(currentUser.role === 'admin') {
-        renderDashboardAdmin(); 
-    } else {
-        moThongBao(); 
-    }
-}
+function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
+function closeMenu() { document.getElementById('appMenu').classList.add('hidden'); }
+function logout() { localStorage.clear(); location.reload(); }
+function veTrangChu() { closeMenu(); clearInterval(timer); if(!currentUser) { moThongBao(); } else if(currentUser.role === 'admin') { renderDashboardAdmin(); } else { moThongBao(); } }
 
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
@@ -267,9 +247,11 @@ function getNavHtml(active) {
     
     let headerGreeting = ""; 
     let thuBiMatBtn = ""; 
+    let vongQuayBtn = "";
     
     if (currentUser && currentUser.role === 'student') {
         headerGreeting = `<div class="mb-5 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>`;
+        vongQuayBtn = `<button onclick="moVongQuay()" class="font-black text-base sm:text-xl pb-2 transition ${active==='vongquay' ? 'text-yellow-500 border-b-4 border-yellow-500' : 'text-slate-400 hover:text-yellow-500'}">🎡 VÒNG QUAY</button>`;
         thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">LỜI MUỐN NÓI</button>`;
     }
     
@@ -278,10 +260,190 @@ function getNavHtml(active) {
         <div class="flex items-center gap-6 sm:gap-10 mb-6 border-b-2 border-slate-100 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
             <button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">BẢNG TIN</button>
             <button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">HỌC TẬP</button>
+            ${vongQuayBtn}
             <button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">HỘP THƯ</button>
             ${thuBiMatBtn}
         </div>
     `;
+}
+
+// ==========================================
+// 🎡 TÍNH NĂNG VÒNG QUAY MAY MẮN (MIỄN PHÍ MỖI NGÀY)
+// ==========================================
+const PRIZES = [
+    { text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm vào Bảng Vàng mất rồi.", icon: "📉" },
+    { text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
+    { text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm vào Bảng Vàng.", icon: "🎉" },
+    { text: "May Mắn", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Hẹn con vào ngày mai nhé!", icon: "🍀" }
+];
+
+let isSpinning = false;
+
+function moVongQuay() {
+    if(!currentUser) return showLogin(); 
+    closeMenu(); 
+    
+    // Kiểm tra số lượt quay hiện tại trong ngày
+    let today = new Date().toLocaleDateString('vi-VN');
+    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+    
+    if (spinLog.date !== today) {
+        spinLog = { date: today, extra: 0, usedFree: false };
+        localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+    }
+    
+    let canSpin = !spinLog.usedFree || spinLog.extra > 0;
+    let btnText = canSpin ? (spinLog.usedFree ? `QUAY (+${spinLog.extra} LƯỢT)` : "QUAY MIỄN PHÍ") : "ĐÃ HẾT LƯỢT HÔM NAY";
+    let btnStyle = canSpin ? "from-yellow-400 to-orange-500 hover:scale-[1.02]" : "from-slate-400 to-slate-500 opacity-50 pointer-events-none";
+
+    // Tạo 4 ô (Mỗi ô 90 độ)
+    let slicesHtml = PRIZES.map((p, i) => {
+        return `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * 90}deg);">
+                    <div class="pt-6 font-black text-white text-sm sm:text-base drop-shadow-md w-20 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div>
+                </div>`;
+    }).join('');
+    
+    // Góc xoay bắt đầu từ -45 độ để ô đầu tiên (0) nằm chễm chệ ở giữa góc 12 giờ
+    let gradColors = PRIZES.map((p, i) => `${p.color} ${i*90}deg ${(i+1)*90}deg`).join(', ');
+
+    contentArea.innerHTML = `
+        ${getNavHtml('vongquay')}
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in">
+            <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay Nhân Phẩm</h2>
+            <p class="text-slate-500 font-bold mb-6 text-sm">Điểm Bảng Vàng của con: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0} điểm</span></p>
+            
+            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8">
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div>
+                <div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" 
+                     style="background: conic-gradient(from -45deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">
+                    ${slicesHtml}
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div>
+                </div>
+            </div>
+            
+            <button id="btnSpin" onclick="thucHienQuay()" class="bg-gradient-to-r text-white px-10 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition ${btnStyle}">
+                ${btnText}
+            </button>
+        </div>
+    `;
+}
+
+async function thucHienQuay() {
+    if(isSpinning) return;
+    
+    let today = new Date().toLocaleDateString('vi-VN');
+    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+    
+    // An toàn: Kiểm tra lại lần nữa
+    if (spinLog.date !== today) spinLog = { date: today, extra: 0, usedFree: false };
+    if (spinLog.usedFree && spinLog.extra <= 0) {
+        alert("Con đã hết lượt quay ngày hôm nay. Hãy quay lại vào ngày mai nhé!"); 
+        return;
+    }
+
+    isSpinning = true;
+    let btn = document.getElementById('btnSpin');
+    btn.classList.add('opacity-50', 'pointer-events-none');
+    
+    // Ghi nhận đã dùng lượt để chống ăn gian
+    if (!spinLog.usedFree) { spinLog.usedFree = true; } 
+    else { spinLog.extra -= 1; }
+    localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+
+    // Random Tỉ lệ Bí Mật:
+    // 25%: - 10 điểm
+    // 25%: thêm lượt
+    // 15%: + 10 điểm
+    // 35%: chúc may mắn lần sau
+    let rand = Math.random() * 100;
+    let idx = 0;
+    if (rand < 25) idx = 0;         // 0: -10đ
+    else if (rand < 50) idx = 1;    // 1: Thêm lượt
+    else if (rand < 65) idx = 2;    // 2: +10đ
+    else idx = 3;                   // 3: Mất lượt (Chúc may mắn)
+    
+    let prize = PRIZES[idx];
+    
+    // Tính toán góc xoay (Xoay 5 vòng + định vị vào đúng vị trí ô)
+    let wheel = document.getElementById('wheel');
+    let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
+    // Công thức: Reset vòng dư + Xoay 5 vòng tròn + Đưa index về đỉnh 12h
+    let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * 90); 
+    
+    wheel.style.transform = `rotate(${nextRot}deg)`;
+    wheel.setAttribute('data-rot', nextRot);
+    
+    setTimeout(async () => {
+        isSpinning = false;
+        
+        // Nếu trúng thêm lượt, cập nhật lại bộ nhớ
+        if (prize.extraSpin > 0) {
+            spinLog.extra += prize.extraSpin;
+            localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+        }
+
+        // Hiện kết quả
+        showPrizeModal(prize);
+        
+        // Cập nhật và gửi API nếu có thay đổi điểm số
+        if (prize.netScore !== 0) {
+            currentUser.score += prize.netScore; 
+            document.getElementById('vqCurrentScore').innerText = currentUser.score + " điểm";
+            try {
+                await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: 'nop_bai', 
+                        data: { 
+                            id_hs: currentUser.id, 
+                            subject: "LuckySpin", 
+                            group: "Vòng quay " + Date.now(), 
+                            score_earned: prize.netScore, 
+                            details: "Quay trúng: " + prize.text 
+                        } 
+                    }) 
+                });
+            } catch(e) {}
+        }
+        
+        // Bắn pháo giấy nếu trúng thưởng tốt
+        if (prize.netScore > 0 || prize.extraSpin > 0) {
+            var duration = 3 * 1000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }; 
+            var interval = setInterval(function() { 
+                var timeLeft = animationEnd - Date.now(); 
+                if (timeLeft <= 0) { return clearInterval(interval); } 
+                var particleCount = 50 * (timeLeft / duration); 
+                confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }); 
+            }, 250);
+        }
+
+        // Khôi phục nút bấm dựa trên số lượt còn lại
+        let canSpinNow = !spinLog.usedFree || spinLog.extra > 0;
+        if (canSpinNow) {
+            btn.classList.remove('opacity-50', 'pointer-events-none');
+            btn.innerText = spinLog.usedFree ? `QUAY (+${spinLog.extra} LƯỢT)` : "QUAY MIỄN PHÍ";
+        } else {
+            btn.innerText = "ĐÃ HẾT LƯỢT HÔM NAY";
+            btn.className = "w-full px-10 py-4 rounded-2xl font-black shadow-lg text-xl transition bg-gradient-to-r from-slate-400 to-slate-500 opacity-50 pointer-events-none text-white";
+        }
+    }, 4000);
+}
+
+function showPrizeModal(prize) {
+    let overlay = document.createElement('div');
+    overlay.id = "prizeModal";
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
+    overlay.innerHTML = `
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 animate-[cascadeDrop_0.5s_ease-out_forwards]" style="border-color: ${prize.color}">
+            <div class="text-7xl mb-4 animate-bounce">${prize.icon}</div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2">${prize.text}</h3>
+            <p class="text-slate-600 font-bold mb-6">${prize.msg}</p>
+            <button onclick="document.getElementById('prizeModal').remove()" class="w-full text-white py-3 rounded-xl font-black shadow-md transition hover:opacity-80" style="background-color: ${prize.color}">
+                ĐÓNG
+            </button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
 }
 
 // ==========================================
