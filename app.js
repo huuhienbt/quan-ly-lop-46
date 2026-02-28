@@ -1,6 +1,6 @@
 // ==========================================
 // NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
-// Cập nhật: Vòng quay miễn phí mỗi ngày (Tỉ lệ: -10đ, +10đ, Thêm lượt, Mất lượt)
+// Cập nhật: Sửa lỗi reset vòng quay khi đăng xuất, chỉnh tỉ lệ & thứ tự ô quay
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -216,10 +216,32 @@ function setupUI() {
 
 const contentArea = document.getElementById('content');
 
-function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
-function closeMenu() { document.getElementById('appMenu').classList.add('hidden'); }
-function logout() { localStorage.clear(); location.reload(); }
-function veTrangChu() { closeMenu(); clearInterval(timer); if(!currentUser) { moThongBao(); } else if(currentUser.role === 'admin') { renderDashboardAdmin(); } else { moThongBao(); } }
+function toggleMenu() { 
+    document.getElementById('appMenu').classList.toggle('hidden'); 
+}
+
+function closeMenu() { 
+    document.getElementById('appMenu').classList.add('hidden'); 
+}
+
+// SỬA LỖI: Không dùng localStorage.clear() để tránh mất nhật ký vòng quay
+function logout() { 
+    localStorage.removeItem('role'); 
+    localStorage.removeItem('uid');
+    location.reload(); 
+}
+
+function veTrangChu() { 
+    closeMenu(); 
+    clearInterval(timer); 
+    if(!currentUser) {
+        moThongBao(); 
+    } else if(currentUser.role === 'admin') {
+        renderDashboardAdmin(); 
+    } else {
+        moThongBao(); 
+    }
+}
 
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
@@ -270,10 +292,11 @@ function getNavHtml(active) {
 // ==========================================
 // 🎡 TÍNH NĂNG VÒNG QUAY MAY MẮN (MIỄN PHÍ MỖI NGÀY)
 // ==========================================
+// Sắp xếp các ô quay theo yêu cầu của thầy (Vị trí 12h: +10đ, 3h: Thêm Lượt, 6h: -10đ, 9h: May mắn)
 const PRIZES = [
-    { text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm vào Bảng Vàng mất rồi.", icon: "📉" },
-    { text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm vào Bảng Vàng.", icon: "🎉" },
+    { text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
+    { text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm vào Bảng Vàng mất rồi.", icon: "📉" },
     { text: "May Mắn", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Hẹn con vào ngày mai nhé!", icon: "🍀" }
 ];
 
@@ -350,24 +373,23 @@ async function thucHienQuay() {
     else { spinLog.extra -= 1; }
     localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
-    // Random Tỉ lệ Bí Mật:
-    // 25%: - 10 điểm
-    // 25%: thêm lượt
-    // 15%: + 10 điểm
-    // 35%: chúc may mắn lần sau
+    // Random Tỉ lệ mới theo yêu cầu:
+    // 15%: + 10 điểm (Index 0)
+    // 35%: Thêm Lượt (Index 1)
+    // 15%: - 10 điểm (Index 2)
+    // 35%: Chúc may mắn lần sau (Index 3)
     let rand = Math.random() * 100;
     let idx = 0;
-    if (rand < 25) idx = 0;         // 0: -10đ
-    else if (rand < 50) idx = 1;    // 1: Thêm lượt
-    else if (rand < 65) idx = 2;    // 2: +10đ
-    else idx = 3;                   // 3: Mất lượt (Chúc may mắn)
-    
+    if (rand < 15) idx = 0;                 // 15% (+10đ)
+    else if (rand < 50) idx = 1;            // 35% (Thêm lượt) (15 + 35 = 50)
+    else if (rand < 65) idx = 2;            // 15% (-10đ) (50 + 15 = 65)
+    else idx = 3;                           // 35% (May mắn)
+
     let prize = PRIZES[idx];
     
     // Tính toán góc xoay (Xoay 5 vòng + định vị vào đúng vị trí ô)
     let wheel = document.getElementById('wheel');
     let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
-    // Công thức: Reset vòng dư + Xoay 5 vòng tròn + Đưa index về đỉnh 12h
     let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * 90); 
     
     wheel.style.transform = `rotate(${nextRot}deg)`;
