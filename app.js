@@ -1,6 +1,6 @@
 // ==========================================
 // NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
-// Đã fix lỗi Bảng vàng, Nâng cấp Lỗi sai, Menu Hộp thư/Lời muốn nói
+// Cập nhật: Rút gọn text Hộp thư bí mật, bỏ icon trái tim, đổi API mới
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -180,7 +180,7 @@ function setupUI() {
                 <div onclick="chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-users text-blue-600 w-6"></i> Quản lý Học sinh</div>
                 <div onclick="moThongBao()" class="p-3 hover:bg-orange-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-bullhorn text-orange-600 w-6"></i> Quản lý Bảng tin</div>
                 <div onclick="moDonTu()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư xin phép</div>
-                <div onclick="moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-heart text-pink-600 w-6"></i> Thư Học Sinh</div>
+                <div onclick="moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-600 w-6"></i> Thư Học Sinh</div>
                 <div onclick="moTienDo()" class="p-3 hover:bg-purple-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-chart-line text-purple-600 w-6"></i> Tiến độ Học tập</div>
                 <div onclick="quanLyNganHang('math')" class="p-3 hover:bg-indigo-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-calculator text-indigo-600 w-6"></i> Kho Toán</div>
                 <div onclick="quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-book text-green-600 w-6"></i> Kho Tiếng Việt</div>
@@ -191,7 +191,7 @@ function setupUI() {
             document.getElementById('menuStudent').innerHTML = `
                 <div onclick="viewProfile(currentUser.id)" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-id-card text-yellow-600 w-6"></i> Hồ sơ cá nhân</div>
                 <div onclick="moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư</div>
-                <div onclick="moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-heart text-pink-500 w-6"></i> Hộp thư bí mật</div>
+                <div onclick="moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-500 w-6"></i> Lời muốn nói</div>
             `;
             document.getElementById('menuStudent').classList.remove('hidden'); 
             document.getElementById('menuTeacher').classList.add('hidden');
@@ -247,7 +247,7 @@ function renderDashboardAdmin() {
             <button onclick="chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-users text-3xl text-blue-600"></i><span class="font-bold text-slate-700">Học sinh</span></button>
             <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Bảng tin</span></button>
             <button onclick="moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Xin phép</span></button>
-            <button onclick="moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope-open-text text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Thư HS</span></button>
+            <button onclick="moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-comment-dots text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Thư HS</span></button>
             <button onclick="moTienDo()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-purple-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-chart-line text-3xl text-purple-600"></i><span class="font-bold text-slate-700">Tiến độ</span></button>
             <button onclick="quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-indigo-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700">Kho Toán</span></button>
             <button onclick="quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-book text-3xl text-green-600"></i><span class="font-bold text-slate-700">Kho T.Việt</span></button>
@@ -272,7 +272,7 @@ function getNavHtml(active) {
     
     if (currentUser && currentUser.role === 'student') {
         headerGreeting = `<div class="mb-5 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>`;
-        thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">LỜI MUỐN NÓI</button>`;
+        thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">💌 LỜI MUỐN NÓI</button>`;
     }
     
     return `
@@ -296,13 +296,12 @@ function moHopThuBiMat() {
     contentArea.innerHTML = `
         ${getNavHtml('thubimat')}
         <div class="bg-[#fff0f5] p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 space-y-5 fade-in relative overflow-hidden">
-            <div class="absolute -top-4 -right-4 text-pink-200 text-6xl opacity-50"><i class="fas fa-envelope-heart"></i></div>
-            <p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con. Con có niềm vui, nỗi buồn, hay điều gì khó nói với bạn bè, hãy viết vào đây để tâm sự với thầy nhé!</p>
+            <p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con.</p>
             <textarea id="mailContent" class="w-full bg-white border-2 border-pink-200 p-4 rounded-2xl font-medium text-slate-700 outline-none focus:border-pink-400 transition min-h-[150px] relative z-10" placeholder="Viết điều con muốn nói vào đây..."></textarea>
             
             <label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100">
                 <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
-                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên (Thầy vẫn biết là con, nhưng thầy hứa sẽ giữ bí mật với các bạn)</span>
+                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span>
             </label>
             
             <button onclick="guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10">
@@ -349,7 +348,7 @@ async function moQuanLyThu() {
         `;
         
         if (letters.length === 0) { 
-            html += `<p class="text-center text-slate-400 font-medium py-10"><i class="fas fa-envelope-open-text text-4xl mb-3 text-pink-200 block"></i>Hộp thư đang trống, chưa có em nào gửi.</p>`; 
+            html += `<p class="text-center text-slate-400 font-medium py-10"><i class="fas fa-comment-dots text-4xl mb-3 text-pink-200 block"></i>Hộp thư đang trống, chưa có em nào gửi.</p>`; 
         } else {
             html += `<div class="space-y-4 pb-10">`;
             letters.forEach(l => {
@@ -715,7 +714,6 @@ function moGocHocTap() {
         if (currentUser && currentUser.role === 'student') { 
             let myScore = currentUser.score || 0; 
             
-            // XÁC ĐỊNH ĐÚNG THỨ HẠNG THỰC TẾ TRÊN BẢNG VÀNG
             let myRealIndex = sortedStudents.findIndex(s => s.id === currentUser.id);
             let myRank = myRealIndex !== -1 ? myRealIndex + 1 : (Data.hs.filter(s => (s.score || 0) > myScore).length + 1);
             
@@ -1021,7 +1019,6 @@ function checkAns(el, selected, correct, index) {
     } else { 
         el.classList.add('!bg-red-100', '!border-red-500', '!text-red-800'); 
         
-        // CHỤP ẢNH CHI TIẾT CÂU LỖI SAI (Câu hỏi + Đáp án chọn + Đáp án đúng)
         let qText = parseImg(q.question);
         let wrongAnsText = parseImg(q[selected]);
         let correctAnsText = parseImg(q[correct]);
