@@ -1,6 +1,6 @@
 // ==========================================
 // NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
-// Cập nhật: Rút gọn text Hộp thư bí mật, bỏ icon trái tim, đổi API mới
+// Cập nhật: Bảng Vàng hiển thị TOP 10, Hiển thị chi tiết nội dung đáp án sai
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -260,13 +260,11 @@ function renderDashboardAdmin() {
 // TÍNH NĂNG ĐIỀU CHỈNH THANH MENU 
 // ----------------------------------------------------
 function getNavHtml(active) {
-    // 1. Dành cho Admin (Thầy giáo)
     if (currentUser && currentUser.role === 'admin') { 
         let title = active === 'bangtin' ? 'BẢNG TIN LỚP' : (active === 'hoctap' ? 'GÓC HỌC TẬP' : 'HỘP THƯ'); 
         return `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-orange-500 uppercase">${title}</h2></div>`; 
     }
     
-    // 2. Dành cho Học sinh và Khách chưa đăng nhập
     let headerGreeting = ""; 
     let thuBiMatBtn = ""; 
     
@@ -678,11 +676,13 @@ function moGocHocTap() {
     
     let eligibleStudents = Data.hs.filter(s => (s.score || 0) > 1500); 
     let sortedStudents = eligibleStudents.sort((a, b) => (b.score || 0) - (a.score || 0)); 
-    let top5 = sortedStudents.slice(0, 5); 
+    
+    // ĐÃ SỬA: LẤY TOP 10 THAY VÌ TOP 5
+    let top10 = sortedStudents.slice(0, 10); 
     let leaderboardHtml = ""; 
     
-    if (top5.length > 0) { 
-        let listHtml = top5.map((s, index) => { 
+    if (top10.length > 0) { 
+        let listHtml = top10.map((s, index) => { 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${index + 1}</span>`; 
             let rowBg = "bg-slate-50 border-slate-100"; 
             let nameColor = "text-slate-700"; 
@@ -718,7 +718,7 @@ function moGocHocTap() {
             let myRank = myRealIndex !== -1 ? myRealIndex + 1 : (Data.hs.filter(s => (s.score || 0) > myScore).length + 1);
             
             if (myScore > 1500) { 
-                if (myRank <= 5) { 
+                if (myRank <= 10) { 
                     personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; 
                 } else { 
                     personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`; 
@@ -1019,6 +1019,7 @@ function checkAns(el, selected, correct, index) {
     } else { 
         el.classList.add('!bg-red-100', '!border-red-500', '!text-red-800'); 
         
+        // CẬP NHẬT: LẤY CHI TIẾT NỘI DUNG ĐÁP ÁN ĐỂ HIỂN THỊ
         let qText = parseImg(q.question);
         let wrongAnsText = parseImg(q[selected]);
         let correctAnsText = parseImg(q[correct]);
@@ -1027,8 +1028,8 @@ function checkAns(el, selected, correct, index) {
             <div class="bg-white p-4 rounded-xl border border-red-200 mb-3 shadow-sm">
                 <p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-red-500">Câu ${index+1}:</span> ${qText}</p>
                 <div class="space-y-2 mt-3">
-                    <p class="text-red-600 text-sm bg-red-50 p-2 rounded-lg border border-red-100"><i class="fas fa-times-circle mr-1"></i> <b>Bé chọn (${selected.toUpperCase()}):</b> ${wrongAnsText}</p>
-                    <p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đúng là (${correct.toUpperCase()}):</b> ${correctAnsText}</p>
+                    <p class="text-red-600 text-sm bg-red-50 p-2 rounded-lg border border-red-100"><i class="fas fa-times-circle mr-1"></i> <b>Bé chọn (${selected.toUpperCase()}):</b> <span class="font-medium">${wrongAnsText}</span></p>
+                    <p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng (${correct.toUpperCase()}):</b> <span class="font-medium">${correctAnsText}</span></p>
                 </div>
             </div>
         `; 
