@@ -1,6 +1,6 @@
 // ==========================================
 // NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
-// Cập nhật: Sửa lỗi reset vòng quay khi đăng xuất, chỉnh tỉ lệ & thứ tự ô quay
+// Fix chống lách luật Vòng quay, Cập nhật Tỉ lệ mới, Thêm Icon Menu
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -206,8 +206,8 @@ function setupUI() {
         
         document.getElementById('menuStudent').innerHTML = `
             <div onclick="showLogin()" class="p-4 bg-blue-50 text-blue-700 rounded-xl font-black flex items-center gap-3 cursor-pointer mb-3 shadow-sm hover:bg-blue-100 transition border border-blue-100"><i class="fas fa-sign-in-alt w-6 text-xl"></i> ĐĂNG NHẬP NGAY</div>
-            <div onclick="moGocHocTap()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600"><i class="fas fa-rocket w-6 text-indigo-500"></i> Góc học tập</div>
-            <div onclick="moXinPhep()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600"><i class="fas fa-envelope-open-text w-6 text-red-500"></i> Hộp thư</div>
+            <div onclick="moGocHocTap()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600">🚀 Góc học tập</div>
+            <div onclick="moXinPhep()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600">📬 Hộp thư</div>
         `;
         document.getElementById('menuStudent').classList.remove('hidden'); 
         document.getElementById('menuTeacher').classList.add('hidden');
@@ -216,15 +216,10 @@ function setupUI() {
 
 const contentArea = document.getElementById('content');
 
-function toggleMenu() { 
-    document.getElementById('appMenu').classList.toggle('hidden'); 
-}
+function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
+function closeMenu() { document.getElementById('appMenu').classList.add('hidden'); }
 
-function closeMenu() { 
-    document.getElementById('appMenu').classList.add('hidden'); 
-}
-
-// SỬA LỖI: Không dùng localStorage.clear() để tránh mất nhật ký vòng quay
+// SỬA LỖI: Đăng xuất không xóa nhật ký quay vòng quay của học sinh
 function logout() { 
     localStorage.removeItem('role'); 
     localStorage.removeItem('uid');
@@ -260,6 +255,7 @@ function renderDashboardAdmin() {
 
 // ----------------------------------------------------
 // TÍNH NĂNG ĐIỀU CHỈNH THANH MENU 
+// Cập nhật: Thêm Icon cho các mục
 // ----------------------------------------------------
 function getNavHtml(active) {
     if (currentUser && currentUser.role === 'admin') { 
@@ -274,16 +270,16 @@ function getNavHtml(active) {
     if (currentUser && currentUser.role === 'student') {
         headerGreeting = `<div class="mb-5 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>`;
         vongQuayBtn = `<button onclick="moVongQuay()" class="font-black text-base sm:text-xl pb-2 transition ${active==='vongquay' ? 'text-yellow-500 border-b-4 border-yellow-500' : 'text-slate-400 hover:text-yellow-500'}">🎡 VÒNG QUAY</button>`;
-        thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">LỜI MUỐN NÓI</button>`;
+        thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">💬 LỜI MUỐN NÓI</button>`;
     }
     
     return `
         ${headerGreeting}
         <div class="flex items-center gap-6 sm:gap-10 mb-6 border-b-2 border-slate-100 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
-            <button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">BẢNG TIN</button>
-            <button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">HỌC TẬP</button>
+            <button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">📰 BẢNG TIN</button>
+            <button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">🚀 HỌC TẬP</button>
             ${vongQuayBtn}
-            <button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">HỘP THƯ</button>
+            <button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">📬 HỘP THƯ</button>
             ${thuBiMatBtn}
         </div>
     `;
@@ -292,26 +288,43 @@ function getNavHtml(active) {
 // ==========================================
 // 🎡 TÍNH NĂNG VÒNG QUAY MAY MẮN (MIỄN PHÍ MỖI NGÀY)
 // ==========================================
-// Sắp xếp các ô quay theo yêu cầu của thầy (Vị trí 12h: +10đ, 3h: Thêm Lượt, 6h: -10đ, 9h: May mắn)
+// CẬP NHẬT: Thứ tự ô quay theo đúng kim đồng hồ (12h, 3h, 6h, 9h)
 const PRIZES = [
     { text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm vào Bảng Vàng.", icon: "🎉" },
     { text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm vào Bảng Vàng mất rồi.", icon: "📉" },
-    { text: "May Mắn", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Hẹn con vào ngày mai nhé!", icon: "🍀" }
+    { text: "May Mắn", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Cố gắng ở lượt quay sau nhé!", icon: "🍀" }
 ];
 
 let isSpinning = false;
 
-function moVongQuay() {
+async function moVongQuay() {
     if(!currentUser) return showLogin(); 
     closeMenu(); 
     
-    // Kiểm tra số lượt quay hiện tại trong ngày
-    let today = new Date().toLocaleDateString('vi-VN');
-    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+    // KIỂM TRA CHỐNG LÁCH LUẬT BẰNG TAB ẨN DANH (Check dữ liệu Máy chủ)
+    let todayStr = new Date().toLocaleDateString('vi-VN');
     
-    if (spinLog.date !== today) {
-        spinLog = { date: today, extra: 0, usedFree: false };
+    // Nạp lại Data log nếu chưa có để chắc chắn
+    if(Data.log.length === 0) {
+        try { Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); } catch(e){}
+    }
+    
+    let hasSpunTodayOnServer = Data.log.some(l => 
+        String(l.id) === String(currentUser.id) && 
+        l.subject === "LuckySpin" && 
+        String(l.group).includes(todayStr)
+    );
+
+    // Xử lý bộ nhớ trong máy
+    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+    if (spinLog.date !== todayStr) {
+        spinLog = { date: todayStr, extra: 0, usedFree: false };
+    }
+    
+    // Nếu máy chủ xác nhận hôm nay đã quay, ép buộc khóa lượt quay miễn phí
+    if (hasSpunTodayOnServer) {
+        spinLog.usedFree = true;
         localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
     }
     
@@ -319,20 +332,18 @@ function moVongQuay() {
     let btnText = canSpin ? (spinLog.usedFree ? `QUAY (+${spinLog.extra} LƯỢT)` : "QUAY MIỄN PHÍ") : "ĐÃ HẾT LƯỢT HÔM NAY";
     let btnStyle = canSpin ? "from-yellow-400 to-orange-500 hover:scale-[1.02]" : "from-slate-400 to-slate-500 opacity-50 pointer-events-none";
 
-    // Tạo 4 ô (Mỗi ô 90 độ)
     let slicesHtml = PRIZES.map((p, i) => {
         return `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * 90}deg);">
                     <div class="pt-6 font-black text-white text-sm sm:text-base drop-shadow-md w-20 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div>
                 </div>`;
     }).join('');
     
-    // Góc xoay bắt đầu từ -45 độ để ô đầu tiên (0) nằm chễm chệ ở giữa góc 12 giờ
     let gradColors = PRIZES.map((p, i) => `${p.color} ${i*90}deg ${(i+1)*90}deg`).join(', ');
 
     contentArea.innerHTML = `
         ${getNavHtml('vongquay')}
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in">
-            <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay Nhân Phẩm</h2>
+            <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
             <p class="text-slate-500 font-bold mb-6 text-sm">Điểm Bảng Vàng của con: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0} điểm</span></p>
             
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8">
@@ -354,11 +365,11 @@ function moVongQuay() {
 async function thucHienQuay() {
     if(isSpinning) return;
     
-    let today = new Date().toLocaleDateString('vi-VN');
+    let todayStr = new Date().toLocaleDateString('vi-VN');
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
     
-    // An toàn: Kiểm tra lại lần nữa
-    if (spinLog.date !== today) spinLog = { date: today, extra: 0, usedFree: false };
+    if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
+    
     if (spinLog.usedFree && spinLog.extra <= 0) {
         alert("Con đã hết lượt quay ngày hôm nay. Hãy quay lại vào ngày mai nhé!"); 
         return;
@@ -368,16 +379,16 @@ async function thucHienQuay() {
     let btn = document.getElementById('btnSpin');
     btn.classList.add('opacity-50', 'pointer-events-none');
     
-    // Ghi nhận đã dùng lượt để chống ăn gian
+    // Ghi nhận trừ lượt ngay lập tức trên máy
     if (!spinLog.usedFree) { spinLog.usedFree = true; } 
     else { spinLog.extra -= 1; }
     localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
-    // Random Tỉ lệ mới theo yêu cầu:
+    // CẬP NHẬT TỈ LỆ MỚI:
     // 15%: + 10 điểm (Index 0)
     // 35%: Thêm Lượt (Index 1)
     // 15%: - 10 điểm (Index 2)
-    // 35%: Chúc may mắn lần sau (Index 3)
+    // 35%: May mắn lần sau (Index 3)
     let rand = Math.random() * 100;
     let idx = 0;
     if (rand < 15) idx = 0;                 // 15% (+10đ)
@@ -387,7 +398,6 @@ async function thucHienQuay() {
 
     let prize = PRIZES[idx];
     
-    // Tính toán góc xoay (Xoay 5 vòng + định vị vào đúng vị trí ô)
     let wheel = document.getElementById('wheel');
     let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
     let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * 90); 
@@ -398,37 +408,38 @@ async function thucHienQuay() {
     setTimeout(async () => {
         isSpinning = false;
         
-        // Nếu trúng thêm lượt, cập nhật lại bộ nhớ
         if (prize.extraSpin > 0) {
             spinLog.extra += prize.extraSpin;
             localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
         }
 
-        // Hiện kết quả
         showPrizeModal(prize);
         
-        // Cập nhật và gửi API nếu có thay đổi điểm số
+        // LUÔN BÁO LÊN SERVER RẰNG BÉ ĐÃ QUAY (Để chống lách luật bằng ẩn danh)
+        let uniqueGroup = "Vòng quay ngày " + todayStr + " (" + Date.now() + ")";
         if (prize.netScore !== 0) {
             currentUser.score += prize.netScore; 
             document.getElementById('vqCurrentScore').innerText = currentUser.score + " điểm";
-            try {
-                await fetch(API_URL, { 
-                    method: 'POST', 
-                    body: JSON.stringify({ 
-                        action: 'nop_bai', 
-                        data: { 
-                            id_hs: currentUser.id, 
-                            subject: "LuckySpin", 
-                            group: "Vòng quay " + Date.now(), 
-                            score_earned: prize.netScore, 
-                            details: "Quay trúng: " + prize.text 
-                        } 
-                    }) 
-                });
-            } catch(e) {}
         }
+
+        try {
+            await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'nop_bai', 
+                    data: { 
+                        id_hs: currentUser.id, 
+                        subject: "LuckySpin", 
+                        group: uniqueGroup, 
+                        score_earned: prize.netScore, 
+                        details: "Quay trúng: " + prize.text 
+                    } 
+                }) 
+            });
+            // Nạp lại vào máy để khóa liền
+            Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: prize.netScore, time: new Date() });
+        } catch(e) {}
         
-        // Bắn pháo giấy nếu trúng thưởng tốt
         if (prize.netScore > 0 || prize.extraSpin > 0) {
             var duration = 3 * 1000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }; 
             var interval = setInterval(function() { 
@@ -439,7 +450,6 @@ async function thucHienQuay() {
             }, 250);
         }
 
-        // Khôi phục nút bấm dựa trên số lượt còn lại
         let canSpinNow = !spinLog.usedFree || spinLog.extra > 0;
         if (canSpinNow) {
             btn.classList.remove('opacity-50', 'pointer-events-none');
