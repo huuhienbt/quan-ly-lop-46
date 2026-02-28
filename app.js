@@ -919,19 +919,15 @@ async function xoaThongBao(id) {
     } 
 }
 
-// --- GÓC HỌC TẬP & BẢNG VÀNG ---
+// --- GÓC HỌC TẬP & BẢNG VÀNG (Cập nhật Đồng hạng) ---
 function moGocHocTap() { 
     closeMenu(); 
     
     let htmlTop = `
         ${getNavHtml('hoctap')}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
-                <i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN
-            </button>
-            <button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
-                <i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT
-            </button>
+            <button onclick="loadSubject('math')" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-calculator text-4xl mb-2 block"></i>TOÁN</button>
+            <button onclick="loadSubject('vietnamese')" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white h-40 rounded-2xl font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition"><i class="fas fa-book-open text-4xl mb-2 block"></i>TIẾNG VIỆT</button>
         </div>
     `; 
     
@@ -941,19 +937,23 @@ function moGocHocTap() {
     let leaderboardHtml = ""; 
     
     if (top10.length > 0) { 
-        let listHtml = top10.map((s, index) => { 
-            let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${index + 1}</span>`; 
+        let listHtml = top10.map((s) => { 
+            // THUẬT TOÁN ĐỒNG HẠNG: Đếm xem có bao nhiêu bạn điểm CAO HƠN bạn này. 
+            // Nếu không có ai cao hơn -> Hạng 1. Nếu có 3 người cao hơn -> Hạng 4.
+            let actualDisplayRank = Data.hs.filter(x => (x.score || 0) > (s.score || 0)).length + 1;
+
+            let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
             let rowBg = "bg-slate-50 border-slate-100"; 
             let nameColor = "text-slate-700"; 
             
-            if (index === 0) { 
+            if (actualDisplayRank === 1) { 
                 rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; 
                 rowBg = "bg-yellow-50 border-yellow-200 scale-[1.02] shadow-sm z-10"; 
                 nameColor = "text-yellow-700"; 
-            } else if (index === 1) { 
+            } else if (actualDisplayRank === 2) { 
                 rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; 
                 rowBg = "bg-gray-50 border-gray-200"; 
-            } else if (index === 2) { 
+            } else if (actualDisplayRank === 3) { 
                 rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; 
                 rowBg = "bg-orange-50 border-orange-100"; 
             } 
@@ -972,9 +972,7 @@ function moGocHocTap() {
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
             let myScore = currentUser.score || 0; 
-            
-            let myRealIndex = sortedStudents.findIndex(s => s.id === currentUser.id);
-            let myRank = myRealIndex !== -1 ? myRealIndex + 1 : (Data.hs.filter(s => (s.score || 0) > myScore).length + 1);
+            let myRank = Data.hs.filter(s => (s.score || 0) > myScore).length + 1;
             
             if (myScore > 1500) { 
                 if (myRank <= 10) { 
