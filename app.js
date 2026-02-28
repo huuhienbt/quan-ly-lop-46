@@ -1,10 +1,10 @@
 // ==========================================
 // NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ CÁC DÒNG)
-// Đã cấu hình: Ẩn "Lời muốn nói" khi chưa đăng nhập
+// Cập nhật: Đổi tên nút "XIN NGHỈ" -> "HỘP THƯ"
 // ==========================================
 
 // ⚠️ THẦY DÁN ĐƯỜNG LINK API MỚI NHẤT VÀO ĐÂY:
-const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzpuACT7j54WUonp3-WAoiiWET2XzE10WLSRZdvR8el0Ov0jlKezq2uqnkaT7NolRbJyg/exec";
 
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [], notiList: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null, score = 0, currentQIndex = 0;
@@ -191,7 +191,7 @@ function setupUI() {
         } else {
             document.getElementById('menuStudent').innerHTML = `
                 <div onclick="viewProfile(currentUser.id)" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-id-card text-yellow-600 w-6"></i> Hồ sơ cá nhân</div>
-                <div onclick="moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư xin phép</div>
+                <div onclick="moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư</div>
                 <div onclick="moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-heart text-pink-500 w-6"></i> Hộp thư bí mật</div>
             `;
             document.getElementById('menuStudent').classList.remove('hidden'); 
@@ -208,7 +208,7 @@ function setupUI() {
         document.getElementById('menuStudent').innerHTML = `
             <div onclick="showLogin()" class="p-4 bg-blue-50 text-blue-700 rounded-xl font-black flex items-center gap-3 cursor-pointer mb-3 shadow-sm hover:bg-blue-100 transition border border-blue-100"><i class="fas fa-sign-in-alt w-6 text-xl"></i> ĐĂNG NHẬP NGAY</div>
             <div onclick="moGocHocTap()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600"><i class="fas fa-rocket w-6 text-indigo-500"></i> Góc học tập</div>
-            <div onclick="moXinPhep()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600"><i class="fas fa-envelope-open-text w-6 text-red-500"></i> Hộp thư xin phép</div>
+            <div onclick="moXinPhep()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600"><i class="fas fa-envelope-open-text w-6 text-red-500"></i> Hộp thư</div>
         `;
         document.getElementById('menuStudent').classList.remove('hidden'); 
         document.getElementById('menuTeacher').classList.add('hidden');
@@ -259,7 +259,6 @@ function renderDashboardAdmin() {
 
 // ----------------------------------------------------
 // TÍNH NĂNG ĐIỀU CHỈNH THANH MENU 
-// Chỉ hiển thị "Lời muốn nói" khi học sinh đăng nhập
 // ----------------------------------------------------
 function getNavHtml(active) {
     // 1. Dành cho Admin (Thầy giáo)
@@ -270,11 +269,10 @@ function getNavHtml(active) {
     
     // 2. Dành cho Học sinh và Khách chưa đăng nhập
     let headerGreeting = ""; 
-    let thuBiMatBtn = ""; // Nút Hộp thư bí mật mặc định ẩn
+    let thuBiMatBtn = ""; 
     
     if (currentUser && currentUser.role === 'student') {
         headerGreeting = `<div class="mb-5 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>`;
-        // Chỉ khi có tài khoản student mới gắn nút Lời Muốn Nói
         thuBiMatBtn = `<button onclick="moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}">💌 LỜI MUỐN NÓI</button>`;
     }
     
@@ -283,7 +281,7 @@ function getNavHtml(active) {
         <div class="flex items-center gap-6 sm:gap-10 mb-6 border-b-2 border-slate-100 pb-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
             <button onclick="moThongBao()" class="font-black text-base sm:text-xl pb-2 transition ${active==='bangtin' ? 'text-orange-500 border-b-4 border-orange-500' : 'text-slate-400 hover:text-orange-500'}">BẢNG TIN</button>
             <button onclick="moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}">HỌC TẬP</button>
-            <button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">XIN NGHỈ</button>
+            <button onclick="moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}">HỘP THƯ</button>
             ${thuBiMatBtn}
         </div>
     `;
