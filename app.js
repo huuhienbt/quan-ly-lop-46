@@ -303,7 +303,7 @@ function moHopThuBiMat() {
             
             <label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100">
                 <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
-                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên (Thầy vẫn biết là con, nhưng thầy hứa sẽ giữ bí mật với các bạn)</span>
+                <span class="font-bold text-slate-600 text-sm">Gửi ẩn danh</span>
             </label>
             
             <button onclick="guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10">
