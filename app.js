@@ -1,9 +1,8 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ CÁC DÒNG)
-// Cập nhật: Đổi tên nút "XIN NGHỈ" -> "HỘP THƯ"
+// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
+// Đã fix lỗi Bảng vàng, Nâng cấp Lỗi sai, Menu Hộp thư/Lời muốn nói
 // ==========================================
 
-// ⚠️ THẦY DÁN ĐƯỜNG LINK API MỚI NHẤT VÀO ĐÂY:
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
 
 let Data = { hs: [], math: [], tv: [], log: [], stats: null, leaves: [], notiList: [] };
@@ -303,7 +302,7 @@ function moHopThuBiMat() {
             
             <label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100">
                 <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
-                <span class="font-bold text-slate-600 text-sm">Gửi ẩn danh</span>
+                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên (Thầy vẫn biết là con, nhưng thầy hứa sẽ giữ bí mật với các bạn)</span>
             </label>
             
             <button onclick="guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10">
@@ -715,7 +714,11 @@ function moGocHocTap() {
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
             let myScore = currentUser.score || 0; 
-            let myRank = Data.hs.filter(s => (s.score || 0) > myScore).length + 1; 
+            
+            // XÁC ĐỊNH ĐÚNG THỨ HẠNG THỰC TẾ TRÊN BẢNG VÀNG
+            let myRealIndex = sortedStudents.findIndex(s => s.id === currentUser.id);
+            let myRank = myRealIndex !== -1 ? myRealIndex + 1 : (Data.hs.filter(s => (s.score || 0) > myScore).length + 1);
+            
             if (myScore > 1500) { 
                 if (myRank <= 5) { 
                     personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; 
@@ -1017,11 +1020,19 @@ function checkAns(el, selected, correct, index) {
         score += 10; 
     } else { 
         el.classList.add('!bg-red-100', '!border-red-500', '!text-red-800'); 
+        
+        // CHỤP ẢNH CHI TIẾT CÂU LỖI SAI (Câu hỏi + Đáp án chọn + Đáp án đúng)
+        let qText = parseImg(q.question);
+        let wrongAnsText = parseImg(q[selected]);
+        let correctAnsText = parseImg(q[correct]);
+
         let wrongText = `
-            <div class="bg-white p-3 rounded-xl border border-red-200 mb-3 shadow-sm">
-                <p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2">Câu ${index+1}: ${q.question}</p>
-                <p class="text-red-600"><i class="fas fa-times-circle mr-1"></i> Bé chọn: <b>${selected.toUpperCase()}</b></p>
-                <p class="text-green-600 mt-1"><i class="fas fa-check-circle mr-1"></i> Đúng là: <b>${correct.toUpperCase()}</b></p>
+            <div class="bg-white p-4 rounded-xl border border-red-200 mb-3 shadow-sm">
+                <p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-red-500">Câu ${index+1}:</span> ${qText}</p>
+                <div class="space-y-2 mt-3">
+                    <p class="text-red-600 text-sm bg-red-50 p-2 rounded-lg border border-red-100"><i class="fas fa-times-circle mr-1"></i> <b>Bé chọn (${selected.toUpperCase()}):</b> ${wrongAnsText}</p>
+                    <p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đúng là (${correct.toUpperCase()}):</b> ${correctAnsText}</p>
+                </div>
             </div>
         `; 
         wrongAnswersLog.push(wrongText); 
@@ -1278,10 +1289,9 @@ window.xemChiTietTienDo = function(studentId, studentName) {
         return groupsList.map(grp => { 
             const log = userLogs.find(l => l.subject === subjectCode && l.group === grp); 
             if(log) { 
-                const safeDetails = log.details ? log.details.replace(/'/g, "\\'").replace(/"/g, "&quot;") : ""; 
-                const btnChiTiet = log.details ? `<button onclick="xemLoiSai('${studentName}', '${grp}', '${safeDetails}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-1 rounded hover:bg-red-600 hover:text-white transition">Xem lỗi sai</button>` : `<span class="text-[10px] text-green-500 font-bold px-2 py-1"><i class="fas fa-check-circle"></i> Tuyệt đối</span>`; 
+                const btnChiTiet = log.details ? `<button onclick="xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Xem lỗi sai</button>` : `<span class="text-[10px] text-green-500 font-bold px-2 py-1"><i class="fas fa-check-circle"></i> Tuyệt đối</span>`; 
                 return `
-                    <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                    <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg">
                         <div class="flex items-center gap-2">
                             <i class="fas fa-check-circle text-green-500 text-lg"></i>
                             <span class="font-bold text-slate-700 text-sm">${grp}</span>
@@ -1294,7 +1304,7 @@ window.xemChiTietTienDo = function(studentId, studentName) {
                 `; 
             } else { 
                 return `
-                    <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50">
+                    <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2">
                         <div class="flex items-center gap-2">
                             <i class="far fa-circle text-slate-300 text-lg"></i>
                             <span class="font-bold text-slate-500 text-sm line-through">${grp}</span>
@@ -1334,7 +1344,7 @@ window.xemChiTietTienDo = function(studentId, studentName) {
                         <h3 class="font-black text-lg uppercase" id="rvTitle">--</h3>
                         <p class="text-xs text-red-100 font-bold" id="rvName">--</p>
                     </div>
-                    <button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40"><i class="fas fa-times"></i></button>
+                    <button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button>
                 </div>
                 <div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div>
             </div>
@@ -1342,10 +1352,14 @@ window.xemChiTietTienDo = function(studentId, studentName) {
     `; 
 };
 
-window.xemLoiSai = function(studentName, group, detailsHtml) { 
+window.xemLoiSai = function(studentId, subjectCode, group) { 
+    const student = Data.hs.find(s => s.id === studentId);
+    const studentName = student ? student.name : "Học sinh";
+    const log = Data.log.find(l => l.id === studentId && l.subject === subjectCode && l.group === group);
+
     document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; 
     document.getElementById("rvName").innerText = studentName; 
-    document.getElementById("rvContent").innerHTML = detailsHtml || '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; 
+    document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; 
     document.getElementById("modalReview").classList.remove("hidden"); 
 };
 
