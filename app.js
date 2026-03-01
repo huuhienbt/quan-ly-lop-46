@@ -1,11 +1,10 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN HOÀN HẢO)
-// Fix lỗi liệt nút Tiếng Việt/Hộp Thư, Đồng bộ dữ liệu ngầm an toàn
+// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN BUNG NÉN)
+// Cập nhật mới nhất: Bảng Vàng xếp hạng theo thời gian (Bằng điểm ai nộp trước xếp trên)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
 
-// Khởi tạo đầy đủ các biến chứa dữ liệu (Bao gồm cả tv và vietnamese để tránh lỗi gọi nhầm)
 let Data = { hs: [], math: [], tv: [], vietnamese: [], log: [], stats: null, leaves: [], notiList: [] };
 let currentUser = null, curSub = null, curGrp = null, quiz = [], timer = null, score = 0, currentQIndex = 0;
 let wrongAnswersLog = []; 
@@ -426,6 +425,7 @@ async function moVongQuay() {
         </div>
     `;
 
+    // TẢI NGẦM DỮ LIỆU TỪ SERVER ĐỂ CHỐNG LÁCH LUẬT
     if(Data.log.length === 0) {
         try { 
             Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); 
@@ -496,6 +496,7 @@ async function thucHienQuay() {
 
         showPrizeModal(prize);
         
+        // BÁO CÁO SERVER NGAY LẬP TỨC
         let uniqueGroup = "Vòng quay ngày " + todayStr + " (" + Date.now() + ")";
         if (prize.netScore !== 0) {
             currentUser.score += prize.netScore; 
@@ -621,8 +622,8 @@ async function moQuanLyThu() {
         const letters = await (await fetch(API_URL + "?type=mailbox&t=" + Date.now())).json();
         let html = `
             <div class="flex items-center mb-6">
-                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3">
-                    <i class="fas fa-arrow-left text-slate-500"></i>
+                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500">
+                    <i class="fas fa-arrow-left"></i>
                 </button>
                 <h2 class="font-black text-xl text-pink-600 uppercase">THƯ TỪ HỌC SINH</h2>
             </div>
@@ -973,7 +974,7 @@ async function xoaThongBao(id) {
     } 
 }
 
-// --- GÓC HỌC TẬP & BẢNG VÀNG (CÓ BADGE BÀI TẬP CHƯA LÀM) ---
+// --- GÓC HỌC TẬP & BẢNG VÀNG (ĐÃ FIX XẾP HẠNG THEO THỜI GIAN) ---
 async function moGocHocTap() { 
     closeMenu(); 
     
@@ -992,7 +993,7 @@ async function moGocHocTap() {
             ]);
             Data.math = await mRes.json();
             Data.tv = await tRes.json();
-            Data.vietnamese = Data.tv; // Đồng bộ gọi tên
+            Data.vietnamese = Data.tv; 
             Data.log = await lRes.json();
             window.isQuizDataLoaded = true;
         } catch(e) { 
@@ -1004,25 +1005,14 @@ async function moGocHocTap() {
     let tvUnread = 0;
     if (currentUser && currentUser.role === 'student') {
         const myLogs = Data.log.filter(l => String(l.id) === String(currentUser.id));
-        
         const mathGroups = [...new Set(Data.math.map(x => x.group))];
         mathUnread = mathGroups.filter(g => !myLogs.some(l => l.subject === 'math' && l.group === g)).length;
-        
         const tvGroups = [...new Set(Data.tv.map(x => x.group))];
         tvUnread = tvGroups.filter(g => !myLogs.some(l => l.subject === 'vietnamese' && l.group === g)).length;
     }
 
-    let mathBadge = mathUnread > 0 ? `
-        <div class="absolute -top-3 -right-3 bg-red-500 text-white text-[11px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-            ${mathUnread} BÀI MỚI
-        </div>
-    ` : '';
-    
-    let tvBadge = tvUnread > 0 ? `
-        <div class="absolute -top-3 -right-3 bg-red-500 text-white text-[11px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">
-            ${tvUnread} BÀI MỚI
-        </div>
-    ` : '';
+    let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[11px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${mathUnread} BÀI MỚI</div>` : '';
+    let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[11px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${tvUnread} BÀI MỚI</div>` : '';
 
     let htmlTop = `
         ${getNavHtml('hoctap')}
@@ -1038,16 +1028,38 @@ async function moGocHocTap() {
         </div>
     `; 
     
-    let eligibleStudents = Data.hs.filter(s => (s.score || 0) > 1500); 
-    let sortedStudents = eligibleStudents.sort((a, b) => (b.score || 0) - (a.score || 0)); 
-    let top15 = sortedStudents.slice(0, 15); 
-    
-    let uniqueScores = [...new Set(sortedStudents.map(s => s.score || 0))].sort((a, b) => b - a);
+    // TÌM THỜI GIAN ĐẠT ĐIỂM CUỐI CÙNG ĐỂ CHỐNG ĐỒNG HẠNG
+    let studentsWithTime = Data.hs.map(s => {
+        let userLogs = Data.log.filter(l => String(l.id) === String(s.id));
+        let lastTime = 0;
+        if (userLogs.length > 0) {
+            let timestamps = userLogs.map(l => new Date(l.time).getTime()).filter(t => !isNaN(t));
+            if (timestamps.length > 0) {
+                lastTime = Math.max(...timestamps); // Thời gian nộp bài / quay vòng cuối cùng
+            }
+        }
+        return { ...s, lastTime: lastTime };
+    });
 
+    let eligibleStudents = studentsWithTime.filter(s => (s.score || 0) > 1500); 
+    
+    // THUẬT TOÁN XẾP HẠNG MỚI: Điểm cao xếp trên -> Nếu bằng điểm, thời gian NHỎ HƠN (nộp sớm hơn) xếp trên.
+    let sortedStudents = eligibleStudents.sort((a, b) => {
+        let scoreDiff = (b.score || 0) - (a.score || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        
+        if (a.lastTime === 0) return 1;
+        if (b.lastTime === 0) return -1;
+        return a.lastTime - b.lastTime;
+    });
+
+    let top15 = sortedStudents.slice(0, 15); 
     let leaderboardHtml = ""; 
+    
     if (top15.length > 0) { 
-        let listHtml = top15.map((s) => { 
-            let actualDisplayRank = uniqueScores.indexOf(s.score || 0) + 1;
+        let listHtml = top15.map((s, index) => { 
+            // Hạng bây giờ chính là số thứ tự vì không còn bị trùng
+            let actualDisplayRank = index + 1;
 
             let rankIcon = `
                 <span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">
@@ -1085,8 +1097,8 @@ async function moGocHocTap() {
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
             let myScore = currentUser.score || 0; 
-            let myRank = uniqueScores.indexOf(myScore) + 1;
-            if (myRank === 0) myRank = uniqueScores.length + 1; 
+            let myRealIndex = sortedStudents.findIndex(s => s.id === currentUser.id);
+            let myRank = myRealIndex !== -1 ? myRealIndex + 1 : sortedStudents.filter(s => (s.score || 0) > myScore).length + 1; 
             
             if (myScore > 1500) { 
                 if (myRank <= 15) { 
@@ -1168,7 +1180,7 @@ async function quanLyNganHang(sub, forceReload = false) {
     try { 
         const qs = await (await fetch(API_URL+"?type="+sub+"&t="+Date.now())).json(); 
         Data[sub] = qs; 
-        if(sub === 'vietnamese') Data.tv = qs; // Cập nhật alias
+        if(sub === 'vietnamese') Data.tv = qs; 
         if(sub === 'tv') Data.vietnamese = qs;
         renderGiaoDienKho(sub); 
     } catch(e) { console.log("Lỗi tải kho:", e); } 
@@ -1355,7 +1367,7 @@ async function luuCauHoi(id) {
         body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) 
     }); 
     
-    window.isQuizDataLoaded = false; // Xóa cache để tự cập nhật
+    window.isQuizDataLoaded = false; 
     alert("Lưu thành công!"); 
     document.getElementById('loader').style.display = 'none'; 
     quanLyNganHang(curSub, true); 
@@ -1368,7 +1380,7 @@ async function xoaCauHoi(id) {
             method:'POST', 
             body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) 
         }); 
-        window.isQuizDataLoaded = false; // Xóa cache
+        window.isQuizDataLoaded = false; 
         alert("Đã xóa!"); 
         document.getElementById('loader').style.display = 'none'; 
         quanLyNganHang(curSub, true); 
@@ -1380,7 +1392,6 @@ async function loadSubject(sub) {
     if(!currentUser) return showLogin(); 
     curSub = sub; 
     
-    // Tải đồng bộ cả Toán và Tiếng Việt nếu chưa tải, tránh lỗi undefined môn học
     if (!window.isQuizDataLoaded) {
         contentArea.innerHTML = `
             <div class="text-center mt-10">
@@ -1396,7 +1407,7 @@ async function loadSubject(sub) {
             ]); 
             Data.math = await mRes.json(); 
             Data.tv = await tRes.json();
-            Data.vietnamese = Data.tv; // Tạo alias bảo hiểm
+            Data.vietnamese = Data.tv; 
             Data.log = await lRes.json(); 
             window.isQuizDataLoaded = true;
         } catch(e) {}
@@ -1404,7 +1415,6 @@ async function loadSubject(sub) {
     
     const qs = Data[sub];
     if (!qs) {
-        // Fallback an toàn nếu có lỗi ngầm
         alert("Không tải được dữ liệu môn này. Vui lòng bấm Đồng Bộ.");
         return veTrangChu();
     }
@@ -1750,7 +1760,7 @@ async function dongBoDuLieu() {
             method: 'POST', 
             body: JSON.stringify({ action: 'clear_cache', data: {} }) 
         }); 
-        window.isQuizDataLoaded = false; // Xóa cache tải ngầm
+        window.isQuizDataLoaded = false;
         alert("Đồng bộ thành công! Giao diện sẽ tự động tải lại dữ liệu mới."); 
         location.reload(); 
     } catch(e) { 
