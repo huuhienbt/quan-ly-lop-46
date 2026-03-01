@@ -1,6 +1,6 @@
 // ==========================================
-// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN - BUNG NÉN ĐẦY ĐỦ DÒNG)
-// Cập nhật: Vòng quay chống Ẩn danh, Tỉ lệ mới, Icon Menu, Nâng cấp Lỗi sai
+// NÃO BỘ XỬ LÝ - APP.JS (BẢN CHUẨN ĐẦY ĐỦ NHẤT)
+// Cập nhật: Bảng Vàng TOP 15, Đồng hạng không mất Bạc/Đồng (Dense Ranking)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -177,41 +177,21 @@ function setupUI() {
 
         if(currentUser.role === 'admin') {
             document.getElementById('menuTeacher').innerHTML = `
-                <div onclick="chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-users text-blue-600 w-6"></i> Quản lý Học sinh
-                </div>
-                <div onclick="moThongBao()" class="p-3 hover:bg-orange-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-bullhorn text-orange-600 w-6"></i> Quản lý Bảng tin
-                </div>
-                <div onclick="moDonTu()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư xin phép
-                </div>
-                <div onclick="moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-comment-dots text-pink-600 w-6"></i> Thư Học Sinh
-                </div>
-                <div onclick="moTienDo()" class="p-3 hover:bg-purple-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-chart-line text-purple-600 w-6"></i> Tiến độ Học tập
-                </div>
-                <div onclick="quanLyNganHang('math')" class="p-3 hover:bg-indigo-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-calculator text-indigo-600 w-6"></i> Kho Toán
-                </div>
-                <div onclick="quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-book text-green-600 w-6"></i> Kho Tiếng Việt
-                </div>
+                <div onclick="chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-users text-blue-600 w-6"></i> Quản lý Học sinh</div>
+                <div onclick="moThongBao()" class="p-3 hover:bg-orange-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-bullhorn text-orange-600 w-6"></i> Quản lý Bảng tin</div>
+                <div onclick="moDonTu()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư xin phép</div>
+                <div onclick="moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-600 w-6"></i> Thư Học Sinh</div>
+                <div onclick="moTienDo()" class="p-3 hover:bg-purple-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-chart-line text-purple-600 w-6"></i> Tiến độ Học tập</div>
+                <div onclick="quanLyNganHang('math')" class="p-3 hover:bg-indigo-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-calculator text-indigo-600 w-6"></i> Kho Toán</div>
+                <div onclick="quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-book text-green-600 w-6"></i> Kho Tiếng Việt</div>
             `;
             document.getElementById('menuTeacher').classList.remove('hidden'); 
             document.getElementById('menuStudent').classList.add('hidden');
         } else {
             document.getElementById('menuStudent').innerHTML = `
-                <div onclick="viewProfile(currentUser.id)" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-id-card text-yellow-600 w-6"></i> Hồ sơ cá nhân
-                </div>
-                <div onclick="moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư
-                </div>
-                <div onclick="moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer">
-                    <i class="fas fa-comment-dots text-pink-500 w-6"></i> Lời muốn nói
-                </div>
+                <div onclick="viewProfile(currentUser.id)" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-id-card text-yellow-600 w-6"></i> Hồ sơ cá nhân</div>
+                <div onclick="moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư</div>
+                <div onclick="moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-500 w-6"></i> Lời muốn nói</div>
             `;
             document.getElementById('menuStudent').classList.remove('hidden'); 
             document.getElementById('menuTeacher').classList.add('hidden');
@@ -225,15 +205,9 @@ function setupUI() {
         if(logoutBtn) logoutBtn.style.display = 'none';
         
         document.getElementById('menuStudent').innerHTML = `
-            <div onclick="showLogin()" class="p-4 bg-blue-50 text-blue-700 rounded-xl font-black flex items-center gap-3 cursor-pointer mb-3 shadow-sm hover:bg-blue-100 transition border border-blue-100">
-                <i class="fas fa-sign-in-alt w-6 text-xl"></i> ĐĂNG NHẬP NGAY
-            </div>
-            <div onclick="moGocHocTap()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600">
-                <i class="fas fa-rocket w-6 text-indigo-500"></i> Góc học tập
-            </div>
-            <div onclick="moXinPhep()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600">
-                <i class="fas fa-envelope-open-text w-6 text-red-500"></i> Hộp thư
-            </div>
+            <div onclick="showLogin()" class="p-4 bg-blue-50 text-blue-700 rounded-xl font-black flex items-center gap-3 cursor-pointer mb-3 shadow-sm hover:bg-blue-100 transition border border-blue-100"><i class="fas fa-sign-in-alt w-6 text-xl"></i> ĐĂNG NHẬP NGAY</div>
+            <div onclick="moGocHocTap()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600"><i class="fas fa-rocket w-6 text-indigo-500"></i> Góc học tập</div>
+            <div onclick="moXinPhep()" class="p-3 hover:bg-slate-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-600"><i class="fas fa-envelope-open-text w-6 text-red-500"></i> Hộp thư</div>
         `;
         document.getElementById('menuStudent').classList.remove('hidden'); 
         document.getElementById('menuTeacher').classList.add('hidden');
@@ -242,13 +216,8 @@ function setupUI() {
 
 const contentArea = document.getElementById('content');
 
-function toggleMenu() { 
-    document.getElementById('appMenu').classList.toggle('hidden'); 
-}
-
-function closeMenu() { 
-    document.getElementById('appMenu').classList.add('hidden'); 
-}
+function toggleMenu() { document.getElementById('appMenu').classList.toggle('hidden'); }
+function closeMenu() { document.getElementById('appMenu').classList.add('hidden'); }
 
 // Chống lỗi mất lượt vòng quay khi đăng xuất
 function logout() { 
@@ -272,46 +241,25 @@ function veTrangChu() {
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
-            <button onclick="chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-100 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-users text-3xl text-blue-600"></i><span class="font-bold text-slate-700">Học sinh</span>
-            </button>
-            <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Bảng tin</span>
-            </button>
-            <button onclick="moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Xin phép</span>
-            </button>
-            <button onclick="moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-comment-dots text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Thư HS</span>
-            </button>
-            <button onclick="moTienDo()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-purple-100 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-chart-line text-3xl text-purple-600"></i><span class="font-bold text-slate-700">Tiến độ</span>
-            </button>
-            <button onclick="quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-indigo-100 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700">Kho Toán</span>
-            </button>
-            <button onclick="quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-100 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-book text-3xl text-green-600"></i><span class="font-bold text-slate-700">Kho T.Việt</span>
-            </button>
-            <button onclick="dongBoDuLieu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-slate-300 flex flex-col items-center gap-3 btn-3d">
-                <i class="fas fa-sync-alt text-3xl text-slate-500"></i><span class="font-bold text-slate-700">Đồng bộ</span>
-            </button>
+            <button onclick="chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-users text-3xl text-blue-600"></i><span class="font-bold text-slate-700">Học sinh</span></button>
+            <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Bảng tin</span></button>
+            <button onclick="moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Xin phép</span></button>
+            <button onclick="moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-comment-dots text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Thư HS</span></button>
+            <button onclick="moTienDo()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-purple-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-chart-line text-3xl text-purple-600"></i><span class="font-bold text-slate-700">Tiến độ</span></button>
+            <button onclick="quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-indigo-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700">Kho Toán</span></button>
+            <button onclick="quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-book text-3xl text-green-600"></i><span class="font-bold text-slate-700">Kho T.Việt</span></button>
+            <button onclick="dongBoDuLieu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-slate-300 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-sync-alt text-3xl text-slate-500"></i><span class="font-bold text-slate-700">Đồng bộ</span></button>
         </div>
     `;
 }
 
 // ----------------------------------------------------
-// MENU ĐIỀU HƯỚNG CÓ ICON
+// TÍNH NĂNG ĐIỀU CHỈNH THANH MENU 
 // ----------------------------------------------------
 function getNavHtml(active) {
     if (currentUser && currentUser.role === 'admin') { 
         let title = active === 'bangtin' ? 'BẢNG TIN LỚP' : (active === 'hoctap' ? 'GÓC HỌC TẬP' : 'HỘP THƯ'); 
-        return `
-            <div class="flex items-center mb-6">
-                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button>
-                <h2 class="font-black text-xl text-orange-500 uppercase">${title}</h2>
-            </div>
-        `; 
+        return `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-orange-500 uppercase">${title}</h2></div>`; 
     }
     
     let headerGreeting = ""; 
@@ -354,7 +302,6 @@ async function moVongQuay() {
     
     let todayStr = new Date().toLocaleDateString('vi-VN');
     
-    // Tải bộ nhớ tạm
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
     if (spinLog.date !== todayStr) {
         spinLog = { date: todayStr, extra: 0, usedFree: false };
@@ -362,7 +309,6 @@ async function moVongQuay() {
     
     let canSpin = !spinLog.usedFree || spinLog.extra > 0;
     
-    // Giao diện Loading
     let btnStyle = "from-slate-400 to-slate-500 opacity-50 pointer-events-none";
 
     let slicesHtml = PRIZES.map((p, i) => {
@@ -396,7 +342,6 @@ async function moVongQuay() {
         </div>
     `;
 
-    // TẢI NGẦM DỮ LIỆU TỪ SERVER ĐỂ CHỐNG LÁCH LUẬT
     if(Data.log.length === 0) {
         try { 
             Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); 
@@ -426,7 +371,6 @@ async function thucHienQuay() {
     
     let todayStr = new Date().toLocaleDateString('vi-VN');
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
-    
     if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
     
     if (spinLog.usedFree && spinLog.extra <= 0) return alert("Con đã hết lượt quay!");
@@ -444,10 +388,10 @@ async function thucHienQuay() {
 
     let rand = Math.random() * 100;
     let idx = 0;
-    if (rand < 15) idx = 0;                 // 15% (+10đ)
-    else if (rand < 50) idx = 1;            // 35% (Thêm lượt) 
-    else if (rand < 65) idx = 2;            // 15% (-10đ) 
-    else idx = 3;                           // 35% (May mắn)
+    if (rand < 15) idx = 0;                 
+    else if (rand < 50) idx = 1;            
+    else if (rand < 65) idx = 2;            
+    else idx = 3;                           
 
     let prize = PRIZES[idx];
     
@@ -468,7 +412,6 @@ async function thucHienQuay() {
 
         showPrizeModal(prize);
         
-        // LƯU LÊN SERVER ĐỂ CHỐNG LÁCH LUẬT
         let uniqueGroup = "Vòng quay ngày " + todayStr + " (" + Date.now() + ")";
         if (prize.netScore !== 0) {
             currentUser.score += prize.netScore; 
@@ -937,23 +880,30 @@ function moGocHocTap() {
     
     let eligibleStudents = Data.hs.filter(s => (s.score || 0) > 1500); 
     let sortedStudents = eligibleStudents.sort((a, b) => (b.score || 0) - (a.score || 0)); 
-    let top10 = sortedStudents.slice(0, 10); 
+    let top15 = sortedStudents.slice(0, 15); 
+    
+    // TẠO DANH SÁCH ĐIỂM DUY NHẤT ĐỂ XẾP ĐỒNG HẠNG CHUẨN XÁC
+    let uniqueScores = [...new Set(sortedStudents.map(s => s.score || 0))].sort((a, b) => b - a);
+
     let leaderboardHtml = ""; 
     
-    if (top10.length > 0) { 
-        let listHtml = top10.map((s, index) => { 
-            let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${index + 1}</span>`; 
+    if (top15.length > 0) { 
+        let listHtml = top15.map((s) => { 
+            // XÁC ĐỊNH HẠNG THỰC TẾ (Dense Ranking)
+            let actualDisplayRank = uniqueScores.indexOf(s.score || 0) + 1;
+
+            let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
             let rowBg = "bg-slate-50 border-slate-100"; 
             let nameColor = "text-slate-700"; 
             
-            if (index === 0) { 
+            if (actualDisplayRank === 1) { 
                 rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; 
                 rowBg = "bg-yellow-50 border-yellow-200 scale-[1.02] shadow-sm z-10"; 
                 nameColor = "text-yellow-700"; 
-            } else if (index === 1) { 
+            } else if (actualDisplayRank === 2) { 
                 rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; 
                 rowBg = "bg-gray-50 border-gray-200"; 
-            } else if (index === 2) { 
+            } else if (actualDisplayRank === 3) { 
                 rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; 
                 rowBg = "bg-orange-50 border-orange-100"; 
             } 
@@ -972,12 +922,11 @@ function moGocHocTap() {
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
             let myScore = currentUser.score || 0; 
-            
-            let myRealIndex = sortedStudents.findIndex(s => s.id === currentUser.id);
-            let myRank = myRealIndex !== -1 ? myRealIndex + 1 : (Data.hs.filter(s => (s.score || 0) > myScore).length + 1);
+            let myRank = uniqueScores.indexOf(myScore) + 1;
+            if (myRank === 0) myRank = uniqueScores.length + 1; // Nếu điểm học sinh chưa có trong list
             
             if (myScore > 1500) { 
-                if (myRank <= 10) { 
+                if (myRank <= 15) { 
                     personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; 
                 } else { 
                     personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`; 
