@@ -1,8 +1,13 @@
-// --- GÓC HỌC TẬP & BẢNG VÀNG (THUẬT TOÁN ĐỒNG HẠNG VÀ THỜI GIAN) ---
+// ==========================================
+// FILE 3: QUIZ.JS (HỌC TẬP, BẢNG VÀNG & QUẢN LÝ KHO BÀI TẬP)
+// ==========================================
+
+// --- GÓC HỌC TẬP & BẢNG VÀNG CHUẨN THỜI GIAN ---
 async function moGocHocTap(fromRouter = false) { 
     closeMenu(); 
     if(!fromRouter) window.history.pushState({}, "", "/hoc-tap");
     
+    // Tải dữ liệu ngầm nếu chưa tải
     if (currentUser && currentUser.role === 'student' && !window.isQuizDataLoaded) {
         contentArea.innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang kiểm tra bài tập...</p></div>`;
         try {
@@ -11,11 +16,15 @@ async function moGocHocTap(fromRouter = false) {
                 fetch(API_URL + "?type=vietnamese&t=" + Date.now()),
                 fetch(API_URL + "?type=history_all&t=" + Date.now())
             ]);
-            Data.math = await mRes.json(); Data.tv = await tRes.json(); Data.vietnamese = Data.tv; Data.log = await lRes.json();
+            Data.math = await mRes.json(); 
+            Data.tv = await tRes.json(); 
+            Data.vietnamese = Data.tv; 
+            Data.log = await lRes.json();
             window.isQuizDataLoaded = true;
         } catch(e) { console.log(e); }
     }
 
+    // Đếm số bài chưa làm để hiện Badge
     let mathUnread = 0; let tvUnread = 0;
     if (currentUser && currentUser.role === 'student') {
         const myLogs = Data.log.filter(l => String(l.id) === String(currentUser.id));
@@ -40,7 +49,7 @@ async function moGocHocTap(fromRouter = false) {
         </div>
     `; 
     
-    // TÌM THỜI GIAN ĐẠT ĐIỂM (Chỉ tính nộp bài/cộng trừ điểm, loại vòng quay 0 điểm)
+    // TÌM THỜI GIAN ĐẠT ĐIỂM (Loại bỏ Vòng quay may mắn 0 điểm)
     let studentsWithTime = Data.hs.map(s => {
         let scoreVal = Number(s.score) || 0;
         let userLogs = Data.log.filter(l => String(l.id) === String(s.id) && Number(l.score) !== 0);
@@ -55,7 +64,7 @@ async function moGocHocTap(fromRouter = false) {
 
     let eligibleStudents = studentsWithTime.filter(s => s.score > 1500); 
     
-    // SẮP XẾP: Điểm cao trên. Bằng điểm -> Thời gian NHỎ HƠN (Sớm hơn) xếp trên
+    // THUẬT TOÁN XẾP HẠNG: Điểm cao xếp trên -> Bằng điểm thì ai Đạt Sớm Hơn (achievedTime NHỎ HƠN) xếp trên
     let sortedStudents = eligibleStudents.sort((a, b) => {
         let scoreDiff = b.score - a.score;
         if (scoreDiff !== 0) return scoreDiff;
@@ -66,11 +75,11 @@ async function moGocHocTap(fromRouter = false) {
 
     let top15 = sortedStudents.slice(0, 15); 
     let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
+
     let leaderboardHtml = ""; 
-    
     if (top15.length > 0) { 
         let listHtml = top15.map((s) => { 
-            let actualDisplayRank = uniqueScores.indexOf(s.score) + 1;
+            let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; // Gom nhóm điểm để trao huy chương đồng hạng
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
             let rowBg = "bg-slate-50 border-slate-100"; let nameColor = "text-slate-700"; 
             
@@ -100,7 +109,7 @@ async function moGocHocTap(fromRouter = false) {
     contentArea.innerHTML = htmlTop + leaderboardHtml; 
 }
 
-// --- QUẢN LÝ KHO BÀI TẬP ---
+// --- QUẢN LÝ KHO BÀI TẬP ADMIN ---
 async function quanLyNganHang(sub, forceReload = false) { 
     closeMenu(); curSub = sub; 
     if (!forceReload && Data[sub] && Data[sub].length > 0) { renderGiaoDienKho(sub); return; } 
@@ -133,10 +142,11 @@ function renderFormCauHoi(id) {
     const q = id ? Data[curSub].find(x => x.id === id) : { group: '', time: 10, question: '', a: '', b: '', c: '', d: '', correct: 'a' }; const groups = [...new Set(Data[curSub].map(x => x.group))]; const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`; 
     contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="quanLyNganHang('${curSub}')" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">${id ? 'SỬA CÂU HỎI' : 'TẠO CÂU HỎI MỚI'}</h2></div><div class="bg-white p-5 rounded-3xl shadow border space-y-4 fade-in">${dl}<div class="grid grid-cols-3 gap-3"><div class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase">Tên Bài Tập (Ví dụ: Tuần 21)</label><input type="text" id="frmG" list="groupList" value="${q.group}" class="edit-input w-full mt-1" placeholder="Ví dụ: Tuần 21"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div></div><div><label class="text-xs font-bold text-slate-500 uppercase">Nội dung câu hỏi</label><textarea id="frmQ" rows="3" class="edit-input w-full mt-1">${q.question}</textarea></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div></div><div><label class="text-xs font-bold text-slate-500 uppercase">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200"><option value="a" ${q.correct=='a'?'selected':''}>Đáp án A</option><option value="b" ${q.correct=='b'?'selected':''}>Đáp án B</option><option value="c" ${q.correct=='c'?'selected':''}>Đáp án C</option><option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option></select></div><button onclick="luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-4">LƯU CÂU HỎI LÊN HỆ THỐNG</button></div>`; 
 }
+
 async function luuCauHoi(id) { const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: document.getElementById("frmQ").value, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" }; if(!data.group || !data.question) return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); window.isQuizDataLoaded = false; alert("Lưu thành công!"); document.getElementById('loader').style.display = 'none'; quanLyNganHang(curSub, true); }
 async function xoaCauHoi(id) { if(confirm("Thầy có chắc chắn muốn xóa câu hỏi này không?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); window.isQuizDataLoaded = false; alert("Đã xóa!"); document.getElementById('loader').style.display = 'none'; quanLyNganHang(curSub, true); } }
 
-// --- LÀM BÀI TẬP ---
+// --- CHỨC NĂNG LÀM BÀI TẬP (HỌC SINH) ---
 async function loadSubject(sub) { 
     if(!currentUser) return showLogin(); curSub = sub; 
     if (!window.isQuizDataLoaded) {
@@ -157,6 +167,7 @@ async function loadSubject(sub) {
         }); 
     } contentArea.innerHTML = html + `</div>`; 
 }
+
 function startQuiz(group, timeMins) { curGrp = group; quiz = Data[curSub].filter(q => q.group === group).sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; wrongAnswersLog = []; renderQuizFrame(); renderQuestion(0); startTimer(timeMins * 60); }
 function renderQuizFrame() { contentArea.innerHTML = `<div class="sticky top-20 bg-[#f0f7ff] z-30 py-3 flex justify-between items-center mb-4"><div class="flex items-center gap-3"><button onclick="loadSubject(curSub)" class="bg-white w-10 h-10 rounded-full shadow-sm text-slate-500 font-bold border"><i class="fas fa-times"></i></button><span class="font-black text-indigo-900 truncate max-w-[150px]">${curGrp}</span></div><div class="bg-white px-4 py-2 rounded-full font-black text-indigo-600 shadow-sm border border-indigo-100 flex items-center gap-2"><i class="fas fa-stopwatch text-orange-500 animate-pulse"></i><span id="quizTimer">00:00</span></div></div><div id="quizBox" class="bg-white p-5 rounded-3xl shadow-xl border-4 border-white min-h-[400px]"></div>`; }
 function renderQuestion(index) { 
@@ -169,33 +180,14 @@ function checkAns(el, selected, correct, index) {
     else { el.classList.add('!bg-red-100', '!border-red-500', '!text-red-800'); let qText = parseImg(q.question); let wrongAnsText = parseImg(q[selected]); let correctAnsText = parseImg(q[correct]); let wrongText = `<div class="bg-white p-4 rounded-xl border border-red-200 mb-3 shadow-sm"><p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-red-500">Câu ${index+1}:</span> ${qText}</p><div class="space-y-2 mt-3"><p class="text-red-600 text-sm bg-red-50 p-2 rounded-lg border border-red-100"><i class="fas fa-times-circle mr-1"></i> <b>Bé chọn (${selected.toUpperCase()}):</b> <span class="font-medium">${wrongAnsText}</span></p><p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng (${correct.toUpperCase()}):</b> <span class="font-medium">${correctAnsText}</span></p></div></div>`; wrongAnswersLog.push(wrongText); } setTimeout(() => renderQuestion(index + 1), 1200); 
 }
 function startTimer(seconds) { clearInterval(timer); let t = seconds; timer = setInterval(() => { let m = Math.floor(t / 60), s = t % 60; document.getElementById('quizTimer').innerText = `${m}:${s < 10 ? '0' + s : s}`; if (t <= 0) { clearInterval(timer); alert("Hết giờ làm bài!"); finishQuiz(); } t--; }, 1000); }
+
 async function finishQuiz() { 
     clearInterval(timer); const maxPossibleScore = quiz.length * 10; 
     if (score > 0 && score === maxPossibleScore) { var duration = 3 * 1000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 }; var interval = setInterval(function() { var timeLeft = animationEnd - Date.now(); if (timeLeft <= 0) { return clearInterval(interval); } var particleCount = 50 * (timeLeft / duration); confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); } 
     document.getElementById("quizBox").innerHTML = `<div class="text-center py-10 fade-in"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-2xl font-black text-slate-800 mb-2">ĐIỂM CỦA BẠN</h3><p class="text-6xl font-black text-indigo-600 mb-8">${score}</p><button onclick="loadSubject(curSub)" class="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black text-lg btn-3d shadow-lg w-full">Trở về Danh sách</button></div>`; 
     if(currentUser.role === 'student') { 
+        let submitTime = new Date().toISOString(); 
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score, details: wrongAnswersLog.join('') } }) }); 
-        Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, time: new Date().toISOString(), details: wrongAnswersLog.join('') }); 
+        Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, time: submitTime, details: wrongAnswersLog.join('') }); 
     } 
 }
-async function moTienDo() { 
-    closeMenu(); contentArea.innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu toàn lớp...</h2>`; 
-    try { Data.math = await (await fetch(API_URL+"?type=math")).json(); Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json(); Data.vietnamese = Data.tv; Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); } catch(e){}
-    const mathGroups = [...new Set(Data.math.map(x=>x.group))]; const tvGroups = [...new Set(Data.tv.map(x=>x.group))]; const total = mathGroups.length + tvGroups.length; 
-    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ CHUNG (${total} BÀI)</h2></div><p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-hand-pointer mr-1"></i> Bấm vào tên học sinh để xem chi tiết điểm số & lỗi sai</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">`; 
-    html += Data.hs.map(h => { const userL = Data.log.filter(l => String(l.id) === String(h.id)); const done = new Set(userL.map(l => l.subject+l.group)).size; const pct = total ? Math.round((done/total)*100) : 0; return `<div onclick="xemChiTietTienDo('${h.id}', '${h.name}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 hover:shadow-md transition"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div><span class="font-bold text-slate-700">${h.name}</span></div><div class="w-1/3 text-right"><div class="text-[11px] font-black mb-1 text-slate-500">${done}/${total} BÀI (${pct}%)</div><div class="progress-bar h-1.5"><div class="progress-fill ${pct==100?'bg-green-500':'bg-purple-500'}" style="width:${pct}%"></div></div></div></div>`; }).join(''); 
-    contentArea.innerHTML = html + "</div>"; 
-}
-window.xemChiTietTienDo = function(studentId, studentName) { 
-    const userLogs = Data.log.filter(l => String(l.id) === String(studentId)); const mathGroups = [...new Set(Data.math.map(x=>x.group))].sort(); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].sort(); 
-    const renderSubjectProgress = (subjectCode, groupsList) => { 
-        if(groupsList.length === 0) return `<p class="text-sm text-slate-400 italic py-2">Chưa có bài tập</p>`; 
-        return groupsList.map(grp => { 
-            const log = userLogs.find(l => l.subject === subjectCode && l.group === grp); 
-            if(log) { const btnChiTiet = log.details ? `<button onclick="xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Xem lỗi sai</button>` : `<span class="text-[10px] text-green-500 font-bold px-2 py-1"><i class="fas fa-check-circle"></i> Tuyệt đối</span>`; return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500 text-lg"></i><span class="font-bold text-slate-700 text-sm">${grp}</span></div><div class="flex items-center gap-3"><span class="font-black text-indigo-600 text-lg">${log.score}đ</span>${btnChiTiet}</div></div>`; } 
-            else { return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; } 
-        }).join(''); 
-    }; 
-    contentArea.innerHTML = `<div class="flex items-center mb-6"><button onclick="moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div><div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>`; 
-};
-window.xemLoiSai = function(studentId, subjectCode, group) { const student = Data.hs.find(s => String(s.id) === String(studentId)); const studentName = student ? student.name : "Học sinh"; const log = Data.log.find(l => String(l.id) === String(studentId) && l.subject === subjectCode && l.group === group); document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); };
