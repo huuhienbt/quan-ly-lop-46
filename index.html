@@ -12,7 +12,9 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
-    <script src="app.js?v=90" defer></script>
+    <script src="config.js?v=1" defer></script>
+    <script src="ui.js?v=1" defer></script>
+    <script src="features.js?v=1" defer></script>
 </head>
 <body class="antialiased bg-slate-50 text-slate-800">
 
@@ -24,9 +26,7 @@
     <div id="loginScreen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-sm">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center fade-in">
             <h1 class="text-3xl font-black text-indigo-900 mb-6">LỚP 4/6</h1>
-            
             <input id="inputLogin" type="text" inputmode="numeric" class="w-full p-4 border-2 border-indigo-100 rounded-xl font-bold text-xl text-center mb-4 focus:border-indigo-500 outline-none transition" placeholder="Mật khẩu / SĐT...">
-            
             <button onclick="login()" class="w-full bg-indigo-600 text-white p-4 rounded-xl font-bold text-lg btn-3d shadow-lg hover:bg-indigo-700">ĐĂNG NHẬP</button>
             <p id="connStatus" class="mt-4 text-xs font-bold text-gray-400">Đang kiểm tra kết nối máy chủ...</p>
         </div>
@@ -52,19 +52,8 @@
                             <p class="font-black text-slate-800 truncate text-lg" id="menuName">--</p>
                         </div>
                         <div class="p-2 space-y-1 max-h-[60vh] overflow-y-auto">
-                            <div id="menuTeacher" class="hidden">
-                                <div onclick="chuyenTrangQuanLy()" class="menu-item"><i class="fas fa-users text-blue-600 w-8"></i> QL Học sinh</div>
-                                <div onclick="moDonTu()" class="menu-item"><i class="fas fa-envelope-open-text text-red-600 w-8"></i> Hộp thư</div>
-                                <div onclick="moTienDo()" class="menu-item"><i class="fas fa-chart-line text-purple-600 w-8"></i> Tiến độ Học tập</div>
-                                <div class="border-t my-2"></div>
-                                <div onclick="quanLyNganHang('math')" class="menu-item"><i class="fas fa-calculator text-indigo-600 w-8"></i> Kho Toán</div>
-                                <div onclick="quanLyNganHang('vietnamese')" class="menu-item"><i class="fas fa-book text-green-600 w-8"></i> Kho Tiếng Việt</div>
-                            </div>
-                            
-                            <div id="menuStudent" class="hidden">
-                                <div onclick="alert('Tính năng đang cập nhật'); closeMenu();" class="menu-item"><i class="fas fa-id-card text-yellow-600 w-8"></i> Hồ sơ cá nhân</div>
-                                <div onclick="moXinPhep()" class="menu-item"><i class="fas fa-pen-to-square text-red-600 w-8"></i> Gửi đơn xin phép</div>
-                            </div>
+                            <div id="menuTeacher" class="hidden"></div>
+                            <div id="menuStudent" class="hidden"></div>
                         </div>
                         <div class="border-t p-2 bg-slate-50">
                             <div onclick="logout()" class="p-3 hover:bg-red-100 rounded-lg font-bold text-red-600 flex justify-center items-center cursor-pointer transition">
@@ -75,9 +64,7 @@
                 </div>
             </div>
         </div>
-
-        <div id="content" class="container mx-auto px-4 pt-6 max-w-5xl fade-in pb-24">
-        </div>
+        <div id="content" class="container mx-auto px-4 pt-6 max-w-5xl fade-in pb-24"></div>
     </div>
 
     <div id="modalProfile" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm fade-in">
@@ -86,69 +73,11 @@
                 <h3 class="font-bold text-lg flex items-center gap-2"><i class="fas fa-user-graduate"></i> <span id="pfName">Tên học sinh</span></h3>
                 <button onclick="closeModal('modalProfile')" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center transition"><i class="fas fa-times"></i></button>
             </div>
-            
             <div id="pfContent" class="p-5"></div>
-            
             <div class="bg-slate-50 p-3 text-center border-t">
                 <button onclick="closeModal('modalProfile')" class="text-slate-500 font-bold text-sm hover:text-slate-800">Đóng cửa sổ</button>
             </div>
         </div>
     </div>
-
-    <style>
-        /* MENU ITEM STYLE */
-        .menu-item {
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            color: #475569;
-            transition: all 0.2s;
-        }
-        .menu-item:hover {
-            background-color: #eff6ff;
-            color: #2563eb;
-            transform: translateX(4px);
-        }
-
-        /* --- CSS MÁY BẮN PHÁO CẦU VỒNG HIỆN ĐẠI --- */
-        .rainbow-spinner {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            /* Dải 7 màu cầu vồng: Đỏ, Cam, Vàng, Lục, Lam, Chàm, Tím */
-            background: conic-gradient(
-                #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444
-            );
-            /* Quay 1 giây một vòng đều đặn */
-            animation: rainbowSpin 1s linear infinite;
-            position: relative;
-        }
-
-        /* Khoét lỗ ở giữa để biến nó thành cái "Vòng (Ring)" thay vì "Bánh (Pie)" */
-        .rainbow-spinner::before {
-            content: "";
-            position: absolute;
-            inset: 6px; /* Độ dày của đường viền cầu vồng (6px) */
-            background-color: #f8fafc; /* Trùng với màu nền web để tạo hiệu ứng rỗng */
-            border-radius: 50%;
-        }
-
-        @keyframes rainbowSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
