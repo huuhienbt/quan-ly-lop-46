@@ -350,13 +350,15 @@ async function finishQuiz() {
     } 
 }
 
-// --- 🎡 VÒNG QUAY MAY MẮN ---
+// ==========================================
+// 🎡 VÒNG QUAY MAY MẮN (ĐÃ SỬA LỖI NÚT, ĐỔI TÊN & CHỈNH TỈ LỆ)
+// ==========================================
 const PRIZES = [
-    { id: "plus10", text: "+10", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm vào Bảng Vàng.", icon: "🎉" },
-    { id: "extra", text: "+1 Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
+    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm vào Bảng Vàng.", icon: "🎉" },
+    { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
-    { id: "minus10", text: "-10", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm vào Bảng Vàng mất rồi.", icon: "📉" },
-    { id: "redo", text: "Vé Thi Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ THI LẠI. Dùng nó để làm lại bài tập điểm thấp nhé!", icon: "🎫" },
+    { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm vào Bảng Vàng mất rồi.", icon: "📉" },
+    { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài tập điểm thấp nhé!", icon: "🎫" },
     { id: "miss", text: "May Mắn", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Cố gắng ở lượt quay sau nhé!", icon: "🍀" }
 ];
 
@@ -367,7 +369,7 @@ window.moVongQuay = async function() {
     if (spinLog.date !== todayStr) { spinLog = { date: todayStr, extra: 0, usedFree: false }; }
     
     let btnStyle = "from-slate-400 to-slate-500 opacity-50 pointer-events-none";
-    let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * 60}deg);"><div class="pt-5 font-black text-white text-sm drop-shadow-md w-16 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
+    let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * 60}deg);"><div class="pt-5 font-black text-white text-xs sm:text-sm drop-shadow-md w-16 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
     let gradColors = `${PRIZES[0].color} 0deg 60deg, ${PRIZES[1].color} 60deg 120deg, ${PRIZES[2].color} 120deg 180deg, ${PRIZES[3].color} 180deg 240deg, ${PRIZES[4].color} 240deg 300deg, ${PRIZES[5].color} 300deg 360deg`;
 
     contentArea.innerHTML = `
@@ -385,7 +387,7 @@ window.moVongQuay = async function() {
                     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div>
                 </div>
             </div>
-            <button id="btnSpin" onclick="thucHienQuay()" class="bg-gradient-to-r text-white px-10 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition ${btnStyle}"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="bg-gradient-to-r text-white px-10 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition ${btnStyle}"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
         </div>
     `;
 
@@ -396,7 +398,7 @@ window.moVongQuay = async function() {
     let btnUpdate = document.getElementById('btnSpin');
     if (btnUpdate) {
         let canSpin = !spinLog.usedFree || spinLog.extra > 0;
-        btnUpdate.innerHTML = canSpin ? (spinLog.usedFree ? `QUAY (+${spinLog.extra} LƯỢT)` : "QUAY MIỄN PHÍ") : "ĐÃ HẾT LƯỢT HÔM NAY";
+        btnUpdate.innerHTML = canSpin ? (spinLog.usedFree ? `BẮT ĐẦU (+${spinLog.extra} LƯỢT)` : "BẮT ĐẦU") : "ĐÃ HẾT LƯỢT HÔM NAY";
         btnUpdate.className = canSpin ? "bg-gradient-to-r text-white px-10 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition from-yellow-400 to-orange-500 hover:scale-[1.02]" : "bg-gradient-to-r text-white px-10 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition from-slate-400 to-slate-500 opacity-50 pointer-events-none";
     }
 };
@@ -413,8 +415,15 @@ window.thucHienQuay = async function() {
     if (!spinLog.usedFree) { spinLog.usedFree = true; } else { spinLog.extra -= 1; }
     localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
-    let rand = Math.random() * 100; let idx = 0;
-    if (rand < 10) idx = 0; else if (rand < 30) idx = 1; else if (rand < 50) idx = 2; else if (rand < 60) idx = 3; else if (rand < 70) idx = 4; else idx = 5;                           
+    // --- CẬP NHẬT TỈ LỆ CHUẨN XÁC THEO YÊU CẦU ---
+    let rand = Math.random() * 100; 
+    let idx = 0;
+    if (rand < 10) idx = 0;                 // 10% (+10 Điểm)
+    else if (rand < 40) idx = 1;            // 30% (Thêm lượt - Cộng dồn từ 10->40)
+    else if (rand < 60) idx = 2;            // 20% (Giải Đố - Cộng dồn từ 40->60)
+    else if (rand < 70) idx = 3;            // 10% (-10 Điểm - Cộng dồn từ 60->70)
+    else if (rand < 80) idx = 4;            // 10% (Vé làm lại - Cộng dồn từ 70->80)
+    else idx = 5;                           // 20% (May Mắn/Mất lượt - Phần còn lại)
 
     let prize = PRIZES[idx];
     let wheel = document.getElementById('wheel'); let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
@@ -427,9 +436,9 @@ window.thucHienQuay = async function() {
 
         if (prize.extraSpin > 0) { spinLog.extra += prize.extraSpin; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); }
         if (prize.id === 'redo') { let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0'); localStorage.setItem('redo_tokens_'+currentUser.id, tokens + 1); }
-        if (prize.id === 'riddle') { showRiddleModal(todayStr, uniqueGroup); return; }
+        if (prize.id === 'riddle') { window.showRiddleModal(todayStr, uniqueGroup); return; }
 
-        showPrizeModal(prize);
+        window.showPrizeModal(prize);
         if (prize.netScore !== 0) { currentUser.score = Number(currentUser.score) + prize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
 
         try {
@@ -441,18 +450,18 @@ window.thucHienQuay = async function() {
             var dur = 3000; var end = Date.now() + dur; 
             var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250);
         }
-        restoreSpinButton(spinLog);
+        window.restoreSpinButton(spinLog);
     }, 4000);
 };
 
-function restoreSpinButton(spinLog) {
+window.restoreSpinButton = function(spinLog) {
     let btnUpdate = document.getElementById('btnSpin'); if (!btnUpdate) return;
     let canSpinNow = !spinLog.usedFree || spinLog.extra > 0;
-    if (canSpinNow) { btnUpdate.classList.remove('opacity-50', 'pointer-events-none'); btnUpdate.innerText = spinLog.usedFree ? `QUAY (+${spinLog.extra} LƯỢT)` : "QUAY MIỄN PHÍ"; } 
+    if (canSpinNow) { btnUpdate.classList.remove('opacity-50', 'pointer-events-none'); btnUpdate.innerText = spinLog.usedFree ? `BẮT ĐẦU (+${spinLog.extra} LƯỢT)` : "BẮT ĐẦU"; } 
     else { btnUpdate.innerText = "ĐÃ HẾT LƯỢT HÔM NAY"; btnUpdate.className = "w-full px-10 py-4 rounded-2xl font-black shadow-lg text-xl transition bg-gradient-to-r from-slate-400 to-slate-500 opacity-50 pointer-events-none text-white"; }
-}
+};
 
-function showRiddleModal(todayStr, uniqueGroup) {
+window.showRiddleModal = function(todayStr, uniqueGroup) {
     let a = Math.floor(Math.random() * 10) + 1; let b = Math.floor(Math.random() * 10) + 1; let c = Math.floor(Math.random() * 10) + 1;
     let correctAns = a + b * c; 
     let overlay = document.createElement('div'); overlay.id = "riddleModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm fade-in p-4";
@@ -462,10 +471,10 @@ function showRiddleModal(todayStr, uniqueGroup) {
             <p class="text-slate-600 font-bold mb-6">Tính nhanh phép toán sau để nhận ngay 20 điểm:</p>
             <div class="bg-purple-50 text-purple-800 text-3xl font-black p-4 rounded-xl mb-6 shadow-inner border border-purple-200">${a} + ${b} x ${c} = ?</div>
             <input type="number" id="riddleAns" class="w-full p-4 border-2 border-purple-200 rounded-xl font-bold text-2xl text-center mb-6 focus:border-purple-500 outline-none" placeholder="Đáp án của con...">
-            <button onclick="checkRiddle(${correctAns}, '${todayStr}', '${uniqueGroup}')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl font-black shadow-lg btn-3d hover:scale-[1.02] transition">TRẢ LỜI</button>
+            <button onclick="window.checkRiddle(${correctAns}, '${todayStr}', '${uniqueGroup}')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl font-black shadow-lg btn-3d hover:scale-[1.02] transition">TRẢ LỜI</button>
         </div>`;
     document.body.appendChild(overlay); setTimeout(() => document.getElementById('riddleAns').focus(), 100);
-}
+};
 
 window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
     let ansStr = document.getElementById('riddleAns').value; if(!ansStr) return alert("Con chưa nhập đáp án kìa!");
@@ -474,18 +483,17 @@ window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
     if (parseInt(ansStr) === correctAns) { prize.netScore = 20; prize.msg = "Giỏi quá! Con tính đúng và được thưởng 20 điểm."; prize.icon = "🎉"; prize.color = "#34d399"; } 
     else { prize.msg = `Tiếc quá! Đáp án đúng là ${correctAns}. Hãy cẩn thận hơn ở lần sau nhé!`; prize.icon = "😅"; prize.color = "#f87171"; }
     if (prize.netScore !== 0) { currentUser.score = Number(currentUser.score) + prize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
-    showPrizeModal(prize);
+    window.showPrizeModal(prize);
     try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: prize.netScore, details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" } }) }); Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: prize.netScore, time: new Date().toISOString() }); } catch(e) {}
     if (prize.netScore > 0) { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
-    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id)); restoreSpinButton(spinLog);
+    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id)); window.restoreSpinButton(spinLog);
 };
 
-function showPrizeModal(prize) {
+window.showPrizeModal = function(prize) {
     let overlay = document.createElement('div'); overlay.id = "prizeModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
     overlay.innerHTML = `<div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 animate-[cascadeDrop_0.5s_ease-out_forwards]" style="border-color: ${prize.color}"><div class="text-7xl mb-4 animate-bounce">${prize.icon}</div><h3 class="text-2xl font-black text-slate-800 mb-2">${prize.text}</h3><p class="text-slate-600 font-bold mb-6">${prize.msg}</p><button onclick="document.getElementById('prizeModal').remove()" class="w-full text-white py-3 rounded-xl font-black shadow-md transition hover:opacity-80" style="background-color: ${prize.color}">ĐÓNG</button></div>`;
     document.body.appendChild(overlay);
-}
-
+};
 // --- 💬 THƯ BÍ MẬT & XIN PHÉP ---
 window.moHopThuBiMat = function() {
     if(!currentUser) return showLogin(); closeMenu();
