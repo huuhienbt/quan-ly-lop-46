@@ -47,3 +47,28 @@ body {
 /* Thanh Tiến độ */
 .progress-bar { height: 8px; background: #e2e8f0; border-radius: 99px; overflow: hidden; margin-top: 6px; }
 .progress-fill { height: 100%; transition: width 1s; }
+
+/* --- CSS MÁY BẮN PHÁO CẦU VỒNG HIỆN ĐẠI --- */
+.rainbow-spinner {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: conic-gradient(
+        #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #6366f1, #a855f7, #ef4444
+    );
+    animation: rainbowSpin 1s linear infinite;
+    position: relative;
+}
+
+.rainbow-spinner::before {
+    content: "";
+    position: absolute;
+    inset: 6px; 
+    background-color: #f8fafc; 
+    border-radius: 50%;
+}
+
+@keyframes rainbowSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
