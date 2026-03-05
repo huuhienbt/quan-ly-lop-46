@@ -787,19 +787,25 @@ async function moVongQuay() {
     restoreSpinButton(spinLog);
 }
 
-function restoreSpinButton(spinLog) {
+window.restoreSpinButton = function(spinLog) {
     let btnUpdate = document.getElementById('btnSpin'); 
     if (!btnUpdate) return;
     
     let canSpinNow = !spinLog.usedFree || spinLog.extra > 0;
+    
     if (canSpinNow) { 
-        btnUpdate.classList.remove('opacity-50', 'pointer-events-none'); 
+        // Bật nút và tô màu Đỏ - Vàng nổi bật
+        btnUpdate.className = "w-full bg-gradient-to-r from-red-500 to-yellow-500 text-white px-10 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition hover:scale-[1.02] cursor-pointer";
         btnUpdate.innerText = spinLog.usedFree ? `BẮT ĐẦU (+${spinLog.extra} LƯỢT)` : "BẮT ĐẦU"; 
+        
+        // Kích hoạt lại sự kiện click
+        btnUpdate.onclick = window.thucHienQuay;
     } else { 
+        // Khóa nút và tô màu xám
+        btnUpdate.className = "w-full bg-gradient-to-r from-slate-400 to-slate-500 text-white px-10 py-4 rounded-2xl font-black shadow-lg text-xl transition opacity-50 pointer-events-none";
         btnUpdate.innerText = "ĐÃ HẾT LƯỢT HÔM NAY"; 
-        btnUpdate.className = "w-full px-10 py-4 rounded-2xl font-black shadow-lg text-xl transition bg-gradient-to-r from-slate-400 to-slate-500 opacity-50 pointer-events-none text-white"; 
     }
-}
+};
 
 function thucHienQuay() {
     if(isSpinning) return;
