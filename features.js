@@ -1,7 +1,6 @@
 // ==========================================
-// FILE 3: FEATURES.JS (TRÁI TIM HỆ THỐNG - BẢN THÔNG MINH)
-// CHỨA: Học Tập, Vòng Quay, Quản Lý, Thư, Đơn Từ, Bảng Vàng
-// MỚI: Tự động lọc dữ liệu cũ, không cần xóa Sheet.
+// FILE: FEATURES.JS (TRÁI TIM HỆ THỐNG - BẢN FULL 100%)
+// Tích hợp: Đa phương tiện (PDF, MP3, YT), Chống sập ảnh, Accordion, Lọc rác.
 // ==========================================
 
 // Biến toàn cục riêng của Vòng quay
@@ -12,7 +11,7 @@ const PRIZES = [
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
     { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
     { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài tập điểm thấp nhé!", icon: "🎫" },
-    { id: "miss", text: "Mất lượt", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Cố gắng ở lượt quay sau nhé!", icon: "😢" }
+    { id: "miss", text: "Mất Lượt", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Cố gắng ở lượt quay sau nhé!", icon: "😢" }
 ];
 
 // ==========================================
@@ -66,9 +65,7 @@ window.moGocHocTap = async function() {
     `; 
     
     function parseLogTime(timeStr) {
-        if(!timeStr) return 0;
-        let d = new Date(timeStr);
-        return !isNaN(d.getTime()) ? d.getTime() : 0; 
+        if(!timeStr) return 0; let d = new Date(timeStr); return !isNaN(d.getTime()) ? d.getTime() : 0; 
     }
 
     let studentsWithTime = Data.hs.map(s => {
@@ -86,8 +83,7 @@ window.moGocHocTap = async function() {
     let eligibleStudents = studentsWithTime.filter(s => s.score > 1500); 
     
     let sortedStudents = eligibleStudents.sort((a, b) => {
-        let scoreDiff = b.score - a.score;
-        if (scoreDiff !== 0) return scoreDiff;
+        let scoreDiff = b.score - a.score; if (scoreDiff !== 0) return scoreDiff;
         let timeA = a.achievedTime === 0 ? Infinity : a.achievedTime;
         let timeB = b.achievedTime === 0 ? Infinity : b.achievedTime;
         return timeA - timeB; 
@@ -109,10 +105,7 @@ window.moGocHocTap = async function() {
             
             return `
                 <div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 text-center flex justify-center">${rankIcon}</div>
-                        <div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div>
-                    </div>
+                    <div class="flex items-center gap-3"><div class="w-10 text-center flex justify-center">${rankIcon}</div><div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div></div>
                     <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div>
                 </div>
             `; 
@@ -120,10 +113,7 @@ window.moGocHocTap = async function() {
         
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
-            let myScore = Number(currentUser.score) || 0; 
-            let myRank = uniqueScores.indexOf(myScore) + 1;
-            if (myRank === 0) myRank = uniqueScores.length + 1; 
-            
+            let myScore = Number(currentUser.score) || 0; let myRank = uniqueScores.indexOf(myScore) + 1; if (myRank === 0) myRank = uniqueScores.length + 1; 
             if (myScore > 1500) { 
                 if (myRank <= 15) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
                 else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`; } 
@@ -131,11 +121,8 @@ window.moGocHocTap = async function() {
         } 
         leaderboardHtml = `
             <div class="mt-10 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in">
-                <div class="text-center mb-5">
-                    <h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3>
-                </div>
-                <div class="flex flex-col">${listHtml}</div>
-                ${personalMsg}
+                <div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div>
+                <div class="flex flex-col">${listHtml}</div>${personalMsg}
             </div>
         `; 
     } else { 
@@ -143,10 +130,7 @@ window.moGocHocTap = async function() {
         if (currentUser && currentUser.role === 'student') { personalMsgEmpty = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Hãy làm bài tập để trở thành người đầu tiên vượt mốc 1500 điểm nhé!</p></div>`; } 
         leaderboardHtml = `
             <div class="mt-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80">
-                <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i>
-                <p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p>
-                <p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>
-                ${personalMsgEmpty}
+                <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i><p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p><p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>${personalMsgEmpty}
             </div>
         `; 
     } 
@@ -155,16 +139,13 @@ window.moGocHocTap = async function() {
 
 
 // ==========================================
-// 2. KHO QUẢN LÝ BÀI TẬP ADMIN (ACCORDION & FONT SOẠN THẢO)
+// 2. KHO QUẢN LÝ BÀI TẬP ADMIN (ACCORDION & CHỐNG MẤT ẢNH)
 // ==========================================
 window.quanLyNganHang = async function(sub, forceReload = false) { 
     closeMenu(); curSub = sub; 
     if (!forceReload && Data[sub] && Data[sub].length > 0) { window.renderGiaoDienKho(sub); return; } 
     document.getElementById('content').innerHTML = `
-        <div class="text-center mt-10">
-            <i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i>
-            <p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p>
-        </div>
+        <div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>
     `; 
     try { 
         const qs = await (await fetch(API_URL+"?type="+sub+"&t="+Date.now())).json(); 
@@ -179,19 +160,10 @@ window.renderGiaoDienKho = function(sub) {
     
     document.getElementById('content').innerHTML = `
         <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center">
-                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <h2 class="font-black text-xl text-indigo-900 uppercase">KHO ${sub === 'math' ? 'TOÁN' : 'T.VIỆT'}</h2>
-            </div>
-            <button onclick="window.renderFormCauHoi(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold btn-3d text-sm">
-                <i class="fas fa-plus mr-1"></i> Tạo câu mới
-            </button>
+            <div class="flex items-center"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">KHO ${sub === 'math' ? 'TOÁN' : 'T.VIỆT'}</h2></div>
+            <button onclick="window.renderFormCauHoi(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold btn-3d text-sm"><i class="fas fa-plus mr-1"></i> Tạo câu mới</button>
         </div>
-        <select id="qFilter" onchange="window.filterQuestions()" class="w-full p-3 rounded-xl border-2 border-slate-200 mb-6 font-bold text-slate-700 outline-none focus:border-indigo-500">
-            ${filterOptions}
-        </select>
+        <select id="qFilter" onchange="window.filterQuestions()" class="w-full p-3 rounded-xl border-2 border-slate-200 mb-6 font-bold text-slate-700 outline-none focus:border-indigo-500">${filterOptions}</select>
         <div id="listQuestions" class="space-y-4"></div>
     `; 
     window.filterQuestions(); 
@@ -200,7 +172,6 @@ window.renderGiaoDienKho = function(sub) {
 window.filterQuestions = function() { 
     const val = document.getElementById("qFilter").value; 
     let list = val === 'all' ? Data[curSub] : Data[curSub].filter(q => String(q.group) === val); 
-    
     if (list.length === 0) { document.getElementById("listQuestions").innerHTML = '<p class="text-center text-slate-400 py-10">Trống</p>'; return; } 
     
     let grouped = {}; list.forEach(q => { if (q.group) { if (!grouped[q.group]) grouped[q.group] = []; grouped[q.group].push(q); } }); 
@@ -218,17 +189,10 @@ window.filterQuestions = function() {
             <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 mb-4 fade-in overflow-hidden transition-all">
                 <div onclick="window.toggleGroupQuestions('${safeGrpId}')" class="flex items-center justify-between p-5 cursor-pointer hover:bg-indigo-50 transition select-none">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800 uppercase">${grp}</h3>
-                            <p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p>
-                        </div>
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner"><i class="fas fa-layer-group"></i></div>
+                        <div><h3 class="font-black text-xl text-slate-800 uppercase">${grp}</h3><p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p></div>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i>
-                    </div>
+                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i></div>
                 </div>
                 <div id="content_${safeGrpId}" class="hidden px-5 pb-5 pt-2 border-t-2 border-slate-50 bg-slate-50/50 space-y-3">
         `; 
@@ -241,19 +205,10 @@ window.filterQuestions = function() {
             html += `
                 <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 transition relative shadow-sm">
                     <div class="flex justify-between items-start">
-                        <div class="flex gap-3 w-full pr-16">
-                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">${index + 1}</span>
-                            <div class="font-medium text-slate-700 text-base mt-1 overflow-hidden break-words w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mt-2">
-                                ${qText}
-                            </div>
-                        </div>
+                        <div class="flex gap-3 w-full pr-16"><span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">${index + 1}</span><div class="font-medium text-slate-700 text-base mt-1 overflow-hidden break-words w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mt-2">${qText}</div></div>
                         <div class="flex gap-2 absolute top-4 right-4">
-                            <button onclick="window.renderFormCauHoi('${q.id}')" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="window.xoaCauHoi('${q.id}')" class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <button onclick="window.renderFormCauHoi('${q.id}')" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Sửa"><i class="fas fa-edit"></i></button>
+                            <button onclick="window.xoaCauHoi('${q.id}')" class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm" title="Xóa"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
@@ -270,6 +225,9 @@ window.toggleGroupQuestions = function(groupId) {
     else { contentDiv.classList.add('hidden'); icon.style.transform = 'rotate(0deg)'; }
 };
 
+// ==========================================
+// 3. BỘ CÔNG CỤ SOẠN THẢO RICH TEXT EDITOR SIÊU CẤP
+// ==========================================
 window.getRichTextToolbar = function(targetId) {
     return `
         <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200 items-center shadow-sm">
@@ -296,24 +254,52 @@ window.getRichTextToolbar = function(targetId) {
             </select>
             
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-3 h-8 bg-blue-50 rounded shadow-sm hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200" title="Chèn Link"><i class="fas fa-link"></i> Link</button>
-            <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-3 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200" title="Chèn ảnh"><i class="fas fa-image"></i> Ảnh</button>
-            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Chỉnh cỡ ảnh">
+            <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded shadow-sm hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200" title="Chèn Link"><i class="fas fa-link"></i> Link</button>
+            <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200" title="Chèn ảnh"><i class="fas fa-image"></i> Ảnh</button>
+            <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded shadow-sm hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200" title="Chèn Video YouTube"><i class="fab fa-youtube"></i> Video</button>
+            <button onclick="window.chenAmThanh('${targetId}')" class="px-2 h-8 bg-green-50 rounded shadow-sm hover:bg-green-100 text-green-700 font-bold text-xs flex items-center gap-1 border border-green-200" title="Chèn File Nghe MP3"><i class="fas fa-music"></i> Nghe</button>
+            <button onclick="window.chenPDF('${targetId}')" class="px-2 h-8 bg-orange-50 rounded shadow-sm hover:bg-orange-100 text-orange-700 font-bold text-xs flex items-center gap-1 border border-orange-200" title="Chèn File PDF"><i class="fas fa-file-pdf"></i> PDF</button>
+            
+            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Chỉnh cỡ ảnh/video">
                 <option value="">Cỡ ảnh...</option><option value="30%">Thu nhỏ 30%</option><option value="60%">Vừa 60%</option><option value="100%">Phóng to 100%</option>
             </select>
         </div>
     `;
 };
 
+window.chenAmThanh = function(targetId) {
+    const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:");
+    if (!url) return;
+    let audioSrc = url;
+    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (driveMatch) { audioSrc = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`; } 
+    else if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
+    const audioHtml = `<div contenteditable="false" style="margin: 15px 0; text-align: center; background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0;"><p style="font-size: 12px; color: #64748b; font-weight: bold; margin-bottom: 8px; text-transform: uppercase;"><i class="fas fa-headphones"></i> Bài nghe Audio</p><audio controls style="width: 100%; max-width: 400px; outline: none;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt không hỗ trợ.</audio></div><br>`;
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
+};
+
+window.chenPDF = function(targetId) {
+    const url = prompt("Dán link file PDF từ Google Drive vào đây:");
+    if (!url) return;
+    let pdfSrc = url;
+    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (driveMatch) { pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; }
+    const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 8px 15px; font-size: 12px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;"><i class="fas fa-file-pdf text-red-500 mr-2"></i>Tài liệu PDF</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, pdfHtml);
+};
+
+window.chenVideoYouTube = function(targetId) {
+    const url = prompt("Dán đường link Video YouTube vào đây:");
+    if (!url) return;
+    let videoId = ""; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp);
+    if (match && match[2].length === 11) { videoId = match[2]; } else { alert("Link YouTube không hợp lệ!"); return; }
+    const embedHtml = `<div contenteditable="false" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${videoId}" allowfullscreen loading="lazy"></iframe></div><br>`;
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, embedHtml);
+};
+
 window.chenLinkVaoEditor = function(targetId) {
     const url = prompt("Dán đường link (URL) trang web vào đây:");
-    if (url) {
-        const tenLink = prompt("Nhập chữ hiển thị (Ví dụ: Bấm vào đây):", "Bấm vào đây");
-        if (tenLink) {
-            document.getElementById(targetId).focus();
-            document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">${tenLink}</a>`);
-        }
-    }
+    if (url) { const tenLink = prompt("Nhập chữ hiển thị:", "Bấm vào đây"); if (tenLink) { document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">${tenLink}</a>`); } }
 };
 
 window.chenAnhVaoEditor = function(targetId) {
@@ -333,10 +319,8 @@ window.chenAnhVaoEditor = function(targetId) {
                 try { 
                     const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'upload_image', data: { filename: file.name, mimeType: 'image/jpeg', base64: base64Data } }) }); 
                     const result = await response.json(); 
-                    if(result.url) { 
-                        document.getElementById(targetId).focus(); 
-                        document.execCommand('insertHTML', false, `<div style="text-align: center;"><img src="${result.url}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div><br>`); 
-                    } else { alert("Lỗi! Không lấy được link ảnh từ Server."); } 
+                    if(result.url) { document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, `<div style="text-align: center;"><img src="${result.url}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div><br>`); } 
+                    else { alert("Lỗi! Không lấy được link ảnh từ Server."); } 
                 } catch(err) { alert("Lỗi mạng khi tải ảnh lên!"); } 
                 document.getElementById('loader').style.display = 'none'; 
             }; img.src = event.target.result; 
@@ -369,13 +353,9 @@ window.renderFormCauHoi = function(id) {
     const groups = [...new Set(Data[curSub].map(x => x.group))].filter(g => g); 
     const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`; 
     
-    let isTV = (curSub === 'vietnamese' || curSub === 'tv'); 
-    let baiDocHtml = ""; 
-    
+    let isTV = (curSub === 'vietnamese' || curSub === 'tv'); let baiDocHtml = ""; 
     let cauHoiHtml = window.parseImg(q.question || "");
-    if (q.image) {
-        cauHoiHtml += `<br><div style="text-align: center;"><img src="${q.image}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div>`;
-    }
+    if (q.image) { cauHoiHtml += `<br><div style="text-align: center;"><img src="${q.image}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div>`; }
 
     if (isTV && cauHoiHtml) { 
         let match = cauHoiHtml.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s); 
@@ -393,21 +373,13 @@ window.renderFormCauHoi = function(id) {
         <div class="bg-white p-5 rounded-3xl shadow border space-y-4 fade-in">
             ${dl} 
             <div class="grid grid-cols-3 gap-3 mb-4">
-                <div class="col-span-2">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Tên Bài Tập</label>
-                    <input type="text" id="frmG" list="groupList" value="${q.group}" oninput="window.autoFillTime()" onchange="window.autoFillTime()" class="edit-input w-full mt-1" placeholder="Ví dụ: Tuần 1">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-slate-500 uppercase">Phút</label>
-                    <input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center">
-                </div>
+                <div class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase">Tên Bài Tập</label><input type="text" id="frmG" list="groupList" value="${q.group}" oninput="window.autoFillTime()" onchange="window.autoFillTime()" class="edit-input w-full mt-1" placeholder="Ví dụ: Tuần 1"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div>
             </div>
             ${formLayout} 
             <div class="grid grid-cols-2 gap-3 mt-4">
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
             </div>
             <div class="mt-4"><label class="text-xs font-bold text-slate-500 uppercase">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200"><option value="a" ${q.correct=='a'?'selected':''}>Đáp án A</option><option value="b" ${q.correct=='b'?'selected':''}>Đáp án B</option><option value="c" ${q.correct=='c'?'selected':''}>Đáp án C</option><option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option></select></div>
             <button onclick="window.luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-6 text-lg hover:bg-indigo-700 transition"><i class="fas fa-save mr-2"></i> LƯU CÂU HỎI LÊN HỆ THỐNG</button>
@@ -416,16 +388,9 @@ window.renderFormCauHoi = function(id) {
 };
 
 window.luuCauHoi = async function(id) { 
-    document.querySelectorAll('#frmQ img, #frmBaiDoc img').forEach(img => img.style.border = 'none'); 
-    window.currentSelectedImg = null;
-
-    let finalQuestionText = document.getElementById("frmQ").innerHTML; 
-    let isTV = (curSub === 'vietnamese' || curSub === 'tv');
-    
-    if (isTV) { 
-        let baiDocText = document.getElementById("frmBaiDoc").innerHTML.trim(); 
-        if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } 
-    }
+    document.querySelectorAll('#frmQ img, #frmBaiDoc img').forEach(img => img.style.border = 'none'); window.currentSelectedImg = null;
+    let finalQuestionText = document.getElementById("frmQ").innerHTML; let isTV = (curSub === 'vietnamese' || curSub === 'tv');
+    if (isTV) { let baiDocText = document.getElementById("frmBaiDoc").innerHTML.trim(); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
 
     if (finalQuestionText.includes('data:image')) {
         alert("⚠️ HỆ THỐNG CẢNH BÁO!\n\nThầy đang dùng lệnh Copy/Dán (Ctrl+V) để chèn ảnh trực tiếp vào khung. Điều này làm quá tải và gây lỗi sập máy chủ!\n\nVui lòng XÓA bức ảnh vừa dán, sau đó bấm vào nút [Ảnh] trên thanh công cụ để tải ảnh lên một cách an toàn.");
@@ -435,39 +400,26 @@ window.luuCauHoi = async function(id) {
     const data = { 
         id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, 
         question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, 
-        c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, 
-        image: "" 
+        c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" 
     }; 
     
     if(!data.group || !finalQuestionText.trim()) return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); 
-    
     document.getElementById('loader').style.display = 'flex'; 
     try {
         await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); 
-        window.isQuizDataLoaded = false; 
-        alert("Lưu thành công!"); 
-        document.getElementById('loader').style.display = 'none'; 
-        window.quanLyNganHang(curSub, true); 
-    } catch(e) {
-        document.getElementById('loader').style.display = 'none'; 
-        alert("Lỗi mạng! Không thể lưu câu hỏi.");
-    }
+        window.isQuizDataLoaded = false; alert("Lưu thành công!"); document.getElementById('loader').style.display = 'none'; window.quanLyNganHang(curSub, true); 
+    } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng! Không thể lưu câu hỏi."); }
 };
 
 window.xoaCauHoi = async function(id) { 
     if(confirm("Thầy có chắc chắn muốn xóa câu hỏi này không?")) { 
-        document.getElementById('loader').style.display = 'flex'; 
-        await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); 
-        window.isQuizDataLoaded = false; 
-        alert("Đã xóa!"); 
-        document.getElementById('loader').style.display = 'none'; 
-        window.quanLyNganHang(curSub, true); 
+        document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); 
+        window.isQuizDataLoaded = false; alert("Đã xóa!"); document.getElementById('loader').style.display = 'none'; window.quanLyNganHang(curSub, true); 
     } 
 };
 
-
 // ==========================================
-// 3. TIẾN TRÌNH LÀM BÀI TẬP HỌC SINH
+// 4. TIẾN TRÌNH LÀM BÀI TẬP HỌC SINH
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); curSub = sub; 
@@ -514,19 +466,16 @@ window.promptRedo = function(group, time) {
 };
 
 window.startQuiz = function(group, timeMins) { 
-    curGrp = group; let rawQuiz = Data[curSub].filter(q => q.group === group);
-    quiz = []; readingPassage = "";
+    curGrp = group; let rawQuiz = Data[curSub].filter(q => q.group === group); quiz = []; readingPassage = "";
     rawQuiz.forEach(q => {
         let qText = q.question || "";
         if (q.image) { qText += `<br><div style="text-align: center;"><img src="${q.image}" class="max-w-full rounded-md mt-2"></div>`; } 
-        
         let match = qText.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s);
         if (match) { readingPassage = match[1]; qText = qText.replace(match[0], '').trim(); } 
         else if (qText.includes('[ĐOẠN VĂN]')) { readingPassage = qText.replace('[ĐOẠN VĂN]', '').trim(); qText = ""; }
         if (qText !== "" || q.a || q.b) quiz.push({ ...q, question: qText }); 
     });
-    quiz = quiz.sort(() => Math.random() - 0.5).slice(0, 10);
-    currentQIndex = 0; score = 0; wrongAnswersLog = []; 
+    quiz = quiz.sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; wrongAnswersLog = []; 
     if (curSub === 'vietnamese' || curSub === 'tv') {
         if (!readingPassage) readingPassage = "Hãy đọc kỹ các câu hỏi bên phải và chọn đáp án đúng nhất nhé!";
         document.getElementById('content').innerHTML = `<div class="sticky top-20 bg-[#f0f7ff] z-30 py-3 flex justify-between items-center mb-4"><div class="flex items-center gap-3"><button onclick="window.loadSubject(curSub)" class="bg-white w-10 h-10 rounded-full shadow-sm text-slate-500 font-bold border"><i class="fas fa-times"></i></button><span class="font-black text-green-700 truncate max-w-[150px]">${curGrp}</span></div><div class="bg-white px-4 py-2 rounded-full font-black text-green-600 shadow-sm border border-green-100 flex items-center gap-2"><i class="fas fa-stopwatch text-orange-500 animate-pulse"></i><span id="quizTimer">00:00</span></div></div><div class="flex flex-col lg:flex-row gap-6"><div class="lg:w-1/2 bg-[#fffbeb] p-6 sm:p-8 rounded-[2rem] border-2 border-yellow-200 shadow-inner lg:h-[75vh] overflow-y-auto relative custom-scrollbar"><div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-4 py-1 rounded-bl-xl opacity-80">BÀI ĐỌC</div><h3 class="font-black text-yellow-800 text-xl mb-4 flex items-center gap-2 border-b-2 border-yellow-200 pb-3"><i class="fas fa-book-reader text-2xl"></i> NỘI DUNG ĐỌC HIỂU</h3><div class="text-slate-800 leading-[1.8] text-base sm:text-lg whitespace-pre-wrap font-medium pb-10 [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${window.parseImg(readingPassage)}</div></div><div class="lg:w-1/2" id="quizBox"></div></div>`;
@@ -564,7 +513,7 @@ window.finishQuiz = async function() {
 };
 
 // ==========================================
-// 4. VÒNG QUAY MAY MẮN
+// 5. VÒNG QUAY MAY MẮN
 // ==========================================
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); closeMenu(); 
@@ -581,7 +530,7 @@ window.moVongQuay = async function() {
             <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
             <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</span></p></div>
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -30deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
-            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-slate-400 to-slate-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition hover:scale-[1.02] cursor-pointer"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
         </div>
     `;
 
@@ -666,57 +615,27 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 5. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (LỌC DỮ LIỆU CŨ)
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (LỌC DỮ LIỆU CŨ/ẢO)
 // ==========================================
 window.moTienDo = async function() { 
     closeMenu(); 
     document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu toàn lớp...</h2>`; 
-    
     try { 
-        Data.math = await (await fetch(API_URL+"?type=math")).json(); 
-        Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json(); 
-        Data.vietnamese = Data.tv; 
-        Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); 
+        Data.math = await (await fetch(API_URL+"?type=math")).json(); Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json(); Data.vietnamese = Data.tv; Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); 
     } catch(e){} 
     
     const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); 
     const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); 
     const total = mathGroups.length + tvGroups.length; 
     
-    let html = `
-        <div class="flex items-center mb-6">
-            <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ CHUNG (${total} BÀI)</h2>
-        </div>
-        <p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-hand-pointer mr-1"></i> Bấm vào tên học sinh để xem chi tiết điểm số & lỗi sai</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">
-    `; 
+    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ CHUNG (${total} BÀI)</h2></div><p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-hand-pointer mr-1"></i> Bấm vào tên học sinh để xem chi tiết điểm số & lỗi sai</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">`; 
     
     html += Data.hs.map(h => { 
         const userL = Data.log.filter(l => String(l.id) === String(h.id)); 
-        
-        // BỘ LỌC THÔNG MINH: Chỉ tính % cho những bài tập HIỆN ĐANG TỒN TẠI trong kho
-        const validLogs = userL.filter(l => {
-            if (l.subject === 'math') return mathGroups.includes(l.group);
-            if (l.subject === 'vietnamese' || l.subject === 'tv') return tvGroups.includes(l.group);
-            return false;
-        });
-
+        const validLogs = userL.filter(l => { if (l.subject === 'math') return mathGroups.includes(l.group); if (l.subject === 'vietnamese' || l.subject === 'tv') return tvGroups.includes(l.group); return false; });
         const done = new Set(validLogs.map(l => (l.subject === 'tv' ? 'vietnamese' : l.subject) + '_' + l.group)).size; 
         const pct = total ? Math.round((done/total)*100) : 0; 
-        
-        return `
-            <div onclick="window.xemChiTietTienDo('${h.id}', '${h.name}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 hover:shadow-md transition">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div>
-                    <span class="font-bold text-slate-700">${h.name}</span>
-                </div>
-                <div class="w-1/3 text-right">
-                    <div class="text-[11px] font-black mb-1 text-slate-500">${done}/${total} BÀI (${pct}%)</div>
-                    <div class="progress-bar h-1.5"><div class="progress-fill ${pct==100?'bg-green-500':'bg-purple-500'}" style="width:${pct}%"></div></div>
-                </div>
-            </div>
-        `; 
+        return `<div onclick="window.xemChiTietTienDo('${h.id}', '${h.name}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 hover:shadow-md transition"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div><span class="font-bold text-slate-700">${h.name}</span></div><div class="w-1/3 text-right"><div class="text-[11px] font-black mb-1 text-slate-500">${done}/${total} BÀI (${pct}%)</div><div class="progress-bar h-1.5"><div class="progress-fill ${pct==100?'bg-green-500':'bg-purple-500'}" style="width:${pct}%"></div></div></div></div>`; 
     }).join(''); 
     
     document.getElementById('content').innerHTML = html + "</div>"; 
@@ -724,13 +643,7 @@ window.moTienDo = async function() {
 
 window.xemChiTietTienDo = function(studentId, studentName) { 
     const userLogs = Data.log.filter(l => String(l.id) === String(studentId)); 
-    
-    const sortFunc = (a, b) => {
-        let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/);
-        let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0;
-        if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a));
-    };
-
+    const sortFunc = (a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); };
     const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g).sort(sortFunc); 
     const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g).sort(sortFunc); 
     
@@ -739,87 +652,31 @@ window.xemChiTietTienDo = function(studentId, studentName) {
         return groupsList.map(grp => { 
             let groupLogs = userLogs.filter(l => (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === grp); 
             if(groupLogs.length > 0) { 
-                // Lấy kết quả mới nhất nếu học sinh làm nhiều lần
-                groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-                const log = groupLogs[0]; 
-
+                groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
                 const btnChiTiet = log.details ? `<button onclick="window.xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Xem lỗi sai</button>` : `<span class="text-[10px] text-green-500 font-bold px-2 py-1"><i class="fas fa-check-circle"></i> Tuyệt đối</span>`; 
-                return `
-                    <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-check-circle text-green-500 text-lg"></i>
-                            <span class="font-bold text-slate-700 text-sm">${grp}</span>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="font-black text-indigo-600 text-lg">${log.score}đ</span>
-                            ${btnChiTiet}
-                        </div>
-                    </div>
-                `; 
+                return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500 text-lg"></i><span class="font-bold text-slate-700 text-sm">${grp}</span></div><div class="flex items-center gap-3"><span class="font-black text-indigo-600 text-lg">${log.score}đ</span>${btnChiTiet}</div></div>`; 
             } else { 
-                return `
-                    <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2">
-                        <div class="flex items-center gap-2">
-                            <i class="far fa-circle text-slate-300 text-lg"></i>
-                            <span class="font-bold text-slate-500 text-sm line-through">${grp}</span>
-                        </div>
-                        <span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span>
-                    </div>
-                `; 
+                return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; 
             } 
         }).join(''); 
     }; 
     
     document.getElementById('content').innerHTML = `
-        <div class="flex items-center mb-6">
-            <button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10">
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100">
-                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div>
-                    <h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3>
-                </div>
-                <div>${renderSubjectProgress('math', mathGroups)}</div>
-            </div>
-            <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                <div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100">
-                    <div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div>
-                    <h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3>
-                </div>
-                <div>${renderSubjectProgress('vietnamese', tvGroups)}</div>
-            </div>
-        </div>
-        <div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in">
-            <div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]">
-                <div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md">
-                    <div>
-                        <h3 class="font-black text-lg uppercase" id="rvTitle">--</h3>
-                        <p class="text-xs text-red-100 font-bold" id="rvName">--</p>
-                    </div>
-                    <button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button>
-                </div>
-                <div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div>
-            </div>
-        </div>
+        <div class="flex items-center mb-6"><button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div>
+        <div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>
     `; 
 };
 
 window.xemLoiSai = function(studentId, subjectCode, group) { 
-    const student = Data.hs.find(s => String(s.id) === String(studentId)); 
-    const studentName = student ? student.name : "Học sinh"; 
+    const student = Data.hs.find(s => String(s.id) === String(studentId)); const studentName = student ? student.name : "Học sinh"; 
     let groupLogs = Data.log.filter(l => String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group);
-    groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-    const log = groupLogs[0]; // Chỉ xem lỗi sai của lần làm gần nhất
-    document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; 
-    document.getElementById("rvName").innerText = studentName; 
-    document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; 
-    document.getElementById("modalReview").classList.remove("hidden"); 
+    groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
+    document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); 
 };
 
 // ==========================================
-// 6. THƯ BÍ MẬT & ĐƠN TỪ
+// 7. THƯ BÍ MẬT & ĐƠN XIN PHÉP (HỌC SINH) & QUẢN LÝ (ADMIN)
 // ==========================================
 window.moHopThuBiMat = function() {
     if(!currentUser) return showLogin(); closeMenu();
@@ -838,8 +695,7 @@ window.guiThuBiMat = async function() {
     const content = document.getElementById('mailContent').value.trim(); const isAnon = document.getElementById('mailAnon').checked; if(!content) return alert("Con chưa viết gì cả!");
     document.getElementById('loader').style.display = 'flex';
     try { await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); alert("Đã gửi thư thành công! Cảm ơn con đã chia sẻ, thầy Hiển sẽ đọc sớm thôi."); veTrangChu(); } 
-    catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); }
-    document.getElementById('loader').style.display = 'none';
+    catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } document.getElementById('loader').style.display = 'none';
 };
 
 window.moXinPhep = function() { 
@@ -911,7 +767,7 @@ window.viewProfile = function(id) {
 };
 
 // ==========================================
-// 7. CÔNG CỤ CHUNG (SINH NHẬT)
+// 8. CÔNG CỤ CHUNG & TIỆN ÍCH
 // ==========================================
 window.checkSinhNhat = function() {
     if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return;
@@ -928,4 +784,10 @@ window.showHappyBirthdayUI = function() {
     document.body.appendChild(overlay);
     var duration = 4 * 1000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 105 };
     var interval = setInterval(function() { var timeLeft = animationEnd - Date.now(); if (timeLeft <= 0) { return clearInterval(interval); } var particleCount = 50 * (timeLeft / duration); confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250);
+};
+
+window.dongBoDuLieu = async function() { 
+    if(!confirm("Hành động này sẽ tải lại toàn bộ dữ liệu mới nhất từ Google Sheets. Tiếp tục?")) return; 
+    document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
+    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); window.isQuizDataLoaded = false; alert("Đồng bộ thành công! Giao diện sẽ tự động tải lại dữ liệu mới."); location.reload(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
 };
