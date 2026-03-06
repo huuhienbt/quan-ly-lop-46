@@ -295,9 +295,14 @@ window.getRichTextToolbar = function(targetId) {
             </select>
             
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
+            
+            <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-3 h-8 bg-blue-50 rounded shadow-sm hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200" title="Chèn Link">
+                <i class="fas fa-link"></i> Link
+            </button>
             <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-3 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200" title="Chèn ảnh">
                 <i class="fas fa-image"></i> Ảnh
             </button>
+            
             <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Chỉnh cỡ ảnh">
                 <option value="">Cỡ ảnh...</option><option value="30%">Thu nhỏ 30%</option><option value="60%">Vừa 60%</option><option value="100%">Phóng to 100%</option>
             </select>
@@ -305,6 +310,17 @@ window.getRichTextToolbar = function(targetId) {
     `;
 };
 
+// HÀM XỬ LÝ CHÈN LINK
+window.chenLinkVaoEditor = function(targetId) {
+    const url = prompt("Dán đường link (URL) trang web vào đây:");
+    if (url) {
+        const tenLink = prompt("Nhập chữ hiển thị (Ví dụ: Bấm vào đây):", "Bấm vào đây");
+        if (tenLink) {
+            document.getElementById(targetId).focus();
+            document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">${tenLink}</a>`);
+        }
+    }
+};
 window.chenAnhVaoEditor = function(targetId) {
     const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; 
     input.onchange = async (e) => { 
