@@ -333,14 +333,23 @@ window.chenAmThanh = function(targetId) {
     
     document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
 };
+// HÀM CHÈN FILE PDF (ĐÃ THÊM TÍNH NĂNG CHO PHÉP ĐẶT TÊN)
 window.chenPDF = function(targetId) {
     const url = prompt("Dán link file PDF từ Google Drive vào đây:");
     if (!url) return;
+    
+    // Hỏi thầy tên hiển thị của tài liệu
+    const pdfTitle = prompt("Nhập tên hiển thị cho tài liệu này (Ví dụ: Đọc tài liệu sau):", "TÀI LIỆU PDF");
+    if (!pdfTitle) return;
+
     let pdfSrc = url;
     let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (driveMatch) { pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; }
-    const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 8px 15px; font-size: 12px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0;"><i class="fas fa-file-pdf text-red-500 mr-2"></i>Tài liệu PDF</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
-    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, pdfHtml);
+
+    const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase;"><i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>${pdfTitle}</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
+    
+    document.getElementById(targetId).focus(); 
+    document.execCommand('insertHTML', false, pdfHtml);
 };
 
 window.chenVideoYouTube = function(targetId) {
