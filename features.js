@@ -894,3 +894,26 @@ window.dongBoDuLieu = async function() {
     document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
     try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); window.isQuizDataLoaded = false; alert("Đồng bộ thành công! Giao diện sẽ tự động tải lại dữ liệu mới."); location.reload(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
 };
+
+// ==========================================
+// TỰ ĐỘNG DỪNG NHẠC/VIDEO KHI MỞ BÀI MỚI
+// ==========================================
+document.addEventListener('play', function(e) {
+    // Tìm tất cả các thẻ audio đang có trên trang
+    var audios = document.getElementsByTagName('audio');
+    for (var i = 0; i < audios.length; i++) {
+        // Nếu audio này không phải là cái vừa bấm thì dừng nó lại
+        if (audios[i] != e.target) {
+            audios[i].pause();
+        }
+    }
+    
+    // Tìm tất cả các thẻ video đang có trên trang
+    var videos = document.getElementsByTagName('video');
+    for (var i = 0; i < videos.length; i++) {
+        // Nếu video này không phải là cái vừa bấm thì dừng nó lại
+        if (videos[i] != e.target) {
+            videos[i].pause();
+        }
+    }
+}, true);
