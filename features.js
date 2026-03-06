@@ -311,7 +311,7 @@ window.getRichTextToolbar = function(targetId) {
     `;
 };
 
-// HÀM CHÈN FILE ÂM THANH (ĐÃ FIX GOOGLE DRIVE & CHO ĐẶT TÊN BÀI)
+// HÀM CHÈN FILE ÂM THANH (ĐÃ FIX CANH GIỮA VÀ ĐỀU 2 BÊN)
 window.chenAmThanh = function(targetId) {
     const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:");
     if (!url) return;
@@ -324,16 +324,15 @@ window.chenAmThanh = function(targetId) {
 
     if (driveMatch) {
         let driveId = driveMatch[1];
-        audioHtml = `<div contenteditable="false" style="margin: 15px 0; background: #f8fafc; padding: 12px; border-radius: 12px; border: 2px solid #e2e8f0; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 10px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><iframe src="https://drive.google.com/file/d/${driveId}/preview" width="100%" height="100" allow="autoplay" style="border:none; border-radius: 8px; background: white;"></iframe></div><br>`;
+        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><iframe src="https://drive.google.com/file/d/${driveId}/preview" style="width: 100%; height: 80px; margin: 0 auto; display: block; border:none; border-radius: 8px; background: white;" allow="autoplay"></iframe></div><br>`;
     } else {
         let audioSrc = url;
         if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
-        audioHtml = `<div contenteditable="false" style="margin: 15px 0; text-align: center; background: #f8fafc; padding: 12px; border-radius: 12px; border: 2px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 10px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; max-width: 400px; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt của con không hỗ trợ nghe nhạc.</audio></div><br>`;
+        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; display: block; margin: 0 auto; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt của con không hỗ trợ nghe nhạc.</audio></div><br>`;
     }
     
     document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
 };
-
 window.chenPDF = function(targetId) {
     const url = prompt("Dán link file PDF từ Google Drive vào đây:");
     if (!url) return;
