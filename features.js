@@ -7,12 +7,12 @@
 // Biến toàn cục riêng của Vòng quay
 let isSpinning = false;
 const PRIZES = [
-    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm vào Bảng Vàng.", icon: "🎉" },
+    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
     { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
-    { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm vào Bảng Vàng mất rồi.", icon: "📉" },
+    { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
     { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài tập điểm thấp nhé!", icon: "🎫" },
-    { id: "miss", text: "Mất lượt", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Cố gắng ở lượt quay sau nhé!", icon: "🍀" }
+    { id: "miss", text: "Mất lượt", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Cố gắng ở lượt quay sau nhé!", icon: "😢" }
 ];
 
 // ==========================================
