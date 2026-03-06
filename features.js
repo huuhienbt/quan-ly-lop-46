@@ -352,13 +352,45 @@ window.chenPDF = function(targetId) {
     document.getElementById(targetId).focus(); 
     document.execCommand('insertHTML', false, pdfHtml);
 };
+// HÀM CHÈN VIDEO (HỖ TRỢ CẢ YOUTUBE, GOOGLE DRIVE VÀ GITHUB/MP4)
 window.chenVideoYouTube = function(targetId) {
-    const url = prompt("Dán đường link Video YouTube vào đây:");
+    const url = prompt("Dán link Video (từ YouTube, Google Drive, hoặc GitHub) vào đây:");
     if (!url) return;
-    let videoId = ""; const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/; const match = url.match(regExp);
-    if (match && match[2].length === 11) { videoId = match[2]; } else { alert("Link YouTube không hợp lệ!"); return; }
-    const embedHtml = `<div contenteditable="false" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${videoId}" allowfullscreen loading="lazy"></iframe></div><br>`;
-    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, embedHtml);
+    
+    let videoHtml = "";
+
+    // 1. Nhận diện link YouTube
+    const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const ytMatch = url.match(ytRegExp);
+    
+    // 2. Nhận diện link Google Drive
+    const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+
+    if (ytMatch && ytMatch[2].length === 11) {
+        // Xử lý giao diện cho YouTube
+        let videoId = ytMatch[2];
+        videoHtml = `<div contenteditable="false" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${videoId}" allowfullscreen loading="lazy"></iframe></div><br>`;
+    } 
+    else if (driveMatch) {
+        // Xử lý giao diện cho Google Drive
+        let driveId = driveMatch[1];
+        videoHtml = `<div contenteditable="false" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`;
+    } 
+    else if (url.includes(".mp4") || url.includes("github.com")) {
+        // Xử lý giao diện cho file MP4 trực tiếp (GitHub)
+        let videoSrc = url;
+        if (url.includes("github.com") && url.includes("/blob/")) { 
+            videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); 
+        }
+        videoHtml = `<div contenteditable="false" style="margin: 15px 0; text-align: center; background: #f8fafc; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><video controls style="width: 100%; max-width: 100%; border-radius: 8px; outline: none;"><source src="${videoSrc}" type="video/mp4">Trình duyệt của con không hỗ trợ phát video này.</video></div><br>`;
+    } 
+    else {
+        alert("Link Video không hợp lệ! Vui lòng copy đúng link từ YouTube, Google Drive hoặc file đuôi .mp4");
+        return;
+    }
+    
+    document.getElementById(targetId).focus(); 
+    document.execCommand('insertHTML', false, videoHtml);
 };
 
 window.chenLinkVaoEditor = function(targetId) {
