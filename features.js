@@ -352,37 +352,39 @@ window.chenPDF = function(targetId) {
     document.getElementById(targetId).focus(); 
     document.execCommand('insertHTML', false, pdfHtml);
 };
-// HÀM CHÈN VIDEO (HỖ TRỢ CẢ YOUTUBE, GOOGLE DRIVE VÀ GITHUB/MP4)
+// HÀM CHÈN VIDEO (CÓ THÊM BƯỚC HỎI KÍCH THƯỚC)
 window.chenVideoYouTube = function(targetId) {
     const url = prompt("Dán link Video (từ YouTube, Google Drive, hoặc GitHub) vào đây:");
     if (!url) return;
     
+    // Thêm câu hỏi để thầy tùy chỉnh kích thước video
+    const sizeInput = prompt("Thầy muốn video chiếm bao nhiêu phần chiều ngang?\n(Nhập số: 100, 80, 60 hoặc 40)", "100");
+    const videoWidth = sizeInput ? sizeInput + "%" : "100%";
+    
     let videoHtml = "";
 
-    // 1. Nhận diện link YouTube
+    // Nhận diện link
     const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const ytMatch = url.match(ytRegExp);
-    
-    // 2. Nhận diện link Google Drive
     const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
 
+    // Bố cục chung để canh giữa và thu nhỏ theo ý thầy
+    const wrapperStyle = `margin: 15px auto; width: ${videoWidth}; max-width: 800px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 12px; overflow: hidden;`;
+
     if (ytMatch && ytMatch[2].length === 11) {
-        // Xử lý giao diện cho YouTube
         let videoId = ytMatch[2];
-        videoHtml = `<div contenteditable="false" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${videoId}" allowfullscreen loading="lazy"></iframe></div><br>`;
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${videoId}" allowfullscreen loading="lazy"></iframe></div><br>`;
     } 
     else if (driveMatch) {
-        // Xử lý giao diện cho Google Drive
         let driveId = driveMatch[1];
-        videoHtml = `<div contenteditable="false" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 15px 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`;
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`;
     } 
     else if (url.includes(".mp4") || url.includes("github.com")) {
-        // Xử lý giao diện cho file MP4 trực tiếp (GitHub)
         let videoSrc = url;
         if (url.includes("github.com") && url.includes("/blob/")) { 
             videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); 
         }
-        videoHtml = `<div contenteditable="false" style="margin: 15px 0; text-align: center; background: #f8fafc; padding: 10px; border-radius: 12px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><video controls style="width: 100%; max-width: 100%; border-radius: 8px; outline: none;"><source src="${videoSrc}" type="video/mp4">Trình duyệt của con không hỗ trợ phát video này.</video></div><br>`;
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} padding: 10px; background: #f8fafc; border: 2px solid #e2e8f0; text-align: center;"><video controls style="width: 100%; border-radius: 8px; outline: none;"><source src="${videoSrc}" type="video/mp4">Trình duyệt không hỗ trợ.</video></div><br>`;
     } 
     else {
         alert("Link Video không hợp lệ! Vui lòng copy đúng link từ YouTube, Google Drive hoặc file đuôi .mp4");
