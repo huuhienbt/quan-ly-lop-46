@@ -333,12 +333,11 @@ window.chenAmThanh = function(targetId) {
     
     document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
 };
-// HÀM CHÈN FILE PDF (ĐÃ THÊM TÍNH NĂNG CHO PHÉP ĐẶT TÊN)
+// HÀM CHÈN FILE PDF (ĐÃ TỐI ƯU TỶ LỆ CHUẨN A4 ĐỂ XÓA VIỀN ĐEN)
 window.chenPDF = function(targetId) {
     const url = prompt("Dán link file PDF từ Google Drive vào đây:");
     if (!url) return;
     
-    // Hỏi thầy tên hiển thị của tài liệu
     const pdfTitle = prompt("Nhập tên hiển thị cho tài liệu này (Ví dụ: Đọc tài liệu sau):", "TÀI LIỆU PDF");
     if (!pdfTitle) return;
 
@@ -346,12 +345,12 @@ window.chenPDF = function(targetId) {
     let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (driveMatch) { pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; }
 
-    const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase;"><i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>${pdfTitle}</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
+    // Đã thay đổi height thành aspect-ratio: 1 / 1.414 để khung tự động co giãn theo chuẩn tờ giấy A4
+    const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase;"><i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>${pdfTitle}</div><iframe src="${pdfSrc}" style="width: 100%; aspect-ratio: 1 / 1.414; min-height: 500px; border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
     
     document.getElementById(targetId).focus(); 
     document.execCommand('insertHTML', false, pdfHtml);
 };
-
 window.chenVideoYouTube = function(targetId) {
     const url = prompt("Dán đường link Video YouTube vào đây:");
     if (!url) return;
