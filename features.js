@@ -1,9 +1,8 @@
 // ==========================================
-// FILE: FEATURES.JS (TRÁI TIM HỆ THỐNG - BẢN FULL HOÀN CHỈNH)
-// Tích hợp: Đa phương tiện, Lọc Rác, Chuông Thông Báo Admin, Vòng Quay Gacha, Thưởng Tốc Độ
+// FILE: FEATURES.JS (BẢN FULL HOÀN CHỈNH - CHỐNG ĐƠ WEB)
+// Tích hợp: Đa phương tiện, Gacha 7 Ô, Thưởng Tốc Độ, Chuông Admin, Lịch sử chạy
 // ==========================================
 
-// Biến toàn cục riêng của Vòng quay (7 Ô)
 let isSpinning = false;
 const PRIZES = [
     { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
@@ -15,27 +14,29 @@ const PRIZES = [
     { id: "chest", text: "Kho Báu", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Wow! Con đã mở được Rương Kho Báu!", icon: "💎" }
 ];
 
+// Hàm hỗ trợ an toàn cho pháo hoa (tránh đơ web nếu lỗi thư viện)
+window.safeConfetti = function() {
+    try {
+        var dur = 3000; var end = Date.now() + dur; 
+        var int = setInterval(function() { 
+            if (end - Date.now() <= 0) return clearInterval(int); 
+            if (typeof confetti === 'function') {
+                confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); 
+            }
+        }, 250);
+    } catch(e) { console.log("Không tải được pháo hoa"); }
+};
+
 // ==========================================
-// 1. GÓC HỌC TẬP & BẢNG VÀNG CHUẨN THỜI GIAN
+// 1. GÓC HỌC TẬP & BẢNG VÀNG
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
-    
     if (currentUser && currentUser.role === 'student' && !window.isQuizDataLoaded) {
-        document.getElementById('content').innerHTML = `
-            <div class="text-center mt-10">
-                <i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i>
-                <p class="mt-2 font-bold text-gray-500">Đang kiểm tra bài tập...</p>
-            </div>
-        `;
+        document.getElementById('content').innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang kiểm tra bài tập...</p></div>`;
         try {
-            const [mRes, tRes, lRes] = await Promise.all([
-                fetch(API_URL + "?type=math&t=" + Date.now()),
-                fetch(API_URL + "?type=vietnamese&t=" + Date.now()),
-                fetch(API_URL + "?type=history_all&t=" + Date.now())
-            ]);
-            Data.math = await mRes.json(); Data.tv = await tRes.json(); Data.vietnamese = Data.tv; Data.log = await lRes.json();
-            window.isQuizDataLoaded = true;
+            const [mRes, tRes, lRes] = await Promise.all([ fetch(API_URL + "?type=math&t=" + Date.now()), fetch(API_URL + "?type=vietnamese&t=" + Date.now()), fetch(API_URL + "?type=history_all&t=" + Date.now()) ]);
+            Data.math = await mRes.json(); Data.tv = await tRes.json(); Data.vietnamese = Data.tv; Data.log = await lRes.json(); window.isQuizDataLoaded = true;
         } catch(e) { console.log(e); }
     }
 
@@ -54,43 +55,21 @@ window.moGocHocTap = async function() {
     let htmlTop = `
         ${getNavHtml('hoctap')}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-3 relative">
-            <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-36 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
-                ${mathBadge}
-                <i class="fas fa-calculator text-4xl mb-2 block opacity-90"></i>TOÁN
-            </button>
-            <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-36 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
-                ${tvBadge}
-                <i class="fas fa-book-open text-4xl mb-2 block opacity-90"></i>TIẾNG VIỆT
-            </button>
+            <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-36 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${mathBadge}<i class="fas fa-calculator text-4xl mb-2 block opacity-90"></i>TOÁN</button>
+            <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-36 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${tvBadge}<i class="fas fa-book-open text-4xl mb-2 block opacity-90"></i>TIẾNG VIỆT</button>
         </div>
     `; 
     
-    function parseLogTime(timeStr) {
-        if(!timeStr) return 0; let d = new Date(timeStr); return !isNaN(d.getTime()) ? d.getTime() : 0; 
-    }
-
+    function parseLogTime(timeStr) { if(!timeStr) return 0; let d = new Date(timeStr); return !isNaN(d.getTime()) ? d.getTime() : 0; }
     let studentsWithTime = Data.hs.map(s => {
-        let scoreVal = Number(s.score) || 0;
-        let userLogs = Data.log.filter(l => String(l.id) === String(s.id) && Number(l.score) !== 0);
-        let achievedTime = 0;
-        if (userLogs.length > 0) {
-            userLogs.sort((a, b) => parseLogTime(a.time) - parseLogTime(b.time));
-            let lastLog = userLogs[userLogs.length - 1];
-            achievedTime = parseLogTime(lastLog.time);
-        }
+        let scoreVal = Number(s.score) || 0; let userLogs = Data.log.filter(l => String(l.id) === String(s.id) && Number(l.score) !== 0); let achievedTime = 0;
+        if (userLogs.length > 0) { userLogs.sort((a, b) => parseLogTime(a.time) - parseLogTime(b.time)); achievedTime = parseLogTime(userLogs[userLogs.length - 1].time); }
         return { ...s, score: scoreVal, achievedTime: achievedTime };
     });
 
     let eligibleStudents = studentsWithTime.filter(s => s.score > 1500); 
-    let sortedStudents = eligibleStudents.sort((a, b) => {
-        let scoreDiff = b.score - a.score; if (scoreDiff !== 0) return scoreDiff;
-        let timeA = a.achievedTime === 0 ? Infinity : a.achievedTime;
-        let timeB = b.achievedTime === 0 ? Infinity : b.achievedTime;
-        return timeA - timeB; 
-    });
-
-    let top15 = sortedStudents.slice(0, 15); 
-    let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
+    let sortedStudents = eligibleStudents.sort((a, b) => { let scoreDiff = b.score - a.score; if (scoreDiff !== 0) return scoreDiff; let timeA = a.achievedTime === 0 ? Infinity : a.achievedTime; let timeB = b.achievedTime === 0 ? Infinity : b.achievedTime; return timeA - timeB; });
+    let top15 = sortedStudents.slice(0, 15); let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
 
     let leaderboardHtml = ""; 
     if (top15.length > 0) { 
@@ -98,17 +77,10 @@ window.moGocHocTap = async function() {
             let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
             let rowBg = "bg-slate-50 border-slate-100"; let nameColor = "text-slate-700"; 
-            
             if (actualDisplayRank === 1) { rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; rowBg = "bg-yellow-50 border-yellow-200 scale-[1.02] shadow-sm z-10"; nameColor = "text-yellow-700"; } 
             else if (actualDisplayRank === 2) { rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; rowBg = "bg-gray-50 border-gray-200"; } 
             else if (actualDisplayRank === 3) { rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; rowBg = "bg-orange-50 border-orange-100"; } 
-            
-            return `
-                <div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
-                    <div class="flex items-center gap-3"><div class="w-10 text-center flex justify-center">${rankIcon}</div><div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div></div>
-                    <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div>
-                </div>
-            `; 
+            return `<div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative"><div class="flex items-center gap-3"><div class="w-10 text-center flex justify-center">${rankIcon}</div><div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div></div><div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div></div>`; 
         }).join(''); 
         
         let personalMsg = ""; 
@@ -119,34 +91,22 @@ window.moGocHocTap = async function() {
                 else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`; } 
             } else { personalMsg = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Vạch xuất phát là 1500 điểm.<br>Hãy làm bài tập để vượt mốc này và ghi danh nhé!</p></div>`; } 
         } 
-        leaderboardHtml = `
-            <div class="mt-10 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in">
-                <div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div>
-                <div class="flex flex-col">${listHtml}</div>${personalMsg}
-            </div>
-        `; 
+        leaderboardHtml = `<div class="mt-10 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col">${listHtml}</div>${personalMsg}</div>`; 
     } else { 
         let personalMsgEmpty = ""; 
         if (currentUser && currentUser.role === 'student') { personalMsgEmpty = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Hãy làm bài tập để trở thành người đầu tiên vượt mốc 1500 điểm nhé!</p></div>`; } 
-        leaderboardHtml = `
-            <div class="mt-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80">
-                <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i><p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p><p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>${personalMsgEmpty}
-            </div>
-        `; 
+        leaderboardHtml = `<div class="mt-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80"><i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i><p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p><p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>${personalMsgEmpty}</div>`; 
     } 
     document.getElementById('content').innerHTML = htmlTop + leaderboardHtml; 
 };
 
-
 // ==========================================
-// 2. KHO QUẢN LÝ BÀI TẬP ADMIN (ACCORDION & CHỐNG MẤT ẢNH)
+// 2. KHO QUẢN LÝ BÀI TẬP ADMIN
 // ==========================================
 window.quanLyNganHang = async function(sub, forceReload = false) { 
     closeMenu(); curSub = sub; 
     if (!forceReload && Data[sub] && Data[sub].length > 0) { window.renderGiaoDienKho(sub); return; } 
-    document.getElementById('content').innerHTML = `
-        <div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>
-    `; 
+    document.getElementById('content').innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>`; 
     try { 
         const qs = await (await fetch(API_URL+"?type="+sub+"&t="+Date.now())).json(); 
         Data[sub] = qs; if(sub === 'vietnamese') Data.tv = qs; if(sub === 'tv') Data.vietnamese = qs; 
@@ -157,12 +117,8 @@ window.quanLyNganHang = async function(sub, forceReload = false) {
 window.renderGiaoDienKho = function(sub) { 
     const qs = Data[sub]; const groups = [...new Set(qs.map(q => q.group))].filter(g => g).sort(); 
     let filterOptions = `<option value="all">-- Tất cả các Tuần --</option>` + groups.map(g => `<option value="${String(g).replace(/"/g, '&quot;')}">${g}</option>`).join(''); 
-    
     document.getElementById('content').innerHTML = `
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">KHO ${sub === 'math' ? 'TOÁN' : 'T.VIỆT'}</h2></div>
-            <button onclick="window.renderFormCauHoi(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold btn-3d text-sm"><i class="fas fa-plus mr-1"></i> Tạo câu mới</button>
-        </div>
+        <div class="flex items-center justify-between mb-4"><div class="flex items-center"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">KHO ${sub === 'math' ? 'TOÁN' : 'T.VIỆT'}</h2></div><button onclick="window.renderFormCauHoi(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold btn-3d text-sm"><i class="fas fa-plus mr-1"></i> Tạo câu mới</button></div>
         <select id="qFilter" onchange="window.filterQuestions()" class="w-full p-3 rounded-xl border-2 border-slate-200 mb-6 font-bold text-slate-700 outline-none focus:border-indigo-500">${filterOptions}</select>
         <div id="listQuestions" class="space-y-4"></div>
     `; 
@@ -173,46 +129,17 @@ window.filterQuestions = function() {
     const val = document.getElementById("qFilter").value; 
     let list = val === 'all' ? Data[curSub] : Data[curSub].filter(q => String(q.group) === val); 
     if (list.length === 0) { document.getElementById("listQuestions").innerHTML = '<p class="text-center text-slate-400 py-10">Trống</p>'; return; } 
-    
     let grouped = {}; list.forEach(q => { if (q.group) { if (!grouped[q.group]) grouped[q.group] = []; grouped[q.group].push(q); } }); 
-    
-    let sortedGroups = Object.keys(grouped).sort((a, b) => { 
-        let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/);
-        let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0;
-        if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); 
-    }); 
+    let sortedGroups = Object.keys(grouped).sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); }); 
     
     let html = ""; 
     sortedGroups.forEach((grp, grpIndex) => { 
         let questions = grouped[grp]; let safeGrpId = 'grp_questions_' + grpIndex; 
-        html += `
-            <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 mb-4 fade-in overflow-hidden transition-all">
-                <div onclick="window.toggleGroupQuestions('${safeGrpId}')" class="flex items-center justify-between p-5 cursor-pointer hover:bg-indigo-50 transition select-none">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner"><i class="fas fa-layer-group"></i></div>
-                        <div><h3 class="font-black text-xl text-slate-800 uppercase">${grp}</h3><p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p></div>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i></div>
-                </div>
-                <div id="content_${safeGrpId}" class="hidden px-5 pb-5 pt-2 border-t-2 border-slate-50 bg-slate-50/50 space-y-3">
-        `; 
-        
+        html += `<div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 mb-4 fade-in overflow-hidden transition-all"><div onclick="window.toggleGroupQuestions('${safeGrpId}')" class="flex items-center justify-between p-5 cursor-pointer hover:bg-indigo-50 transition select-none"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner"><i class="fas fa-layer-group"></i></div><div><h3 class="font-black text-xl text-slate-800 uppercase">${grp}</h3><p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p></div></div><div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i></div></div><div id="content_${safeGrpId}" class="hidden px-5 pb-5 pt-2 border-t-2 border-slate-50 bg-slate-50/50 space-y-3">`; 
         questions.forEach((q, index) => { 
-            let qText = window.parseImg(q.question || ""); 
-            if (q.image) qText += `<br><img src="${q.image}" class="max-w-full rounded-md mt-2">`;
+            let qText = window.parseImg(q.question || ""); if (q.image) qText += `<br><img src="${q.image}" class="max-w-full rounded-md mt-2">`;
             if(qText.includes('[BAIDOC]')) qText = "<span class='text-yellow-600 font-bold'>[CHỨA BÀI ĐỌC]</span> " + qText.replace(/\[BAIDOC\].*?\[\/BAIDOC\]/s, '').trim();
-            
-            html += `
-                <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 transition relative shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div class="flex gap-3 w-full pr-16"><span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">${index + 1}</span><div class="font-medium text-slate-700 text-base mt-1 overflow-hidden break-words w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mt-2">${qText}</div></div>
-                        <div class="flex gap-2 absolute top-4 right-4">
-                            <button onclick="window.renderFormCauHoi('${q.id}')" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Sửa"><i class="fas fa-edit"></i></button>
-                            <button onclick="window.xoaCauHoi('${q.id}')" class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm" title="Xóa"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </div>
-                </div>
-            `; 
+            html += `<div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 transition relative shadow-sm"><div class="flex justify-between items-start"><div class="flex gap-3 w-full pr-16"><span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">${index + 1}</span><div class="font-medium text-slate-700 text-base mt-1 overflow-hidden break-words w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mt-2">${qText}</div></div><div class="flex gap-2 absolute top-4 right-4"><button onclick="window.renderFormCauHoi('${q.id}')" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Sửa"><i class="fas fa-edit"></i></button><button onclick="window.xoaCauHoi('${q.id}')" class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm" title="Xóa"><i class="fas fa-trash"></i></button></div></div></div>`; 
         }); 
         html += `</div></div>`; 
     }); 
@@ -226,111 +153,72 @@ window.toggleGroupQuestions = function(groupId) {
 };
 
 // ==========================================
-// 3. BỘ CÔNG CỤ SOẠN THẢO RICH TEXT EDITOR ĐA PHƯƠNG TIỆN
+// 3. EDITOR ĐA PHƯƠNG TIỆN
 // ==========================================
 window.getRichTextToolbar = function(targetId) {
     return `
         <div class="flex flex-wrap gap-2 mb-2 p-2 bg-slate-50 rounded-xl border border-slate-200 items-center shadow-sm">
-            <button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black text-slate-700" title="In đậm">B</button>
-            <button onclick="document.execCommand('italic', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 italic font-serif text-slate-700" title="In nghiêng">I</button>
-            <button onclick="document.execCommand('underline', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 underline font-serif text-slate-700" title="Gạch chân">U</button>
-            <button onclick="document.execCommand('superscript', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-bold text-slate-700 text-sm" title="Chỉ số trên (Ví dụ: cm²)">X²</button>
-            
-            <div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8" title="Màu chữ">
-                <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer">
-            </div>
-            
+            <button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black text-slate-700">B</button>
+            <button onclick="document.execCommand('italic', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 italic font-serif text-slate-700">I</button>
+            <button onclick="document.execCommand('underline', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 underline font-serif text-slate-700">U</button>
+            <button onclick="document.execCommand('superscript', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-bold text-slate-700 text-sm">X²</button>
+            <div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer"></div>
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn trái"><i class="fas fa-align-left"></i></button>
-            <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn giữa"><i class="fas fa-align-center"></i></button>
-            <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600" title="Căn phải"><i class="fas fa-align-right"></i></button>
-            
+            <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-left"></i></button>
+            <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-center"></i></button>
+            <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-right"></i></button>
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            <select onchange="document.execCommand('fontName', false, this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Kiểu chữ">
-                <option value="">Kiểu chữ</option><option value="Arial">Arial</option><option value="'Times New Roman', Times, serif">Times New Roman</option><option value="Tahoma">Tahoma</option>
-            </select>
-            <select onchange="document.execCommand('fontSize', false, this.value)" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Cỡ chữ">
-                <option value="">Cỡ chữ</option><option value="1">Cỡ 1</option><option value="2">Cỡ 2</option><option value="3">Cỡ 3</option><option value="4">Cỡ 4</option><option value="5">Cỡ 5</option><option value="6">Cỡ 6</option><option value="7">Cỡ 7</option>
-            </select>
-            
-            <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded shadow-sm hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200" title="Chèn Link"><i class="fas fa-link"></i> Link</button>
-            <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200" title="Chèn ảnh"><i class="fas fa-image"></i> Ảnh</button>
-            <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded shadow-sm hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200" title="Chèn Video"><i class="fab fa-youtube"></i> Video</button>
-            <button onclick="window.chenAmThanh('${targetId}')" class="px-2 h-8 bg-green-50 rounded shadow-sm hover:bg-green-100 text-green-700 font-bold text-xs flex items-center gap-1 border border-green-200" title="Chèn File Nghe MP3"><i class="fas fa-music"></i> Nghe</button>
-            <button onclick="window.chenPDF('${targetId}')" class="px-2 h-8 bg-orange-50 rounded shadow-sm hover:bg-orange-100 text-orange-700 font-bold text-xs flex items-center gap-1 border border-orange-200" title="Chèn File PDF"><i class="fas fa-file-pdf"></i> PDF</button>
-            
-            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Chỉnh cỡ ảnh">
-                <option value="">Cỡ ảnh...</option><option value="30%">Thu nhỏ 30%</option><option value="60%">Vừa 60%</option><option value="100%">Phóng to 100%</option>
-            </select>
+            <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200"><i class="fas fa-link"></i> Link</button>
+            <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200"><i class="fas fa-image"></i> Ảnh</button>
+            <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200"><i class="fab fa-youtube"></i> Video</button>
+            <button onclick="window.chenAmThanh('${targetId}')" class="px-2 h-8 bg-green-50 rounded hover:bg-green-100 text-green-700 font-bold text-xs flex items-center gap-1 border border-green-200"><i class="fas fa-music"></i> Nghe</button>
+            <button onclick="window.chenPDF('${targetId}')" class="px-2 h-8 bg-orange-50 rounded hover:bg-orange-100 text-orange-700 font-bold text-xs flex items-center gap-1 border border-orange-200"><i class="fas fa-file-pdf"></i> PDF</button>
+            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ ảnh...</option><option value="30%">Thu nhỏ 30%</option><option value="60%">Vừa 60%</option><option value="100%">Phóng to 100%</option></select>
         </div>
     `;
 };
 
 window.chenAmThanh = function(targetId) {
-    const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:");
-    if (!url) return;
-    const audioTitle = prompt("Nhập tiêu đề cho bài nghe (Ví dụ: Nghe đoạn hội thoại sau):", "BÀI NGHE AUDIO");
-    if (!audioTitle) return;
-
-    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    let audioHtml = "";
-
+    const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:"); if (!url) return;
+    const audioTitle = prompt("Nhập tiêu đề cho bài nghe:", "BÀI NGHE AUDIO"); if (!audioTitle) return;
+    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); let audioHtml = "";
     if (driveMatch) {
-        let driveId = driveMatch[1];
-        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><iframe src="https://drive.google.com/file/d/${driveId}/preview" style="width: 100%; height: 80px; margin: 0 auto; display: block; border:none; border-radius: 8px; background: white;" allow="autoplay"></iframe></div><br>`;
+        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" style="width: 100%; height: 80px; margin: 0 auto; display: block; border:none; border-radius: 8px; background: white;" allow="autoplay"></iframe></div><br>`;
     } else {
-        let audioSrc = url;
-        if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
-        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; display: block; margin: 0 auto; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt của con không hỗ trợ nghe nhạc.</audio></div><br>`;
+        let audioSrc = url; if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
+        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; display: block; margin: 0 auto; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt không hỗ trợ nghe nhạc.</audio></div><br>`;
     }
     document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
 };
 
 window.chenPDF = function(targetId) {
-    const url = prompt("Dán link file PDF từ Google Drive vào đây:");
-    if (!url) return;
-    const pdfTitle = prompt("Nhập tên hiển thị cho tài liệu này (Ví dụ: Đọc tài liệu sau):", "TÀI LIỆU PDF");
-    if (!pdfTitle) return;
-
-    let pdfSrc = url;
-    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (driveMatch) { pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; }
+    const url = prompt("Dán link file PDF từ Google Drive vào đây:"); if (!url) return;
+    const pdfTitle = prompt("Nhập tên hiển thị cho tài liệu:", "TÀI LIỆU PDF"); if (!pdfTitle) return;
+    let pdfSrc = url; let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if (driveMatch) { pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; }
     const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase;"><i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>${pdfTitle}</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
     document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, pdfHtml);
 };
 
 window.chenVideoYouTube = function(targetId) {
-    const url = prompt("Dán link Video (từ YouTube, Google Drive, hoặc GitHub) vào đây:");
-    if (!url) return;
-    const sizeInput = prompt("Thầy muốn video chiếm bao nhiêu phần chiều ngang?\n(Nhập số: 100, 80, 60 hoặc 40)", "100");
-    const videoWidth = sizeInput ? sizeInput + "%" : "100%";
-    
-    let videoHtml = "";
-    const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const ytMatch = url.match(ytRegExp);
-    const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    const url = prompt("Dán link Video (YouTube, Google Drive, GitHub) vào đây:"); if (!url) return;
+    const sizeInput = prompt("Chiếm bao nhiêu phần ngang? (Nhập số: 100, 80, 60...)", "100"); const videoWidth = sizeInput ? sizeInput + "%" : "100%";
+    let videoHtml = ""; const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     const wrapperStyle = `margin: 15px auto; width: ${videoWidth}; max-width: 800px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 12px; overflow: hidden;`;
 
     if (ytMatch && ytMatch[2].length === 11) {
-        let videoId = ytMatch[2];
-        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${videoId}" allowfullscreen loading="lazy"></iframe></div><br>`;
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${ytMatch[2]}" allowfullscreen loading="lazy"></iframe></div><br>`;
     } else if (driveMatch) {
-        let driveId = driveMatch[1];
-        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`;
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`;
     } else if (url.includes(".mp4") || url.includes("github.com")) {
-        let videoSrc = url;
-        if (url.includes("github.com") && url.includes("/blob/")) { videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
+        let videoSrc = url; if (url.includes("github.com") && url.includes("/blob/")) { videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
         videoHtml = `<div contenteditable="false" style="${wrapperStyle} padding: 10px; background: #f8fafc; border: 2px solid #e2e8f0; text-align: center;"><video controls style="width: 100%; border-radius: 8px; outline: none;"><source src="${videoSrc}" type="video/mp4">Trình duyệt không hỗ trợ.</video></div><br>`;
-    } else {
-        alert("Link Video không hợp lệ! Vui lòng copy đúng link từ YouTube, Google Drive hoặc file đuôi .mp4"); return;
-    }
+    } else { alert("Link Video không hợp lệ!"); return; }
     document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, videoHtml);
 };
 
 window.chenLinkVaoEditor = function(targetId) {
     const url = prompt("Dán đường link (URL) trang web vào đây:");
-    if (url) { const tenLink = prompt("Nhập chữ hiển thị (Ví dụ: Bấm vào đây):", "Bấm vào đây"); if (tenLink) { document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">${tenLink}</a>`); } }
+    if (url) { const tenLink = prompt("Nhập chữ hiển thị:", "Bấm vào đây"); if (tenLink) { document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">${tenLink}</a>`); } }
 };
 
 window.chenAnhVaoEditor = function(targetId) {
@@ -372,32 +260,19 @@ window.resizeImg = function(size) {
 };
 
 window.parseImg = function(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); };
-
-window.autoFillTime = function() {
-    let selectedGroup = document.getElementById('frmG').value;
-    let existingQ = Data[curSub].find(q => q.group === selectedGroup);
-    if (existingQ && existingQ.time) { document.getElementById('frmT').value = existingQ.time; }
-};
+window.autoFillTime = function() { let selectedGroup = document.getElementById('frmG').value; let existingQ = Data[curSub].find(q => q.group === selectedGroup); if (existingQ && existingQ.time) { document.getElementById('frmT').value = existingQ.time; } };
 
 window.renderFormCauHoi = function(id) { 
     const q = id ? Data[curSub].find(x => x.id === id) : { group: '', time: 20, question: '', a: '', b: '', c: '', d: '', correct: 'a', image: '' }; 
-    const groups = [...new Set(Data[curSub].map(x => x.group))].filter(g => g); 
-    const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`; 
-    
-    let isTV = (curSub === 'vietnamese' || curSub === 'tv'); let baiDocHtml = ""; 
-    let cauHoiHtml = window.parseImg(q.question || "");
+    const groups = [...new Set(Data[curSub].map(x => x.group))].filter(g => g); const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`; 
+    let isTV = (curSub === 'vietnamese' || curSub === 'tv'); let baiDocHtml = ""; let cauHoiHtml = window.parseImg(q.question || "");
     if (q.image) { cauHoiHtml += `<br><div style="text-align: center;"><img src="${q.image}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div>`; }
-
-    if (isTV && cauHoiHtml) { 
-        let match = cauHoiHtml.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s); 
-        if (match) { baiDocHtml = match[1]; cauHoiHtml = cauHoiHtml.replace(match[0], '').trim(); } 
-        else if (cauHoiHtml.includes('[ĐOẠN VĂN]')) { baiDocHtml = cauHoiHtml.replace('[ĐOẠN VĂN]', '').trim(); cauHoiHtml = ""; } 
-    }
+    if (isTV && cauHoiHtml) { let match = cauHoiHtml.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s); if (match) { baiDocHtml = match[1]; cauHoiHtml = cauHoiHtml.replace(match[0], '').trim(); } else if (cauHoiHtml.includes('[ĐOẠN VĂN]')) { baiDocHtml = cauHoiHtml.replace('[ĐOẠN VĂN]', '').trim(); cauHoiHtml = ""; } }
 
     let formLayout = isTV ? 
-        `<div class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl"><label class="text-xs font-black text-yellow-700 uppercase tracking-wider block mb-2"><i class="fas fa-book-reader"></i> Khung Bài Đọc (Chỉ cần nhập ở 1 câu bất kỳ của Tuần)</label>${window.getRichTextToolbar('frmBaiDoc')}<div id="frmBaiDoc" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border border-yellow-300 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${baiDocHtml}</div></div><div class="w-full mb-4"><label class="text-xs font-black text-green-700 uppercase tracking-wider block mb-2"><i class="fas fa-question-circle"></i> Khung Câu Hỏi</label>${window.getRichTextToolbar('frmQ')}<div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border-2 border-green-200 p-4 rounded-xl outline-none focus:border-green-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div></div>` 
+        `<div class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl"><label class="text-xs font-black text-yellow-700 uppercase tracking-wider block mb-2"><i class="fas fa-book-reader"></i> Khung Bài Đọc</label>${window.getRichTextToolbar('frmBaiDoc')}<div id="frmBaiDoc" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border border-yellow-300 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${baiDocHtml}</div></div><div class="w-full mb-4"><label class="text-xs font-black text-green-700 uppercase tracking-wider block mb-2"><i class="fas fa-question-circle"></i> Khung Câu Hỏi</label>${window.getRichTextToolbar('frmQ')}<div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border-2 border-green-200 p-4 rounded-xl outline-none focus:border-green-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div></div>` 
         : 
-        `<div class="w-full mb-4"><label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-calculator"></i> Nội dung câu hỏi (Tuyệt đối KHÔNG Ctrl+V dán ảnh. Hãy dùng nút [Ảnh])</label>${window.getRichTextToolbar('frmQ')}<div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[150px] bg-white border-2 border-indigo-200 p-4 rounded-xl outline-none focus:border-indigo-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div></div>`;
+        `<div class="w-full mb-4"><label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-calculator"></i> Nội dung câu hỏi</label>${window.getRichTextToolbar('frmQ')}<div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[150px] bg-white border-2 border-indigo-200 p-4 rounded-xl outline-none focus:border-indigo-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div></div>`;
     
     document.getElementById('content').innerHTML = `
         <div class="flex items-center mb-6"><button onclick="window.quanLyNganHang('${curSub}')" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">${id ? 'SỬA CÂU HỎI' : 'TẠO CÂU HỎI MỚI'}</h2></div>
@@ -409,10 +284,7 @@ window.renderFormCauHoi = function(id) {
             </div>
             ${formLayout} 
             <div class="grid grid-cols-2 gap-3 mt-4">
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div><div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
             </div>
             <div class="mt-4"><label class="text-xs font-bold text-slate-500 uppercase">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200"><option value="a" ${q.correct=='a'?'selected':''}>Đáp án A</option><option value="b" ${q.correct=='b'?'selected':''}>Đáp án B</option><option value="c" ${q.correct=='c'?'selected':''}>Đáp án C</option><option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option></select></div>
             <button onclick="window.luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-6 text-lg hover:bg-indigo-700 transition"><i class="fas fa-save mr-2"></i> LƯU CÂU HỎI LÊN HỆ THỐNG</button>
@@ -425,34 +297,26 @@ window.luuCauHoi = async function(id) {
     let finalQuestionText = document.getElementById("frmQ").innerHTML; let isTV = (curSub === 'vietnamese' || curSub === 'tv');
     if (isTV) { let baiDocText = document.getElementById("frmBaiDoc").innerHTML.trim(); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
 
-    if (finalQuestionText.includes('data:image')) {
-        alert("⚠️ HỆ THỐNG CẢNH BÁO!\n\nThầy đang dùng lệnh Copy/Dán (Ctrl+V) để chèn ảnh trực tiếp vào khung. Điều này làm quá tải và gây lỗi sập máy chủ!\n\nVui lòng XÓA bức ảnh vừa dán, sau đó bấm vào nút [Ảnh] trên thanh công cụ để tải ảnh lên một cách an toàn.");
-        return;
-    }
-
-    const data = { 
-        id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, 
-        question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, 
-        c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" 
-    }; 
-    
+    if (finalQuestionText.includes('data:image')) { alert("⚠️ CẢNH BÁO! Vui lòng dùng nút [Ảnh] để tải ảnh lên, KHÔNG dùng lệnh Copy/Dán (Ctrl+V) trực tiếp vào khung."); return; }
+    const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" }; 
     if(!data.group || !finalQuestionText.trim()) return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); 
+    
     document.getElementById('loader').style.display = 'flex'; 
     try {
         await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); 
-        window.isQuizDataLoaded = false; alert("Lưu thành công!"); document.getElementById('loader').style.display = 'none'; window.quanLyNganHang(curSub, true); 
-    } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng! Không thể lưu câu hỏi."); }
+        window.isQuizDataLoaded = false; alert("Lưu thành công!"); window.quanLyNganHang(curSub, true); 
+    } catch(e) { alert("Lỗi mạng! Không thể lưu câu hỏi."); } finally { document.getElementById('loader').style.display = 'none'; }
 };
 
 window.xoaCauHoi = async function(id) { 
-    if(confirm("Thầy có chắc chắn muốn xóa câu hỏi này không?")) { 
-        document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); 
-        window.isQuizDataLoaded = false; alert("Đã xóa!"); document.getElementById('loader').style.display = 'none'; window.quanLyNganHang(curSub, true); 
+    if(confirm("Chắc chắn xóa câu hỏi này?")) { 
+        document.getElementById('loader').style.display = 'flex'; 
+        try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); window.isQuizDataLoaded = false; alert("Đã xóa!"); window.quanLyNganHang(curSub, true); } catch(e){} finally { document.getElementById('loader').style.display = 'none'; }
     } 
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI TẬP & THƯỞNG TỐC ĐỘ CHO HỌC SINH
+// 4. TIẾN TRÌNH LÀM BÀI TẬP & THƯỞNG TỐC ĐỘ 
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); curSub = sub; 
@@ -461,20 +325,14 @@ window.loadSubject = async function(sub) {
         try { const [mRes, tRes, lRes] = await Promise.all([ fetch(API_URL + "?type=math&t=" + Date.now()), fetch(API_URL + "?type=vietnamese&t=" + Date.now()), fetch(API_URL + "?type=history_all&t=" + Date.now()) ]); Data.math = await mRes.json(); Data.tv = await tRes.json(); Data.vietnamese = Data.tv; Data.log = await lRes.json(); window.isQuizDataLoaded = true; } catch(e) {}
     }
     const qs = Data[sub]; if (!qs) { alert("Không tải được dữ liệu. Vui lòng thử lại."); return veTrangChu(); }
-    
-    const grps = [...new Set(qs.map(x => x.group))].filter(g => g).sort((a, b) => {
-        let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/);
-        let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0;
-        if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a));
-    });
+    const grps = [...new Set(qs.map(x => x.group))].filter(g => g).sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
     
     let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; 
     if(grps.length === 0) { html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; } 
     else {
         grps.forEach(g => { 
             const isDone = Data.log.some(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g); 
-            const time = qs.find(q => q.group === g).time || 20; 
-            const count = qs.filter(q => q.group === g && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length; 
+            const time = qs.find(q => q.group === g).time || 20; const count = qs.filter(q => q.group === g && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length; 
             let clickAction = `window.startQuiz('${g}', ${time})`; 
             if (isDone && currentUser.role === 'student') { 
                 let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
@@ -491,9 +349,7 @@ window.promptRedo = function(group, time) {
     let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
     if(tokens > 0) {
         if(confirm(`Con đang có ${tokens} VÉ LÀM LẠI.\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] không?`)) {
-            localStorage.setItem('redo_tokens_'+currentUser.id, tokens - 1);
-            Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group));
-            window.startQuiz(group, time);
+            localStorage.setItem('redo_tokens_'+currentUser.id, tokens - 1); Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group)); window.startQuiz(group, time);
         }
     }
 };
@@ -501,11 +357,8 @@ window.promptRedo = function(group, time) {
 window.startQuiz = function(group, timeMins) { 
     curGrp = group; let rawQuiz = Data[curSub].filter(q => q.group === group); quiz = []; readingPassage = "";
     rawQuiz.forEach(q => {
-        let qText = q.question || "";
-        if (q.image) { qText += `<br><div style="text-align: center;"><img src="${q.image}" class="max-w-full rounded-md mt-2"></div>`; } 
-        let match = qText.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s);
-        if (match) { readingPassage = match[1]; qText = qText.replace(match[0], '').trim(); } 
-        else if (qText.includes('[ĐOẠN VĂN]')) { readingPassage = qText.replace('[ĐOẠN VĂN]', '').trim(); qText = ""; }
+        let qText = q.question || ""; if (q.image) { qText += `<br><div style="text-align: center;"><img src="${q.image}" class="max-w-full rounded-md mt-2"></div>`; } 
+        let match = qText.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s); if (match) { readingPassage = match[1]; qText = qText.replace(match[0], '').trim(); } else if (qText.includes('[ĐOẠN VĂN]')) { readingPassage = qText.replace('[ĐOẠN VĂN]', '').trim(); qText = ""; }
         if (qText !== "" || q.a || q.b) quiz.push({ ...q, question: qText }); 
     });
     quiz = quiz.sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; wrongAnswersLog = []; 
@@ -520,8 +373,7 @@ window.startQuiz = function(group, timeMins) {
 
 window.renderQuestion = function(index) { 
     if (index >= quiz.length) { window.finishQuiz(); return; } const q = quiz[index]; 
-    let colorTheme = (curSub === 'vietnamese' || curSub === 'tv') ? 'text-green-600' : 'text-indigo-600';
-    let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100' : '';
+    let colorTheme = (curSub === 'vietnamese' || curSub === 'tv') ? 'text-green-600' : 'text-indigo-600'; let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100' : '';
     document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${window.parseImg(q.question)}</div></div><div class="space-y-4">${['a','b','c','d'].filter(k => q[k]).map(key => `<div onclick="window.checkAns(this, '${key}', '${q.correct}', ${index})" class="quiz-option p-4 sm:p-5 border-2 border-slate-100 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition btn-3d bg-white"><span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 uppercase text-lg shrink-0 shadow-inner">${key}</span><div class="font-bold text-slate-700 flex-1 text-base sm:text-lg leading-relaxed">${window.parseImg(q[key])}</div></div>`).join('')}</div></div>`; 
 };
 
@@ -533,88 +385,50 @@ window.checkAns = function(el, selected, correct, index) {
 };
 
 window.startTimer = function(seconds) { 
-    clearInterval(timer); 
-    window.totalQuizTime = seconds;
-    window.remainingQuizTime = seconds;
-    
+    if (timer) clearInterval(timer); 
+    window.totalQuizTime = seconds; window.remainingQuizTime = seconds;
     timer = setInterval(() => { 
-        let m = Math.floor(window.remainingQuizTime / 60), s = window.remainingQuizTime % 60; 
-        document.getElementById('quizTimer').innerText = `${m}:${s < 10 ? '0' + s : s}`; 
-        
-        if (window.remainingQuizTime <= 0) { 
-            clearInterval(timer); alert("Hết giờ làm bài!"); window.finishQuiz(); 
-        } 
+        let m = Math.floor(window.remainingQuizTime / 60), s = window.remainingQuizTime % 60; document.getElementById('quizTimer').innerText = `${m}:${s < 10 ? '0' + s : s}`; 
+        if (window.remainingQuizTime <= 0) { clearInterval(timer); alert("Hết giờ làm bài!"); window.finishQuiz(); } 
         window.remainingQuizTime--; 
     }, 1000); 
 };
 
 window.finishQuiz = async function() { 
-    clearInterval(timer); 
-    const maxPossibleScore = quiz.length * 10; 
-    let timeTaken = window.totalQuizTime - window.remainingQuizTime;
-    let halfTime = window.totalQuizTime / 2;
-    
-    let extraSpinsEarned = 0;
-    let rewardMessage = "";
+    if (timer) clearInterval(timer); 
+    const maxPossibleScore = quiz.length * 10; let timeTaken = window.totalQuizTime - window.remainingQuizTime; let halfTime = window.totalQuizTime / 2;
+    let extraSpinsEarned = 0; let rewardMessage = "";
 
     if (score > 0 && score === maxPossibleScore) { 
         let previousMax = Data.log.find(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp && Number(l.score) === maxPossibleScore);
-        
         if (!previousMax && currentUser.role === 'student') {
-            if (timeTaken <= halfTime) {
-                extraSpinsEarned = 2;
-                rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ! Đúng 100% siêu nhanh. Con được thưởng <b>+2 Lượt quay</b>!</p></div>`;
-            } else {
-                extraSpinsEarned = 1;
-                rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! Đúng 100%. Con được thưởng <b>+1 Lượt quay</b>!</p></div>`;
-            }
-            let todayStr = new Date().toLocaleDateString('vi-VN');
-            let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+            if (timeTaken <= halfTime) { extraSpinsEarned = 2; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ! Đúng 100% siêu nhanh. Thưởng <b>+2 Lượt quay</b>!</p></div>`; } 
+            else { extraSpinsEarned = 1; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! Đúng 100%. Thưởng <b>+1 Lượt quay</b>!</p></div>`; }
+            let todayStr = new Date().toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
             if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
-            spinLog.extra += extraSpinsEarned;
-            localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
-            
-        } else if (previousMax && currentUser.role === 'student') {
-            rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`;
-        }
-
-        var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); 
+            spinLog.extra += extraSpinsEarned; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+        } else if (previousMax && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`; }
+        window.safeConfetti(); 
     } 
     
-    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${rewardMessage}<button onclick="window.loadSubject(curSub)" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${rewardMessage}<button onclick="window.loadSubject('${curSub}')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
     
     if(currentUser.role === 'student') { 
-        let submitTime = new Date().toISOString();
-        let detailsToSave = wrongAnswersLog.join('');
+        let submitTime = new Date().toISOString(); let detailsToSave = wrongAnswersLog.join('');
         if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score, details: detailsToSave } }) }); 
-        Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, time: submitTime, details: detailsToSave }); 
+        try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score, details: detailsToSave } }) }); Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, time: submitTime, details: detailsToSave }); } catch(e){}
     } 
 };
 
 // ==========================================
 // 5. VÒNG QUAY MAY MẮN (GACHA & BẢNG VÀNG LỊCH SỬ)
 // ==========================================
-let isSpinning = false;
-const PRIZES = [
-    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
-    { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
-    { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
-    { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
-    { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài nhé!", icon: "🎫" },
-    { id: "miss", text: "Mất Lượt", color: "#94a3b8", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt.", icon: "😢" },
-    { id: "chest", text: "Kho Báu", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Wow! Con đã mở được Rương Kho Báu!", icon: "💎" }
-];
-
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); closeMenu(); 
-    let todayStr = new Date().toLocaleDateString('vi-VN');
-    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+    let todayStr = new Date().toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
     if (spinLog.date !== todayStr) { spinLog = { date: todayStr, extra: 0, usedFree: false }; }
     
-    let sliceAngle = 360 / PRIZES.length;
-    let halfSlice = sliceAngle / 2;
-
+    let sliceAngle = 360 / PRIZES.length; let halfSlice = sliceAngle / 2;
     let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
     let gradColors = PRIZES.map((p, i) => `${p.color} ${i * sliceAngle}deg ${(i + 1) * sliceAngle}deg`).join(', ');
 
@@ -625,24 +439,19 @@ window.moVongQuay = async function() {
             <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</span></p></div>
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
             <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none mb-6"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
-            
-            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all">
-                <div class="text-center text-orange-400 text-sm font-bold"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách trúng thưởng...</div>
-            </div>
+            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"><div class="text-center text-orange-400 text-sm font-bold"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách trúng thưởng...</div></div>
         </div>
     `;
 
     if(Data.log.length === 0) {
-        try { Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); window.checkSpinStatus(spinLog, todayStr); } 
-        catch(e) { window.checkSpinStatus(spinLog, todayStr); }
+        try { Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); window.checkSpinStatus(spinLog, todayStr); } catch(e) { window.checkSpinStatus(spinLog, todayStr); }
     } else window.checkSpinStatus(spinLog, todayStr);
 };
 
 window.checkSpinStatus = function(spinLog, todayStr) {
     let hasSpunTodayOnServer = Data.log.some(l => String(l.id) === String(currentUser.id) && l.subject === "LuckySpin" && String(l.group).includes(todayStr));
     if (hasSpunTodayOnServer) { spinLog.usedFree = true; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); }
-    window.restoreSpinButton(spinLog);
-    window.renderSpinHistory(todayStr); // Gọi hàm hiển thị bảng vàng
+    window.restoreSpinButton(spinLog); window.renderSpinHistory(todayStr); 
 };
 
 window.restoreSpinButton = function(spinLog) {
@@ -652,103 +461,56 @@ window.restoreSpinButton = function(spinLog) {
     else { btnUpdate.className = "inline-block bg-gradient-to-r from-slate-400 to-slate-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg text-xl transition opacity-50 pointer-events-none mb-6"; btnUpdate.innerText = "ĐÃ HẾT LƯỢT HÔM NAY"; }
 };
 
-// HÀM MỚI: TẠO GIAO DIỆN CHỮ CHẠY CHO LỊCH SỬ QUAY
 window.renderSpinHistory = function(todayStr) {
-    let container = document.getElementById('spinHistoryContainer');
-    if (!container) return;
-
-    // Lọc ra các lượt quay trong ngày hôm nay
+    let container = document.getElementById('spinHistoryContainer'); if (!container) return;
     let todayLogs = Data.log.filter(l => l.subject === "LuckySpin" && String(l.group).includes(todayStr));
-    
-    if (todayLogs.length === 0) {
-        container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`;
-        return;
-    }
-
-    // Sắp xếp mới nhất lên đầu
+    if (todayLogs.length === 0) { container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`; return; }
     todayLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
     
     let listItems = todayLogs.map(l => {
-        let hs = Data.hs.find(x => String(x.id) === String(l.id));
-        let name = hs ? hs.name : "Một bạn";
-        // Cắt bỏ phần chữ thừa để lấy đúng tên quà
+        let hs = Data.hs.find(x => String(x.id) === String(l.id)); let name = hs ? hs.name : "Một bạn";
         let prizeText = (l.details || "").replace("Quay trúng: ", "").split(" (")[0]; 
-        
-        // Làm nổi bật phần thưởng xịn
         let textStyle = "text-orange-600 font-bold";
         if(prizeText.includes("Kho Báu")) textStyle = "text-red-600 font-black animate-pulse";
         if(prizeText.includes("Mất Lượt") || prizeText.includes("-10")) textStyle = "text-slate-400 font-medium";
-
         return `<div class="py-2.5 border-b border-orange-100/50 last:border-0 text-[13px] text-slate-600 flex justify-between items-center"><span class="font-black text-blue-600 truncate mr-2"><i class="fas fa-user-circle text-blue-300 mr-1"></i>${name}</span> <span class="text-right ${textStyle}">${prizeText}</span></div>`;
     }).join('');
 
-    // Tính tốc độ chạy dựa trên số lượng người quay
     let animDuration = Math.max(todayLogs.length * 2.5, 10);
-
     container.innerHTML = `
         <div class="bg-orange-50/50 rounded-2xl border border-orange-200 relative overflow-hidden shadow-inner h-40 group">
-            <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-orange-50 to-transparent z-10 pointer-events-none"></div>
-            <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-orange-50 to-transparent z-10 pointer-events-none"></div>
-            <h3 class="text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-100 py-2 text-center border-b border-orange-200 relative z-20 shadow-sm"><i class="fas fa-broadcast-tower mr-1"></i> Bảng Vàng Hôm Nay</h3>
-            
-            <div class="overflow-hidden h-[120px] relative px-4">
-                <div class="animate-scroll-up flex flex-col group-hover:[animation-play-state:paused] pt-2">
-                    ${listItems}
-                    ${listItems} </div>
-            </div>
-            <style>
-                @keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
-                .animate-scroll-up { animation: scrollUp ${animDuration}s linear infinite; }
-            </style>
+            <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-orange-50 to-transparent z-10 pointer-events-none"></div><div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-orange-50 to-transparent z-10 pointer-events-none"></div>
+            <h3 class="text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-100 py-2 text-center border-b border-orange-200 relative z-20 shadow-sm"><i class="fas fa-gift mr-1"></i> Trạm Nhận Quà</h3>
+            <div class="overflow-hidden h-[120px] relative px-4"><div class="animate-scroll-up flex flex-col group-hover:[animation-play-state:paused] pt-2">${listItems}${listItems}</div></div>
+            <style>@keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } } .animate-scroll-up { animation: scrollUp ${animDuration}s linear infinite; }</style>
         </div>
     `;
 };
 
 window.thucHienQuay = async function() {
     if(isSpinning) return;
-    let todayStr = new Date().toLocaleDateString('vi-VN');
-    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+    let todayStr = new Date().toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
     if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
     if (spinLog.usedFree && spinLog.extra <= 0) return alert("Con đã hết lượt quay!");
 
     isSpinning = true;
     let btn = document.getElementById('btnSpin'); btn.classList.add('opacity-50', 'pointer-events-none');
-    if (!spinLog.usedFree) spinLog.usedFree = true; else spinLog.extra -= 1;
-    localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+    if (!spinLog.usedFree) spinLog.usedFree = true; else spinLog.extra -= 1; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
     let rand = Math.random() * 100; let idx = 0;
-    if (rand < 10) idx = 0;         // +10 điểm: 10%
-    else if (rand < 30) idx = 1;    // Thêm lượt: 20%
-    else if (rand < 70) idx = 2;    // Giải đố: 40%
-    else if (rand < 75) idx = 3;    // -10 điểm: 5%
-    else if (rand < 85) idx = 4;    // Vé làm lại: 10%
-    else if (rand < 90) idx = 5;    // Mất lượt: 5%
-    else idx = 6;                   // Rương kho báu: 10%
+    if (rand < 10) idx = 0; else if (rand < 30) idx = 1; else if (rand < 70) idx = 2; else if (rand < 75) idx = 3; else if (rand < 85) idx = 4; else if (rand < 90) idx = 5; else idx = 6; 
 
-    let sliceAngle = 360 / PRIZES.length;
-    let wheel = document.getElementById('wheel'); let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
-    let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * sliceAngle); 
-    wheel.style.transform = `rotate(${nextRot}deg)`; wheel.setAttribute('data-rot', nextRot);
+    let sliceAngle = 360 / PRIZES.length; let wheel = document.getElementById('wheel'); let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
+    let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * sliceAngle); wheel.style.transform = `rotate(${nextRot}deg)`; wheel.setAttribute('data-rot', nextRot);
     
     setTimeout(async () => {
-        isSpinning = false;
-        let uniqueGroup = "Vòng quay ngày " + todayStr + " (" + Date.now() + ")";
-        let finalPrize = {...PRIZES[idx]};
+        isSpinning = false; let uniqueGroup = "Vòng quay ngày " + todayStr + " (" + Date.now() + ")"; let finalPrize = {...PRIZES[idx]};
 
         if (finalPrize.id === 'chest') {
             let chestRand = Math.floor(Math.random() * 3);
-            if (chestRand === 0) {
-                finalPrize.netScore = 10; finalPrize.extraSpin = 2;
-                finalPrize.msg = "Tuyệt vời! Rương chứa: <b>2 Lượt quay</b> và <b>10 Điểm</b>.";
-            } else if (chestRand === 1) {
-                finalPrize.netScore = 30; finalPrize.extraSpin = 1;
-                finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Lượt quay</b> và <b>30 Điểm</b>.";
-            } else {
-                finalPrize.netScore = 20; finalPrize.extraSpin = 0;
-                let currentTokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
-                localStorage.setItem('redo_tokens_'+currentUser.id, currentTokens + 1);
-                finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Vé làm lại</b> và <b>20 Điểm</b>.";
-            }
+            if (chestRand === 0) { finalPrize.netScore = 10; finalPrize.extraSpin = 2; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>2 Lượt quay</b> và <b>10 Điểm</b>."; } 
+            else if (chestRand === 1) { finalPrize.netScore = 30; finalPrize.extraSpin = 1; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Lượt quay</b> và <b>30 Điểm</b>."; } 
+            else { finalPrize.netScore = 20; finalPrize.extraSpin = 0; let currentTokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0'); localStorage.setItem('redo_tokens_'+currentUser.id, currentTokens + 1); finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Vé làm lại</b> và <b>20 Điểm</b>."; }
         }
 
         if (finalPrize.extraSpin > 0) { spinLog.extra += finalPrize.extraSpin; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); }
@@ -761,57 +523,30 @@ window.thucHienQuay = async function() {
         try { 
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: finalPrize.netScore, details: "Quay trúng: " + finalPrize.text + (finalPrize.id === 'chest' ? " ("+finalPrize.msg+")" : "") } }) }); 
             Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: finalPrize.netScore, time: new Date().toISOString(), details: "Quay trúng: " + finalPrize.text }); 
-            // Cập nhật ngay Bảng vàng sau khi quay xong
             window.renderSpinHistory(todayStr);
         } catch(e) {}
         
-        if (finalPrize.netScore > 0 || finalPrize.extraSpin > 0 || finalPrize.id === 'redo' || finalPrize.id === 'chest') { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
+        if (finalPrize.netScore > 0 || finalPrize.extraSpin > 0 || finalPrize.id === 'redo' || finalPrize.id === 'chest') { window.safeConfetti(); }
         window.restoreSpinButton(spinLog);
     }, 4000);
 };
 
 window.showRiddleModal = function(todayStr, uniqueGroup) {
-    let a = Math.floor(Math.random() * 10) + 1; let b = Math.floor(Math.random() * 10) + 1; let c = Math.floor(Math.random() * 10) + 1;
-    let correctAns = a + b * c; 
+    let a = Math.floor(Math.random() * 10) + 1; let b = Math.floor(Math.random() * 10) + 1; let c = Math.floor(Math.random() * 10) + 1; let correctAns = a + b * c; 
     let overlay = document.createElement('div'); overlay.id = "riddleModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm fade-in p-4";
-    overlay.innerHTML = `<div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-purple-500 animate-[cascadeDrop_0.5s_ease-out_forwards]"><div class="text-6xl mb-4 animate-bounce">🧠</div><h3 class="text-2xl font-black text-purple-600 mb-2 uppercase">Thử Tài Giải Đố</h3><p class="text-slate-600 font-bold mb-6">Tính nhanh phép toán sau để nhận ngay 20 điểm:</p><div class="bg-purple-50 text-purple-800 text-3xl font-black p-4 rounded-xl mb-6 shadow-inner border border-purple-200">${a} + ${b} x ${c} = ?</div><input type="number" id="riddleAns" class="w-full p-4 border-2 border-purple-200 rounded-xl font-bold text-2xl text-center mb-6 focus:border-purple-500 outline-none" placeholder="Đáp án của con..."><button onclick="window.checkRiddle(${correctAns}, '${todayStr}', '${uniqueGroup}')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl font-black shadow-lg btn-3d hover:scale-[1.02] transition">TRẢ LỜI</button></div>`;
+    overlay.innerHTML = `<div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-purple-500 animate-[cascadeDrop_0.5s_ease-out_forwards]"><div class="text-6xl mb-4 animate-bounce">🧠</div><h3 class="text-2xl font-black text-purple-600 mb-2 uppercase">Thử Tài Giải Đố</h3><p class="text-slate-600 font-bold mb-6">Tính nhanh phép toán sau để nhận ngay 20 điểm:</p><div class="bg-purple-50 text-purple-800 text-3xl font-black p-4 rounded-xl mb-6 shadow-inner border border-purple-200">${a} + ${b} x ${c} = ?</div><input type="number" id="riddleAns" class="w-full p-4 border-2 border-purple-200 rounded-xl font-bold text-2xl text-center mb-6 focus:border-purple-500 outline-none" placeholder="Đáp án của con..."><button onclick="window.checkRiddle(${correctAns}, '${todayStr}', '${uniqueGroup}')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl font-black shadow-lg btn-3d hover:scale-[1.02] transition">TRẢ LỜI</button><button onclick="document.getElementById('riddleModal').remove(); window.isSpinning=false; window.restoreSpinButton(JSON.parse(localStorage.getItem('spinLog_'+currentUser.id)));" class="w-full mt-3 text-slate-400 font-bold hover:text-slate-600">Đóng</button></div>`;
     document.body.appendChild(overlay); setTimeout(() => document.getElementById('riddleAns').focus(), 100);
 };
 
 window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
     let ansStr = document.getElementById('riddleAns').value; if(!ansStr) return alert("Con chưa nhập đáp án kìa!"); document.getElementById('riddleModal').remove();
     let prize = { icon: "", text: "Giải Đố", color: "", msg: "", netScore: 0 };
-    if (parseInt(ansStr) === correctAns) { prize.netScore = 20; prize.msg = "Giỏi quá! Con tính đúng và được thưởng 20 điểm."; prize.icon = "🎉"; prize.color = "#34d399"; } 
-    else { prize.msg = `Tiếc quá! Đáp án đúng là ${correctAns}. Hãy cẩn thận hơn ở lần sau nhé!`; prize.icon = "😅"; prize.color = "#f87171"; }
+    if (parseInt(ansStr) === correctAns) { prize.netScore = 20; prize.msg = "Giỏi quá! Con tính đúng và được thưởng 20 điểm."; prize.icon = "🎉"; prize.color = "#34d399"; } else { prize.msg = `Tiếc quá! Đáp án đúng là ${correctAns}. Hãy cẩn thận hơn ở lần sau nhé!`; prize.icon = "😅"; prize.color = "#f87171"; }
     
     if (prize.netScore !== 0) { currentUser.score = Number(currentUser.score) + prize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
     window.showPrizeModal(prize);
-    
-    try { 
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: prize.netScore, details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" } }) }); 
-        Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: prize.netScore, time: new Date().toISOString(), details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" }); 
-        // Cập nhật lại Bảng vàng
-        window.renderSpinHistory(todayStr);
-    } catch(e) {}
-    
-    if (prize.netScore > 0) { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
-    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id)); window.restoreSpinButton(spinLog);
-};
-
-window.showPrizeModal = function(prize) {
-    let overlay = document.createElement('div'); overlay.id = "prizeModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
-    overlay.innerHTML = `<div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 animate-[cascadeDrop_0.5s_ease-out_forwards]" style="border-color: ${prize.color}"><div class="text-7xl mb-4 animate-bounce">${prize.icon}</div><h3 class="text-2xl font-black text-slate-800 mb-2">${prize.text}</h3><p class="text-slate-600 font-bold mb-6 text-sm">${prize.msg}</p><button onclick="document.getElementById('prizeModal').remove()" class="w-full text-white py-3 rounded-xl font-black shadow-md transition hover:opacity-80" style="background-color: ${prize.color}">ĐÓNG</button></div>`;
-    document.body.appendChild(overlay);
-};
-window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
-    let ansStr = document.getElementById('riddleAns').value; if(!ansStr) return alert("Con chưa nhập đáp án kìa!"); document.getElementById('riddleModal').remove();
-    let prize = { icon: "", text: "Giải Đố", color: "", msg: "", netScore: 0 };
-    if (parseInt(ansStr) === correctAns) { prize.netScore = 20; prize.msg = "Giỏi quá! Con tính đúng và được thưởng 20 điểm."; prize.icon = "🎉"; prize.color = "#34d399"; } 
-    else { prize.msg = `Tiếc quá! Đáp án đúng là ${correctAns}. Hãy cẩn thận hơn ở lần sau nhé!`; prize.icon = "😅"; prize.color = "#f87171"; }
-    if (prize.netScore !== 0) { currentUser.score = Number(currentUser.score) + prize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
-    window.showPrizeModal(prize);
-    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: prize.netScore, details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" } }) }); Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: prize.netScore, time: new Date().toISOString() }); } catch(e) {}
-    if (prize.netScore > 0) { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
+    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: prize.netScore, details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" } }) }); Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: prize.netScore, time: new Date().toISOString(), details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" }); window.renderSpinHistory(todayStr); } catch(e) {}
+    if (prize.netScore > 0) window.safeConfetti(); 
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id)); window.restoreSpinButton(spinLog);
 };
 
@@ -822,37 +557,25 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (LỌC DỮ LIỆU CŨ/ẢO)
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
 // ==========================================
 window.moTienDo = async function() { 
-    closeMenu(); 
-    document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu toàn lớp...</h2>`; 
-    try { 
-        Data.math = await (await fetch(API_URL+"?type=math")).json(); Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json(); Data.vietnamese = Data.tv; Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); 
-    } catch(e){} 
+    closeMenu(); document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu toàn lớp...</h2>`; 
+    try { Data.math = await (await fetch(API_URL+"?type=math")).json(); Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json(); Data.vietnamese = Data.tv; Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); } catch(e){} 
+    const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); const total = mathGroups.length + tvGroups.length; 
     
-    const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); 
-    const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); 
-    const total = mathGroups.length + tvGroups.length; 
-    
-    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ CHUNG (${total} BÀI)</h2></div><p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-hand-pointer mr-1"></i> Bấm vào tên học sinh để xem chi tiết điểm số & lỗi sai</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">`; 
-    
+    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ CHUNG (${total} BÀI)</h2></div><p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-hand-pointer mr-1"></i> Bấm vào tên học sinh để xem chi tiết</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">`; 
     html += Data.hs.map(h => { 
-        const userL = Data.log.filter(l => String(l.id) === String(h.id)); 
-        const validLogs = userL.filter(l => { if (l.subject === 'math') return mathGroups.includes(l.group); if (l.subject === 'vietnamese' || l.subject === 'tv') return tvGroups.includes(l.group); return false; });
-        const done = new Set(validLogs.map(l => (l.subject === 'tv' ? 'vietnamese' : l.subject) + '_' + l.group)).size; 
-        const pct = total ? Math.round((done/total)*100) : 0; 
+        const userL = Data.log.filter(l => String(l.id) === String(h.id)); const validLogs = userL.filter(l => { if (l.subject === 'math') return mathGroups.includes(l.group); if (l.subject === 'vietnamese' || l.subject === 'tv') return tvGroups.includes(l.group); return false; });
+        const done = new Set(validLogs.map(l => (l.subject === 'tv' ? 'vietnamese' : l.subject) + '_' + l.group)).size; const pct = total ? Math.round((done/total)*100) : 0; 
         return `<div onclick="window.xemChiTietTienDo('${h.id}', '${h.name}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex justify-between items-center cursor-pointer hover:border-purple-300 hover:shadow-md transition"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div><span class="font-bold text-slate-700">${h.name}</span></div><div class="w-1/3 text-right"><div class="text-[11px] font-black mb-1 text-slate-500">${done}/${total} BÀI (${pct}%)</div><div class="progress-bar h-1.5"><div class="progress-fill ${pct==100?'bg-green-500':'bg-purple-500'}" style="width:${pct}%"></div></div></div></div>`; 
     }).join(''); 
-    
     document.getElementById('content').innerHTML = html + "</div>"; 
 };
 
 window.xemChiTietTienDo = function(studentId, studentName) { 
-    const userLogs = Data.log.filter(l => String(l.id) === String(studentId)); 
-    const sortFunc = (a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); };
-    const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g).sort(sortFunc); 
-    const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g).sort(sortFunc); 
+    const userLogs = Data.log.filter(l => String(l.id) === String(studentId)); const sortFunc = (a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); };
+    const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g).sort(sortFunc); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g).sort(sortFunc); 
     
     const renderSubjectProgress = (subjectCode, groupsList) => { 
         if(groupsList.length === 0) return `<p class="text-sm text-slate-400 italic py-2">Chưa có bài tập</p>`; 
@@ -862,17 +585,11 @@ window.xemChiTietTienDo = function(studentId, studentName) {
                 groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
                 const btnChiTiet = log.details ? `<button onclick="window.xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Xem lỗi sai</button>` : `<span class="text-[10px] text-green-500 font-bold px-2 py-1"><i class="fas fa-check-circle"></i> Tuyệt đối</span>`; 
                 return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500 text-lg"></i><span class="font-bold text-slate-700 text-sm">${grp}</span></div><div class="flex items-center gap-3"><span class="font-black text-indigo-600 text-lg">${log.score}đ</span>${btnChiTiet}</div></div>`; 
-            } else { 
-                return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; 
-            } 
+            } else { return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; } 
         }).join(''); 
     }; 
     
-    document.getElementById('content').innerHTML = `
-        <div class="flex items-center mb-6"><button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div>
-        <div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>
-    `; 
+    document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div><div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>`; 
 };
 
 window.xemLoiSai = function(studentId, subjectCode, group) { 
@@ -887,45 +604,23 @@ window.xemLoiSai = function(studentId, subjectCode, group) {
 // ==========================================
 window.moHopThuBiMat = function() {
     if(!currentUser) return showLogin(); closeMenu();
-    document.getElementById('content').innerHTML = `
-        ${getNavHtml('thubimat')}
-        <div class="bg-[#fff0f5] p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 space-y-5 fade-in relative overflow-hidden">
-            <p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con.</p>
-            <textarea id="mailContent" class="w-full bg-white border-2 border-pink-200 p-4 rounded-2xl font-medium text-slate-700 outline-none focus:border-pink-400 transition min-h-[150px] relative z-10" placeholder="Viết điều con muốn nói vào đây..."></textarea>
-            <label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100"><input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer"><span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span></label>
-            <button onclick="window.guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button>
-        </div>
-    `;
+    document.getElementById('content').innerHTML = `${getNavHtml('thubimat')}<div class="bg-[#fff0f5] p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 space-y-5 fade-in relative overflow-hidden"><p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con.</p><textarea id="mailContent" class="w-full bg-white border-2 border-pink-200 p-4 rounded-2xl font-medium text-slate-700 outline-none focus:border-pink-400 transition min-h-[150px] relative z-10" placeholder="Viết điều con muốn nói vào đây..."></textarea><label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100"><input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer"><span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span></label><button onclick="window.guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button></div>`;
 };
 
 window.guiThuBiMat = async function() {
-    const content = document.getElementById('mailContent').value.trim(); const isAnon = document.getElementById('mailAnon').checked; if(!content) return alert("Con chưa viết gì cả!");
-    document.getElementById('loader').style.display = 'flex';
-    try { await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); alert("Đã gửi thư thành công! Cảm ơn con đã chia sẻ, thầy Hiển sẽ đọc sớm thôi."); veTrangChu(); } 
-    catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); }
-    document.getElementById('loader').style.display = 'none';
+    const content = document.getElementById('mailContent').value.trim(); const isAnon = document.getElementById('mailAnon').checked; if(!content) return alert("Con chưa viết gì cả!"); document.getElementById('loader').style.display = 'flex';
+    try { await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); alert("Đã gửi thư thành công!"); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
 
 window.moXinPhep = function() { 
     if(!currentUser) return showLogin(); closeMenu(); 
-    document.getElementById('content').innerHTML = `
-        ${getNavHtml('hopthu')}
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 fade-in">
-            <div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700"></div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại xin phép</label><select id="lType" onchange="window.changeLeaveType()" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Nghỉ học và bán trú">Nghỉ học và bán trú</option><option value="Nghỉ Bán trú">Nghỉ Bán trú</option></select></div>
-                <div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian nghỉ</label><select id="lSession" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option></select></div>
-            </div>
-            <div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lý do (Bệnh, việc gia đình...)</label><textarea id="lReason" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-medium text-slate-700 outline-none focus:border-red-400 transition" rows="3" placeholder="Nhập lý do chi tiết..."></textarea></div>
-            <button onclick="window.sendLeave()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-red-700 transition"><i class="fas fa-paper-plane mr-2"></i> GỬI ĐƠN CHO GVCN</button>
-        </div>
-    `; 
+    document.getElementById('content').innerHTML = `${getNavHtml('hopthu')}<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 fade-in"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại xin phép</label><select id="lType" onchange="window.changeLeaveType()" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Nghỉ học và bán trú">Nghỉ học và bán trú</option><option value="Nghỉ Bán trú">Nghỉ Bán trú</option></select></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian nghỉ</label><select id="lSession" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option></select></div></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lý do (Bệnh, việc gia đình...)</label><textarea id="lReason" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-medium text-slate-700 outline-none focus:border-red-400 transition" rows="3" placeholder="Nhập lý do chi tiết..."></textarea></div><button onclick="window.sendLeave()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-red-700 transition"><i class="fas fa-paper-plane mr-2"></i> GỬI ĐƠN CHO GVCN</button></div>`; 
     document.getElementById('lDate').valueAsDate = new Date(Date.now()+86400000); 
 };
 
 window.changeLeaveType = function() { const type = document.getElementById('lType').value; const session = document.getElementById('lSession'); if (type === 'Nghỉ Bán trú') { session.innerHTML = `<option value="Ăn trưa và Không ngủ trưa">Ăn trưa và Không ngủ trưa</option><option value="Không ăn trưa và không ngủ trưa">Không ăn trưa và không ngủ trưa</option>`; } else { session.innerHTML = `<option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option>`; } };
 
-window.sendLeave = async function() { const d = document.getElementById('lDate').value; const r = document.getElementById('lReason').value; const type = document.getElementById('lType').value; const session = document.getElementById('lSession').value; if(!d || !r) return alert("Vui lòng chọn Ngày nghỉ và Nhập Lý do!"); const combinedType = `${type} (${session})`; document.getElementById('loader').style.display='flex'; try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:combinedType, reason:r } }) }); alert("Gửi đơn xin phép thành công! Giáo viên đã nhận được."); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); } document.getElementById('loader').style.display='none'; };
+window.sendLeave = async function() { const d = document.getElementById('lDate').value; const r = document.getElementById('lReason').value; const type = document.getElementById('lType').value; const session = document.getElementById('lSession').value; if(!d || !r) return alert("Vui lòng chọn Ngày nghỉ và Nhập Lý do!"); const combinedType = `${type} (${session})`; document.getElementById('loader').style.display='flex'; try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:combinedType, reason:r } }) }); alert("Gửi đơn thành công!"); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); } finally { document.getElementById('loader').style.display='none'; } };
 
 // ==========================================
 // 8. QUẢN LÝ ADMIN (THƯ & ĐƠN)
@@ -934,12 +629,7 @@ window.moQuanLyThu = async function() {
     closeMenu(); document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải thư...</p></div>`; 
     try {
         const letters = await (await fetch(API_URL + "?type=mailbox&t=" + Date.now())).json();
-        
-        if (currentUser && currentUser.role === 'admin') {
-            localStorage.setItem('admin_read_mail_' + currentUser.id, letters.length);
-            window.kiemTraThongBaoAdmin();
-        }
-
+        if (currentUser && currentUser.role === 'admin') { localStorage.setItem('admin_read_mail_' + currentUser.id, letters.length); window.kiemTraThongBaoAdmin(); }
         let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-pink-600 uppercase">THƯ TỪ HỌC SINH</h2></div>`;
         if(letters.length === 0) { html += `<div class="text-center py-10 text-slate-400 font-bold"><i class="fas fa-comment-dots text-5xl mb-3 text-slate-200"></i><br>Không có thư nào.</div>`; } 
         else {
@@ -948,8 +638,7 @@ window.moQuanLyThu = async function() {
                 let timeSent = ""; try { let d = new Date(l.time); timeSent = isNaN(d) ? l.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = l.time; }
                 let isAnon = (String(l.isAnonymous).toLowerCase() === "true"); let senderDisplay = isAnon ? `<span class="text-purple-600"><i class="fas fa-user-secret"></i> Ẩn danh (Thực tế: ${l.name})</span>` : `<span class="text-blue-600"><i class="fas fa-user"></i> ${l.name}</span>`; let anonBadge = isAnon ? `<span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-1 rounded ml-2">THƯ ẨN DANH</span>` : '';
                 html += `<div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 ${isAnon ? 'border-purple-400' : 'border-pink-400'} hover:shadow-md transition relative"><div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2"><div class="font-bold text-sm">${senderDisplay} ${anonBadge}</div><div class="text-[10px] text-slate-400"><i class="fas fa-clock"></i> ${timeSent}</div></div><div class="text-slate-700 text-base whitespace-pre-wrap font-medium bg-slate-50 p-3 rounded-xl">"${l.content}"</div></div>`;
-            });
-            html += `</div>`;
+            }); html += `</div>`;
         }
         document.getElementById('content').innerHTML = html;
     } catch (e) { document.getElementById('content').innerHTML = `<p class="text-center text-red-500 mt-10 font-bold">Lỗi tải dữ liệu hộp thư.</p>`; }
@@ -957,35 +646,30 @@ window.moQuanLyThu = async function() {
 
 window.moDonTu = async function() { 
     closeMenu(); document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</h2>`; 
-    const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json(); 
-    
-    if (currentUser && currentUser.role === 'admin') {
-        localStorage.setItem('admin_read_leave_' + currentUser.id, leaves.length);
-        window.kiemTraThongBaoAdmin();
-    }
-
-    let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600 uppercase">HỘP THƯ ĐƠN TỪ</h2></div>`; 
-    if (leaves.length === 0) { html += `<p class="text-center text-slate-400 font-medium py-10"><i class="fas fa-check-circle text-4xl mb-3 text-green-200 block"></i>Lớp đi học đầy đủ, không có đơn xin phép nào.</p>`; } 
-    else { 
-        const groupedLeaves = {}; leaves.forEach(l => { let fDate = l.dateOff; if (fDate.includes('-')) { const parts = fDate.split('-'); if(parts.length === 3) fDate = `${parts[2]}/${parts[1]}/${parts[0]}`; } if (!groupedLeaves[fDate]) groupedLeaves[fDate] = []; groupedLeaves[fDate].push(l); }); 
-        html += `<div class="space-y-6 pb-10">`; 
-        for (const [dateStr, items] of Object.entries(groupedLeaves)) { 
-            html += `<div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-red-500 fade-in relative overflow-hidden"><div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3"><div class="flex items-center gap-2"><i class="fas fa-calendar-alt text-red-500 text-xl"></i><h3 class="font-black text-lg text-slate-800">Xin nghỉ ngày: ${dateStr}</h3></div><span class="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">${items.length} đơn</span></div><div class="space-y-4">`; 
-            items.forEach(l => { 
-                const isBanTru = l.type.startsWith('Nghỉ Bán trú') || l.type.includes('Chỉ nghỉ Bán trú'); const badgeColor = isBanTru ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-red-100 text-red-700 border-red-200'; const icon = isBanTru ? 'fa-utensils' : 'fa-bed'; const iconBg = isBanTru ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'; 
-                let timeSent = ""; try { let d = new Date(l.time); if(isNaN(d)) timeSent = l.time; else timeSent = d.toLocaleString('vi-VN'); } catch(e) { timeSent = l.time; } 
-                html += `<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex gap-4 hover:border-slate-300 transition"><div class="w-10 h-10 ${iconBg} rounded-full flex justify-center items-center text-lg shrink-0"><i class="fas ${icon}"></i></div><div class="flex-1"><div class="flex justify-between items-start mb-1"><span class="font-black text-slate-800">${l.name}</span></div><div class="mb-2"><span class="text-[11px] font-black inline-block px-2 py-1 rounded border ${badgeColor}">${l.type}</span></div><p class="text-[13px] text-slate-700 italic bg-white p-3 rounded-xl border border-slate-100">" ${l.reason} "</p><p class="text-[10px] text-slate-400 mt-2 text-right">Gửi lúc: ${timeSent}</p></div></div>`; 
-            }); html += `</div></div>`; 
-        } html += `</div>`; 
-    } 
-    document.getElementById('content').innerHTML = html; 
+    try {
+        const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json(); 
+        if (currentUser && currentUser.role === 'admin') { localStorage.setItem('admin_read_leave_' + currentUser.id, leaves.length); window.kiemTraThongBaoAdmin(); }
+        let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600 uppercase">HỘP THƯ ĐƠN TỪ</h2></div>`; 
+        if (leaves.length === 0) { html += `<p class="text-center text-slate-400 font-medium py-10"><i class="fas fa-check-circle text-4xl mb-3 text-green-200 block"></i>Lớp đi học đầy đủ, không có đơn xin phép nào.</p>`; } 
+        else { 
+            const groupedLeaves = {}; leaves.forEach(l => { let fDate = l.dateOff; if (fDate.includes('-')) { const parts = fDate.split('-'); if(parts.length === 3) fDate = `${parts[2]}/${parts[1]}/${parts[0]}`; } if (!groupedLeaves[fDate]) groupedLeaves[fDate] = []; groupedLeaves[fDate].push(l); }); 
+            html += `<div class="space-y-6 pb-10">`; 
+            for (const [dateStr, items] of Object.entries(groupedLeaves)) { 
+                html += `<div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-red-500 fade-in relative overflow-hidden"><div class="flex items-center justify-between mb-4 border-b border-slate-100 pb-3"><div class="flex items-center gap-2"><i class="fas fa-calendar-alt text-red-500 text-xl"></i><h3 class="font-black text-lg text-slate-800">Xin nghỉ ngày: ${dateStr}</h3></div><span class="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">${items.length} đơn</span></div><div class="space-y-4">`; 
+                items.forEach(l => { 
+                    const isBanTru = l.type.startsWith('Nghỉ Bán trú') || l.type.includes('Chỉ nghỉ Bán trú'); const badgeColor = isBanTru ? 'bg-orange-100 text-orange-700 border-orange-200' : 'bg-red-100 text-red-700 border-red-200'; const icon = isBanTru ? 'fa-utensils' : 'fa-bed'; const iconBg = isBanTru ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'; 
+                    let timeSent = ""; try { let d = new Date(l.time); if(isNaN(d)) timeSent = l.time; else timeSent = d.toLocaleString('vi-VN'); } catch(e) { timeSent = l.time; } 
+                    html += `<div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex gap-4 hover:border-slate-300 transition"><div class="w-10 h-10 ${iconBg} rounded-full flex justify-center items-center text-lg shrink-0"><i class="fas ${icon}"></i></div><div class="flex-1"><div class="flex justify-between items-start mb-1"><span class="font-black text-slate-800">${l.name}</span></div><div class="mb-2"><span class="text-[11px] font-black inline-block px-2 py-1 rounded border ${badgeColor}">${l.type}</span></div><p class="text-[13px] text-slate-700 italic bg-white p-3 rounded-xl border border-slate-100">" ${l.reason} "</p><p class="text-[10px] text-slate-400 mt-2 text-right">Gửi lúc: ${timeSent}</p></div></div>`; 
+                }); html += `</div></div>`; 
+            } html += `</div>`; 
+        } document.getElementById('content').innerHTML = html; 
+    } catch (e) {}
 };
 
 // ==========================================
 // 9. QUẢN LÝ HỌC SINH
 // ==========================================
 window.chuyenTrangQuanLy = function() { closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="window.viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); document.getElementById('content').innerHTML = html + "</div>"; };
-
 window.viewProfile = function(id) { 
     closeMenu(); const s = Data.hs.find(x => String(x.id) === String(id)); if(!s) return; 
     const avatar = s.gender === 'Nữ' ? '<div class="w-24 h-24 bg-pink-100 text-pink-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-graduate"></i></div>' : '<div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-astronaut"></i></div>'; 
@@ -1009,42 +693,32 @@ window.checkSinhNhat = function() {
 window.showHappyBirthdayUI = function() {
     let overlay = document.createElement('div'); overlay.id = "hpbdModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
     overlay.innerHTML = `<div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]"><div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden"><button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button><div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div><h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">CHÚC MỪNG SINH NHẬT</h2><h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3><div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-6 relative"><i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i><p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Hôm nay là một ngày thật đặc biệt! Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p></div><button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">CẢM ƠN THẦY Ạ!</button></div></div>`;
-    document.body.appendChild(overlay);
-    var duration = 4 * 1000; var animationEnd = Date.now() + duration; var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 105 };
-    var interval = setInterval(function() { var timeLeft = animationEnd - Date.now(); if (timeLeft <= 0) { return clearInterval(interval); } var particleCount = 50 * (timeLeft / duration); confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250);
+    document.body.appendChild(overlay); window.safeConfetti();
 };
 
 window.dongBoDuLieu = async function() { 
     if(!confirm("Hành động này sẽ tải lại toàn bộ dữ liệu mới nhất từ Google Sheets. Tiếp tục?")) return; 
-    document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
-    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); window.isQuizDataLoaded = false; alert("Đồng bộ thành công! Giao diện sẽ tự động tải lại dữ liệu mới."); location.reload(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
+    document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ..."; 
+    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); window.isQuizDataLoaded = false; alert("Đồng bộ thành công!"); location.reload(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
 };
 
 // ==========================================
-// 11. CHUÔNG BÁO ADMIN & TẮT NHẠC
+// 11. CHUÔNG BÁO ADMIN
 // ==========================================
 window.kiemTraThongBaoAdmin = async function() {
     if (!currentUser || currentUser.role !== 'admin') return;
     try {
         const [mailRes, leaveRes] = await Promise.all([ fetch(API_URL + "?type=mailbox&t=" + Date.now()), fetch(API_URL + "?type=absent_list&t=" + Date.now()) ]);
-        const mails = await mailRes.json();
-        const leaves = await leaveRes.json();
-        
-        let readMail = parseInt(localStorage.getItem('admin_read_mail_' + currentUser.id) || "0");
-        let readLeave = parseInt(localStorage.getItem('admin_read_leave_' + currentUser.id) || "0");
-        
-        let unreadMail = mails.length - readMail; if (unreadMail < 0) unreadMail = 0;
-        let unreadLeave = leaves.length - readLeave; if (unreadLeave < 0) unreadLeave = 0;
-        
+        const mails = await mailRes.json(); const leaves = await leaveRes.json();
+        let readMail = parseInt(localStorage.getItem('admin_read_mail_' + currentUser.id) || "0"); let readLeave = parseInt(localStorage.getItem('admin_read_leave_' + currentUser.id) || "0");
+        let unreadMail = mails.length - readMail; if (unreadMail < 0) unreadMail = 0; let unreadLeave = leaves.length - readLeave; if (unreadLeave < 0) unreadLeave = 0;
         window.renderChuongThongBao(unreadMail, unreadLeave);
     } catch(e) { console.log("Lỗi tải thông báo:", e); }
 };
 
 window.renderChuongThongBao = function(unreadMail, unreadLeave) {
     let oldBell = document.getElementById('adminNotificationBell'); if (oldBell) oldBell.remove();
-    let totalUnread = unreadMail + unreadLeave;
-    if (totalUnread <= 0) return; 
-    
+    let totalUnread = unreadMail + unreadLeave; if (totalUnread <= 0) return; 
     let bellHtml = `
         <div id="adminNotificationBell" class="fixed bottom-8 right-6 z-[80] flex flex-col items-end fade-in">
             <div id="adminNotiPopup" class="hidden bg-white p-4 rounded-2xl shadow-2xl border border-slate-100 mb-3 w-64 origin-bottom-right transition-all">
@@ -1053,8 +727,7 @@ window.renderChuongThongBao = function(unreadMail, unreadLeave) {
                 ${unreadLeave > 0 ? `<div onclick="window.moDonTu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition"><span class="font-bold text-red-700 text-sm"><i class="fas fa-file-signature mr-2"></i>Đơn xin phép</span><span class="bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadLeave}</span></div>` : ''}
             </div>
             <button onclick="document.getElementById('adminNotiPopup').classList.toggle('hidden')" class="relative w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-[0_8px_30px_rgb(245,158,11/0.5)] hover:scale-110 transition flex items-center justify-center text-white text-2xl btn-3d animate-bounce border-2 border-white">
-                <i class="fas fa-bell"></i>
-                <span class="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">${totalUnread}</span>
+                <i class="fas fa-bell"></i><span class="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">${totalUnread}</span>
             </button>
         </div>
     `;
@@ -1062,16 +735,14 @@ window.renderChuongThongBao = function(unreadMail, unreadLeave) {
 };
 
 setInterval(() => {
-    if (window.currentUser && window.currentUser.role === 'admin') {
-        if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); }
-    } else {
-        window.hasCheckedAdminNoti = false; let bell = document.getElementById('adminNotificationBell'); if (bell) bell.remove();
-    }
+    if (window.currentUser && window.currentUser.role === 'admin') { if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); } } 
+    else { window.hasCheckedAdminNoti = false; let bell = document.getElementById('adminNotificationBell'); if (bell) bell.remove(); }
 }, 2000);
 
+// ==========================================
+// 12. TỰ ĐỘNG DỪNG NHẠC KHI MỞ BÀI KHÁC
+// ==========================================
 document.addEventListener('play', function(e) {
-    var audios = document.getElementsByTagName('audio');
-    for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); }
-    var videos = document.getElementsByTagName('video');
-    for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); }
+    var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); }
+    var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); }
 }, true);
