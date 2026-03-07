@@ -40,7 +40,7 @@ window.onload = async () => {
             if (u) loginStudent(u); else loginGuest(); 
         } else { loginGuest(); }
     } catch(e) { 
-        document.getElementById('connStatus').innerText = "Lỗi mạng hoặc Link API bị sai!"; 
+        document.getElementById('connStatus').innerText = "Lỗi mạng"; 
         document.getElementById('connStatus').className = "mt-4 text-xs font-bold text-red-500"; 
         loginGuest(); 
     }
@@ -70,7 +70,7 @@ window.login = async function() {
 
     if (Data.hs.length === 0) {
         try { Data.hs = await (await fetch(API_URL + "?type=students&t=" + Date.now())).json(); } 
-        catch(e) { document.getElementById('loader').style.display = 'none'; return alert("Lỗi mạng khi lấy dữ liệu học sinh!"); }
+        catch(e) { document.getElementById('loader').style.display = 'none'; return alert("Lỗi mạng khi lấy dữ liệu!"); }
     }
 
     // [ĐÃ FIX BẢO MẬT]: Bắt buộc so sánh khớp chính xác tuyệt đối SĐT Ba hoặc Mẹ
@@ -92,14 +92,14 @@ window.login = async function() {
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'check_admin', data: { pass: v } }) });
         const result = await response.json(); document.getElementById('loader').style.display = 'none';
-        if (result.status === "OK") { localStorage.setItem('role','admin'); loginAdmin(); } else { alert("❌ Số điện thoại không có trong danh sách hoặc Mật khẩu sai!"); }
+        if (result.status === "OK") { localStorage.setItem('role','admin'); loginAdmin(); } else { alert("Số điện thoại hoặc Mật khẩu sai!"); }
     } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng kiểm tra bảo mật!"); }
 };
 
 window.loginAdmin = function() { currentUser = { role: 'admin', name: "Thầy Hiển" }; setupUI(); renderDashboardAdmin(); };
 window.loginStudent = async function(u) { currentUser = { ...u, role: 'student' }; setupUI(); moThongBao(); setTimeout(checkSinhNhat, 1000); };
 window.logout = function() { 
-    if(confirm("Thầy/Trò có chắc chắn muốn đăng xuất không?")) {
+    if(confirm("Bạn có chắc chắn muốn đăng xuất không?")) {
         localStorage.removeItem('role'); localStorage.removeItem('uid'); window.isQuizDataLoaded = false; location.reload(); 
     }
 };
