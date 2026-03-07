@@ -1,6 +1,6 @@
 // ==========================================
-// FILE 3: FEATURES.JS (TRÁI TIM HỆ THỐNG - BẢN FULL HOÀN CHỈNH)
-// Tích hợp: Đa phương tiện (PDF, MP3, YT), Accordion, Lọc Rác, Vòng Quay Chuẩn
+// FILE: FEATURES.JS (TRÁI TIM HỆ THỐNG - BẢN FULL HOÀN CHỈNH)
+// Tích hợp: Đa phương tiện, Lọc Rác, Chuông Thông Báo Admin
 // ==========================================
 
 // Biến toàn cục riêng của Vòng quay
@@ -65,9 +65,7 @@ window.moGocHocTap = async function() {
     `; 
     
     function parseLogTime(timeStr) {
-        if(!timeStr) return 0;
-        let d = new Date(timeStr);
-        return !isNaN(d.getTime()) ? d.getTime() : 0; 
+        if(!timeStr) return 0; let d = new Date(timeStr); return !isNaN(d.getTime()) ? d.getTime() : 0; 
     }
 
     let studentsWithTime = Data.hs.map(s => {
@@ -83,10 +81,8 @@ window.moGocHocTap = async function() {
     });
 
     let eligibleStudents = studentsWithTime.filter(s => s.score > 1500); 
-    
     let sortedStudents = eligibleStudents.sort((a, b) => {
-        let scoreDiff = b.score - a.score;
-        if (scoreDiff !== 0) return scoreDiff;
+        let scoreDiff = b.score - a.score; if (scoreDiff !== 0) return scoreDiff;
         let timeA = a.achievedTime === 0 ? Infinity : a.achievedTime;
         let timeB = b.achievedTime === 0 ? Infinity : b.achievedTime;
         return timeA - timeB; 
@@ -108,10 +104,7 @@ window.moGocHocTap = async function() {
             
             return `
                 <div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 text-center flex justify-center">${rankIcon}</div>
-                        <div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div>
-                    </div>
+                    <div class="flex items-center gap-3"><div class="w-10 text-center flex justify-center">${rankIcon}</div><div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div></div>
                     <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div>
                 </div>
             `; 
@@ -119,10 +112,7 @@ window.moGocHocTap = async function() {
         
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
-            let myScore = Number(currentUser.score) || 0; 
-            let myRank = uniqueScores.indexOf(myScore) + 1;
-            if (myRank === 0) myRank = uniqueScores.length + 1; 
-            
+            let myScore = Number(currentUser.score) || 0; let myRank = uniqueScores.indexOf(myScore) + 1; if (myRank === 0) myRank = uniqueScores.length + 1; 
             if (myScore > 1500) { 
                 if (myRank <= 15) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
                 else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`; } 
@@ -130,11 +120,8 @@ window.moGocHocTap = async function() {
         } 
         leaderboardHtml = `
             <div class="mt-10 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in">
-                <div class="text-center mb-5">
-                    <h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3>
-                </div>
-                <div class="flex flex-col">${listHtml}</div>
-                ${personalMsg}
+                <div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div>
+                <div class="flex flex-col">${listHtml}</div>${personalMsg}
             </div>
         `; 
     } else { 
@@ -142,10 +129,7 @@ window.moGocHocTap = async function() {
         if (currentUser && currentUser.role === 'student') { personalMsgEmpty = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Hãy làm bài tập để trở thành người đầu tiên vượt mốc 1500 điểm nhé!</p></div>`; } 
         leaderboardHtml = `
             <div class="mt-10 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80">
-                <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i>
-                <p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p>
-                <p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>
-                ${personalMsgEmpty}
+                <i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i><p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p><p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>${personalMsgEmpty}
             </div>
         `; 
     } 
@@ -154,16 +138,13 @@ window.moGocHocTap = async function() {
 
 
 // ==========================================
-// 2. KHO QUẢN LÝ BÀI TẬP ADMIN (ACCORDION & FONT SOẠN THẢO)
+// 2. KHO QUẢN LÝ BÀI TẬP ADMIN (ACCORDION & CHỐNG MẤT ẢNH)
 // ==========================================
 window.quanLyNganHang = async function(sub, forceReload = false) { 
     closeMenu(); curSub = sub; 
     if (!forceReload && Data[sub] && Data[sub].length > 0) { window.renderGiaoDienKho(sub); return; } 
     document.getElementById('content').innerHTML = `
-        <div class="text-center mt-10">
-            <i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i>
-            <p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p>
-        </div>
+        <div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>
     `; 
     try { 
         const qs = await (await fetch(API_URL+"?type="+sub+"&t="+Date.now())).json(); 
@@ -178,19 +159,10 @@ window.renderGiaoDienKho = function(sub) {
     
     document.getElementById('content').innerHTML = `
         <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center">
-                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <h2 class="font-black text-xl text-indigo-900 uppercase">KHO ${sub === 'math' ? 'TOÁN' : 'T.VIỆT'}</h2>
-            </div>
-            <button onclick="window.renderFormCauHoi(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold btn-3d text-sm">
-                <i class="fas fa-plus mr-1"></i> Tạo câu mới
-            </button>
+            <div class="flex items-center"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">KHO ${sub === 'math' ? 'TOÁN' : 'T.VIỆT'}</h2></div>
+            <button onclick="window.renderFormCauHoi(null)" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold btn-3d text-sm"><i class="fas fa-plus mr-1"></i> Tạo câu mới</button>
         </div>
-        <select id="qFilter" onchange="window.filterQuestions()" class="w-full p-3 rounded-xl border-2 border-slate-200 mb-6 font-bold text-slate-700 outline-none focus:border-indigo-500">
-            ${filterOptions}
-        </select>
+        <select id="qFilter" onchange="window.filterQuestions()" class="w-full p-3 rounded-xl border-2 border-slate-200 mb-6 font-bold text-slate-700 outline-none focus:border-indigo-500">${filterOptions}</select>
         <div id="listQuestions" class="space-y-4"></div>
     `; 
     window.filterQuestions(); 
@@ -199,7 +171,6 @@ window.renderGiaoDienKho = function(sub) {
 window.filterQuestions = function() { 
     const val = document.getElementById("qFilter").value; 
     let list = val === 'all' ? Data[curSub] : Data[curSub].filter(q => String(q.group) === val); 
-    
     if (list.length === 0) { document.getElementById("listQuestions").innerHTML = '<p class="text-center text-slate-400 py-10">Trống</p>'; return; } 
     
     let grouped = {}; list.forEach(q => { if (q.group) { if (!grouped[q.group]) grouped[q.group] = []; grouped[q.group].push(q); } }); 
@@ -217,17 +188,10 @@ window.filterQuestions = function() {
             <div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 mb-4 fade-in overflow-hidden transition-all">
                 <div onclick="window.toggleGroupQuestions('${safeGrpId}')" class="flex items-center justify-between p-5 cursor-pointer hover:bg-indigo-50 transition select-none">
                     <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner">
-                            <i class="fas fa-layer-group"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-black text-xl text-slate-800 uppercase">${grp}</h3>
-                            <p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p>
-                        </div>
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner"><i class="fas fa-layer-group"></i></div>
+                        <div><h3 class="font-black text-xl text-slate-800 uppercase">${grp}</h3><p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p></div>
                     </div>
-                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
-                        <i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i>
-                    </div>
+                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i></div>
                 </div>
                 <div id="content_${safeGrpId}" class="hidden px-5 pb-5 pt-2 border-t-2 border-slate-50 bg-slate-50/50 space-y-3">
         `; 
@@ -240,19 +204,10 @@ window.filterQuestions = function() {
             html += `
                 <div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 transition relative shadow-sm">
                     <div class="flex justify-between items-start">
-                        <div class="flex gap-3 w-full pr-16">
-                            <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">${index + 1}</span>
-                            <div class="font-medium text-slate-700 text-base mt-1 overflow-hidden break-words w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mt-2">
-                                ${qText}
-                            </div>
-                        </div>
+                        <div class="flex gap-3 w-full pr-16"><span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">${index + 1}</span><div class="font-medium text-slate-700 text-base mt-1 overflow-hidden break-words w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mt-2">${qText}</div></div>
                         <div class="flex gap-2 absolute top-4 right-4">
-                            <button onclick="window.renderFormCauHoi('${q.id}')" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Sửa">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="window.xoaCauHoi('${q.id}')" class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm" title="Xóa">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            <button onclick="window.renderFormCauHoi('${q.id}')" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Sửa"><i class="fas fa-edit"></i></button>
+                            <button onclick="window.xoaCauHoi('${q.id}')" class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm" title="Xóa"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>
                 </div>
@@ -270,7 +225,7 @@ window.toggleGroupQuestions = function(groupId) {
 };
 
 // ==========================================
-// 3. BỘ CÔNG CỤ SOẠN THẢO RICH TEXT EDITOR SIÊU CẤP
+// 3. BỘ CÔNG CỤ SOẠN THẢO RICH TEXT EDITOR ĐA PHƯƠNG TIỆN
 // ==========================================
 window.getRichTextToolbar = function(targetId) {
     return `
@@ -311,11 +266,9 @@ window.getRichTextToolbar = function(targetId) {
     `;
 };
 
-// HÀM CHÈN FILE ÂM THANH (ĐÃ FIX CANH GIỮA VÀ ĐỀU 2 BÊN)
 window.chenAmThanh = function(targetId) {
     const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:");
     if (!url) return;
-    
     const audioTitle = prompt("Nhập tiêu đề cho bài nghe (Ví dụ: Nghe đoạn hội thoại sau):", "BÀI NGHE AUDIO");
     if (!audioTitle) return;
 
@@ -330,69 +283,48 @@ window.chenAmThanh = function(targetId) {
         if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
         audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; display: block; margin: 0 auto; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt của con không hỗ trợ nghe nhạc.</audio></div><br>`;
     }
-    
     document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
 };
-// HÀM CHÈN FILE PDF (GIỮ NGUYÊN CHIỀU CAO GỌN GÀNG, CÓ CHO PHÉP ĐỔI TÊN)
+
 window.chenPDF = function(targetId) {
     const url = prompt("Dán link file PDF từ Google Drive vào đây:");
     if (!url) return;
-    
-    // Khung hỏi tên hiển thị của tài liệu
     const pdfTitle = prompt("Nhập tên hiển thị cho tài liệu này (Ví dụ: Đọc tài liệu sau):", "TÀI LIỆU PDF");
     if (!pdfTitle) return;
 
     let pdfSrc = url;
     let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
     if (driveMatch) { pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; }
-
-    // Trả lại chiều cao cố định height="500px" cho gọn gàng
     const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase;"><i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>${pdfTitle}</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
-    
-    document.getElementById(targetId).focus(); 
-    document.execCommand('insertHTML', false, pdfHtml);
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, pdfHtml);
 };
-// HÀM CHÈN VIDEO (CÓ THÊM BƯỚC HỎI KÍCH THƯỚC)
+
 window.chenVideoYouTube = function(targetId) {
     const url = prompt("Dán link Video (từ YouTube, Google Drive, hoặc GitHub) vào đây:");
     if (!url) return;
-    
-    // Thêm câu hỏi để thầy tùy chỉnh kích thước video
     const sizeInput = prompt("Thầy muốn video chiếm bao nhiêu phần chiều ngang?\n(Nhập số: 100, 80, 60 hoặc 40)", "100");
     const videoWidth = sizeInput ? sizeInput + "%" : "100%";
     
     let videoHtml = "";
-
-    // Nhận diện link
     const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const ytMatch = url.match(ytRegExp);
     const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-
-    // Bố cục chung để canh giữa và thu nhỏ theo ý thầy
     const wrapperStyle = `margin: 15px auto; width: ${videoWidth}; max-width: 800px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 12px; overflow: hidden;`;
 
     if (ytMatch && ytMatch[2].length === 11) {
         let videoId = ytMatch[2];
         videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${videoId}" allowfullscreen loading="lazy"></iframe></div><br>`;
-    } 
-    else if (driveMatch) {
+    } else if (driveMatch) {
         let driveId = driveMatch[1];
         videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveId}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`;
-    } 
-    else if (url.includes(".mp4") || url.includes("github.com")) {
+    } else if (url.includes(".mp4") || url.includes("github.com")) {
         let videoSrc = url;
-        if (url.includes("github.com") && url.includes("/blob/")) { 
-            videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); 
-        }
+        if (url.includes("github.com") && url.includes("/blob/")) { videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); }
         videoHtml = `<div contenteditable="false" style="${wrapperStyle} padding: 10px; background: #f8fafc; border: 2px solid #e2e8f0; text-align: center;"><video controls style="width: 100%; border-radius: 8px; outline: none;"><source src="${videoSrc}" type="video/mp4">Trình duyệt không hỗ trợ.</video></div><br>`;
-    } 
-    else {
-        alert("Link Video không hợp lệ! Vui lòng copy đúng link từ YouTube, Google Drive hoặc file đuôi .mp4");
-        return;
+    } else {
+        alert("Link Video không hợp lệ! Vui lòng copy đúng link từ YouTube, Google Drive hoặc file đuôi .mp4"); return;
     }
-    
-    document.getElementById(targetId).focus(); 
-    document.execCommand('insertHTML', false, videoHtml);
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, videoHtml);
 };
 
 window.chenLinkVaoEditor = function(targetId) {
@@ -630,7 +562,7 @@ window.moVongQuay = async function() {
             <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
             <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</span></p></div>
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -30deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
-            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-slate-400 to-slate-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition hover:scale-[1.02] cursor-pointer"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
         </div>
     `;
 
@@ -776,7 +708,7 @@ window.xemLoiSai = function(studentId, subjectCode, group) {
 };
 
 // ==========================================
-// 7. THƯ BÍ MẬT & ĐƠN XIN PHÉP (HỌC SINH) & QUẢN LÝ (ADMIN)
+// 7. THƯ BÍ MẬT & ĐƠN XIN PHÉP
 // ==========================================
 window.moHopThuBiMat = function() {
     if(!currentUser) return showLogin(); closeMenu();
@@ -820,10 +752,20 @@ window.changeLeaveType = function() { const type = document.getElementById('lTyp
 
 window.sendLeave = async function() { const d = document.getElementById('lDate').value; const r = document.getElementById('lReason').value; const type = document.getElementById('lType').value; const session = document.getElementById('lSession').value; if(!d || !r) return alert("Vui lòng chọn Ngày nghỉ và Nhập Lý do!"); const combinedType = `${type} (${session})`; document.getElementById('loader').style.display='flex'; try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:combinedType, reason:r } }) }); alert("Gửi đơn xin phép thành công! Giáo viên đã nhận được."); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); } document.getElementById('loader').style.display='none'; };
 
+// ==========================================
+// 8. QUẢN LÝ ADMIN (THƯ & ĐƠN)
+// ==========================================
 window.moQuanLyThu = async function() { 
     closeMenu(); document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải thư...</p></div>`; 
     try {
         const letters = await (await fetch(API_URL + "?type=mailbox&t=" + Date.now())).json();
+        
+        // ĐÁNH DẤU ĐÃ ĐỌC VÀ TẮT CHUÔNG
+        if (currentUser && currentUser.role === 'admin') {
+            localStorage.setItem('admin_read_mail_' + currentUser.id, letters.length);
+            window.kiemTraThongBaoAdmin();
+        }
+
         let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-pink-600 uppercase">THƯ TỪ HỌC SINH</h2></div>`;
         if(letters.length === 0) { html += `<div class="text-center py-10 text-slate-400 font-bold"><i class="fas fa-comment-dots text-5xl mb-3 text-slate-200"></i><br>Không có thư nào.</div>`; } 
         else {
@@ -842,6 +784,13 @@ window.moQuanLyThu = async function() {
 window.moDonTu = async function() { 
     closeMenu(); document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</h2>`; 
     const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json(); 
+    
+    // ĐÁNH DẤU ĐÃ ĐỌC VÀ TẮT CHUÔNG
+    if (currentUser && currentUser.role === 'admin') {
+        localStorage.setItem('admin_read_leave_' + currentUser.id, leaves.length);
+        window.kiemTraThongBaoAdmin();
+    }
+
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-red-600 uppercase">HỘP THƯ ĐƠN TỪ</h2></div>`; 
     if (leaves.length === 0) { html += `<p class="text-center text-slate-400 font-medium py-10"><i class="fas fa-check-circle text-4xl mb-3 text-green-200 block"></i>Lớp đi học đầy đủ, không có đơn xin phép nào.</p>`; } 
     else { 
@@ -859,6 +808,9 @@ window.moDonTu = async function() {
     document.getElementById('content').innerHTML = html; 
 };
 
+// ==========================================
+// 9. QUẢN LÝ HỌC SINH
+// ==========================================
 window.chuyenTrangQuanLy = function() { closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="window.viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); document.getElementById('content').innerHTML = html + "</div>"; };
 
 window.viewProfile = function(id) { 
@@ -870,7 +822,7 @@ window.viewProfile = function(id) {
 };
 
 // ==========================================
-// 8. CÔNG CỤ CHUNG & ĐỒNG BỘ
+// 10. CÔNG CỤ CHUNG & ĐỒNG BỘ
 // ==========================================
 window.checkSinhNhat = function() {
     if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return;
@@ -896,24 +848,61 @@ window.dongBoDuLieu = async function() {
 };
 
 // ==========================================
-// TỰ ĐỘNG DỪNG NHẠC/VIDEO KHI MỞ BÀI MỚI
+// 11. HỆ THỐNG TRỢ LÝ ẢO (TỰ ĐỘNG BÁO CHUÔNG CHO THẦY)
+// ==========================================
+window.kiemTraThongBaoAdmin = async function() {
+    if (!currentUser || currentUser.role !== 'admin') return;
+    try {
+        const [mailRes, leaveRes] = await Promise.all([ fetch(API_URL + "?type=mailbox&t=" + Date.now()), fetch(API_URL + "?type=absent_list&t=" + Date.now()) ]);
+        const mails = await mailRes.json();
+        const leaves = await leaveRes.json();
+        
+        let readMail = parseInt(localStorage.getItem('admin_read_mail_' + currentUser.id) || "0");
+        let readLeave = parseInt(localStorage.getItem('admin_read_leave_' + currentUser.id) || "0");
+        
+        let unreadMail = mails.length - readMail; if (unreadMail < 0) unreadMail = 0;
+        let unreadLeave = leaves.length - readLeave; if (unreadLeave < 0) unreadLeave = 0;
+        
+        window.renderChuongThongBao(unreadMail, unreadLeave);
+    } catch(e) { console.log("Lỗi tải thông báo:", e); }
+};
+
+window.renderChuongThongBao = function(unreadMail, unreadLeave) {
+    let oldBell = document.getElementById('adminNotificationBell'); if (oldBell) oldBell.remove();
+    let totalUnread = unreadMail + unreadLeave;
+    if (totalUnread <= 0) return; 
+    
+    let bellHtml = `
+        <div id="adminNotificationBell" class="fixed bottom-8 right-6 z-[80] flex flex-col items-end fade-in">
+            <div id="adminNotiPopup" class="hidden bg-white p-4 rounded-2xl shadow-2xl border border-slate-100 mb-3 w-64 origin-bottom-right transition-all">
+                <h4 class="font-black text-slate-700 mb-3 border-b pb-2"><i class="fas fa-bell text-yellow-500 mr-2 animate-pulse"></i>Thông báo mới</h4>
+                ${unreadMail > 0 ? `<div onclick="window.moQuanLyThu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-pink-50 rounded-xl mb-2 cursor-pointer hover:bg-pink-100 transition"><span class="font-bold text-pink-700 text-sm"><i class="fas fa-envelope mr-2"></i>Thư bí mật</span><span class="bg-pink-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadMail}</span></div>` : ''}
+                ${unreadLeave > 0 ? `<div onclick="window.moDonTu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition"><span class="font-bold text-red-700 text-sm"><i class="fas fa-file-signature mr-2"></i>Đơn xin phép</span><span class="bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadLeave}</span></div>` : ''}
+            </div>
+            <button onclick="document.getElementById('adminNotiPopup').classList.toggle('hidden')" class="relative w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-[0_8px_30px_rgb(245,158,11/0.5)] hover:scale-110 transition flex items-center justify-center text-white text-2xl btn-3d animate-bounce border-2 border-white">
+                <i class="fas fa-bell"></i>
+                <span class="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">${totalUnread}</span>
+            </button>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', bellHtml);
+};
+
+// Theo dõi để kích hoạt chuông 1 lần duy nhất khi Thầy giáo đăng nhập
+setInterval(() => {
+    if (window.currentUser && window.currentUser.role === 'admin') {
+        if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); }
+    } else {
+        window.hasCheckedAdminNoti = false; let bell = document.getElementById('adminNotificationBell'); if (bell) bell.remove();
+    }
+}, 2000);
+
+// ==========================================
+// 12. TỰ ĐỘNG DỪNG NHẠC/VIDEO KHI MỞ BÀI KHÁC
 // ==========================================
 document.addEventListener('play', function(e) {
-    // Tìm tất cả các thẻ audio đang có trên trang
     var audios = document.getElementsByTagName('audio');
-    for (var i = 0; i < audios.length; i++) {
-        // Nếu audio này không phải là cái vừa bấm thì dừng nó lại
-        if (audios[i] != e.target) {
-            audios[i].pause();
-        }
-    }
-    
-    // Tìm tất cả các thẻ video đang có trên trang
+    for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); }
     var videos = document.getElementsByTagName('video');
-    for (var i = 0; i < videos.length; i++) {
-        // Nếu video này không phải là cái vừa bấm thì dừng nó lại
-        if (videos[i] != e.target) {
-            videos[i].pause();
-        }
-    }
+    for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); }
 }, true);
