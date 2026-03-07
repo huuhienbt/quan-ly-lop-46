@@ -593,8 +593,19 @@ window.finishQuiz = async function() {
 };
 
 // ==========================================
-// 5. VÒNG QUAY MAY MẮN (GACHA TỶ LỆ CHUẨN)
+// 5. VÒNG QUAY MAY MẮN (GACHA & BẢNG VÀNG LỊCH SỬ)
 // ==========================================
+let isSpinning = false;
+const PRIZES = [
+    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
+    { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
+    { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
+    { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
+    { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài nhé!", icon: "🎫" },
+    { id: "miss", text: "Mất Lượt", color: "#94a3b8", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt.", icon: "😢" },
+    { id: "chest", text: "Kho Báu", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Wow! Con đã mở được Rương Kho Báu!", icon: "💎" }
+];
+
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); closeMenu(); 
     let todayStr = new Date().toLocaleDateString('vi-VN');
@@ -613,7 +624,11 @@ window.moVongQuay = async function() {
             <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
             <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</span></p></div>
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
-            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none mb-6"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
+            
+            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all">
+                <div class="text-center text-orange-400 text-sm font-bold"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách trúng thưởng...</div>
+            </div>
         </div>
     `;
 
@@ -627,13 +642,66 @@ window.checkSpinStatus = function(spinLog, todayStr) {
     let hasSpunTodayOnServer = Data.log.some(l => String(l.id) === String(currentUser.id) && l.subject === "LuckySpin" && String(l.group).includes(todayStr));
     if (hasSpunTodayOnServer) { spinLog.usedFree = true; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); }
     window.restoreSpinButton(spinLog);
+    window.renderSpinHistory(todayStr); // Gọi hàm hiển thị bảng vàng
 };
 
 window.restoreSpinButton = function(spinLog) {
     let btnUpdate = document.getElementById('btnSpin'); if (!btnUpdate) return;
     let canSpinNow = !spinLog.usedFree || spinLog.extra > 0;
-    if (canSpinNow) { btnUpdate.className = "inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition hover:scale-[1.02] cursor-pointer"; btnUpdate.innerText = spinLog.usedFree ? `BẮT ĐẦU (+${spinLog.extra} LƯỢT)` : "BẮT ĐẦU"; } 
-    else { btnUpdate.className = "inline-block bg-gradient-to-r from-slate-400 to-slate-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg text-xl transition opacity-50 pointer-events-none"; btnUpdate.innerText = "ĐÃ HẾT LƯỢT HÔM NAY"; }
+    if (canSpinNow) { btnUpdate.className = "inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition hover:scale-[1.02] cursor-pointer mb-6"; btnUpdate.innerText = spinLog.usedFree ? `BẮT ĐẦU (+${spinLog.extra} LƯỢT)` : "BẮT ĐẦU"; } 
+    else { btnUpdate.className = "inline-block bg-gradient-to-r from-slate-400 to-slate-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg text-xl transition opacity-50 pointer-events-none mb-6"; btnUpdate.innerText = "ĐÃ HẾT LƯỢT HÔM NAY"; }
+};
+
+// HÀM MỚI: TẠO GIAO DIỆN CHỮ CHẠY CHO LỊCH SỬ QUAY
+window.renderSpinHistory = function(todayStr) {
+    let container = document.getElementById('spinHistoryContainer');
+    if (!container) return;
+
+    // Lọc ra các lượt quay trong ngày hôm nay
+    let todayLogs = Data.log.filter(l => l.subject === "LuckySpin" && String(l.group).includes(todayStr));
+    
+    if (todayLogs.length === 0) {
+        container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`;
+        return;
+    }
+
+    // Sắp xếp mới nhất lên đầu
+    todayLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
+    
+    let listItems = todayLogs.map(l => {
+        let hs = Data.hs.find(x => String(x.id) === String(l.id));
+        let name = hs ? hs.name : "Một bạn";
+        // Cắt bỏ phần chữ thừa để lấy đúng tên quà
+        let prizeText = (l.details || "").replace("Quay trúng: ", "").split(" (")[0]; 
+        
+        // Làm nổi bật phần thưởng xịn
+        let textStyle = "text-orange-600 font-bold";
+        if(prizeText.includes("Kho Báu")) textStyle = "text-red-600 font-black animate-pulse";
+        if(prizeText.includes("Mất Lượt") || prizeText.includes("-10")) textStyle = "text-slate-400 font-medium";
+
+        return `<div class="py-2.5 border-b border-orange-100/50 last:border-0 text-[13px] text-slate-600 flex justify-between items-center"><span class="font-black text-blue-600 truncate mr-2"><i class="fas fa-user-circle text-blue-300 mr-1"></i>${name}</span> <span class="text-right ${textStyle}">${prizeText}</span></div>`;
+    }).join('');
+
+    // Tính tốc độ chạy dựa trên số lượng người quay
+    let animDuration = Math.max(todayLogs.length * 2.5, 10);
+
+    container.innerHTML = `
+        <div class="bg-orange-50/50 rounded-2xl border border-orange-200 relative overflow-hidden shadow-inner h-40 group">
+            <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-orange-50 to-transparent z-10 pointer-events-none"></div>
+            <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-orange-50 to-transparent z-10 pointer-events-none"></div>
+            <h3 class="text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-100 py-2 text-center border-b border-orange-200 relative z-20 shadow-sm"><i class="fas fa-broadcast-tower mr-1"></i> Bảng Vàng Hôm Nay</h3>
+            
+            <div class="overflow-hidden h-[120px] relative px-4">
+                <div class="animate-scroll-up flex flex-col group-hover:[animation-play-state:paused] pt-2">
+                    ${listItems}
+                    ${listItems} </div>
+            </div>
+            <style>
+                @keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+                .animate-scroll-up { animation: scrollUp ${animDuration}s linear infinite; }
+            </style>
+        </div>
+    `;
 };
 
 window.thucHienQuay = async function() {
@@ -689,7 +757,14 @@ window.thucHienQuay = async function() {
 
         window.showPrizeModal(finalPrize);
         if (finalPrize.netScore !== 0) { currentUser.score = Number(currentUser.score) + finalPrize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
-        try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: finalPrize.netScore, details: "Quay trúng: " + finalPrize.text + (finalPrize.id === 'chest' ? " ("+finalPrize.msg+")" : "") } }) }); Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: finalPrize.netScore, time: new Date().toISOString() }); } catch(e) {}
+        
+        try { 
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: finalPrize.netScore, details: "Quay trúng: " + finalPrize.text + (finalPrize.id === 'chest' ? " ("+finalPrize.msg+")" : "") } }) }); 
+            Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: finalPrize.netScore, time: new Date().toISOString(), details: "Quay trúng: " + finalPrize.text }); 
+            // Cập nhật ngay Bảng vàng sau khi quay xong
+            window.renderSpinHistory(todayStr);
+        } catch(e) {}
+        
         if (finalPrize.netScore > 0 || finalPrize.extraSpin > 0 || finalPrize.id === 'redo' || finalPrize.id === 'chest') { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
         window.restoreSpinButton(spinLog);
     }, 4000);
@@ -703,6 +778,31 @@ window.showRiddleModal = function(todayStr, uniqueGroup) {
     document.body.appendChild(overlay); setTimeout(() => document.getElementById('riddleAns').focus(), 100);
 };
 
+window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
+    let ansStr = document.getElementById('riddleAns').value; if(!ansStr) return alert("Con chưa nhập đáp án kìa!"); document.getElementById('riddleModal').remove();
+    let prize = { icon: "", text: "Giải Đố", color: "", msg: "", netScore: 0 };
+    if (parseInt(ansStr) === correctAns) { prize.netScore = 20; prize.msg = "Giỏi quá! Con tính đúng và được thưởng 20 điểm."; prize.icon = "🎉"; prize.color = "#34d399"; } 
+    else { prize.msg = `Tiếc quá! Đáp án đúng là ${correctAns}. Hãy cẩn thận hơn ở lần sau nhé!`; prize.icon = "😅"; prize.color = "#f87171"; }
+    
+    if (prize.netScore !== 0) { currentUser.score = Number(currentUser.score) + prize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
+    window.showPrizeModal(prize);
+    
+    try { 
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: prize.netScore, details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" } }) }); 
+        Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: prize.netScore, time: new Date().toISOString(), details: "Quay trúng: Giải đố (" + prize.netScore + "đ)" }); 
+        // Cập nhật lại Bảng vàng
+        window.renderSpinHistory(todayStr);
+    } catch(e) {}
+    
+    if (prize.netScore > 0) { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
+    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id)); window.restoreSpinButton(spinLog);
+};
+
+window.showPrizeModal = function(prize) {
+    let overlay = document.createElement('div'); overlay.id = "prizeModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
+    overlay.innerHTML = `<div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 animate-[cascadeDrop_0.5s_ease-out_forwards]" style="border-color: ${prize.color}"><div class="text-7xl mb-4 animate-bounce">${prize.icon}</div><h3 class="text-2xl font-black text-slate-800 mb-2">${prize.text}</h3><p class="text-slate-600 font-bold mb-6 text-sm">${prize.msg}</p><button onclick="document.getElementById('prizeModal').remove()" class="w-full text-white py-3 rounded-xl font-black shadow-md transition hover:opacity-80" style="background-color: ${prize.color}">ĐÓNG</button></div>`;
+    document.body.appendChild(overlay);
+};
 window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
     let ansStr = document.getElementById('riddleAns').value; if(!ansStr) return alert("Con chưa nhập đáp án kìa!"); document.getElementById('riddleModal').remove();
     let prize = { icon: "", text: "Giải Đố", color: "", msg: "", netScore: 0 };
