@@ -439,7 +439,7 @@ window.moVongQuay = async function() {
             <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</span></p></div>
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
             <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none mb-6"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
-            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"><div class="text-center text-orange-400 text-sm font-bold"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</div></div>
+            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"><div class="text-center text-orange-400 text-sm font-bold"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách trúng thưởng...</div></div>
         </div>
     `;
 
@@ -461,16 +461,10 @@ window.restoreSpinButton = function(spinLog) {
     else { btnUpdate.className = "inline-block bg-gradient-to-r from-slate-400 to-slate-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg text-xl transition opacity-50 pointer-events-none mb-6"; btnUpdate.innerText = "ĐÃ HẾT LƯỢT HÔM NAY"; }
 };
 
-// HÀM CẬP NHẬT: TẠO GIAO DIỆN CHỮ CHẠY CHO LỊCH SỬ QUAY (ĐÃ XỬ LÝ LẶP TÊN ĐẸP MẮT HƠN)
 window.renderSpinHistory = function(todayStr) {
     let container = document.getElementById('spinHistoryContainer'); if (!container) return;
     let todayLogs = Data.log.filter(l => l.subject === "LuckySpin" && String(l.group).includes(todayStr));
-    
-    if (todayLogs.length === 0) { 
-        container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`; 
-        return; 
-    }
-    
+    if (todayLogs.length === 0) { container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`; return; }
     todayLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
     
     let listItems = todayLogs.map(l => {
@@ -482,19 +476,6 @@ window.renderSpinHistory = function(todayStr) {
         return `<div class="py-2.5 border-b border-orange-100/50 last:border-0 text-[13px] text-slate-600 flex justify-between items-center"><span class="font-black text-blue-600 truncate mr-2"><i class="fas fa-user-circle text-blue-300 mr-1"></i>${name}</span> <span class="text-right ${textStyle}">${prizeText}</span></div>`;
     }).join('');
 
-    // XỬ LÝ KHOẢNG CÁCH NẾU DANH SÁCH QUÁ NGẮN
-    let spacer = todayLogs.length < 4 ? `<div class="py-4 text-center text-orange-300 text-[11px] font-bold italic border-b border-orange-100/50">... chờ các bạn khác ...</div>` : "";
-
-    let animDuration = Math.max(todayLogs.length * 2.5, 10);
-    container.innerHTML = `
-        <div class="bg-orange-50/50 rounded-2xl border border-orange-200 relative overflow-hidden shadow-inner h-40 group">
-            <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-orange-50 to-transparent z-10 pointer-events-none"></div><div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-orange-50 to-transparent z-10 pointer-events-none"></div>
-            <h3 class="text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-100 py-2 text-center border-b border-orange-200 relative z-20 shadow-sm"><i class="fas fa-gift mr-1"></i> Trạm Nhận Quà</h3>
-            <div class="overflow-hidden h-[120px] relative px-4"><div class="animate-scroll-up flex flex-col group-hover:[animation-play-state:paused] pt-2">${listItems}${spacer}${listItems}${spacer}</div></div>
-            <style>@keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } } .animate-scroll-up { animation: scrollUp ${animDuration}s linear infinite; }</style>
-        </div>
-    `;
-};
     let animDuration = Math.max(todayLogs.length * 2.5, 10);
     container.innerHTML = `
         <div class="bg-orange-50/50 rounded-2xl border border-orange-200 relative overflow-hidden shadow-inner h-40 group">
