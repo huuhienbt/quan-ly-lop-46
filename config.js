@@ -1,5 +1,5 @@
 // ==========================================
-// FILE 1: CONFIG.JS (KẾT NỐI, KHỞI TẠO, ĐĂNG NHẬP)
+// FILE 1: CONFIG.JS (KẾT NỐI, KHỞI TẠO, ĐĂNG NHẬP BẢO MẬT)
 // ==========================================
 
 const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
@@ -47,9 +47,9 @@ window.onload = async () => {
 };
 
 // --- XỬ LÝ ĐĂNG NHẬP ---
-function loginGuest() { currentUser = null; setupUI(); moThongBao(); }
+window.loginGuest = function() { currentUser = null; setupUI(); moThongBao(); };
 
-function showLogin() { 
+window.showLogin = function() { 
     closeMenu(); document.getElementById('mainApp').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); 
     if(!document.getElementById('btnBackGuest')) {
         const loginForm = document.querySelector('#loginScreen > div'); 
@@ -61,9 +61,9 @@ function showLogin() {
             loginForm.appendChild(btn);
         }
     }
-}
+};
 
-async function login() {
+window.login = async function() {
     const v = document.getElementById('inputLogin').value.trim();
     if(!v) return alert("Vui lòng nhập SĐT hoặc Mật khẩu!");
     document.getElementById('loader').style.display = 'flex';
@@ -73,16 +73,33 @@ async function login() {
         catch(e) { document.getElementById('loader').style.display = 'none'; return alert("Lỗi mạng khi lấy dữ liệu học sinh!"); }
     }
 
-    const u = Data.hs.find(s => s.fatherPhone.includes(v) || s.motherPhone.includes(v));
-    if(u) { localStorage.setItem('role','student'); localStorage.setItem('uid',u.id); loginStudent(u); return; }
+    // [ĐÃ FIX BẢO MẬT]: Bắt buộc so sánh khớp chính xác tuyệt đối SĐT Ba hoặc Mẹ
+    const u = Data.hs.find(x => {
+        let sdtBa = String(x.fatherPhone || "").trim();
+        let sdtMe = String(x.motherPhone || "").trim();
+        return (v === sdtBa && sdtBa !== "") || (v === sdtMe && sdtMe !== "");
+    });
 
+    if(u) { 
+        document.getElementById('loader').style.display = 'none';
+        localStorage.setItem('role','student'); 
+        localStorage.setItem('uid',u.id); 
+        loginStudent(u); 
+        return; 
+    }
+
+    // Nếu không phải học sinh, kiểm tra mật khẩu Admin qua Google App Script
     try {
         const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'check_admin', data: { pass: v } }) });
         const result = await response.json(); document.getElementById('loader').style.display = 'none';
-        if (result.status === "OK") { localStorage.setItem('role','admin'); loginAdmin(); } else { alert("Sai SĐT hoặc mật khẩu!"); }
+        if (result.status === "OK") { localStorage.setItem('role','admin'); loginAdmin(); } else { alert("❌ Số điện thoại không có trong danh sách hoặc Mật khẩu sai!"); }
     } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng kiểm tra bảo mật!"); }
-}
+};
 
-function loginAdmin() { currentUser = { role: 'admin', name: "Thầy Hiển" }; setupUI(); renderDashboardAdmin(); }
-async function loginStudent(u) { currentUser = { ...u, role: 'student' }; setupUI(); moThongBao(); setTimeout(checkSinhNhat, 1000); }
-function logout() { localStorage.removeItem('role'); localStorage.removeItem('uid'); window.isQuizDataLoaded = false; location.reload(); }
+window.loginAdmin = function() { currentUser = { role: 'admin', name: "Thầy Hiển" }; setupUI(); renderDashboardAdmin(); };
+window.loginStudent = async function(u) { currentUser = { ...u, role: 'student' }; setupUI(); moThongBao(); setTimeout(checkSinhNhat, 1000); };
+window.logout = function() { 
+    if(confirm("Thầy/Trò có chắc chắn muốn đăng xuất không?")) {
+        localStorage.removeItem('role'); localStorage.removeItem('uid'); window.isQuizDataLoaded = false; location.reload(); 
+    }
+};
