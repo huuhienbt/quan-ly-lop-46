@@ -1,17 +1,18 @@
 // ==========================================
 // FILE: FEATURES.JS (TRÁI TIM HỆ THỐNG - BẢN FULL HOÀN CHỈNH)
-// Tích hợp: Đa phương tiện, Lọc Rác, Chuông Thông Báo Admin
+// Tích hợp: Đa phương tiện, Lọc Rác, Chuông Thông Báo Admin, Vòng Quay Gacha, Thưởng Tốc Độ
 // ==========================================
 
-// Biến toàn cục riêng của Vòng quay
+// Biến toàn cục riêng của Vòng quay (7 Ô)
 let isSpinning = false;
 const PRIZES = [
     { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
     { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
     { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
-    { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài tập điểm thấp nhé!", icon: "🎫" },
-    { id: "miss", text: "Mất Lượt", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt. Cố gắng ở lượt quay sau nhé!", icon: "😢" }
+    { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài nhé!", icon: "🎫" },
+    { id: "miss", text: "Mất Lượt", color: "#94a3b8", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt.", icon: "😢" },
+    { id: "chest", text: "Kho Báu", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Wow! Con đã mở được Rương Kho Báu!", icon: "💎" }
 ];
 
 // ==========================================
@@ -255,11 +256,11 @@ window.getRichTextToolbar = function(targetId) {
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
             <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded shadow-sm hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200" title="Chèn Link"><i class="fas fa-link"></i> Link</button>
             <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200" title="Chèn ảnh"><i class="fas fa-image"></i> Ảnh</button>
-            <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded shadow-sm hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200" title="Chèn Video YouTube"><i class="fab fa-youtube"></i> Video</button>
+            <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded shadow-sm hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200" title="Chèn Video"><i class="fab fa-youtube"></i> Video</button>
             <button onclick="window.chenAmThanh('${targetId}')" class="px-2 h-8 bg-green-50 rounded shadow-sm hover:bg-green-100 text-green-700 font-bold text-xs flex items-center gap-1 border border-green-200" title="Chèn File Nghe MP3"><i class="fas fa-music"></i> Nghe</button>
             <button onclick="window.chenPDF('${targetId}')" class="px-2 h-8 bg-orange-50 rounded shadow-sm hover:bg-orange-100 text-orange-700 font-bold text-xs flex items-center gap-1 border border-orange-200" title="Chèn File PDF"><i class="fas fa-file-pdf"></i> PDF</button>
             
-            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Chỉnh cỡ ảnh/video">
+            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1" title="Chỉnh cỡ ảnh">
                 <option value="">Cỡ ảnh...</option><option value="30%">Thu nhỏ 30%</option><option value="60%">Vừa 60%</option><option value="100%">Phóng to 100%</option>
             </select>
         </div>
@@ -451,7 +452,7 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI TẬP HỌC SINH
+// 4. TIẾN TRÌNH LÀM BÀI TẬP & THƯỞNG TỐC ĐỘ CHO HỌC SINH
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); curSub = sub; 
@@ -531,21 +532,68 @@ window.checkAns = function(el, selected, correct, index) {
     setTimeout(() => window.renderQuestion(index + 1), 1200); 
 };
 
-window.startTimer = function(seconds) { clearInterval(timer); let t = seconds; timer = setInterval(() => { let m = Math.floor(t / 60), s = t % 60; document.getElementById('quizTimer').innerText = `${m}:${s < 10 ? '0' + s : s}`; if (t <= 0) { clearInterval(timer); alert("Hết giờ làm bài!"); window.finishQuiz(); } t--; }, 1000); };
+window.startTimer = function(seconds) { 
+    clearInterval(timer); 
+    window.totalQuizTime = seconds;
+    window.remainingQuizTime = seconds;
+    
+    timer = setInterval(() => { 
+        let m = Math.floor(window.remainingQuizTime / 60), s = window.remainingQuizTime % 60; 
+        document.getElementById('quizTimer').innerText = `${m}:${s < 10 ? '0' + s : s}`; 
+        
+        if (window.remainingQuizTime <= 0) { 
+            clearInterval(timer); alert("Hết giờ làm bài!"); window.finishQuiz(); 
+        } 
+        window.remainingQuizTime--; 
+    }, 1000); 
+};
 
 window.finishQuiz = async function() { 
-    clearInterval(timer); const maxPossibleScore = quiz.length * 10; 
-    if (score > 0 && score === maxPossibleScore) { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); } 
-    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-10 drop-shadow-sm">${score}</p><button onclick="window.loadSubject(curSub)" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition">HOÀN TẤT & TRỞ VỀ</button></div>`; 
+    clearInterval(timer); 
+    const maxPossibleScore = quiz.length * 10; 
+    let timeTaken = window.totalQuizTime - window.remainingQuizTime;
+    let halfTime = window.totalQuizTime / 2;
+    
+    let extraSpinsEarned = 0;
+    let rewardMessage = "";
+
+    if (score > 0 && score === maxPossibleScore) { 
+        let previousMax = Data.log.find(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp && Number(l.score) === maxPossibleScore);
+        
+        if (!previousMax && currentUser.role === 'student') {
+            if (timeTaken <= halfTime) {
+                extraSpinsEarned = 2;
+                rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ! Đúng 100% siêu nhanh. Con được thưởng <b>+2 Lượt quay</b>!</p></div>`;
+            } else {
+                extraSpinsEarned = 1;
+                rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! Đúng 100%. Con được thưởng <b>+1 Lượt quay</b>!</p></div>`;
+            }
+            let todayStr = new Date().toLocaleDateString('vi-VN');
+            let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+            if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
+            spinLog.extra += extraSpinsEarned;
+            localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+            
+        } else if (previousMax && currentUser.role === 'student') {
+            rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`;
+        }
+
+        var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); 
+    } 
+    
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${rewardMessage}<button onclick="window.loadSubject(curSub)" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
+    
     if(currentUser.role === 'student') { 
         let submitTime = new Date().toISOString();
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score, details: wrongAnswersLog.join('') } }) }); 
-        Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, time: submitTime, details: wrongAnswersLog.join('') }); 
+        let detailsToSave = wrongAnswersLog.join('');
+        if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score, details: detailsToSave } }) }); 
+        Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, time: submitTime, details: detailsToSave }); 
     } 
 };
 
 // ==========================================
-// 5. VÒNG QUAY MAY MẮN
+// 5. VÒNG QUAY MAY MẮN (GACHA TỶ LỆ CHUẨN)
 // ==========================================
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); closeMenu(); 
@@ -553,16 +601,19 @@ window.moVongQuay = async function() {
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
     if (spinLog.date !== todayStr) { spinLog = { date: todayStr, extra: 0, usedFree: false }; }
     
-    let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * 60}deg);"><div class="pt-5 font-black text-white text-xs sm:text-sm drop-shadow-md w-16 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
-    let gradColors = `${PRIZES[0].color} 0deg 60deg, ${PRIZES[1].color} 60deg 120deg, ${PRIZES[2].color} 120deg 180deg, ${PRIZES[3].color} 180deg 240deg, ${PRIZES[4].color} 240deg 300deg, ${PRIZES[5].color} 300deg 360deg`;
+    let sliceAngle = 360 / PRIZES.length;
+    let halfSlice = sliceAngle / 2;
+
+    let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
+    let gradColors = PRIZES.map((p, i) => `${p.color} ${i * sliceAngle}deg ${(i + 1) * sliceAngle}deg`).join(', ');
 
     document.getElementById('content').innerHTML = `
         ${getNavHtml('vongquay')}
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in">
             <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
             <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</span></p></div>
-            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -30deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
-            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition hover:scale-[1.02] cursor-pointer"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
+            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
         </div>
     `;
 
@@ -598,24 +649,48 @@ window.thucHienQuay = async function() {
     localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
     let rand = Math.random() * 100; let idx = 0;
-    if (rand < 10) idx = 0; else if (rand < 40) idx = 1; else if (rand < 60) idx = 2; else if (rand < 70) idx = 3; else if (rand < 80) idx = 4; else idx = 5;                           
+    if (rand < 10) idx = 0;         // +10 điểm: 10%
+    else if (rand < 30) idx = 1;    // Thêm lượt: 20%
+    else if (rand < 70) idx = 2;    // Giải đố: 40%
+    else if (rand < 75) idx = 3;    // -10 điểm: 5%
+    else if (rand < 85) idx = 4;    // Vé làm lại: 10%
+    else if (rand < 90) idx = 5;    // Mất lượt: 5%
+    else idx = 6;                   // Rương kho báu: 10%
 
-    let prize = PRIZES[idx];
+    let sliceAngle = 360 / PRIZES.length;
     let wheel = document.getElementById('wheel'); let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
-    let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * 60); 
+    let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * sliceAngle); 
     wheel.style.transform = `rotate(${nextRot}deg)`; wheel.setAttribute('data-rot', nextRot);
     
     setTimeout(async () => {
         isSpinning = false;
         let uniqueGroup = "Vòng quay ngày " + todayStr + " (" + Date.now() + ")";
-        if (prize.extraSpin > 0) { spinLog.extra += prize.extraSpin; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); }
-        if (prize.id === 'redo') { let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0'); localStorage.setItem('redo_tokens_'+currentUser.id, tokens + 1); }
-        if (prize.id === 'riddle') { window.showRiddleModal(todayStr, uniqueGroup); return; }
+        let finalPrize = {...PRIZES[idx]};
 
-        window.showPrizeModal(prize);
-        if (prize.netScore !== 0) { currentUser.score = Number(currentUser.score) + prize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
-        try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: prize.netScore, details: "Quay trúng: " + prize.text } }) }); Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: prize.netScore, time: new Date().toISOString() }); } catch(e) {}
-        if (prize.netScore > 0 || prize.extraSpin > 0 || prize.id === 'redo') { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
+        if (finalPrize.id === 'chest') {
+            let chestRand = Math.floor(Math.random() * 3);
+            if (chestRand === 0) {
+                finalPrize.netScore = 10; finalPrize.extraSpin = 2;
+                finalPrize.msg = "Tuyệt vời! Rương chứa: <b>2 Lượt quay</b> và <b>10 Điểm</b>.";
+            } else if (chestRand === 1) {
+                finalPrize.netScore = 30; finalPrize.extraSpin = 1;
+                finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Lượt quay</b> và <b>30 Điểm</b>.";
+            } else {
+                finalPrize.netScore = 20; finalPrize.extraSpin = 0;
+                let currentTokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
+                localStorage.setItem('redo_tokens_'+currentUser.id, currentTokens + 1);
+                finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Vé làm lại</b> và <b>20 Điểm</b>.";
+            }
+        }
+
+        if (finalPrize.extraSpin > 0) { spinLog.extra += finalPrize.extraSpin; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); }
+        if (finalPrize.id === 'redo') { let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0'); localStorage.setItem('redo_tokens_'+currentUser.id, tokens + 1); }
+        if (finalPrize.id === 'riddle') { window.showRiddleModal(todayStr, uniqueGroup); return; }
+
+        window.showPrizeModal(finalPrize);
+        if (finalPrize.netScore !== 0) { currentUser.score = Number(currentUser.score) + finalPrize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
+        try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: finalPrize.netScore, details: "Quay trúng: " + finalPrize.text + (finalPrize.id === 'chest' ? " ("+finalPrize.msg+")" : "") } }) }); Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: finalPrize.netScore, time: new Date().toISOString() }); } catch(e) {}
+        if (finalPrize.netScore > 0 || finalPrize.extraSpin > 0 || finalPrize.id === 'redo' || finalPrize.id === 'chest') { var dur = 3000; var end = Date.now() + dur; var int = setInterval(function() { if (end - Date.now() <= 0) return clearInterval(int); confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); }, 250); }
         window.restoreSpinButton(spinLog);
     }, 4000);
 };
@@ -642,7 +717,7 @@ window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
 
 window.showPrizeModal = function(prize) {
     let overlay = document.createElement('div'); overlay.id = "prizeModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
-    overlay.innerHTML = `<div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 animate-[cascadeDrop_0.5s_ease-out_forwards]" style="border-color: ${prize.color}"><div class="text-7xl mb-4 animate-bounce">${prize.icon}</div><h3 class="text-2xl font-black text-slate-800 mb-2">${prize.text}</h3><p class="text-slate-600 font-bold mb-6">${prize.msg}</p><button onclick="document.getElementById('prizeModal').remove()" class="w-full text-white py-3 rounded-xl font-black shadow-md transition hover:opacity-80" style="background-color: ${prize.color}">ĐÓNG</button></div>`;
+    overlay.innerHTML = `<div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 animate-[cascadeDrop_0.5s_ease-out_forwards]" style="border-color: ${prize.color}"><div class="text-7xl mb-4 animate-bounce">${prize.icon}</div><h3 class="text-2xl font-black text-slate-800 mb-2">${prize.text}</h3><p class="text-slate-600 font-bold mb-6 text-sm">${prize.msg}</p><button onclick="document.getElementById('prizeModal').remove()" class="w-full text-white py-3 rounded-xl font-black shadow-md transition hover:opacity-80" style="background-color: ${prize.color}">ĐÓNG</button></div>`;
     document.body.appendChild(overlay);
 };
 
@@ -760,7 +835,6 @@ window.moQuanLyThu = async function() {
     try {
         const letters = await (await fetch(API_URL + "?type=mailbox&t=" + Date.now())).json();
         
-        // ĐÁNH DẤU ĐÃ ĐỌC VÀ TẮT CHUÔNG
         if (currentUser && currentUser.role === 'admin') {
             localStorage.setItem('admin_read_mail_' + currentUser.id, letters.length);
             window.kiemTraThongBaoAdmin();
@@ -785,7 +859,6 @@ window.moDonTu = async function() {
     closeMenu(); document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</h2>`; 
     const leaves = await (await fetch(API_URL + "?type=absent_list&t=" + Date.now())).json(); 
     
-    // ĐÁNH DẤU ĐÃ ĐỌC VÀ TẮT CHUÔNG
     if (currentUser && currentUser.role === 'admin') {
         localStorage.setItem('admin_read_leave_' + currentUser.id, leaves.length);
         window.kiemTraThongBaoAdmin();
@@ -848,7 +921,7 @@ window.dongBoDuLieu = async function() {
 };
 
 // ==========================================
-// 11. HỆ THỐNG TRỢ LÝ ẢO (TỰ ĐỘNG BÁO CHUÔNG CHO THẦY)
+// 11. CHUÔNG BÁO ADMIN & TẮT NHẠC
 // ==========================================
 window.kiemTraThongBaoAdmin = async function() {
     if (!currentUser || currentUser.role !== 'admin') return;
@@ -888,7 +961,6 @@ window.renderChuongThongBao = function(unreadMail, unreadLeave) {
     document.body.insertAdjacentHTML('beforeend', bellHtml);
 };
 
-// Theo dõi để kích hoạt chuông 1 lần duy nhất khi Thầy giáo đăng nhập
 setInterval(() => {
     if (window.currentUser && window.currentUser.role === 'admin') {
         if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); }
@@ -897,9 +969,6 @@ setInterval(() => {
     }
 }, 2000);
 
-// ==========================================
-// 12. TỰ ĐỘNG DỪNG NHẠC/VIDEO KHI MỞ BÀI KHÁC
-// ==========================================
 document.addEventListener('play', function(e) {
     var audios = document.getElementsByTagName('audio');
     for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); }
