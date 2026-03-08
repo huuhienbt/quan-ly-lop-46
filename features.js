@@ -383,7 +383,7 @@ window.renderSpinHistory = function(todayStr) {
     container.innerHTML = `
         <div class="bg-orange-50/50 rounded-2xl border border-orange-200 relative overflow-hidden shadow-inner h-40 group">
             <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-orange-50 to-transparent z-10 pointer-events-none"></div><div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-orange-50 to-transparent z-10 pointer-events-none"></div>
-            <h3 class="text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-100 py-2 text-center border-b border-orange-200 relative z-20 shadow-sm"><i class="fas fa-gift mr-1"></i> Trạm Nhận Quà</h3>
+            <h3 class="text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-100 py-2 text-center border-b border-orange-200 relative z-20 shadow-sm"><i class="fas fa-gift mr-1"></i> Lịch Sử Quay Thưởng </h3>
             <div class="overflow-hidden h-[120px] relative px-4"><div class="animate-scroll-up flex flex-col group-hover:[animation-play-state:paused] pt-2">${listItems}${spacer}${listItems}${spacer}</div></div>
             <style>@keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } } .animate-scroll-up { animation: scrollUp ${animDuration}s linear infinite; }</style>
         </div>
