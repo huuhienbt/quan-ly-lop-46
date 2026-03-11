@@ -1035,11 +1035,25 @@ window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu(); 
 
-    // Tự động kéo kho câu đố từ Google Sheet về
-    if(!Data.caudo) {
-        try { Data.caudo = await (await fetch(API_URL+"?type=caudo&t="+Date.now())).json(); }
-        catch(e) { Data.caudo = []; }
+    // --- BẮT ĐẦU: HIỆU ỨNG TẢI TRANG MƯỢT MÀ GIỐNG GÓC HỌC TẬP ---
+    if(!Data.caudo || Data.log.length === 0) {
+        document.getElementById('content').innerHTML = `
+            ${getNavHtml('vongquay')}
+            <div class="text-center mt-24 fade-in">
+                <i class="fas fa-spinner fa-spin text-6xl text-yellow-500 mb-4 drop-shadow-md"></i>
+                <p class="font-black text-slate-500 text-lg animate-pulse">Đang tải Vòng quay và Trạm quà...</p>
+            </div>
+        `;
+        try { 
+            // Tải cùng lúc cả Câu đố và Lịch sử để tiết kiệm thời gian (nhanh gấp đôi)
+            let promises = [];
+            if(!Data.caudo) promises.push(fetch(API_URL+"?type=caudo&t="+Date.now()).then(r => r.json()).then(d => Data.caudo = d));
+            if(Data.log.length === 0) promises.push(fetch(API_URL+"?type=history_all&t="+Date.now()).then(r => r.json()).then(d => Data.log = d));
+            await Promise.all(promises);
+        }
+        catch(e) { if(!Data.caudo) Data.caudo = []; }
     }
+    // --- KẾT THÚC HIỆU ỨNG TẢI TRANG ---
     
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
@@ -1084,6 +1098,10 @@ window.moVongQuay = async function() {
             </div>
         </div>
     `;
+
+    // Gọi hiển thị trạng thái nút quay và chữ chạy lịch sử
+    window.checkSpinStatus(spinLog, todayStr); 
+};
 
     if(Data.log.length === 0) {
         try { 
