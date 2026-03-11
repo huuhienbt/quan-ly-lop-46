@@ -146,8 +146,7 @@ window.moGocHocTap = async function() {
             let isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
 
             let titleBadge = "";
-            // --- ĐÃ ĐỔI ICON BỌ THÀNH CON ONG VÀNG CHUẨN ---
-let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-bee mr-1 text-base text-yellow-600"></i>Ong Vàng Chăm Chỉ</div>` : "";
+            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-bee mr-1 text-base text-yellow-600"></i>Ong Vàng Chăm Chỉ</div>` : "";
             
             let nameColor = "text-slate-700 font-bold";
             let rowStyles = "bg-slate-50 border-slate-200"; 
