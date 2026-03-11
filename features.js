@@ -1,6 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN BUNG FULL - AN TOÀN 100%)
-// Tích hợp: Vòng quay 7 ô (Kho báu), Trạm Nhận Quà (Chữ chạy), Thưởng tốc độ, Chuông Admin
+// FILE: FEATURES.JS (BẢN BUNG FULL - TÍCH HỢP TẤT CẢ TÍNH NĂNG MỚI NHẤT)
+// Bao gồm: Huy hiệu Rank, Ong Vàng, Giải đố Tiếng Việt từ Sheet, Thưởng Tốc Độ, Lì xì sinh nhật
 // ==========================================
 
 let isSpinning = false;
@@ -15,7 +15,6 @@ const PRIZES = [
     { id: "chest", text: "Kho Báu", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Wow! Con đã mở được Rương Kho Báu!", icon: "💎" }
 ];
 
-// Hàm bắn pháo hoa an toàn (chống lỗi thư viện làm đơ web)
 window.safeConfetti = function() {
     try {
         var dur = 3000; 
@@ -39,7 +38,7 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP & BẢNG VÀNG CHUẨN THỜI GIAN
+// 1. GÓC HỌC TẬP & BẢNG VÀNG CHUẨN THỜI GIAN (CÓ DANH HIỆU LEO RANK & ONG VÀNG)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -70,12 +69,14 @@ window.moGocHocTap = async function() {
     let mathUnread = 0; 
     let tvUnread = 0;
 
+    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g);
+    const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g);
+    const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
+
     if (currentUser && currentUser.role === 'student') {
         const myLogs = Data.log.filter(l => String(l.id) === String(currentUser.id));
-        const mathGroups = [...new Set(Data.math.map(x => x.group))];
-        mathUnread = mathGroups.filter(g => !myLogs.some(l => l.subject === 'math' && l.group === g)).length;
-        const tvGroups = [...new Set(Data.tv.map(x => x.group))];
-        tvUnread = tvGroups.filter(g => !myLogs.some(l => (l.subject === 'vietnamese' || l.subject === 'tv') && l.group === g)).length;
+        mathUnread = mathGroupsAll.filter(g => !myLogs.some(l => l.subject === 'math' && l.group === g)).length;
+        tvUnread = tvGroupsAll.filter(g => !myLogs.some(l => (l.subject === 'vietnamese' || l.subject === 'tv') && l.group === g)).length;
     }
 
     let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${mathUnread} BÀI MỚI</div>` : '';
@@ -129,28 +130,56 @@ window.moGocHocTap = async function() {
         let listHtml = top15.map((s) => { 
             let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
-            let rowBg = "bg-slate-50 border-slate-100"; 
-            let nameColor = "text-slate-700"; 
             
-            if (actualDisplayRank === 1) { 
-                rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; 
-                rowBg = "bg-yellow-50 border-yellow-200 scale-[1.02] shadow-sm z-10"; 
-                nameColor = "text-yellow-700"; 
-            } else if (actualDisplayRank === 2) { 
-                rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; 
-                rowBg = "bg-gray-50 border-gray-200"; 
-            } else if (actualDisplayRank === 3) { 
-                rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; 
-                rowBg = "bg-orange-50 border-orange-100"; 
-            } 
+            let userLogs = Data.log.filter(l => String(l.id) === String(s.id));
+            let doneMath = new Set(userLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
+            let doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
+            let isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
+
+            let titleBadge = "";
+            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-bug mr-1"></i>Ong Vàng Chăm Chỉ</div>` : "";
+            
+            let nameColor = "text-slate-700 font-bold";
+            let rowStyles = "bg-slate-50 border-slate-200"; 
+            
+            if (actualDisplayRank === 1) { rowStyles = "bg-yellow-50 scale-[1.02] z-10"; nameColor = "text-yellow-700 font-bold"; rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; }
+            else if (actualDisplayRank === 2) { rowStyles = "bg-gray-50"; rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; }
+            else if (actualDisplayRank === 3) { rowStyles = "bg-orange-50"; rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; }
+
+            if (s.score >= 5000) {
+                titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
+                nameColor = "text-red-600 font-black drop-shadow-md";
+                rowStyles += " border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)] ring-2 ring-red-200 ring-offset-1 animate-pulse";
+            } else if (s.score >= 4000) {
+                titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
+                nameColor = "text-purple-700 font-bold drop-shadow-sm";
+                rowStyles += " border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]";
+            } else if (s.score >= 3000) {
+                titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
+                nameColor = "text-emerald-700 font-bold";
+                rowStyles += " border-2 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]";
+            } else {
+                if (actualDisplayRank === 1) rowStyles += " border-yellow-300 shadow-sm";
+                else if (actualDisplayRank === 2) rowStyles += " border-gray-300";
+                else if (actualDisplayRank === 3) rowStyles += " border-orange-200";
+                else rowStyles += " border-slate-100";
+            }
+
+            let allBadges = "";
+            if (titleBadge || ongVangBadge) {
+                allBadges = `<div class="flex flex-wrap gap-1">${titleBadge}${ongVangBadge}</div>`;
+            }
             
             return `
-                <div class="flex items-center justify-between p-3 mb-2 rounded-xl border ${rowBg} transition relative">
+                <div class="flex items-center justify-between p-3 mb-2 rounded-xl transition-all relative border ${rowStyles}">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 text-center flex justify-center">${rankIcon}</div>
-                        <div class="font-bold ${nameColor} text-sm sm:text-base">${s.name}</div>
+                        <div class="w-10 text-center flex justify-center shrink-0">${rankIcon}</div>
+                        <div class="flex flex-col">
+                            <span class="${nameColor} text-sm sm:text-base tracking-wide">${s.name}</span>
+                            ${allBadges}
+                        </div>
                     </div>
-                    <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm">
+                    <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm shrink-0">
                         ${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span>
                     </div>
                 </div>
@@ -1000,11 +1029,17 @@ window.finishQuiz = async function() {
 };
 
 // ==========================================
-// 5. VÒNG QUAY MAY MẮN & BẢNG CHỮ CHẠY
+// 5. VÒNG QUAY MAY MẮN & BẢNG CHỮ CHẠY (GIẢI ĐỐ TỪ SHEET)
 // ==========================================
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu(); 
+
+    // Tự động kéo kho câu đố từ Google Sheet về
+    if(!Data.caudo) {
+        try { Data.caudo = await (await fetch(API_URL+"?type=caudo&t="+Date.now())).json(); }
+        catch(e) { Data.caudo = []; }
+    }
     
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
@@ -1235,25 +1270,49 @@ window.thucHienQuay = async function() {
     }, 4000);
 };
 
+// Cập nhật: Hàm Giải Đố kết hợp Toán học và Lấy câu hỏi Tiếng Việt từ Google Sheet
 window.showRiddleModal = function(todayStr, uniqueGroup) {
-    let a = Math.floor(Math.random() * 10) + 1; 
-    let b = Math.floor(Math.random() * 10) + 1; 
-    let c = Math.floor(Math.random() * 10) + 1; 
-    let correctAns = a + b * c; 
-    
+    let isMath = Math.random() < 0.5; // 50% ra Toán, 50% ra Tiếng Việt
+    let questionStr = "";
+    let correctAns = "";
+    let inputType = "text";
+
+    if (isMath || !Data.caudo || Data.caudo.length === 0) {
+        // NẾU LÀ TOÁN (hoặc nếu Sheet Câu Đố bị trống)
+        isMath = true;
+        inputType = "number";
+        let type = Math.floor(Math.random() * 3);
+        if (type === 0) {
+            let a = Math.floor(Math.random() * 30) + 10; let b = Math.floor(Math.random() * 10) + 2; let c = Math.floor(Math.random() * 10) + 2; 
+            correctAns = (a + b * c).toString(); questionStr = `${a} + ${b} x ${c}`;
+        } else if (type === 1) {
+            let a = Math.floor(Math.random() * 89) + 11; let b = Math.floor(Math.random() * 89) + 11; 
+            correctAns = (a * b).toString(); questionStr = `${a} x ${b}`;
+        } else {
+            let divisor = Math.floor(Math.random() * 89) + 11; let quotient = Math.floor(Math.random() * 89) + 11; let dividend = divisor * quotient; 
+            correctAns = quotient.toString(); questionStr = `${dividend} : ${divisor}`;
+        }
+    } else {
+        // NẾU LÀ TIẾNG VIỆT (Kéo từ Google Sheet)
+        let r = Data.caudo[Math.floor(Math.random() * Data.caudo.length)];
+        questionStr = r.cauhoi;
+        correctAns = r.dapan;
+    }
+
     let overlay = document.createElement('div'); 
     overlay.id = "riddleModal"; 
     overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm fade-in p-4";
-    
+    let textSize = isMath ? "text-3xl" : "text-xl sm:text-2xl"; 
+
     overlay.innerHTML = `
         <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center border-t-8 border-purple-500 animate-[cascadeDrop_0.5s_ease-out_forwards]">
             <div class="text-6xl mb-4 animate-bounce">🧠</div>
             <h3 class="text-2xl font-black text-purple-600 mb-2 uppercase">Thử Tài Giải Đố</h3>
-            <p class="text-slate-600 font-bold mb-6">Tính nhanh phép toán sau để nhận ngay 20 điểm:</p>
-            <div class="bg-purple-50 text-purple-800 text-3xl font-black p-4 rounded-xl mb-6 shadow-inner border border-purple-200">${a} + ${b} x ${c} = ?</div>
-            <input type="number" id="riddleAns" class="w-full p-4 border-2 border-purple-200 rounded-xl font-bold text-2xl text-center mb-6 focus:border-purple-500 outline-none" placeholder="Đáp án của con...">
-            <button onclick="window.checkRiddle(${correctAns}, '${todayStr}', '${uniqueGroup}')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl font-black shadow-lg btn-3d hover:scale-[1.02] transition">TRẢ LỜI</button>
-            <button onclick="document.getElementById('riddleModal').remove(); window.isSpinning=false; window.restoreSpinButton(JSON.parse(localStorage.getItem('spinLog_'+currentUser.id)));" class="w-full mt-4 text-slate-400 font-bold hover:text-slate-600">Đóng</button>
+            <p class="text-slate-600 font-bold mb-4">Trả lời đúng để nhận ngay 20 điểm:</p>
+            <div class="bg-purple-50 text-purple-800 ${textSize} font-black p-4 rounded-xl mb-6 shadow-inner border border-purple-200 leading-snug">${questionStr}${isMath ? ' = ?' : ''}</div>
+            <input type="${inputType}" id="riddleAns" class="w-full p-4 border-2 border-purple-200 rounded-xl font-bold text-xl text-center mb-6 focus:border-purple-500 outline-none" placeholder="Đáp án của con...">
+            <button onclick="window.checkRiddle('${correctAns}', '${todayStr}', '${uniqueGroup}')" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white py-4 rounded-xl font-black shadow-lg btn-3d hover:scale-[1.02] transition">TRẢ LỜI</button>
+            <button onclick="document.getElementById('riddleModal').remove(); window.isSpinning=false; window.restoreSpinButton(JSON.parse(localStorage.getItem('spinLog_'+currentUser.id)));" class="w-full mt-4 text-slate-400 font-bold hover:text-slate-600 transition">Đóng</button>
         </div>
     `;
     
@@ -1261,20 +1320,20 @@ window.showRiddleModal = function(todayStr, uniqueGroup) {
     setTimeout(() => document.getElementById('riddleAns').focus(), 100);
 };
 
-window.checkRiddle = async function(correctAns, todayStr, uniqueGroup) {
-    let ansStr = document.getElementById('riddleAns').value; 
+window.checkRiddle = async function(correctAnsStr, todayStr, uniqueGroup) {
+    let ansStr = document.getElementById('riddleAns').value.trim().toLowerCase(); 
     if(!ansStr) return alert("Con chưa nhập đáp án kìa!"); 
     document.getElementById('riddleModal').remove();
     
     let prize = { icon: "", text: "Giải Đố", color: "", msg: "", netScore: 0 };
     
-    if (parseInt(ansStr) === correctAns) { 
+    if (ansStr === correctAnsStr.toLowerCase().trim()) { 
         prize.netScore = 20; 
-        prize.msg = "Giỏi quá! Con tính đúng và được thưởng 20 điểm."; 
+        prize.msg = "Giỏi quá! Con trả lời đúng và được thưởng 20 điểm."; 
         prize.icon = "🎉"; 
         prize.color = "#34d399"; 
     } else { 
-        prize.msg = `Tiếc quá! Đáp án đúng là ${correctAns}. Hãy cẩn thận hơn ở lần sau nhé!`; 
+        prize.msg = `Tiếc quá! Đáp án đúng là "${correctAnsStr}". Hãy cẩn thận hơn ở lần sau nhé!`; 
         prize.icon = "😅"; 
         prize.color = "#f87171"; 
     }
@@ -1823,6 +1882,25 @@ window.checkSinhNhat = function() {
     
     let today = new Date();
     if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) { 
+        
+        let currentYear = today.getFullYear();
+        let bonusKey = 'hpbd_bonus_' + currentYear + '_' + currentUser.id;
+        
+        if (!localStorage.getItem(bonusKey)) {
+            let todayStr = today.toLocaleDateString('vi-VN'); 
+            let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+            if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
+            
+            spinLog.extra += 5; 
+            localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+            localStorage.setItem(bonusKey, 'true'); 
+            
+            try { 
+                let uniqueGroup = "Sinh nhật " + currentYear;
+                fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: 0, details: "Hệ thống tự động tặng 5 lượt quay nhân dịp sinh nhật!" } }) }); 
+            } catch(e) {}
+        }
+
         window.showHappyBirthdayUI(); 
         sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); 
     }
@@ -1840,10 +1918,17 @@ window.showHappyBirthdayUI = function() {
                 <div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div>
                 <h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">CHÚC MỪNG SINH NHẬT</h2>
                 <h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3>
-                <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-6 relative">
+                
+                <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-4 relative">
                     <i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i>
-                    <p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Hôm nay là một ngày thật đặc biệt! Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p>
+                    <p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p>
                 </div>
+                
+                <div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 p-3 rounded-2xl mb-6 shadow-inner animate-pulse">
+                    <p class="text-orange-600 font-black text-sm"><i class="fas fa-gift text-xl mr-1 text-red-500"></i> LÌ XÌ TỪ THẦY HIỂN</p>
+                    <p class="text-slate-700 font-bold text-xs mt-1">Hệ thống đã tự động cộng <span class="text-red-600 text-base font-black">5 LƯỢT QUAY</span> vào Vòng Quay May Mắn của con!</p>
+                </div>
+                
                 <button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">CẢM ƠN THẦY Ạ!</button>
             </div>
         </div>
