@@ -1,14 +1,15 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN SIÊU TỐC - SPA TẢI 1 LẦN DUY NHẤT)
-// Tích hợp: Bảng Vàng Leo Rank, Ong Vàng, Giải đố Tiếng Việt Sheet, Lì xì sinh nhật
+// FILE: FEATURES.JS (BẢN BUNG FULL - HOÀN HẢO 100%)
+// Tích hợp: SPA Tải 1 lần, Bảng Vàng Leo Rank, Ong Vàng chuẩn (Con Ong), 
+// Danh hiệu trang cá nhân, Chữ chạy trượt xuống, Giải đố Tiếng Việt
 // ==========================================
 
 let isSpinning = false;
 window.Data = window.Data || { hs: [], math: [], tv: [], vietnamese: [], log: [], caudo: [] };
-window.isAllDataLoaded = false; // Cờ đánh dấu đã tải toàn bộ dữ liệu chưa
+window.isAllDataLoaded = false;
 
 const PRIZES = [
-    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng 10 điểm.", icon: "🎉" },
+    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
     { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
     { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
@@ -30,13 +31,11 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (GIAO DIỆN TINH TẾ, NHẸ NHÀNG)
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (GIAO DIỆN TINH TẾ)
 // ==========================================
 window.loadAllDataOnce = async function(force = false) {
     if (window.isAllDataLoaded && !force) return true;
 
-    // Giao diện vòng xoay nhỏ gọn, tạo cảm giác web cực kỳ nhẹ và mượt
     document.getElementById('content').innerHTML = `
         <div class="flex flex-col items-center justify-center mt-24 fade-in opacity-80">
             <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-400 mb-3"></i>
@@ -77,7 +76,7 @@ window.loadAllDataOnce = async function(force = false) {
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
-    if (!(await window.loadAllDataOnce())) return; // Chỉ gọi 1 dòng này, cực kỳ nhanh gọn
+    if (!(await window.loadAllDataOnce())) return;
 
     let mathUnread = 0; let tvUnread = 0;
     const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g);
@@ -146,7 +145,7 @@ window.moGocHocTap = async function() {
             let isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
 
             let titleBadge = "";
-            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-bee mr-1 text-base text-yellow-600"></i>Ong Vàng Chăm Chỉ</div>` : "";
+            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border-2 border-yellow-400 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-bee mr-1 text-base text-yellow-600"></i>Ong Vàng Chăm Chỉ</div>` : "";
             
             let nameColor = "text-slate-700 font-bold";
             let rowStyles = "bg-slate-50 border-slate-200"; 
@@ -722,8 +721,8 @@ window.renderSpinHistory = function(todayStr) {
             <div class="absolute top-0 left-0 w-full h-8 bg-gradient-to-b from-orange-50 to-transparent z-10 pointer-events-none"></div>
             <div class="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-orange-50 to-transparent z-10 pointer-events-none"></div>
             <h3 class="text-[11px] font-black text-orange-600 uppercase tracking-widest bg-orange-100 py-2 text-center border-b border-orange-200 relative z-20 shadow-sm"><i class="fas fa-gift mr-1"></i> Trạm Nhận Quà</h3>
-            <div class="overflow-hidden h-[120px] relative px-4"><div class="animate-scroll-up flex flex-col group-hover:[animation-play-state:paused] pt-2">${listItems}${spacer}${listItems}${spacer}</div></div>
-            <style>@keyframes scrollUp { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } } .animate-scroll-up { animation: scrollUp ${animDuration}s linear infinite; }</style>
+            <div class="overflow-hidden h-[120px] relative px-4"><div class="animate-scroll-down flex flex-col group-hover:[animation-play-state:paused] pt-2">${listItems}${spacer}${listItems}${spacer}</div></div>
+            <style>@keyframes scrollDown { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } } .animate-scroll-down { animation: scrollDown ${animDuration}s linear infinite; }</style>
         </div>
     `;
 };
@@ -984,8 +983,37 @@ window.moDonTu = async function() {
 };
 
 // ==========================================
-// 9. QUẢN LÝ HỌC SINH
+// 9. QUẢN LÝ HỌC SINH & TRANG CÁ NHÂN
 // ==========================================
+window.calculateTitle = function(student) {
+    if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
+
+    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g);
+    const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g);
+    const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
+
+    const userLogs = Data.log.filter(l => String(l.id) === String(student.id));
+    const doneMath = new Set(userLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
+    const doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
+    const isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
+
+    let titlesHtml = "";
+
+    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border-2 border-yellow-400 inline-flex items-center shadow-sm"><i class="fas fa-bee mr-1 text-base text-yellow-600"></i>Ong Vàng Chăm Chỉ</div>` : "";
+    if (ongVangBadge) titlesHtml += ongVangBadge;
+
+    let scoreVal = Number(student.score) || 0;
+    let titleBadge = "";
+
+    if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
+    else if (scoreVal >= 4000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
+    else if (scoreVal >= 3000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
+    else if (scoreVal >= 1500) titleBadge = `<div class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-flex items-center shadow-sm"><i class="fas fa-fire mr-1"></i>Chiến Binh</div>`;
+
+    if (titleBadge) titlesHtml += (titlesHtml ? " " : "") + titleBadge;
+    return titlesHtml;
+};
+
 window.chuyenTrangQuanLy = function() { 
     closeMenu(); 
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; 
@@ -1003,11 +1031,13 @@ window.viewProfile = function(id) {
         return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${phone}</span><a href="tel:${cleanPhone}" class="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs hover:bg-green-600 hover:text-white transition"><i class="fas fa-phone"></i></a></div></div>`; 
     }; 
     
+    const studentTitles = window.calculateTitle(s);
+
     document.getElementById('content').innerHTML = `
         <div class="flex items-center mb-6"><button onclick="${currentUser && currentUser.role==='admin'?'window.chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ CÁ NHÂN</h2></div>
         <div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-50 fade-in relative overflow-hidden">
             <div class="text-center mb-6 relative z-10">${avatar}<h2 class="text-2xl font-black text-slate-800">${s.name}</h2><span class="bg-blue-50 text-blue-600 font-mono font-bold px-3 py-1 rounded-full text-xs mt-2 inline-block">ID: ${s.id}</span></div>
-            <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right"><p class="text-xs font-bold opacity-90 uppercase">Xếp hạng</p><p class="text-lg font-bold"><i class="fas fa-trophy mr-1"></i> Thành viên</p></div></div>
+            <div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right flex flex-col items-end gap-1 mt-1">${studentTitles}</div></div>
             <div class="space-y-1"><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Ngày sinh</span><b class="text-slate-700">${cleanDob}</b></div><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Giới tính</span><b class="text-slate-700">${s.gender || '-'}</b></div>${renderPhone(s.fatherPhone, "SĐT Cha")}${renderPhone(s.motherPhone, "SĐT Mẹ")}<div class="py-2"><span class="text-slate-400 font-bold uppercase text-[10px] block mb-1">Địa chỉ</span><b class="text-slate-700 text-sm leading-snug">${s.address || 'Chưa cập nhật'}</b></div></div>
         </div>
     `; 
@@ -1060,7 +1090,7 @@ window.dongBoDuLieu = async function() {
     document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
     try { 
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); 
-        window.isAllDataLoaded = false; // Bắt buộc tải lại dữ liệu mới
+        window.isAllDataLoaded = false; 
         alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); 
         location.reload(); 
     } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
