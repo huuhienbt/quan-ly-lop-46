@@ -1,7 +1,7 @@
 // ==========================================
 // FILE: FEATURES.JS (BẢN BUNG FULL - HOÀN HẢO 100%)
-// Tích hợp: SPA Tải 1 lần, Bảng Vàng Leo Rank, Ong Vàng chuẩn (Con Ong), 
-// Danh hiệu trang cá nhân, Chữ chạy trượt xuống, Giải đố Tiếng Việt
+// Tích hợp: Tải 1 lần (sửa vòng xoay), Bảng Vàng Leo Rank, Ong Vàng (🐝), 
+// Danh hiệu trang cá nhân (Bỏ Chiến binh), Chữ chạy trượt xuống, Giải đố Tiếng Việt
 // ==========================================
 
 let isSpinning = false;
@@ -9,7 +9,7 @@ window.Data = window.Data || { hs: [], math: [], tv: [], vietnamese: [], log: []
 window.isAllDataLoaded = false;
 
 const PRIZES = [
-    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng 10 điểm.", icon: "🎉" },
+    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
     { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
     { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
@@ -31,15 +31,16 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (GIAO DIỆN TINH TẾ)
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (VÒNG XOAY HOẠT ĐỘNG CHUẨN)
 // ==========================================
 window.loadAllDataOnce = async function(force = false) {
     if (window.isAllDataLoaded && !force) return true;
 
+    // Ép vòng tròn phải xoay bằng animate-spin và inline-block
     document.getElementById('content').innerHTML = `
-        <div class="flex flex-col items-center justify-center mt-24 fade-in opacity-80">
-            <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-400 mb-3"></i>
-            <p class="text-slate-400 font-medium text-sm animate-pulse">Đang tải dữ liệu...</p>
+        <div class="flex flex-col items-center justify-center mt-28 fade-in opacity-90">
+            <i class="fas fa-circle-notch animate-spin inline-block text-5xl text-indigo-500 mb-4 drop-shadow-md"></i>
+            <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang tải dữ liệu...</p>
         </div>
     `;
 
@@ -62,9 +63,10 @@ window.loadAllDataOnce = async function(force = false) {
     } catch(e) {
         console.error("Lỗi tải tổng:", e);
         document.getElementById('content').innerHTML = `
-            <div class="text-center mt-24 text-red-400 fade-in">
-                <i class="fas fa-wifi text-4xl mb-3 opacity-70"></i>
-                <p class="font-medium text-sm">Kết nối mạng chậm, vui lòng tải lại trang nhé!</p>
+            <div class="text-center mt-24 text-red-500 fade-in">
+                <i class="fas fa-wifi text-6xl mb-4 opacity-50"></i>
+                <h2 class="text-xl font-black uppercase mb-2">Lỗi Kết Nối</h2>
+                <p class="font-bold text-sm">Không thể tải dữ liệu. Thầy/cô và con vui lòng F5 tải lại trang nhé!</p>
             </div>
         `;
         return false;
@@ -145,7 +147,7 @@ window.moGocHocTap = async function() {
             let isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
 
             let titleBadge = "";
-            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border-2 border-yellow-400 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-bee mr-1 text-base text-yellow-600"></i>Ong Vàng Chăm Chỉ</div>` : "";
+            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm"><span class="text-sm mr-1">🐝</span>Ong Vàng Chăm Chỉ</div>` : "";
             
             let nameColor = "text-slate-700 font-bold";
             let rowStyles = "bg-slate-50 border-slate-200"; 
@@ -999,7 +1001,7 @@ window.calculateTitle = function(student) {
 
     let titlesHtml = "";
 
-    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border-2 border-yellow-400 inline-flex items-center shadow-sm"><i class="fas fa-bee mr-1 text-base text-yellow-600"></i>Ong Vàng Chăm Chỉ</div>` : "";
+    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm"><span class="text-sm mr-1">🐝</span>Ong Vàng Chăm Chỉ</div>` : "";
     if (ongVangBadge) titlesHtml += ongVangBadge;
 
     let scoreVal = Number(student.score) || 0;
@@ -1008,7 +1010,6 @@ window.calculateTitle = function(student) {
     if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
     else if (scoreVal >= 4000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
     else if (scoreVal >= 3000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
-    else if (scoreVal >= 1500) titleBadge = `<div class="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 inline-flex items-center shadow-sm"><i class="fas fa-fire mr-1"></i>Chiến Binh</div>`;
 
     if (titleBadge) titlesHtml += (titlesHtml ? " " : "") + titleBadge;
     return titlesHtml;
