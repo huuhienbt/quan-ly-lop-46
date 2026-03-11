@@ -32,13 +32,23 @@ window.safeConfetti = function() {
 // ==========================================
 // 0. BỘ NÃO TẢI DỮ LIỆU TỔNG TỐC ĐỘ CAO (MỚI NÂNG CẤP)
 // ==========================================
+// ==========================================
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG TỐC ĐỘ CAO (MỚI NÂNG CẤP)
+// ==========================================
 window.loadAllDataOnce = async function(force = false) {
     if (window.isAllDataLoaded && !force) return true;
     
     document.getElementById('content').innerHTML = `
-        <div class="text-center mt-24 fade-in">
-            <i class="fas fa-cloud-download-alt text-6xl text-blue-500 mb-6 animate-bounce drop-shadow-md"></i>
-            <h2 class="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Đang đồng bộ dữ liệu</h2>
+        <div class="text-center mt-28 fade-in">
+            <div class="inline-block relative w-20 h-20 mb-6">
+                <div class="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center text-blue-600 text-2xl"><i class="fas fa-laptop-code"></i></div>
+            </div>
+            <h2 class="text-2xl font-black text-slate-800 uppercase tracking-widest mb-3">KHỞI TẠO HỆ THỐNG</h2>
+            <p class="font-bold text-slate-500 text-sm bg-slate-50 inline-block px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+                <i class="fas fa-shield-alt text-green-500 mr-1"></i> Vui lòng đợi giây lát, đang chuẩn bị không gian học tập...
+            </p>
         </div>
     `;
     
@@ -60,7 +70,13 @@ window.loadAllDataOnce = async function(force = false) {
         return true;
     } catch(e) {
         console.error("Lỗi tải tổng:", e);
-        document.getElementById('content').innerHTML = `<div class="text-center mt-20 text-red-500 font-bold">Lỗi mạng! Không thể kết nối đến máy chủ. Vui lòng tải lại trang.</div>`;
+        document.getElementById('content').innerHTML = `
+            <div class="text-center mt-24 text-red-500 fade-in">
+                <i class="fas fa-wifi text-6xl mb-4 opacity-50"></i>
+                <h2 class="text-xl font-black uppercase mb-2">Lỗi Kết Nối</h2>
+                <p class="font-bold text-sm">Không thể kết nối đến máy chủ lớp 4/6. Thầy/cô và con vui lòng tải lại trang nhé!</p>
+            </div>
+        `;
         return false;
     }
 };
