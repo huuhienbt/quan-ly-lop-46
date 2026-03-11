@@ -1,10 +1,11 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN BUNG FULL - CHUẨN CÚ PHÁP 100%)
-// Tích hợp: Huy hiệu Bảng Vàng, Ong Vàng, Giải đố Tiếng Việt Sheet, Lì xì sinh nhật, Chống đơ
+// FILE: FEATURES.JS (BẢN SIÊU TỐC - SPA TẢI 1 LẦN DUY NHẤT)
+// Tích hợp: Bảng Vàng Leo Rank, Ong Vàng, Giải đố Tiếng Việt Sheet, Lì xì sinh nhật
 // ==========================================
 
 let isSpinning = false;
 window.Data = window.Data || { hs: [], math: [], tv: [], vietnamese: [], log: [], caudo: [] };
+window.isAllDataLoaded = false; // Cờ đánh dấu đã tải toàn bộ dữ liệu chưa
 
 const PRIZES = [
     { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
@@ -18,19 +19,51 @@ const PRIZES = [
 
 window.safeConfetti = function() {
     try {
-        var dur = 3000; 
-        var end = Date.now() + dur; 
+        var dur = 3000; var end = Date.now() + dur; 
         var int = setInterval(function() { 
             if (end - Date.now() <= 0) return clearInterval(int); 
             if (typeof confetti === 'function') {
-                confetti({ 
-                    startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, 
-                    particleCount: 50 * ((end - Date.now()) / dur), 
-                    origin: { x: Math.random(), y: Math.random() - 0.2 } 
-                }); 
+                confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); 
             }
         }, 250);
     } catch(e) { console.log("Không tải được hiệu ứng pháo hoa."); }
+};
+
+// ==========================================
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG TỐC ĐỘ CAO (MỚI NÂNG CẤP)
+// ==========================================
+window.loadAllDataOnce = async function(force = false) {
+    if (window.isAllDataLoaded && !force) return true;
+    
+    document.getElementById('content').innerHTML = `
+        <div class="text-center mt-24 fade-in">
+            <i class="fas fa-cloud-download-alt text-6xl text-blue-500 mb-6 animate-bounce drop-shadow-md"></i>
+            <h2 class="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Đang đồng bộ dữ liệu</h2>
+            <p class="font-bold text-slate-500">Hệ thống đang tải toàn bộ bài tập và câu đố (chỉ 1 lần duy nhất)...</p>
+        </div>
+    `;
+    
+    try {
+        const [mRes, tRes, lRes, cRes] = await Promise.all([
+            fetch(API_URL + "?type=math&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=vietnamese&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json())
+        ]);
+        
+        Data.math = Array.isArray(mRes) ? mRes : [];
+        Data.tv = Array.isArray(tRes) ? tRes : [];
+        Data.vietnamese = Data.tv;
+        Data.log = Array.isArray(lRes) ? lRes : [];
+        Data.caudo = Array.isArray(cRes) ? cRes : [];
+        
+        window.isAllDataLoaded = true;
+        return true;
+    } catch(e) {
+        console.error("Lỗi tải tổng:", e);
+        document.getElementById('content').innerHTML = `<div class="text-center mt-20 text-red-500 font-bold">Lỗi mạng! Không thể kết nối đến máy chủ. Vui lòng tải lại trang.</div>`;
+        return false;
+    }
 };
 
 // ==========================================
@@ -38,27 +71,7 @@ window.safeConfetti = function() {
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
-    
-    if (currentUser && currentUser.role === 'student' && !window.isQuizDataLoaded) {
-        document.getElementById('content').innerHTML = `
-            <div class="text-center mt-10">
-                <i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i>
-                <p class="mt-2 font-bold text-gray-500">Đang kiểm tra bài tập...</p>
-            </div>
-        `;
-        try {
-            const [mRes, tRes, lRes] = await Promise.all([
-                fetch(API_URL + "?type=math&t=" + Date.now()),
-                fetch(API_URL + "?type=vietnamese&t=" + Date.now()),
-                fetch(API_URL + "?type=history_all&t=" + Date.now())
-            ]);
-            Data.math = await mRes.json(); 
-            Data.tv = await tRes.json(); 
-            Data.vietnamese = Data.tv; 
-            Data.log = await lRes.json();
-            window.isQuizDataLoaded = true;
-        } catch(e) { console.log(e); }
-    }
+    if (!(await window.loadAllDataOnce())) return; // Chỉ gọi 1 dòng này, cực kỳ nhanh gọn
 
     let mathUnread = 0; let tvUnread = 0;
     const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g);
@@ -222,13 +235,8 @@ window.moGocHocTap = async function() {
 // ==========================================
 window.quanLyNganHang = async function(sub, forceReload = false) { 
     closeMenu(); curSub = sub; 
-    if (!forceReload && Data[sub] && Data[sub].length > 0) { window.renderGiaoDienKho(sub); return; } 
-    document.getElementById('content').innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải dữ liệu...</p></div>`; 
-    try { 
-        const qs = await (await fetch(API_URL+"?type="+sub+"&t="+Date.now())).json(); 
-        Data[sub] = qs; if(sub === 'vietnamese') Data.tv = qs; if(sub === 'tv') Data.vietnamese = qs; 
-        window.renderGiaoDienKho(sub); 
-    } catch(e) { document.getElementById('content').innerHTML = `<div class="text-center mt-10 text-red-500 font-bold">Lỗi tải dữ liệu. Thử lại sau.</div>`; } 
+    if (!(await window.loadAllDataOnce(forceReload))) return;
+    window.renderGiaoDienKho(sub); 
 };
 
 window.renderGiaoDienKho = function(sub) { 
@@ -395,8 +403,7 @@ window.chenAnhVaoEditor = function(targetId) {
 };
 
 window.handleEditorClick = function(e) { 
-    document.querySelectorAll('div[contenteditable="true"] img').forEach(img => img.style.border = 'none'); 
-    window.currentSelectedImg = null; 
+    document.querySelectorAll('div[contenteditable="true"] img').forEach(img => img.style.border = 'none'); window.currentSelectedImg = null; 
     if (e.target.tagName === 'IMG') { e.target.style.border = '3px dashed #f97316'; window.currentSelectedImg = e.target; } 
 };
 window.resizeImg = function(size) { if(!size) return; if(!window.currentSelectedImg) return alert("Thầy hãy bấm chọn một tấm ảnh ở dưới trước khi chỉnh kích thước nhé!"); window.currentSelectedImg.style.width = size; window.currentSelectedImg.style.height = 'auto'; };
@@ -455,13 +462,13 @@ window.luuCauHoi = async function(id) {
     const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" }; 
     if(!data.group || !finalQuestionText.trim()) { return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); }
     document.getElementById('loader').style.display = 'flex'; 
-    try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); window.isQuizDataLoaded = false; alert("Lưu thành công!"); window.quanLyNganHang(curSub, true); } catch(e) { alert("Lỗi mạng! Không thể lưu câu hỏi."); } finally { document.getElementById('loader').style.display = 'none'; }
+    try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); window.isAllDataLoaded = false; alert("Lưu thành công!"); window.quanLyNganHang(curSub, true); } catch(e) { alert("Lỗi mạng! Không thể lưu câu hỏi."); } finally { document.getElementById('loader').style.display = 'none'; }
 };
 
 window.xoaCauHoi = async function(id) { 
     if(confirm("Chắc chắn xóa câu hỏi này?")) { 
         document.getElementById('loader').style.display = 'flex'; 
-        try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); window.isQuizDataLoaded = false; alert("Đã xóa!"); window.quanLyNganHang(curSub, true); } catch(e) {} finally { document.getElementById('loader').style.display = 'none'; } 
+        try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); window.isAllDataLoaded = false; alert("Đã xóa!"); window.quanLyNganHang(curSub, true); } catch(e) {} finally { document.getElementById('loader').style.display = 'none'; } 
     } 
 };
 
@@ -471,14 +478,7 @@ window.xoaCauHoi = async function(id) {
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); 
     curSub = sub; 
-    
-    if (!window.isQuizDataLoaded) {
-        document.getElementById('content').innerHTML = `<div class="text-center mt-10"><i class="fas fa-spinner fa-spin text-3xl text-indigo-600"></i><p class="mt-2 font-bold text-gray-500">Đang tải bài tập...</p></div>`; 
-        try { 
-            const [mRes, tRes, lRes] = await Promise.all([ fetch(API_URL + "?type=math&t=" + Date.now()), fetch(API_URL + "?type=vietnamese&t=" + Date.now()), fetch(API_URL + "?type=history_all&t=" + Date.now()) ]); 
-            Data.math = await mRes.json(); Data.tv = await tRes.json(); Data.vietnamese = Data.tv; Data.log = await lRes.json(); window.isQuizDataLoaded = true; 
-        } catch(e) {}
-    }
+    if (!(await window.loadAllDataOnce())) return;
     
     const qs = Data[sub]; if (!qs) { alert("Không tải được dữ liệu. Vui lòng thử lại."); return veTrangChu(); }
     const grps = [...new Set(qs.map(x => x.group))].filter(g => g).sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
@@ -647,37 +647,12 @@ window.finishQuiz = async function() {
 };
 
 // ==========================================
-// 5. VÒNG QUAY MAY MẮN CHỐNG ĐƠ TUYỆT ĐỐI
+// 5. VÒNG QUAY MAY MẮN
 // ==========================================
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu(); 
-
-    if (!window.Data) window.Data = {};
-    if (!Data.caudo) Data.caudo = [];
-    if (!Data.log) Data.log = [];
-
-    document.getElementById('content').innerHTML = `
-        ${getNavHtml('vongquay')}
-        <div class="text-center mt-24 fade-in">
-            <i class="fas fa-spinner fa-spin text-6xl text-yellow-500 mb-4 drop-shadow-md"></i>
-            <p class="font-black text-slate-500 text-lg animate-pulse">Đang tải Vòng quay và Trạm quà...</p>
-        </div>
-    `;
-
-    try { 
-        let promises = [];
-        if (Data.caudo.length === 0) {
-            promises.push(fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json()).then(d => { if(Array.isArray(d)) Data.caudo = d; }).catch(e => console.log("Lỗi")));
-        }
-        if (Data.log.length === 0) {
-            promises.push(fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()).then(d => { if(Array.isArray(d)) Data.log = d; }).catch(e => console.log("Lỗi")));
-        }
-        if (promises.length > 0) await Promise.all(promises);
-    } catch(e) { console.log(e); }
-
-    if (!Array.isArray(Data.caudo)) Data.caudo = [];
-    if (!Array.isArray(Data.log)) Data.log = [];
+    if (!(await window.loadAllDataOnce())) return;
 
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
@@ -695,17 +670,9 @@ window.moVongQuay = async function() {
                 <p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p>
                 <p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</span></p>
             </div>
-            
-            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8">
-                <div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div>
-                <div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">
-                    ${slicesHtml}
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div>
-                </div>
-            </div>
-            
-            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition opacity-50 pointer-events-none mb-6"><i class="fas fa-spinner fa-spin mr-2"></i> ĐANG KẾT NỐI...</button>
-            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"><div class="text-center text-orange-400 text-sm font-bold"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</div></div>
+            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition mb-6 cursor-pointer hover:scale-[1.02]">BẮT ĐẦU</button>
+            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"></div>
         </div>
     `;
     window.checkSpinStatus(spinLog, todayStr); 
@@ -729,10 +696,8 @@ window.renderSpinHistory = function(todayStr) {
     let todayLogs = Data.log.filter(l => l.subject === "LuckySpin" && String(l.group).includes(todayStr));
     
     if (todayLogs.length === 0) { 
-        container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`; 
-        return; 
+        container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`; return; 
     }
-    
     todayLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
     let listItems = todayLogs.map(l => {
         let hs = Data.hs.find(x => String(x.id) === String(l.id)); let name = hs ? hs.name : "Một bạn";
@@ -766,7 +731,6 @@ window.thucHienQuay = async function() {
 
     isSpinning = true;
     let btn = document.getElementById('btnSpin'); btn.classList.add('opacity-50', 'pointer-events-none');
-    
     if (!spinLog.usedFree) { spinLog.usedFree = true; } else { spinLog.extra -= 1; }
     localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
@@ -870,8 +834,9 @@ window.showPrizeModal = function(prize) {
 // 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
 // ==========================================
 window.moTienDo = async function() { 
-    closeMenu(); document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-purple-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu toàn lớp...</h2>`; 
-    try { Data.math = await (await fetch(API_URL+"?type=math")).json(); Data.tv = await (await fetch(API_URL+"?type=vietnamese")).json(); Data.vietnamese = Data.tv; Data.log = await (await fetch(API_URL+"?type=history_all&t="+Date.now())).json(); } catch(e){} 
+    closeMenu(); 
+    if (!(await window.loadAllDataOnce())) return;
+    
     const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); const total = mathGroups.length + tvGroups.length; 
     let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600">TIẾN ĐỘ CHUNG (${total} BÀI)</h2></div><p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-hand-pointer mr-1"></i> Bấm vào tên học sinh để xem chi tiết</p><div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">`; 
     html += Data.hs.map(h => { 
@@ -1087,7 +1052,12 @@ window.showHappyBirthdayUI = function() {
 window.dongBoDuLieu = async function() { 
     if(!confirm("Hành động này sẽ tải lại toàn bộ dữ liệu mới nhất từ Google Sheets. Tiếp tục?")) return; 
     document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
-    try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); window.isQuizDataLoaded = false; alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); location.reload(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
+    try { 
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); 
+        window.isAllDataLoaded = false; // Bắt buộc tải lại dữ liệu mới
+        alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); 
+        location.reload(); 
+    } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
 };
 
 // ==========================================
