@@ -39,7 +39,6 @@ window.loadAllDataOnce = async function(force = false) {
         <div class="text-center mt-24 fade-in">
             <i class="fas fa-cloud-download-alt text-6xl text-blue-500 mb-6 animate-bounce drop-shadow-md"></i>
             <h2 class="text-2xl font-black text-slate-800 uppercase tracking-widest mb-2">Đang đồng bộ dữ liệu</h2>
-            <p class="font-bold text-slate-500">Hệ thống đang tải toàn bộ bài tập và câu đố (chỉ 1 lần duy nhất)...</p>
         </div>
     `;
     
