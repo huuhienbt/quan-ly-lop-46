@@ -30,28 +30,20 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG TỐC ĐỘ CAO (MỚI NÂNG CẤP)
 // ==========================================
-// ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG TỐC ĐỘ CAO (MỚI NÂNG CẤP)
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (GIAO DIỆN TINH TẾ, NHẸ NHÀNG)
 // ==========================================
 window.loadAllDataOnce = async function(force = false) {
     if (window.isAllDataLoaded && !force) return true;
-    
+
+    // Giao diện vòng xoay nhỏ gọn, tạo cảm giác web cực kỳ nhẹ và mượt
     document.getElementById('content').innerHTML = `
-        <div class="text-center mt-28 fade-in">
-            <div class="inline-block relative w-20 h-20 mb-6">
-                <div class="absolute inset-0 border-4 border-blue-100 rounded-full"></div>
-                <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
-                <div class="absolute inset-0 flex items-center justify-center text-blue-600 text-2xl"><i class="fas fa-laptop-code"></i></div>
-            </div>
-            <h2 class="text-2xl font-black text-slate-800 uppercase tracking-widest mb-3">KHỞI TẠO HỆ THỐNG</h2>
-            <p class="font-bold text-slate-500 text-sm bg-slate-50 inline-block px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
-                <i class="fas fa-shield-alt text-green-500 mr-1"></i> Vui lòng đợi giây lát, đang chuẩn bị không gian học tập...
-            </p>
+        <div class="flex flex-col items-center justify-center mt-24 fade-in opacity-80">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-400 mb-3"></i>
+            <p class="text-slate-400 font-medium text-sm animate-pulse">Đang tải dữ liệu...</p>
         </div>
     `;
-    
+
     try {
         const [mRes, tRes, lRes, cRes] = await Promise.all([
             fetch(API_URL + "?type=math&t=" + Date.now()).then(r => r.json()),
@@ -59,22 +51,21 @@ window.loadAllDataOnce = async function(force = false) {
             fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json())
         ]);
-        
+
         Data.math = Array.isArray(mRes) ? mRes : [];
         Data.tv = Array.isArray(tRes) ? tRes : [];
         Data.vietnamese = Data.tv;
         Data.log = Array.isArray(lRes) ? lRes : [];
         Data.caudo = Array.isArray(cRes) ? cRes : [];
-        
+
         window.isAllDataLoaded = true;
         return true;
     } catch(e) {
         console.error("Lỗi tải tổng:", e);
         document.getElementById('content').innerHTML = `
-            <div class="text-center mt-24 text-red-500 fade-in">
-                <i class="fas fa-wifi text-6xl mb-4 opacity-50"></i>
-                <h2 class="text-xl font-black uppercase mb-2">Lỗi Kết Nối</h2>
-                <p class="font-bold text-sm">Không thể kết nối đến máy chủ lớp 4/6. Thầy/cô và con vui lòng tải lại trang nhé!</p>
+            <div class="text-center mt-24 text-red-400 fade-in">
+                <i class="fas fa-wifi text-4xl mb-3 opacity-70"></i>
+                <p class="font-medium text-sm">Kết nối mạng chậm, vui lòng tải lại trang nhé!</p>
             </div>
         `;
         return false;
