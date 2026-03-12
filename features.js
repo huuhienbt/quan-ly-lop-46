@@ -1,15 +1,16 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN BUNG FULL - HOÀN HẢO 100%)
-// Tích hợp: Tải 1 lần (sửa vòng xoay), Bảng Vàng Leo Rank, Ong Vàng (🐝), 
-// Danh hiệu trang cá nhân (Bỏ Chiến binh), Chữ chạy trượt xuống, Giải đố Tiếng Việt
+// FILE: FEATURES.JS (BẢN TẢI NGẦM SIÊU TỐC - TỐI GIẢN)
+// Tích hợp: Tải ngầm 0 giây, Bảng Vàng Leo Rank, Bỏ icon Ong Vàng, 
+// Chữ chạy trượt xuống, Giải đố Tiếng Việt
 // ==========================================
 
 let isSpinning = false;
 window.Data = window.Data || { hs: [], math: [], tv: [], vietnamese: [], log: [], caudo: [] };
 window.isAllDataLoaded = false;
+window.isFetchingBackground = false;
 
 const PRIZES = [
-    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng 10 điểm.", icon: "🎉" },
+    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
     { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
     { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
@@ -31,18 +32,20 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (VÒNG XOAY HOẠT ĐỘNG CHUẨN)
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (CÓ CHẾ ĐỘ TẢI NGẦM TÀNG HÌNH)
 // ==========================================
-window.loadAllDataOnce = async function(force = false) {
+window.loadAllDataOnce = async function(force = false, silent = false) {
     if (window.isAllDataLoaded && !force) return true;
 
-    // Ép vòng tròn phải xoay bằng animate-spin và inline-block
-    document.getElementById('content').innerHTML = `
-        <div class="flex flex-col items-center justify-center mt-28 fade-in opacity-90">
-            <i class="fas fa-circle-notch animate-spin inline-block text-5xl text-indigo-500 mb-4 drop-shadow-md"></i>
-            <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang tải dữ liệu...</p>
-        </div>
-    `;
+    // Chỉ hiện vòng xoay nếu không phải đang tải ngầm
+    if (!silent) {
+        document.getElementById('content').innerHTML = `
+            <div class="flex flex-col items-center justify-center mt-28 fade-in opacity-90">
+                <i class="fas fa-circle-notch animate-spin inline-block text-5xl text-indigo-500 mb-4 drop-shadow-md"></i>
+                <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang kết nối không gian học tập...</p>
+            </div>
+        `;
+    }
 
     try {
         const [mRes, tRes, lRes, cRes] = await Promise.all([
@@ -62,13 +65,16 @@ window.loadAllDataOnce = async function(force = false) {
         return true;
     } catch(e) {
         console.error("Lỗi tải tổng:", e);
-        document.getElementById('content').innerHTML = `
-            <div class="text-center mt-24 text-red-500 fade-in">
-                <i class="fas fa-wifi text-6xl mb-4 opacity-50"></i>
-                <h2 class="text-xl font-black uppercase mb-2">Lỗi Kết Nối</h2>
-                <p class="font-bold text-sm">Không thể tải dữ liệu. Thầy/cô và con vui lòng F5 tải lại trang nhé!</p>
-            </div>
-        `;
+        if (!silent) {
+            document.getElementById('content').innerHTML = `
+                <div class="text-center mt-24 text-red-500 fade-in">
+                    <i class="fas fa-wifi text-6xl mb-4 opacity-50"></i>
+                    <h2 class="text-xl font-black uppercase mb-2">Lỗi Kết Nối</h2>
+                    <p class="font-bold text-sm">Không thể tải dữ liệu. Thầy/cô và con vui lòng F5 tải lại trang nhé!</p>
+                </div>
+            `;
+        }
+        window.isFetchingBackground = false; // Cho phép tải ngầm thử lại
         return false;
     }
 };
@@ -146,6 +152,7 @@ window.moGocHocTap = async function() {
             let doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
             let isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
 
+            // Đã xóa icon hình ảnh, chỉ để lại chữ
             let titleBadge = "";
             let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
             
@@ -1001,6 +1008,7 @@ window.calculateTitle = function(student) {
 
     let titlesHtml = "";
 
+    // Đã xóa hình ảnh
     let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
     if (ongVangBadge) titlesHtml += ongVangBadge;
 
@@ -1139,3 +1147,15 @@ document.addEventListener('play', function(e) {
     var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); }
     var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); }
 }, true);
+
+// ==========================================
+// 13. TẢI NGẦM DỮ LIỆU NGAY SAU KHI ĐĂNG NHẬP
+// ==========================================
+let checkLoginInterval = setInterval(() => {
+    if (window.currentUser && !window.isAllDataLoaded && !window.isFetchingBackground) {
+        window.isFetchingBackground = true;
+        // Gọi tải ngầm (silent = true) - không hiện bảng xoay tải dữ liệu
+        window.loadAllDataOnce(false, true).catch(e => console.log("Lỗi tải ngầm"));
+        clearInterval(checkLoginInterval);
+    }
+}, 1000);
