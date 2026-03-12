@@ -147,7 +147,7 @@ window.moGocHocTap = async function() {
             let isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
 
             let titleBadge = "";
-            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm"><span class="text-sm mr-1">🐝</span>Ong Vàng Chăm Chỉ</div>` : "";
+            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
             
             let nameColor = "text-slate-700 font-bold";
             let rowStyles = "bg-slate-50 border-slate-200"; 
@@ -1001,7 +1001,7 @@ window.calculateTitle = function(student) {
 
     let titlesHtml = "";
 
-    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm"><span class="text-sm mr-1">🐝</span>Ong Vàng Chăm Chỉ</div>` : "";
+    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
     if (ongVangBadge) titlesHtml += ongVangBadge;
 
     let scoreVal = Number(student.score) || 0;
