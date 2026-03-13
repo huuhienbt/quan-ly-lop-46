@@ -1,5 +1,7 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN TÍCH HỢP GAME BẢO VỆ TRÁI ĐẤT - PHÁO LASER THẤP GỌN)
+// FILE: FEATURES.JS (BẢN BUNG FULL - HOÀN HẢO 100%)
+// Tích hợp: Tải 1 lần, Bảng Vàng, Không icon Ong Vàng, Bỏ Chiến binh,
+// Chữ chạy trượt xuống, Giải đố TV, Game Toán: Bảo Vệ Trái Đất (Bản nâng cấp)
 // ==========================================
 
 let isSpinning = false;
@@ -8,7 +10,7 @@ window.isAllDataLoaded = false;
 window.isFetchingBackground = false;
 
 const PRIZES = [
-    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng ngay 10 điểm.", icon: "🎉" },
+    { id: "plus10", text: "+10 Điểm", color: "#34d399", netScore: 10, extraSpin: 0, msg: "Chúc mừng! Con được cộng 10 điểm.", icon: "🎉" },
     { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
     { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
@@ -30,7 +32,7 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (TẢI NGẦM TÀNG HÌNH)
 // ==========================================
 window.loadAllDataOnce = async function(force = false, silent = false) {
     if (window.isAllDataLoaded && !force) return true;
@@ -77,7 +79,7 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP
+// 1. GÓC HỌC TẬP (NÚT GAME TOÁN)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -685,7 +687,7 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ, THƯ TỪ VÀ ADMIN
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
@@ -719,6 +721,7 @@ window.moTienDo = async function() {
     }).join(''); 
     document.getElementById('content').innerHTML = html + "</div>"; 
 };
+
 window.xemChiTietTienDo = function(studentId, studentName) { 
     const userLogs = Data.log.filter(l => String(l.id) === String(studentId)); 
     const sortFunc = (a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); };
