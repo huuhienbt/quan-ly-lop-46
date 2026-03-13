@@ -1,5 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN TỐI ƯU TỐC ĐỘ - THÊM LẠI FONT/SIZE CHỮ)
+// FILE: FEATURES.JS (BẢN TỐI ƯU SMART CACHE - TỐC ĐỘ 0 GIÂY)
+// Tích hợp: Tải ngầm Cache, Giữ Font/Size chữ, Game Bảo Vệ Trái Đất, Vòng Quay, Bảng Vàng
 // ==========================================
 
 let isSpinning = false;
@@ -30,22 +31,51 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (CÓ BỘ NHỚ ĐỆM SIÊU TỐC)
 // ==========================================
 window.loadAllDataOnce = async function(force = false, silent = false) {
     if (window.isAllDataLoaded && !force) return true;
 
+    // BƯỚC 1: Lấy dữ liệu từ bộ nhớ máy (Tốc độ 0 giây)
+    if (!force) {
+        try {
+            let cacheData = localStorage.getItem('eduDataCache');
+            if (cacheData) {
+                let parsed = JSON.parse(cacheData);
+                if (parsed.math && parsed.tv && parsed.log) {
+                    Data.math = parsed.math;
+                    Data.tv = parsed.tv;
+                    Data.vietnamese = parsed.tv;
+                    Data.log = parsed.log;
+                    Data.caudo = parsed.caudo || [];
+                    window.isAllDataLoaded = true;
+                    
+                    // Lặng lẽ tải bản mới nhất ngầm phía sau để cập nhật cho lần sau
+                    if (!window.isFetchingBackground) {
+                        window.isFetchingBackground = true;
+                        window.fetchFreshDataSilently(false).then(() => window.isFetchingBackground = false);
+                    }
+                    return true;
+                }
+            }
+        } catch(e) {}
+    }
+
+    // BƯỚC 2: Nếu máy chưa có dữ liệu, mới hiện vòng xoay chờ tải
     if (!silent) {
         document.getElementById('content').innerHTML = `
             <div class="flex flex-col items-center justify-center mt-28 fade-in opacity-90">
                 <i class="fas fa-circle-notch animate-spin inline-block text-5xl text-indigo-500 mb-4 drop-shadow-md"></i>
-                <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang tải dữ liệu học tập...</p>
+                <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang đồng bộ không gian học tập...</p>
             </div>
         `;
     }
 
+    return await window.fetchFreshDataSilently(!silent);
+};
+
+window.fetchFreshDataSilently = async function(showError = false) {
     try {
-        // Chạy song song không chặn giao diện (đối với silent mode)
         const [mRes, tRes, lRes, cRes] = await Promise.all([
             fetch(API_URL + "?type=math&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=vietnamese&t=" + Date.now()).then(r => r.json()),
@@ -59,20 +89,25 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
         Data.log = Array.isArray(lRes) ? lRes : [];
         Data.caudo = Array.isArray(cRes) ? cRes : [];
 
+        // Lưu vào cache để lần mở sau mượt mà
+        try {
+            localStorage.setItem('eduDataCache', JSON.stringify({
+                math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo
+            }));
+        } catch(e) {}
+
         window.isAllDataLoaded = true;
         return true;
     } catch(e) {
-        console.error("Lỗi tải tổng:", e);
-        if (!silent) {
+        if (showError) {
             document.getElementById('content').innerHTML = `
                 <div class="text-center mt-24 text-red-500 fade-in">
                     <i class="fas fa-wifi text-6xl mb-4 opacity-50"></i>
                     <h2 class="text-xl font-black uppercase mb-2">Lỗi Kết Nối</h2>
-                    <p class="font-bold text-sm">Không thể tải dữ liệu. Thầy/cô và con vui lòng F5 tải lại trang nhé!</p>
+                    <p class="font-bold text-sm">Không thể kết nối. Thầy/cô và con vui lòng F5 tải lại trang nhé!</p>
                 </div>
             `;
         }
-        window.isFetchingBackground = false; 
         return false;
     }
 };
@@ -246,7 +281,7 @@ window.toggleGroupQuestions = function(groupId) {
 };
 
 // ==========================================
-// 3. EDITOR ĐA PHƯƠNG TIỆN TÙY CHỈNH (Đã thêm Font/Size chữ)
+// 3. EDITOR ĐA PHƯƠNG TIỆN TÙY CHỈNH (Có Font/Size chữ)
 // ==========================================
 window.getRichTextToolbar = function(targetId) {
     return `
@@ -260,22 +295,10 @@ window.getRichTextToolbar = function(targetId) {
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
             
             <select onchange="document.execCommand('fontName', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1">
-                <option value="">Kiểu chữ...</option>
-                <option value="Arial">Arial</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Tahoma">Tahoma</option>
-                <option value="Verdana">Verdana</option>
+                <option value="">Kiểu chữ...</option><option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option><option value="Tahoma">Tahoma</option><option value="Verdana">Verdana</option>
             </select>
             <select onchange="document.execCommand('fontSize', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1">
-                <option value="">Cỡ chữ...</option>
-                <option value="1">Rất nhỏ</option>
-                <option value="2">Nhỏ</option>
-                <option value="3">Bình thường</option>
-                <option value="4">Vừa</option>
-                <option value="5">Lớn</option>
-                <option value="6">Rất lớn</option>
-                <option value="7">Khổng lồ</option>
+                <option value="">Cỡ chữ...</option><option value="1">Rất nhỏ</option><option value="2">Nhỏ</option><option value="3">Bình thường</option><option value="4">Vừa</option><option value="5">Lớn</option><option value="6">Rất lớn</option><option value="7">Khổng lồ</option>
             </select>
 
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
@@ -713,26 +736,6 @@ window.showPrizeModal = function(prize) {
 // ==========================================
 // 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
 // ==========================================
-window.calculateTitle = function(student) {
-    if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
-    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g); const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g); const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
-    const userLogs = Data.log.filter(l => String(l.id) === String(student.id));
-    const doneMath = new Set(userLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
-    const doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
-    const isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
-
-    let titlesHtml = "";
-    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
-    if (ongVangBadge) titlesHtml += ongVangBadge;
-
-    let scoreVal = Number(student.score) || 0; let titleBadge = "";
-    if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
-    else if (scoreVal >= 4000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
-    else if (scoreVal >= 3000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
-    if (titleBadge) titlesHtml += (titlesHtml ? " " : "") + titleBadge;
-    return titlesHtml;
-};
-
 window.moTienDo = async function() { 
     closeMenu(); if (!(await window.loadAllDataOnce())) return;
     const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); const total = mathGroups.length + tvGroups.length; 
@@ -771,6 +774,9 @@ window.xemLoiSai = function(studentId, subjectCode, group) {
     document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); 
 };
 
+// ==========================================
+// 7. THƯ BÍ MẬT & ĐƠN XIN PHÉP
+// ==========================================
 window.moHopThuBiMat = function() {
     if(!currentUser) return showLogin(); closeMenu();
     document.getElementById('content').innerHTML = `${getNavHtml('thubimat')}<div class="bg-[#fff0f5] p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 space-y-5 fade-in relative overflow-hidden"><p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con.</p><textarea id="mailContent" class="w-full bg-white border-2 border-pink-200 p-4 rounded-2xl font-medium text-slate-700 outline-none focus:border-pink-400 transition min-h-[150px] relative z-10" placeholder="Viết điều con muốn nói vào đây..."></textarea><label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100"><input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer"><span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span></label><button onclick="window.guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button></div>`;
@@ -798,6 +804,9 @@ window.sendLeave = async function() {
     try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:combinedType, reason:r } }) }); alert("Gửi đơn thành công!"); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); } finally { document.getElementById('loader').style.display='none'; } 
 };
 
+// ==========================================
+// 8. QUẢN LÝ ADMIN & THÔNG BÁO
+// ==========================================
 window.moQuanLyThu = async function() { 
     closeMenu(); document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải thư...</p></div>`; 
     try {
@@ -837,49 +846,84 @@ window.moDonTu = async function() {
     } catch (e) {}
 };
 
-window.viewProfile = function(id) { 
-    closeMenu(); const s = Data.hs.find(x => String(x.id) === String(id)); if(!s) return; 
-    const avatar = s.gender === 'Nữ' ? '<div class="w-24 h-24 bg-pink-100 text-pink-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-graduate"></i></div>' : '<div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-astronaut"></i></div>'; 
-    let cleanDob = s.dob || 'Chưa cập nhật'; if(cleanDob.includes('T') && cleanDob.includes('.000Z')) { const dt = new Date(cleanDob); cleanDob = ("0" + dt.getDate()).slice(-2) + "/" + ("0" + (dt.getMonth() + 1)).slice(-2) + "/" + dt.getFullYear(); } 
-    const renderPhone = (phone, label) => { 
-        if(!phone || phone.trim() === '') return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><span class="text-slate-400 italic text-xs">Chưa cập nhật</span></div>`; 
-        const cleanPhone = phone.toString().replace(/\D/g, ''); return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${phone}</span><a href="tel:${cleanPhone}" class="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs hover:bg-green-600 hover:text-white transition"><i class="fas fa-phone"></i></a></div></div>`; 
-    }; 
-    const studentTitles = window.calculateTitle(s);
-    document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="${currentUser && currentUser.role==='admin'?'window.chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ CÁ NHÂN</h2></div><div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-50 fade-in relative overflow-hidden"><div class="text-center mb-6 relative z-10">${avatar}<h2 class="text-2xl font-black text-slate-800">${s.name}</h2><span class="bg-blue-50 text-blue-600 font-mono font-bold px-3 py-1 rounded-full text-xs mt-2 inline-block">ID: ${s.id}</span></div><div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right flex flex-col items-end gap-1 mt-1">${studentTitles}</div></div><div class="space-y-1"><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Ngày sinh</span><b class="text-slate-700">${cleanDob}</b></div><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Giới tính</span><b class="text-slate-700">${s.gender || '-'}</b></div>${renderPhone(s.fatherPhone, "SĐT Cha")}${renderPhone(s.motherPhone, "SĐT Mẹ")}<div class="py-2"><span class="text-slate-400 font-bold uppercase text-[10px] block mb-1">Địa chỉ</span><b class="text-slate-700 text-sm leading-snug">${s.address || 'Chưa cập nhật'}</b></div></div></div>`; 
+window.kiemTraThongBaoAdmin = async function() { 
+    if (!currentUser || currentUser.role !== 'admin') return; 
+    try { 
+        const [mailRes, leaveRes] = await Promise.all([ fetch(API_URL + "?type=mailbox&t=" + Date.now()), fetch(API_URL + "?type=absent_list&t=" + Date.now()) ]); 
+        const mails = await mailRes.json(); const leaves = await leaveRes.json(); 
+        let readMail = parseInt(localStorage.getItem('admin_read_mail_' + currentUser.id) || "0"); let readLeave = parseInt(localStorage.getItem('admin_read_leave_' + currentUser.id) || "0"); 
+        let unreadMail = mails.length - readMail; if (unreadMail < 0) unreadMail = 0; let unreadLeave = leaves.length - readLeave; if (unreadLeave < 0) unreadLeave = 0; 
+        window.renderChuongThongBao(unreadMail, unreadLeave); 
+    } catch(e) { console.log("Lỗi tải thông báo:", e); } 
 };
 
-window.chuyenTrangQuanLy = function() { 
-    closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="window.viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); document.getElementById('content').innerHTML = html + "</div>"; 
+window.renderChuongThongBao = function(unreadMail, unreadLeave) { 
+    let oldBell = document.getElementById('adminNotificationBell'); if (oldBell) oldBell.remove(); let totalUnread = unreadMail + unreadLeave; if (totalUnread <= 0) return; 
+    let bellHtml = `<div id="adminNotificationBell" class="fixed bottom-8 right-6 z-[80] flex flex-col items-end fade-in"><div id="adminNotiPopup" class="hidden bg-white p-4 rounded-2xl shadow-2xl border border-slate-100 mb-3 w-64 origin-bottom-right transition-all"><h4 class="font-black text-slate-700 mb-3 border-b pb-2"><i class="fas fa-bell text-yellow-500 mr-2 animate-pulse"></i>Thông báo mới</h4>${unreadMail > 0 ? `<div onclick="window.moQuanLyThu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-pink-50 rounded-xl mb-2 cursor-pointer hover:bg-pink-100 transition"><span class="font-bold text-pink-700 text-sm"><i class="fas fa-envelope mr-2"></i>Thư bí mật</span><span class="bg-pink-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadMail}</span></div>` : ''}${unreadLeave > 0 ? `<div onclick="window.moDonTu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition"><span class="font-bold text-red-700 text-sm"><i class="fas fa-file-signature mr-2"></i>Đơn xin phép</span><span class="bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadLeave}</span></div>` : ''}</div><button onclick="document.getElementById('adminNotiPopup').classList.toggle('hidden')" class="relative w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-[0_8px_30px_rgb(245,158,11/0.5)] hover:scale-110 transition flex items-center justify-center text-white text-2xl btn-3d animate-bounce border-2 border-white"><i class="fas fa-bell"></i><span class="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">${totalUnread}</span></button></div>`; document.body.insertAdjacentHTML('beforeend', bellHtml); 
 };
+
+// Đã giảm tần suất kiểm tra thông báo từ 5s xuống 60s để tránh làm treo máy
+setInterval(() => { 
+    if (window.currentUser && window.currentUser.role === 'admin') { 
+        if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); } 
+    } else { window.hasCheckedAdminNoti = false; let bell = document.getElementById('adminNotificationBell'); if (bell) bell.remove(); } 
+}, 60000); 
 
 // ==========================================
-// 10. TỐI ƯU HÓA TẢI NGẦM CHỐNG GIẬT LAG
+// 9. CÔNG CỤ CHUNG & ĐỒNG BỘ
 // ==========================================
 let checkLoginInterval = setInterval(() => { 
     if (window.currentUser && !window.isAllDataLoaded && !window.isFetchingBackground) { 
         window.isFetchingBackground = true; 
-        clearInterval(checkLoginInterval); // Dừng bộ đếm ngay khi phát hiện đăng nhập
-        
-        // CỐT LÕI TỐI ƯU: Đợi 3 giây để giao diện trang chủ Load mượt mà xong mới Tải Ngầm
-        setTimeout(() => {
-            window.loadAllDataOnce(false, true).catch(e => console.log("Lỗi tải ngầm")); 
-        }, 3000);
+        clearInterval(checkLoginInterval);
+        // Cốt lõi tối ưu tốc độ: Đợi người dùng vào trang chủ ổn định (3 giây) rồi mới đi tải dữ liệu
+        setTimeout(() => { window.loadAllDataOnce(false, true).catch(e => console.log("Lỗi tải ngầm")); }, 3000);
     } 
 }, 1000);
 
-window.dongBoDuLieu = async function() { if(!confirm("Hành động này sẽ tải lại toàn bộ dữ liệu mới nhất từ Google Sheets. Tiếp tục?")) return; document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); window.isAllDataLoaded = false; alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); location.reload(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } };
+window.dongBoDuLieu = async function() { 
+    if(!confirm("Hành động này sẽ tải lại toàn bộ dữ liệu mới nhất từ máy chủ. Tiếp tục?")) return; 
+    document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
+    try { 
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); 
+        localStorage.removeItem('eduDataCache'); // Xóa Cache để ép tải mới hoàn toàn
+        window.isAllDataLoaded = false; 
+        alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); 
+        location.reload(); 
+    } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } 
+};
 
-window.kiemTraThongBaoAdmin = async function() { if (!currentUser || currentUser.role !== 'admin') return; try { const [mailRes, leaveRes] = await Promise.all([ fetch(API_URL + "?type=mailbox&t=" + Date.now()), fetch(API_URL + "?type=absent_list&t=" + Date.now()) ]); const mails = await mailRes.json(); const leaves = await leaveRes.json(); let readMail = parseInt(localStorage.getItem('admin_read_mail_' + currentUser.id) || "0"); let readLeave = parseInt(localStorage.getItem('admin_read_leave_' + currentUser.id) || "0"); let unreadMail = mails.length - readMail; if (unreadMail < 0) unreadMail = 0; let unreadLeave = leaves.length - readLeave; if (unreadLeave < 0) unreadLeave = 0; window.renderChuongThongBao(unreadMail, unreadLeave); } catch(e) { console.log("Lỗi tải thông báo:", e); } };
-window.renderChuongThongBao = function(unreadMail, unreadLeave) { let oldBell = document.getElementById('adminNotificationBell'); if (oldBell) oldBell.remove(); let totalUnread = unreadMail + unreadLeave; if (totalUnread <= 0) return; let bellHtml = `<div id="adminNotificationBell" class="fixed bottom-8 right-6 z-[80] flex flex-col items-end fade-in"><div id="adminNotiPopup" class="hidden bg-white p-4 rounded-2xl shadow-2xl border border-slate-100 mb-3 w-64 origin-bottom-right transition-all"><h4 class="font-black text-slate-700 mb-3 border-b pb-2"><i class="fas fa-bell text-yellow-500 mr-2 animate-pulse"></i>Thông báo mới</h4>${unreadMail > 0 ? `<div onclick="window.moQuanLyThu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-pink-50 rounded-xl mb-2 cursor-pointer hover:bg-pink-100 transition"><span class="font-bold text-pink-700 text-sm"><i class="fas fa-envelope mr-2"></i>Thư bí mật</span><span class="bg-pink-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadMail}</span></div>` : ''}${unreadLeave > 0 ? `<div onclick="window.moDonTu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition"><span class="font-bold text-red-700 text-sm"><i class="fas fa-file-signature mr-2"></i>Đơn xin phép</span><span class="bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadLeave}</span></div>` : ''}</div><button onclick="document.getElementById('adminNotiPopup').classList.toggle('hidden')" class="relative w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-[0_8px_30px_rgb(245,158,11/0.5)] hover:scale-110 transition flex items-center justify-center text-white text-2xl btn-3d animate-bounce border-2 border-white"><i class="fas fa-bell"></i><span class="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">${totalUnread}</span></button></div>`; document.body.insertAdjacentHTML('beforeend', bellHtml); };
-setInterval(() => { if (window.currentUser && window.currentUser.role === 'admin') { if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); } } else { window.hasCheckedAdminNoti = false; let bell = document.getElementById('adminNotificationBell'); if (bell) bell.remove(); } }, 5000); // Đổi thành 5 giây kiểm tra 1 lần cho nhẹ máy
+window.checkSinhNhat = function() { 
+    if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return; 
+    if (sessionStorage.getItem('hpbdShown_' + currentUser.id)) return; 
+    let dobStr = currentUser.dob; let bDay = 0, bMonth = 0; 
+    try { if (dobStr.includes('T')) { let dt = new Date(dobStr); bDay = dt.getDate(); bMonth = dt.getMonth() + 1; } else if (dobStr.includes('/')) { let parts = dobStr.split('/'); bDay = parseInt(parts[0]); bMonth = parseInt(parts[1]); } else if (dobStr.includes('-')) { let parts = dobStr.split('-'); bDay = parseInt(parts[2]); bMonth = parseInt(parts[1]); } } catch(e) { return; } 
+    let today = new Date(); 
+    if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) { 
+        let currentYear = today.getFullYear(); let bonusKey = 'hpbd_bonus_' + currentYear + '_' + currentUser.id; 
+        if (!localStorage.getItem(bonusKey)) { 
+            let todayStr = today.toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}'); 
+            if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false }; 
+            spinLog.extra += 5; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); localStorage.setItem(bonusKey, 'true'); 
+            try { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: "Sinh nhật " + currentYear, score_earned: 0, details: "Hệ thống tự động tặng 5 lượt quay nhân dịp sinh nhật!" } }) }); } catch(e) {} 
+        } 
+        window.showHappyBirthdayUI(); sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); 
+    } 
+};
 
-window.checkSinhNhat = function() { if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return; if (sessionStorage.getItem('hpbdShown_' + currentUser.id)) return; let dobStr = currentUser.dob; let bDay = 0, bMonth = 0; try { if (dobStr.includes('T')) { let dt = new Date(dobStr); bDay = dt.getDate(); bMonth = dt.getMonth() + 1; } else if (dobStr.includes('/')) { let parts = dobStr.split('/'); bDay = parseInt(parts[0]); bMonth = parseInt(parts[1]); } else if (dobStr.includes('-')) { let parts = dobStr.split('-'); bDay = parseInt(parts[2]); bMonth = parseInt(parts[1]); } } catch(e) { return; } let today = new Date(); if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) { let currentYear = today.getFullYear(); let bonusKey = 'hpbd_bonus_' + currentYear + '_' + currentUser.id; if (!localStorage.getItem(bonusKey)) { let todayStr = today.toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}'); if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false }; spinLog.extra += 5; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); localStorage.setItem(bonusKey, 'true'); try { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: "Sinh nhật " + currentYear, score_earned: 0, details: "Hệ thống tự động tặng 5 lượt quay nhân dịp sinh nhật!" } }) }); } catch(e) {} } window.showHappyBirthdayUI(); sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); } };
-window.showHappyBirthdayUI = function() { let overlay = document.createElement('div'); overlay.id = "hpbdModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4"; overlay.innerHTML = `<div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]"><div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden"><button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button><div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div><h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">CHÚC MỪNG SINH NHẬT</h2><h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3><div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-4 relative"><i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i><p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p></div><div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 p-3 rounded-2xl mb-6 shadow-inner animate-pulse"><p class="text-orange-600 font-black text-sm"><i class="fas fa-gift text-xl mr-1 text-red-500"></i> LÌ XÌ TỪ THẦY HIỂN</p><p class="text-slate-700 font-bold text-xs mt-1">Hệ thống đã tự động cộng <span class="text-red-600 text-base font-black">5 LƯỢT QUAY</span> vào Vòng Quay May Mắn của con!</p></div><button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">CẢM ƠN THẦY Ạ!</button></div></div>`; document.body.appendChild(overlay); window.safeConfetti(); };
-document.addEventListener('play', function(e) { var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); } var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); } }, true);
+window.showHappyBirthdayUI = function() { 
+    let overlay = document.createElement('div'); overlay.id = "hpbdModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4"; 
+    overlay.innerHTML = `<div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]"><div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden"><button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button><div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div><h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">CHÚC MỪNG SINH NHẬT</h2><h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3><div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-4 relative"><i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i><p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p></div><div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 p-3 rounded-2xl mb-6 shadow-inner animate-pulse"><p class="text-orange-600 font-black text-sm"><i class="fas fa-gift text-xl mr-1 text-red-500"></i> LÌ XÌ TỪ THẦY HIỂN</p><p class="text-slate-700 font-bold text-xs mt-1">Hệ thống đã tự động cộng <span class="text-red-600 text-base font-black">5 LƯỢT QUAY</span> vào Vòng Quay May Mắn của con!</p></div><button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">CẢM ƠN THẦY Ạ!</button></div></div>`; 
+    document.body.appendChild(overlay); window.safeConfetti(); 
+};
+
+document.addEventListener('play', function(e) { 
+    var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); } 
+    var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); } 
+}, true);
 
 // ==========================================
-// 7. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
@@ -916,9 +960,7 @@ window.moGameBaoVeTraiDat = function() {
 
             <div id="mg-sky" class="flex-1 relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black">
                 <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(white 1px, transparent 1px); background-size: 30px 30px;"></div>
-                
                 <div id="mg-combo-text" class="absolute top-1/4 left-1/2 -translate-x-1/2 text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-red-600 opacity-0 transition-opacity duration-300 drop-shadow-[0_0_10px_rgba(255,0,0,0.8)] z-10 pointer-events-none">COMBO x2 🔥</div>
-
                 <div class="absolute bottom-0 left-0 w-full h-24 flex justify-center items-end">
                     <div class="w-full h-16 bg-blue-500/20 rounded-t-[100%] border-t border-blue-400/30 blur-[2px] absolute bottom-0"></div>
                     <div id="mg-cannon" class="w-16 h-10 bg-gradient-to-t from-slate-400 to-slate-200 rounded-t-xl relative z-10 border-2 border-b-0 border-slate-500 flex justify-center pt-1.5 shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-transform duration-75">
