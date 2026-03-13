@@ -1,7 +1,5 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN BUNG FULL - HOÀN HẢO 100%)
-// Tích hợp: Tải 1 lần, Bảng Vàng, Không icon Ong Vàng, Bỏ Chiến binh,
-// Chữ chạy trượt xuống, Giải đố TV, Game Toán: Bảo Vệ Trái Đất (Bản nâng cấp)
+// FILE: FEATURES.JS (BẢN TỐI ƯU TỐC ĐỘ - THÊM LẠI FONT/SIZE CHỮ)
 // ==========================================
 
 let isSpinning = false;
@@ -32,7 +30,7 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (TẢI NGẦM TÀNG HÌNH)
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG
 // ==========================================
 window.loadAllDataOnce = async function(force = false, silent = false) {
     if (window.isAllDataLoaded && !force) return true;
@@ -41,12 +39,13 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
         document.getElementById('content').innerHTML = `
             <div class="flex flex-col items-center justify-center mt-28 fade-in opacity-90">
                 <i class="fas fa-circle-notch animate-spin inline-block text-5xl text-indigo-500 mb-4 drop-shadow-md"></i>
-                <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang kết nối không gian học tập...</p>
+                <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang tải dữ liệu học tập...</p>
             </div>
         `;
     }
 
     try {
+        // Chạy song song không chặn giao diện (đối với silent mode)
         const [mRes, tRes, lRes, cRes] = await Promise.all([
             fetch(API_URL + "?type=math&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=vietnamese&t=" + Date.now()).then(r => r.json()),
@@ -79,7 +78,7 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (NÚT GAME TOÁN)
+// 1. GÓC HỌC TẬP
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -247,7 +246,7 @@ window.toggleGroupQuestions = function(groupId) {
 };
 
 // ==========================================
-// 3. EDITOR ĐA PHƯƠNG TIỆN TÙY CHỈNH
+// 3. EDITOR ĐA PHƯƠNG TIỆN TÙY CHỈNH (Đã thêm Font/Size chữ)
 // ==========================================
 window.getRichTextToolbar = function(targetId) {
     return `
@@ -257,11 +256,36 @@ window.getRichTextToolbar = function(targetId) {
             <button onclick="document.execCommand('underline', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 underline font-serif text-slate-700">U</button>
             <button onclick="document.execCommand('superscript', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-bold text-slate-700 text-sm">X²</button>
             <div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer"></div>
+            
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
+            
+            <select onchange="document.execCommand('fontName', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1">
+                <option value="">Kiểu chữ...</option>
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Tahoma">Tahoma</option>
+                <option value="Verdana">Verdana</option>
+            </select>
+            <select onchange="document.execCommand('fontSize', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1">
+                <option value="">Cỡ chữ...</option>
+                <option value="1">Rất nhỏ</option>
+                <option value="2">Nhỏ</option>
+                <option value="3">Bình thường</option>
+                <option value="4">Vừa</option>
+                <option value="5">Lớn</option>
+                <option value="6">Rất lớn</option>
+                <option value="7">Khổng lồ</option>
+            </select>
+
+            <div class="w-px h-6 bg-slate-300 mx-1"></div>
+            
             <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-left"></i></button>
             <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-center"></i></button>
             <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-right"></i></button>
+            
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
+            
             <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200"><i class="fas fa-link"></i> Link</button>
             <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200"><i class="fas fa-image"></i> Ảnh</button>
             <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200"><i class="fab fa-youtube"></i> Video</button>
@@ -739,34 +763,41 @@ window.xemChiTietTienDo = function(studentId, studentName) {
     }; 
     document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div><div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>`; 
 };
+
 window.xemLoiSai = function(studentId, subjectCode, group) { 
     const student = Data.hs.find(s => String(s.id) === String(studentId)); const studentName = student ? student.name : "Học sinh"; 
     let groupLogs = Data.log.filter(l => String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group);
     groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
     document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); 
 };
+
 window.moHopThuBiMat = function() {
     if(!currentUser) return showLogin(); closeMenu();
     document.getElementById('content').innerHTML = `${getNavHtml('thubimat')}<div class="bg-[#fff0f5] p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 space-y-5 fade-in relative overflow-hidden"><p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con.</p><textarea id="mailContent" class="w-full bg-white border-2 border-pink-200 p-4 rounded-2xl font-medium text-slate-700 outline-none focus:border-pink-400 transition min-h-[150px] relative z-10" placeholder="Viết điều con muốn nói vào đây..."></textarea><label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100"><input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer"><span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span></label><button onclick="window.guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button></div>`;
 };
+
 window.guiThuBiMat = async function() {
     const content = document.getElementById('mailContent').value.trim(); const isAnon = document.getElementById('mailAnon').checked; 
     if(!content) return alert("Con chưa viết gì cả!"); document.getElementById('loader').style.display = 'flex';
     try { await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); alert("Đã gửi thư thành công!"); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
+
 window.moXinPhep = function() { 
     if(!currentUser) return showLogin(); closeMenu(); 
     document.getElementById('content').innerHTML = `${getNavHtml('hopthu')}<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 fade-in"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại xin phép</label><select id="lType" onchange="window.changeLeaveType()" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Nghỉ học và bán trú">Nghỉ học và bán trú</option><option value="Nghỉ Bán trú">Nghỉ Bán trú</option></select></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian nghỉ</label><select id="lSession" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option></select></div></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lý do (Bệnh, việc gia đình...)</label><textarea id="lReason" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-medium text-slate-700 outline-none focus:border-red-400 transition" rows="3" placeholder="Nhập lý do chi tiết..."></textarea></div><button onclick="window.sendLeave()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-red-700 transition"><i class="fas fa-paper-plane mr-2"></i> GỬI ĐƠN CHO GVCN</button></div>`; document.getElementById('lDate').valueAsDate = new Date(Date.now()+86400000); 
 };
+
 window.changeLeaveType = function() { 
     const type = document.getElementById('lType').value; const session = document.getElementById('lSession'); 
     if (type === 'Nghỉ Bán trú') { session.innerHTML = `<option value="Ăn trưa và Không ngủ trưa">Ăn trưa và Không ngủ trưa</option><option value="Không ăn trưa và không ngủ trưa">Không ăn trưa và không ngủ trưa</option>`; } else { session.innerHTML = `<option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option>`; } 
 };
+
 window.sendLeave = async function() { 
     const d = document.getElementById('lDate').value; const r = document.getElementById('lReason').value; const type = document.getElementById('lType').value; const session = document.getElementById('lSession').value; 
     if(!d || !r) return alert("Vui lòng chọn Ngày nghỉ và Nhập Lý do!"); const combinedType = `${type} (${session})`; document.getElementById('loader').style.display='flex'; 
     try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action:'gui_xin_phep', data:{ id:currentUser.id, name:currentUser.name, dateOff:d, type:combinedType, reason:r } }) }); alert("Gửi đơn thành công!"); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được đơn!"); } finally { document.getElementById('loader').style.display='none'; } 
 };
+
 window.moQuanLyThu = async function() { 
     closeMenu(); document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải thư...</p></div>`; 
     try {
@@ -784,6 +815,7 @@ window.moQuanLyThu = async function() {
         document.getElementById('content').innerHTML = html;
     } catch (e) { document.getElementById('content').innerHTML = `<p class="text-center text-red-500 mt-10 font-bold">Lỗi tải dữ liệu hộp thư.</p>`; }
 };
+
 window.moDonTu = async function() { 
     closeMenu(); document.getElementById('content').innerHTML = `<h2 class="text-xl font-black text-red-600 mb-4 text-center"><i class="fas fa-spinner fa-spin"></i> Đang tải danh sách...</h2>`; 
     try {
@@ -804,6 +836,7 @@ window.moDonTu = async function() {
         } document.getElementById('content').innerHTML = html; 
     } catch (e) {}
 };
+
 window.viewProfile = function(id) { 
     closeMenu(); const s = Data.hs.find(x => String(x.id) === String(id)); if(!s) return; 
     const avatar = s.gender === 'Nữ' ? '<div class="w-24 h-24 bg-pink-100 text-pink-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-graduate"></i></div>' : '<div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-astronaut"></i></div>'; 
@@ -815,14 +848,32 @@ window.viewProfile = function(id) {
     const studentTitles = window.calculateTitle(s);
     document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="${currentUser && currentUser.role==='admin'?'window.chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ CÁ NHÂN</h2></div><div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-50 fade-in relative overflow-hidden"><div class="text-center mb-6 relative z-10">${avatar}<h2 class="text-2xl font-black text-slate-800">${s.name}</h2><span class="bg-blue-50 text-blue-600 font-mono font-bold px-3 py-1 rounded-full text-xs mt-2 inline-block">ID: ${s.id}</span></div><div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right flex flex-col items-end gap-1 mt-1">${studentTitles}</div></div><div class="space-y-1"><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Ngày sinh</span><b class="text-slate-700">${cleanDob}</b></div><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Giới tính</span><b class="text-slate-700">${s.gender || '-'}</b></div>${renderPhone(s.fatherPhone, "SĐT Cha")}${renderPhone(s.motherPhone, "SĐT Mẹ")}<div class="py-2"><span class="text-slate-400 font-bold uppercase text-[10px] block mb-1">Địa chỉ</span><b class="text-slate-700 text-sm leading-snug">${s.address || 'Chưa cập nhật'}</b></div></div></div>`; 
 };
+
 window.chuyenTrangQuanLy = function() { 
     closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="window.viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); document.getElementById('content').innerHTML = html + "</div>"; 
 };
-let checkLoginInterval = setInterval(() => { if (window.currentUser && !window.isAllDataLoaded && !window.isFetchingBackground) { window.isFetchingBackground = true; window.loadAllDataOnce(false, true).catch(e => console.log("Lỗi tải ngầm")); clearInterval(checkLoginInterval); } }, 1000);
+
+// ==========================================
+// 10. TỐI ƯU HÓA TẢI NGẦM CHỐNG GIẬT LAG
+// ==========================================
+let checkLoginInterval = setInterval(() => { 
+    if (window.currentUser && !window.isAllDataLoaded && !window.isFetchingBackground) { 
+        window.isFetchingBackground = true; 
+        clearInterval(checkLoginInterval); // Dừng bộ đếm ngay khi phát hiện đăng nhập
+        
+        // CỐT LÕI TỐI ƯU: Đợi 3 giây để giao diện trang chủ Load mượt mà xong mới Tải Ngầm
+        setTimeout(() => {
+            window.loadAllDataOnce(false, true).catch(e => console.log("Lỗi tải ngầm")); 
+        }, 3000);
+    } 
+}, 1000);
+
 window.dongBoDuLieu = async function() { if(!confirm("Hành động này sẽ tải lại toàn bộ dữ liệu mới nhất từ Google Sheets. Tiếp tục?")) return; document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; try { await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); window.isAllDataLoaded = false; alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); location.reload(); } catch(e) { document.getElementById('loader').style.display = 'none'; alert("Lỗi mạng khi đồng bộ!"); } };
+
 window.kiemTraThongBaoAdmin = async function() { if (!currentUser || currentUser.role !== 'admin') return; try { const [mailRes, leaveRes] = await Promise.all([ fetch(API_URL + "?type=mailbox&t=" + Date.now()), fetch(API_URL + "?type=absent_list&t=" + Date.now()) ]); const mails = await mailRes.json(); const leaves = await leaveRes.json(); let readMail = parseInt(localStorage.getItem('admin_read_mail_' + currentUser.id) || "0"); let readLeave = parseInt(localStorage.getItem('admin_read_leave_' + currentUser.id) || "0"); let unreadMail = mails.length - readMail; if (unreadMail < 0) unreadMail = 0; let unreadLeave = leaves.length - readLeave; if (unreadLeave < 0) unreadLeave = 0; window.renderChuongThongBao(unreadMail, unreadLeave); } catch(e) { console.log("Lỗi tải thông báo:", e); } };
 window.renderChuongThongBao = function(unreadMail, unreadLeave) { let oldBell = document.getElementById('adminNotificationBell'); if (oldBell) oldBell.remove(); let totalUnread = unreadMail + unreadLeave; if (totalUnread <= 0) return; let bellHtml = `<div id="adminNotificationBell" class="fixed bottom-8 right-6 z-[80] flex flex-col items-end fade-in"><div id="adminNotiPopup" class="hidden bg-white p-4 rounded-2xl shadow-2xl border border-slate-100 mb-3 w-64 origin-bottom-right transition-all"><h4 class="font-black text-slate-700 mb-3 border-b pb-2"><i class="fas fa-bell text-yellow-500 mr-2 animate-pulse"></i>Thông báo mới</h4>${unreadMail > 0 ? `<div onclick="window.moQuanLyThu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-pink-50 rounded-xl mb-2 cursor-pointer hover:bg-pink-100 transition"><span class="font-bold text-pink-700 text-sm"><i class="fas fa-envelope mr-2"></i>Thư bí mật</span><span class="bg-pink-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadMail}</span></div>` : ''}${unreadLeave > 0 ? `<div onclick="window.moDonTu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition"><span class="font-bold text-red-700 text-sm"><i class="fas fa-file-signature mr-2"></i>Đơn xin phép</span><span class="bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadLeave}</span></div>` : ''}</div><button onclick="document.getElementById('adminNotiPopup').classList.toggle('hidden')" class="relative w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-[0_8px_30px_rgb(245,158,11/0.5)] hover:scale-110 transition flex items-center justify-center text-white text-2xl btn-3d animate-bounce border-2 border-white"><i class="fas fa-bell"></i><span class="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">${totalUnread}</span></button></div>`; document.body.insertAdjacentHTML('beforeend', bellHtml); };
-setInterval(() => { if (window.currentUser && window.currentUser.role === 'admin') { if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); } } else { window.hasCheckedAdminNoti = false; let bell = document.getElementById('adminNotificationBell'); if (bell) bell.remove(); } }, 2000);
+setInterval(() => { if (window.currentUser && window.currentUser.role === 'admin') { if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); } } else { window.hasCheckedAdminNoti = false; let bell = document.getElementById('adminNotificationBell'); if (bell) bell.remove(); } }, 5000); // Đổi thành 5 giây kiểm tra 1 lần cho nhẹ máy
+
 window.checkSinhNhat = function() { if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return; if (sessionStorage.getItem('hpbdShown_' + currentUser.id)) return; let dobStr = currentUser.dob; let bDay = 0, bMonth = 0; try { if (dobStr.includes('T')) { let dt = new Date(dobStr); bDay = dt.getDate(); bMonth = dt.getMonth() + 1; } else if (dobStr.includes('/')) { let parts = dobStr.split('/'); bDay = parseInt(parts[0]); bMonth = parseInt(parts[1]); } else if (dobStr.includes('-')) { let parts = dobStr.split('-'); bDay = parseInt(parts[2]); bMonth = parseInt(parts[1]); } } catch(e) { return; } let today = new Date(); if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) { let currentYear = today.getFullYear(); let bonusKey = 'hpbd_bonus_' + currentYear + '_' + currentUser.id; if (!localStorage.getItem(bonusKey)) { let todayStr = today.toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}'); if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false }; spinLog.extra += 5; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); localStorage.setItem(bonusKey, 'true'); try { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: "Sinh nhật " + currentYear, score_earned: 0, details: "Hệ thống tự động tặng 5 lượt quay nhân dịp sinh nhật!" } }) }); } catch(e) {} } window.showHappyBirthdayUI(); sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); } };
 window.showHappyBirthdayUI = function() { let overlay = document.createElement('div'); overlay.id = "hpbdModal"; overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4"; overlay.innerHTML = `<div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]"><div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden"><button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button><div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div><h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">CHÚC MỪNG SINH NHẬT</h2><h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3><div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-4 relative"><i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i><p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p></div><div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 p-3 rounded-2xl mb-6 shadow-inner animate-pulse"><p class="text-orange-600 font-black text-sm"><i class="fas fa-gift text-xl mr-1 text-red-500"></i> LÌ XÌ TỪ THẦY HIỂN</p><p class="text-slate-700 font-bold text-xs mt-1">Hệ thống đã tự động cộng <span class="text-red-600 text-base font-black">5 LƯỢT QUAY</span> vào Vòng Quay May Mắn của con!</p></div><button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">CẢM ƠN THẦY Ạ!</button></div></div>`; document.body.appendChild(overlay); window.safeConfetti(); };
 document.addEventListener('play', function(e) { var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); } var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); } }, true);
@@ -898,23 +949,20 @@ window.moGameBaoVeTraiDat = function() {
 window.mgTaoPhepTinh = function(level) {
     let ops = ['+', '-', 'x', ':']; let op = ops[Math.floor(Math.random() * ops.length)]; let a, b, ans;
     if (level === 1) { 
-        // Cấp 1: Cộng trừ 2 chữ số nhẹ nhàng (< 50). Nhân chia bảng 2,3,4,5
         if (op === '+') { a = Math.floor(Math.random()*40)+10; b = Math.floor(Math.random()*40)+10; ans = a+b; }
         else if (op === '-') { a = Math.floor(Math.random()*50)+30; b = Math.floor(Math.random()*(a-10))+10; ans = a-b; }
         else if (op === 'x') { a = Math.floor(Math.random()*4)+2; b = Math.floor(Math.random()*9)+2; ans = a*b; }
         else { b = Math.floor(Math.random()*4)+2; ans = Math.floor(Math.random()*9)+2; a = b*ans; }
     } else if (level === 2) { 
-        // Cấp 2: Cộng trừ 2 chữ số lớn hơn (50-99). Nhân chia bảng 6,7,8,9
         if (op === '+') { a = Math.floor(Math.random()*50)+40; b = Math.floor(Math.random()*50)+10; ans = a+b; }
         else if (op === '-') { a = Math.floor(Math.random()*50)+50; b = Math.floor(Math.random()*(a-10))+10; ans = a-b; }
         else if (op === 'x') { a = Math.floor(Math.random()*4)+6; b = Math.floor(Math.random()*9)+2; ans = a*b; }
         else { b = Math.floor(Math.random()*4)+6; ans = Math.floor(Math.random()*9)+2; a = b*ans; }
     } else { 
-        // Cấp 3: Cộng trừ 2 chữ số khó (tổng có thể qua 100 nhưng vẫn là phép tính 2 chữ số). Nhân chia nâng cao
-        if (op === '+') { a = Math.floor(Math.random()*50)+50; b = Math.floor(Math.random()*50)+50; ans = a+b; } // Vd: 75 + 68
-        else if (op === '-') { a = Math.floor(Math.random()*50)+100; b = Math.floor(Math.random()*80)+20; ans = a-b; } // Vd: 125 - 68
-        else if (op === 'x') { a = Math.floor(Math.random()*20)+11; b = Math.floor(Math.random()*8)+2; ans = a*b; } // Vd: 15 x 4
-        else { b = Math.floor(Math.random()*8)+2; ans = Math.floor(Math.random()*20)+11; a = b*ans; } // Vd: 60 : 4 = 15
+        if (op === '+') { a = Math.floor(Math.random()*50)+50; b = Math.floor(Math.random()*50)+50; ans = a+b; }
+        else if (op === '-') { a = Math.floor(Math.random()*50)+100; b = Math.floor(Math.random()*80)+20; ans = a-b; }
+        else if (op === 'x') { a = Math.floor(Math.random()*20)+11; b = Math.floor(Math.random()*8)+2; ans = a*b; }
+        else { b = Math.floor(Math.random()*8)+2; ans = Math.floor(Math.random()*20)+11; a = b*ans; }
     }
     return { q: `${a} ${op} ${b}`, a: ans.toString() };
 };
@@ -925,7 +973,6 @@ window.mgStartLevel = function() {
     document.getElementById('mg-level').innerText = mathGame.level;
     document.getElementById('mg-input').innerText = "";
 
-    // Tốc độ sinh và rơi thiên thạch đã được điều chỉnh chậm lại rõ rệt
     let spawnRate = mathGame.level === 1 ? 4000 : (mathGame.level === 2 ? 3500 : 3000);
     let fallSpeed = mathGame.level === 1 ? 0.15 : (mathGame.level === 2 ? 0.25 : 0.35); 
 
@@ -1052,7 +1099,6 @@ window.mgEndLevel = function() {
 window.mgGameOver = async function(isWin = false) {
     clearInterval(mathGame.loop); clearInterval(mathGame.spawn); mathGame.active = false;
     
-    // Lời động viên tích cực
     let msg = isWin ? "BẢO VỆ THÀNH CÔNG!" : "NHIỆM VỤ KẾT THÚC!";
     let titleColor = isWin ? "text-emerald-400" : "text-yellow-400";
     let iconSmile = isWin ? "🌍" : "😊";
