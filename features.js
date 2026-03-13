@@ -1,5 +1,5 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN TÍCH HỢP GAME BẢO VỆ TRÁI ĐẤT - LASER - 10 TIM - BÀN PHÍM 1/3)
+// FILE: FEATURES.JS (BẢN TÍCH HỢP GAME BẢO VỆ TRÁI ĐẤT - 2 CHỮ SỐ, PHÍM THẤP, LỜI ĐỘNG VIÊN)
 // ==========================================
 
 let isSpinning = false;
@@ -30,7 +30,7 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (TẢI NGẦM TÀNG HÌNH)
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG
 // ==========================================
 window.loadAllDataOnce = async function(force = false, silent = false) {
     if (window.isAllDataLoaded && !force) return true;
@@ -685,7 +685,7 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ, THƯ TỪ VÀ ADMIN (Giữ nguyên)
+// 6. QUẢN LÝ TIẾN ĐỘ, THƯ TỪ VÀ ADMIN
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
@@ -874,15 +874,15 @@ window.moGameBaoVeTraiDat = function() {
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-2 pb-4 relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] border-t-2 border-slate-700 h-[35vh] max-h-[300px] flex flex-col justify-end">
+            <div class="bg-slate-800 p-2 pb-4 relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] border-t-2 border-slate-700 h-[28vh] max-h-[240px] flex flex-col justify-end">
                 <div class="max-w-md mx-auto w-full h-full flex flex-col">
-                    <div class="bg-slate-900 border-2 border-slate-700 rounded-xl mb-2 flex-[0_0_40px] flex items-center justify-center">
-                        <span id="mg-input" class="text-2xl font-black text-cyan-400 tracking-widest drop-shadow-[0_0_5px_cyan]"></span>
+                    <div class="bg-slate-900 border-2 border-slate-700 rounded-xl mb-2 flex-[0_0_36px] flex items-center justify-center">
+                        <span id="mg-input" class="text-xl font-black text-cyan-400 tracking-widest drop-shadow-[0_0_5px_cyan]"></span>
                     </div>
-                    <div class="grid grid-cols-3 gap-2 flex-1">
-                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="window.mgType(${n})" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-md w-full h-full flex items-center justify-center">${n}</button>`).join('')}
-                        <button onclick="window.mgClear()" class="bg-red-500/20 text-red-400 border-red-500/50 font-black text-lg rounded-xl border-b-4 active:border-b-0 active:translate-y-1 hover:bg-red-500/30 transition shadow-md w-full h-full flex items-center justify-center"><i class="fas fa-backspace"></i></button>
-                        <button onclick="window.mgType(0)" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-md w-full h-full flex items-center justify-center">0</button>
+                    <div class="grid grid-cols-3 gap-1.5 flex-1">
+                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="window.mgType(${n})" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-sm w-full h-full flex items-center justify-center">${n}</button>`).join('')}
+                        <button onclick="window.mgClear()" class="bg-red-500/20 text-red-400 border-red-500/50 font-black text-lg rounded-xl border-b-4 active:border-b-0 active:translate-y-1 hover:bg-red-500/30 transition shadow-sm w-full h-full flex items-center justify-center"><i class="fas fa-backspace"></i></button>
+                        <button onclick="window.mgType(0)" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-sm w-full h-full flex items-center justify-center">0</button>
                         <button onclick="window.mgShoot()" class="bg-gradient-to-t from-blue-600 to-cyan-500 text-white font-black text-lg rounded-xl border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 hover:opacity-90 transition shadow-[0_0_15px_rgba(6,182,212,0.4)] w-full h-full flex items-center justify-center"><i class="fas fa-crosshairs mr-1"></i> BẮN</button>
                     </div>
                 </div>
@@ -895,20 +895,23 @@ window.moGameBaoVeTraiDat = function() {
 window.mgTaoPhepTinh = function(level) {
     let ops = ['+', '-', 'x', ':']; let op = ops[Math.floor(Math.random() * ops.length)]; let a, b, ans;
     if (level === 1) { 
+        // Cấp 1: Cộng trừ 2 chữ số nhẹ nhàng (< 50). Nhân chia bảng 2,3,4,5
         if (op === '+') { a = Math.floor(Math.random()*40)+10; b = Math.floor(Math.random()*40)+10; ans = a+b; }
-        else if (op === '-') { a = Math.floor(Math.random()*80)+20; b = Math.floor(Math.random()*(a-1))+1; ans = a-b; }
-        else if (op === 'x') { a = Math.floor(Math.random()*4)+2; b = Math.floor(Math.random()*10)+1; ans = a*b; }
-        else { b = Math.floor(Math.random()*4)+2; ans = Math.floor(Math.random()*10)+1; a = b*ans; }
+        else if (op === '-') { a = Math.floor(Math.random()*50)+30; b = Math.floor(Math.random()*(a-10))+10; ans = a-b; }
+        else if (op === 'x') { a = Math.floor(Math.random()*4)+2; b = Math.floor(Math.random()*9)+2; ans = a*b; }
+        else { b = Math.floor(Math.random()*4)+2; ans = Math.floor(Math.random()*9)+2; a = b*ans; }
     } else if (level === 2) { 
-        if (op === '+') { a = Math.floor(Math.random()*400)+100; b = Math.floor(Math.random()*400)+100; ans = a+b; }
-        else if (op === '-') { a = Math.floor(Math.random()*500)+100; b = Math.floor(Math.random()*(a-1))+1; ans = a-b; }
-        else if (op === 'x') { a = Math.floor(Math.random()*4)+6; b = Math.floor(Math.random()*10)+1; ans = a*b; }
-        else { b = Math.floor(Math.random()*4)+6; ans = Math.floor(Math.random()*10)+1; a = b*ans; }
+        // Cấp 2: Cộng trừ 2 chữ số lớn hơn (50-99). Nhân chia bảng 6,7,8,9
+        if (op === '+') { a = Math.floor(Math.random()*50)+40; b = Math.floor(Math.random()*50)+10; ans = a+b; }
+        else if (op === '-') { a = Math.floor(Math.random()*50)+50; b = Math.floor(Math.random()*(a-10))+10; ans = a-b; }
+        else if (op === 'x') { a = Math.floor(Math.random()*4)+6; b = Math.floor(Math.random()*9)+2; ans = a*b; }
+        else { b = Math.floor(Math.random()*4)+6; ans = Math.floor(Math.random()*9)+2; a = b*ans; }
     } else { 
-        if (op === '+') { a = Math.floor(Math.random()*5000)+1000; b = Math.floor(Math.random()*5000)+1000; ans = a+b; }
-        else if (op === '-') { a = Math.floor(Math.random()*8000)+1000; b = Math.floor(Math.random()*(a-1))+1; ans = a-b; }
-        else if (op === 'x') { a = Math.floor(Math.random()*89)+10; b = Math.floor(Math.random()*8)+2; ans = a*b; }
-        else { b = Math.floor(Math.random()*89)+10; ans = Math.floor(Math.random()*8)+2; a = b*ans; }
+        // Cấp 3: Cộng trừ 2 chữ số khó (tổng có thể qua 100 nhưng vẫn là phép tính 2 chữ số). Nhân chia nâng cao
+        if (op === '+') { a = Math.floor(Math.random()*50)+50; b = Math.floor(Math.random()*50)+50; ans = a+b; } // Vd: 75 + 68
+        else if (op === '-') { a = Math.floor(Math.random()*50)+100; b = Math.floor(Math.random()*80)+20; ans = a-b; } // Vd: 125 - 68
+        else if (op === 'x') { a = Math.floor(Math.random()*20)+11; b = Math.floor(Math.random()*8)+2; ans = a*b; } // Vd: 15 x 4
+        else { b = Math.floor(Math.random()*8)+2; ans = Math.floor(Math.random()*20)+11; a = b*ans; } // Vd: 60 : 4 = 15
     }
     return { q: `${a} ${op} ${b}`, a: ans.toString() };
 };
@@ -919,7 +922,7 @@ window.mgStartLevel = function() {
     document.getElementById('mg-level').innerText = mathGame.level;
     document.getElementById('mg-input').innerText = "";
 
-    // Điều chỉnh tốc độ sinh và rơi chậm lại theo cấp độ
+    // Tốc độ sinh và rơi thiên thạch đã được điều chỉnh chậm lại rõ rệt
     let spawnRate = mathGame.level === 1 ? 4000 : (mathGame.level === 2 ? 3500 : 3000);
     let fallSpeed = mathGame.level === 1 ? 0.15 : (mathGame.level === 2 ? 0.25 : 0.35); 
 
@@ -976,7 +979,6 @@ window.mgShoot = function() {
     if (hitIndex !== -1) {
         let m = mathGame.meteors[hitIndex];
         
-        // --- TOÁN HỌC: TÍNH TỌA ĐỘ LASER ---
         let cannon = document.getElementById('mg-cannon');
         if (cannon && m.el) {
             let rectC = cannon.getBoundingClientRect(); 
@@ -1046,12 +1048,16 @@ window.mgEndLevel = function() {
 
 window.mgGameOver = async function(isWin = false) {
     clearInterval(mathGame.loop); clearInterval(mathGame.spawn); mathGame.active = false;
-    let msg = isWin ? "BẢO VỆ THÀNH CÔNG!" : "TRÁI ĐẤT BỊ PHÁ HỦY!";
-    let titleColor = isWin ? "text-emerald-400" : "text-red-500";
+    
+    // Đã thay đổi câu báo Game Over thành lời động viên tích cực
+    let msg = isWin ? "BẢO VỆ THÀNH CÔNG!" : "NHIỆM VỤ KẾT THÚC!";
+    let titleColor = isWin ? "text-emerald-400" : "text-yellow-400";
+    let iconSmile = isWin ? "🌍" : "😊";
     
     document.getElementById('mg-sky').innerHTML += `
         <div class="absolute inset-0 bg-black/90 flex flex-col items-center justify-center z-50 animate-[cascadeDrop_0.5s_ease-out_forwards]">
-            <h2 class="text-3xl font-black ${titleColor} mb-2 uppercase">${msg}</h2>
+            <div class="text-6xl mb-4 animate-bounce">${iconSmile}</div>
+            <h2 class="text-3xl font-black ${titleColor} mb-2 uppercase text-center">${msg}</h2>
             <p class="text-slate-300 font-bold mb-6">Số điểm đạt được: <span class="text-yellow-400 text-2xl ml-1">${mathGame.score}</span></p>
             <button onclick="window.thoatGameToan(true)" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-xl font-black text-xl hover:scale-105 transition shadow-[0_0_15px_blue]">NHẬN THƯỞNG & THOÁT</button>
         </div>
