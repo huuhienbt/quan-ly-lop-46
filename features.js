@@ -1,5 +1,5 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN TÍCH HỢP GAME BẢO VỆ TRÁI ĐẤT - LASER ĐỊNH HƯỚNG)
+// FILE: FEATURES.JS (BẢN TÍCH HỢP GAME BẢO VỆ TRÁI ĐẤT - LASER - 10 TIM - BÀN PHÍM 1/3)
 // ==========================================
 
 let isSpinning = false;
@@ -707,7 +707,6 @@ window.calculateTitle = function(student) {
     return titlesHtml;
 };
 
-// ... (Các hàm khác như xemChiTietTienDo, moHopThuBiMat, moDonTu... đều được giữ nguyên 100% bên dưới này) ...
 window.moTienDo = async function() { 
     closeMenu(); if (!(await window.loadAllDataOnce())) return;
     const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); const total = mathGroups.length + tvGroups.length; 
@@ -828,7 +827,7 @@ document.addEventListener('play', function(e) { var audios = document.getElement
 // ==========================================
 // 7. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
 // ==========================================
-let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 3, timeLeft: 60, active: false };
+let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
 window.moGameBaoVeTraiDat = function() {
     if(!currentUser) return showLogin();
@@ -839,27 +838,25 @@ window.moGameBaoVeTraiDat = function() {
     if (gameLog.date !== todayStr) gameLog = { date: todayStr, plays: 0 };
     if (gameLog.plays >= 3) return alert("Hôm nay con đã xuất kích đủ 3 lần rồi. Hãy nghỉ ngơi và quay lại bảo vệ Trái Đất vào ngày mai nhé!");
 
-    // Cập nhật lượt chơi
     gameLog.plays += 1;
     localStorage.setItem('mathGame_' + currentUser.id, JSON.stringify(gameLog));
 
-    // Reset game state
-    mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 3, timeLeft: 60, active: true };
+    mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true };
 
     document.getElementById('content').innerHTML = `
         <div id="gameUI" class="fixed inset-0 z-[100] bg-slate-900 overflow-hidden flex flex-col font-sans select-none touch-none">
             <div class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-3 flex justify-between items-center text-white relative z-20">
-                <div class="flex items-center gap-3">
-                    <button onclick="window.thoatGameToan()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center hover:bg-red-500 transition"><i class="fas fa-times"></i></button>
-                    <div id="mg-lives" class="text-red-400 text-lg flex gap-1">❤️❤️❤️</div>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.thoatGameToan()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0 hover:bg-red-500 transition"><i class="fas fa-times"></i></button>
+                    <div id="mg-lives" class="text-red-400 text-[10px] sm:text-xs flex tracking-tighter">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️</div>
                 </div>
-                <div class="text-center absolute left-1/2 -translate-x-1/2">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">CẤP ĐỘ <span id="mg-level" class="text-white text-sm">1</span></p>
-                    <p id="mg-time" class="text-xl font-black text-yellow-400">01:00</p>
+                <div class="text-center absolute left-1/2 -translate-x-1/2 mt-1">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">CẤP ĐỘ <span id="mg-level" class="text-white text-sm">1</span></p>
+                    <p id="mg-time" class="text-xl font-black text-yellow-400 leading-none">01:00</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">ĐIỂM</p>
-                    <p id="mg-score" class="text-2xl font-black text-emerald-400">0</p>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">ĐIỂM</p>
+                    <p id="mg-score" class="text-2xl font-black text-emerald-400 leading-none">0</p>
                 </div>
             </div>
 
@@ -877,16 +874,16 @@ window.moGameBaoVeTraiDat = function() {
                 </div>
             </div>
 
-            <div class="bg-slate-800 p-2 pb-6 relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] border-t-2 border-slate-700">
-                <div class="max-w-md mx-auto">
-                    <div class="bg-slate-900 border-2 border-slate-700 rounded-xl mb-2 h-14 flex items-center justify-center">
-                        <span id="mg-input" class="text-3xl font-black text-cyan-400 tracking-widest drop-shadow-[0_0_5px_cyan]"></span>
+            <div class="bg-slate-800 p-2 pb-4 relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] border-t-2 border-slate-700 h-[35vh] max-h-[300px] flex flex-col justify-end">
+                <div class="max-w-md mx-auto w-full h-full flex flex-col">
+                    <div class="bg-slate-900 border-2 border-slate-700 rounded-xl mb-2 flex-[0_0_40px] flex items-center justify-center">
+                        <span id="mg-input" class="text-2xl font-black text-cyan-400 tracking-widest drop-shadow-[0_0_5px_cyan]"></span>
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
-                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="window.mgType(${n})" class="bg-slate-700 text-white font-black text-2xl h-14 rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-md">${n}</button>`).join('')}
-                        <button onclick="window.mgClear()" class="bg-red-500/20 text-red-400 border-red-500/50 font-black text-xl h-14 rounded-xl border-b-4 active:border-b-0 active:translate-y-1 hover:bg-red-500/30 transition shadow-md"><i class="fas fa-backspace"></i></button>
-                        <button onclick="window.mgType(0)" class="bg-slate-700 text-white font-black text-2xl h-14 rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-md">0</button>
-                        <button onclick="window.mgShoot()" class="bg-gradient-to-t from-blue-600 to-cyan-500 text-white font-black text-xl h-14 rounded-xl border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 hover:opacity-90 transition shadow-[0_0_15px_rgba(6,182,212,0.4)]"><i class="fas fa-crosshairs mr-1"></i> BẮN</button>
+                    <div class="grid grid-cols-3 gap-2 flex-1">
+                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="window.mgType(${n})" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-md w-full h-full flex items-center justify-center">${n}</button>`).join('')}
+                        <button onclick="window.mgClear()" class="bg-red-500/20 text-red-400 border-red-500/50 font-black text-lg rounded-xl border-b-4 active:border-b-0 active:translate-y-1 hover:bg-red-500/30 transition shadow-md w-full h-full flex items-center justify-center"><i class="fas fa-backspace"></i></button>
+                        <button onclick="window.mgType(0)" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-md w-full h-full flex items-center justify-center">0</button>
+                        <button onclick="window.mgShoot()" class="bg-gradient-to-t from-blue-600 to-cyan-500 text-white font-black text-lg rounded-xl border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 hover:opacity-90 transition shadow-[0_0_15px_rgba(6,182,212,0.4)] w-full h-full flex items-center justify-center"><i class="fas fa-crosshairs mr-1"></i> BẮN</button>
                     </div>
                 </div>
             </div>
@@ -922,8 +919,9 @@ window.mgStartLevel = function() {
     document.getElementById('mg-level').innerText = mathGame.level;
     document.getElementById('mg-input').innerText = "";
 
-    let spawnRate = mathGame.level === 1 ? 3500 : (mathGame.level === 2 ? 2800 : 2000);
-    let fallSpeed = mathGame.level === 1 ? 0.3 : (mathGame.level === 2 ? 0.45 : 0.6); 
+    // Điều chỉnh tốc độ sinh và rơi chậm lại theo cấp độ
+    let spawnRate = mathGame.level === 1 ? 4000 : (mathGame.level === 2 ? 3500 : 3000);
+    let fallSpeed = mathGame.level === 1 ? 0.15 : (mathGame.level === 2 ? 0.25 : 0.35); 
 
     mathGame.spawn = setInterval(() => {
         if(!mathGame.active) return;
@@ -968,7 +966,6 @@ window.mgShoot = function() {
     let inpStr = document.getElementById('mg-input').innerText; if(!inpStr) return;
     let hitIndex = -1;
     
-    // Tìm thiên thạch thấp nhất có đáp án khớp
     let lowestTop = -100;
     for(let i=0; i<mathGame.meteors.length; i++) {
         if(mathGame.meteors[i].ans === inpStr && mathGame.meteors[i].top > lowestTop) {
@@ -977,45 +974,38 @@ window.mgShoot = function() {
     }
 
     if (hitIndex !== -1) {
-        // TRÚNG ĐÍCH
         let m = mathGame.meteors[hitIndex];
         
         // --- TOÁN HỌC: TÍNH TỌA ĐỘ LASER ---
         let cannon = document.getElementById('mg-cannon');
         if (cannon && m.el) {
-            let rectC = cannon.getBoundingClientRect(); // Khung nòng pháo
-            let rectM = m.el.getBoundingClientRect();   // Khung thiên thạch
+            let rectC = cannon.getBoundingClientRect(); 
+            let rectM = m.el.getBoundingClientRect();   
             
-            // Tìm tọa độ tâm
             let startX = rectC.left + rectC.width / 2;
             let startY = rectC.top;
             let endX = rectM.left + rectM.width / 2;
             let endY = rectM.top + rectM.height / 2;
             
-            // Pytago tính chiều dài & Lượng giác tính góc
             let length = Math.hypot(endX - startX, endY - startY);
             let angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
             
-            // Tạo tia Laser
             let laser = document.createElement('div');
             laser.className = "absolute bg-cyan-300 shadow-[0_0_20px_2px_cyan] z-20 pointer-events-none rounded-full";
             laser.style.left = startX + 'px';
             laser.style.top = startY + 'px';
             laser.style.width = length + 'px';
             laser.style.height = '6px';
-            laser.style.transformOrigin = '0 50%'; // Xoay từ gốc bên trái
+            laser.style.transformOrigin = '0 50%'; 
             laser.style.transform = `rotate(${angle}deg)`;
             document.getElementById('gameUI').appendChild(laser);
             
-            // Hiệu ứng pháo giật lùi (Recoil)
             cannon.style.transform = 'translateY(10px)';
             setTimeout(() => cannon.style.transform = 'translateY(0)', 100);
             
-            // Xóa laser chớp nhoáng
             setTimeout(() => laser.remove(), 150);
         }
 
-        // Hiệu ứng nổ bùm
         m.el.className = "absolute text-6xl animate-ping z-30 drop-shadow-[0_0_20px_red]"; 
         m.el.innerHTML = "💥";
         setTimeout(() => { if(m.el) m.el.remove(); }, 300);
@@ -1026,7 +1016,6 @@ window.mgShoot = function() {
         let pts = mathGame.combo >= 5 ? basePts * 2 : basePts;
         mathGame.score += pts; document.getElementById('mg-score').innerText = mathGame.score;
     } else {
-        // XỊT (GÕ SAI)
         mathGame.combo = 0; window.mgUpdateCombo();
         document.getElementById('mg-input').classList.add('text-red-500');
         setTimeout(()=>document.getElementById('mg-input').classList.remove('text-red-500'), 200);
@@ -1041,7 +1030,7 @@ window.mgUpdateCombo = function() {
 };
 
 window.mgUpdateLives = function() {
-    let hpStr = ""; for(let i=0;i<3;i++){ hpStr += i < mathGame.lives ? "❤️" : "🖤"; }
+    let hpStr = ""; for(let i=0;i<10;i++){ hpStr += i < mathGame.lives ? "❤️" : "🖤"; }
     document.getElementById('mg-lives').innerText = hpStr;
 };
 
