@@ -456,7 +456,8 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI & HIỂN THỊ ĐIỂM SỐ
+// ==========================================
+// 4. TIẾN TRÌNH LÀM BÀI & HIỂN THỊ ĐIỂM SỐ (DẠNG 80/100 ĐIỂM)
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); 
@@ -476,6 +477,7 @@ window.loadSubject = async function(sub) {
             
             const time = qs.find(q => q.group === g).time || 20; 
             const count = qs.filter(q => q.group === g && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length; 
+            const maxPossibleScore = count * 10; // Tính tổng điểm tuyệt đối của bài
             
             let clickAction = `window.startQuiz('${g}', ${time})`; 
             let myScoreStr = "";
@@ -483,19 +485,17 @@ window.loadSubject = async function(sub) {
             if (isDone && currentUser.role === 'student') { 
                 // Lọc lấy số điểm cao nhất học sinh từng đạt được ở bài này
                 let maxScore = Math.max(...myLogsForGroup.map(l => Number(l.score) || 0));
-                myScoreStr = `${maxScore} Điểm`;
+                myScoreStr = `${maxScore}/${maxPossibleScore} điểm`; // Hiển thị dạng phân số
 
                 let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
                 if(tokens > 0) clickAction = `window.promptRedo('${g}', ${time})`; 
-                else clickAction = `alert('Con đã làm bài này đạt ${maxScore} điểm. Hãy vào Vòng Quay May Mắn tìm VÉ LÀM LẠI nếu muốn cải thiện điểm nhé!')`; 
+                else clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm. Hãy vào Vòng Quay May Mắn tìm VÉ LÀM LẠI nếu muốn cải thiện điểm nhé!')`; 
             } 
             
-            // Đổi huy hiệu ĐÃ LÀM thành Mức điểm màu Xanh ngọc
             let badgeHtml = !isDone 
                 ? `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>` 
                 : `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded shadow-sm border border-emerald-200"><i class="fas fa-check-circle text-xs mr-1"></i>${myScoreStr}</span>`; 
             
-            // Nền bài tập đã làm cũng được làm sáng sủa, đẹp mắt hơn
             html += `<div onclick="${clickAction}" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-emerald-100 bg-emerald-50/40 opacity-90' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check-circle' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${badgeHtml}</div>`; 
         }); 
     } 
