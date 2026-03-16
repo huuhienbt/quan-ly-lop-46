@@ -456,7 +456,7 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI & MÀU SẮC ĐIỂM SỐ (% TỈ LỆ)
+// 4. TIẾN TRÌNH LÀM BÀI & HIỂN THỊ ĐIỂM SỐ THEO MÀU
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); 
@@ -485,9 +485,8 @@ window.loadSubject = async function(sub) {
 
             if (isDone && currentUser.role === 'student') { 
                 let maxScore = Math.max(...myLogsForGroup.map(l => Number(l.score) || 0));
-                let pct = maxPossibleScore > 0 ? (maxScore / maxPossibleScore) * 100 : 0; // Tính % điểm
+                let pct = maxPossibleScore > 0 ? (maxScore / maxPossibleScore) * 100 : 0; 
                 
-                // Quy định màu sắc theo % điểm
                 let theme = {};
                 if (pct >= 90) {
                     theme = { badge: "bg-green-100 text-green-700 border border-green-500", card: "border-green-200 bg-green-50/40 opacity-95", icon: "bg-green-100 text-green-600", sym: "fa-check-circle" };
@@ -504,9 +503,18 @@ window.loadSubject = async function(sub) {
                 iconClass = theme.icon;
                 iconSymbol = theme.sym;
 
+                let isMaxScore = (pct >= 100);
                 let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
-                if(tokens > 0) clickAction = `window.promptRedo('${g}', ${time})`; 
-                else clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm. Hãy vào Vòng Quay May Mắn tìm VÉ LÀM LẠI nếu muốn cải thiện điểm nhé!')`; 
+                
+                if (tokens > 0) {
+                    clickAction = `window.promptRedo('${g}', ${time}, ${isMaxScore})`; 
+                } else {
+                    if (isMaxScore) {
+                        clickAction = `alert('Tuyệt vời! Con đã đạt điểm tuyệt đối ${maxScore}/${maxPossibleScore} ở bài này rồi. Quá xuất sắc! 🎉')`; 
+                    } else {
+                        clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm.\\n\\nHãy vào Vòng Quay May Mắn tìm VÉ LÀM LẠI nếu muốn cải thiện điểm nhé!')`; 
+                    }
+                }
             } 
             
             html += `<div onclick="${clickAction}" class="p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${cardClass}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${iconClass}"><i class="fas ${iconSymbol}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${badgeHtml}</div>`; 
@@ -515,10 +523,14 @@ window.loadSubject = async function(sub) {
     document.getElementById('content').innerHTML = html + `</div>`; 
 };
 
-window.promptRedo = function(group, time) {
+window.promptRedo = function(group, time, isMaxScore = false) {
     let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
     if(tokens > 0) { 
-        if(confirm(`Con đang có ${tokens} VÉ LÀM LẠI.\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] không?`)) { 
+        let confirmMsg = isMaxScore 
+            ? `Con đang có ${tokens} VÉ LÀM LẠI.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` 
+            : `Con đang có ${tokens} VÉ LÀM LẠI.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
+
+        if(confirm(confirmMsg)) { 
             localStorage.setItem('redo_tokens_'+currentUser.id, tokens - 1); 
             Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group)); 
             window.startQuiz(group, time); 
@@ -556,7 +568,7 @@ window.startQuiz = function(group, timeMins) {
 
 window.renderQuestion = function(index) { 
     if (index >= quiz.length) { window.finishQuiz(); return; } 
-    const q = quiz[index]; let colorTheme = (curSub === 'vietnamese' || curSub === 'tv') ? 'text-green-600' : 'textindigo-600'; 
+    const q = quiz[index]; let colorTheme = (curSub === 'vietnamese' || curSub === 'tv') ? 'text-green-600' : 'text-indigo-600'; 
     let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100' : '';
     let optionsHtml = ['a','b','c','d'].filter(k => q[k]).map(key => `<div onclick="window.checkAns(this, '${key}', '${q.correct}', ${index})" class="quiz-option p-4 sm:p-5 border-2 border-slate-100 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition btn-3d bg-white"><span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 uppercase text-lg shrink-0 shadow-inner">${key}</span><div class="font-bold text-slate-700 flex-1 text-base sm:text-lg leading-relaxed">${window.parseImg(q[key])}</div></div>`).join('');
     document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${window.parseImg(q.question)}</div></div><div class="space-y-4">${optionsHtml}</div></div>`; 
@@ -764,6 +776,26 @@ window.showPrizeModal = function(prize) {
 // ==========================================
 // 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
 // ==========================================
+window.calculateTitle = function(student) {
+    if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
+    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g); const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g); const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
+    const userLogs = Data.log.filter(l => String(l.id) === String(student.id));
+    const doneMath = new Set(userLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
+    const doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
+    const isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
+
+    let titlesHtml = "";
+    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
+    if (ongVangBadge) titlesHtml += ongVangBadge;
+
+    let scoreVal = Number(student.score) || 0; let titleBadge = "";
+    if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
+    else if (scoreVal >= 4000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
+    else if (scoreVal >= 3000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
+    if (titleBadge) titlesHtml += (titlesHtml ? " " : "") + titleBadge;
+    return titlesHtml;
+};
+
 window.moTienDo = async function() { 
     closeMenu(); if (!(await window.loadAllDataOnce())) return;
     const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); const total = mathGroups.length + tvGroups.length; 
@@ -874,6 +906,22 @@ window.moDonTu = async function() {
     } catch (e) {}
 };
 
+window.viewProfile = function(id) { 
+    closeMenu(); const s = Data.hs.find(x => String(x.id) === String(id)); if(!s) return; 
+    const avatar = s.gender === 'Nữ' ? '<div class="w-24 h-24 bg-pink-100 text-pink-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-graduate"></i></div>' : '<div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-astronaut"></i></div>'; 
+    let cleanDob = s.dob || 'Chưa cập nhật'; if(cleanDob.includes('T') && cleanDob.includes('.000Z')) { const dt = new Date(cleanDob); cleanDob = ("0" + dt.getDate()).slice(-2) + "/" + ("0" + (dt.getMonth() + 1)).slice(-2) + "/" + dt.getFullYear(); } 
+    const renderPhone = (phone, label) => { 
+        if(!phone || phone.trim() === '') return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><span class="text-slate-400 italic text-xs">Chưa cập nhật</span></div>`; 
+        const cleanPhone = phone.toString().replace(/\D/g, ''); return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${phone}</span><a href="tel:${cleanPhone}" class="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs hover:bg-green-600 hover:text-white transition"><i class="fas fa-phone"></i></a></div></div>`; 
+    }; 
+    const studentTitles = window.calculateTitle(s);
+    document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="${currentUser && currentUser.role==='admin'?'window.chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ CÁ NHÂN</h2></div><div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-50 fade-in relative overflow-hidden"><div class="text-center mb-6 relative z-10">${avatar}<h2 class="text-2xl font-black text-slate-800">${s.name}</h2><span class="bg-blue-50 text-blue-600 font-mono font-bold px-3 py-1 rounded-full text-xs mt-2 inline-block">ID: ${s.id}</span></div><div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right flex flex-col items-end gap-1 mt-1">${studentTitles}</div></div><div class="space-y-1"><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Ngày sinh</span><b class="text-slate-700">${cleanDob}</b></div><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Giới tính</span><b class="text-slate-700">${s.gender || '-'}</b></div>${renderPhone(s.fatherPhone, "SĐT Cha")}${renderPhone(s.motherPhone, "SĐT Mẹ")}<div class="py-2"><span class="text-slate-400 font-bold uppercase text-[10px] block mb-1">Địa chỉ</span><b class="text-slate-700 text-sm leading-snug">${s.address || 'Chưa cập nhật'}</b></div></div></div>`; 
+};
+
+window.chuyenTrangQuanLy = function() { 
+    closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="window.viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); document.getElementById('content').innerHTML = html + "</div>"; 
+};
+
 window.kiemTraThongBaoAdmin = async function() { 
     if (!currentUser || currentUser.role !== 'admin') return; 
     try { 
@@ -903,7 +951,6 @@ let checkLoginInterval = setInterval(() => {
     if (window.currentUser && !window.isAllDataLoaded && !window.isFetchingBackground) { 
         window.isFetchingBackground = true; 
         clearInterval(checkLoginInterval);
-        // TẢI NGẦM: Đợi 3 giây để giao diện trang chủ load xong
         setTimeout(() => { window.loadAllDataOnce(false, true).catch(e => console.log("Lỗi tải ngầm")); }, 3000);
     } 
 }, 1000);
@@ -913,7 +960,7 @@ window.dongBoDuLieu = async function() {
     document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
     try { 
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); 
-        localStorage.removeItem('eduDataCache'); // Xóa sạch Cache
+        localStorage.removeItem('eduDataCache'); 
         window.isAllDataLoaded = false; 
         alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); 
         location.reload(); 
@@ -945,7 +992,7 @@ window.showHappyBirthdayUI = function() {
 };
 
 // ==========================================
-// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (FULL)
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
@@ -1041,7 +1088,7 @@ window.mgStartLevel = function() {
     document.getElementById('mg-input').innerText = "";
 
     let spawnRate = mathGame.level === 1 ? 4000 : (mathGame.level === 2 ? 3500 : 3000);
-    let fallSpeed = mathGame.level === 1 ? 0.15 : (mathGame.level === 2 ? 0.25 : 0.35); 
+    let fallSpeed = mathGame.level === 1 ? 0.075 : (mathGame.level === 2 ? 0.125 : 0.175); 
 
     mathGame.spawn = setInterval(() => {
         if(!mathGame.active) return;
