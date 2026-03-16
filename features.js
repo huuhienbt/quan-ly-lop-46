@@ -456,8 +456,7 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI & HIỂN THỊ ĐIỂM SỐ (DẠNG 80/100 ĐIỂM)
+// 4. TIẾN TRÌNH LÀM BÀI & MÀU SẮC ĐIỂM SỐ (% TỈ LỆ)
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); 
@@ -471,32 +470,46 @@ window.loadSubject = async function(sub) {
     
     if(grps.length === 0) { html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; } else {
         grps.forEach(g => { 
-            // Tìm tất cả các lần làm bài của học sinh đối với bài tập này
             const myLogsForGroup = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g);
             const isDone = myLogsForGroup.length > 0; 
             
             const time = qs.find(q => q.group === g).time || 20; 
             const count = qs.filter(q => q.group === g && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length; 
-            const maxPossibleScore = count * 10; // Tính tổng điểm tuyệt đối của bài
+            const maxPossibleScore = count * 10; 
             
             let clickAction = `window.startQuiz('${g}', ${time})`; 
-            let myScoreStr = "";
+            let badgeHtml = `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>`;
+            let cardClass = `border-indigo-50 bg-white`;
+            let iconClass = `bg-indigo-100 text-indigo-600`;
+            let iconSymbol = `fa-star`;
 
             if (isDone && currentUser.role === 'student') { 
-                // Lọc lấy số điểm cao nhất học sinh từng đạt được ở bài này
                 let maxScore = Math.max(...myLogsForGroup.map(l => Number(l.score) || 0));
-                myScoreStr = `${maxScore}/${maxPossibleScore} điểm`; // Hiển thị dạng phân số
+                let pct = maxPossibleScore > 0 ? (maxScore / maxPossibleScore) * 100 : 0; // Tính % điểm
+                
+                // Quy định màu sắc theo % điểm
+                let theme = {};
+                if (pct >= 90) {
+                    theme = { badge: "bg-green-100 text-green-700 border border-green-500", card: "border-green-200 bg-green-50/40 opacity-95", icon: "bg-green-100 text-green-600", sym: "fa-check-circle" };
+                } else if (pct >= 70) {
+                    theme = { badge: "bg-yellow-100 text-yellow-700 border border-yellow-500", card: "border-yellow-200 bg-yellow-50/40 opacity-95", icon: "bg-yellow-100 text-yellow-600", sym: "fa-check-circle" };
+                } else if (pct >= 50) {
+                    theme = { badge: "bg-orange-100 text-orange-700 border border-orange-500", card: "border-orange-200 bg-orange-50/40 opacity-95", icon: "bg-orange-100 text-orange-600", sym: "fa-exclamation-circle" };
+                } else {
+                    theme = { badge: "bg-red-100 text-red-700 border border-red-500", card: "border-red-200 bg-red-50/40 opacity-95", icon: "bg-red-100 text-red-600", sym: "fa-times-circle" };
+                }
+                
+                badgeHtml = `<span class="${theme.badge} text-[10px] font-black px-2 py-1 rounded shadow-sm"><i class="fas ${theme.sym} text-xs mr-1"></i>${maxScore}/${maxPossibleScore} điểm</span>`;
+                cardClass = theme.card;
+                iconClass = theme.icon;
+                iconSymbol = theme.sym;
 
                 let tokens = parseInt(localStorage.getItem('redo_tokens_'+currentUser.id) || '0');
                 if(tokens > 0) clickAction = `window.promptRedo('${g}', ${time})`; 
                 else clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm. Hãy vào Vòng Quay May Mắn tìm VÉ LÀM LẠI nếu muốn cải thiện điểm nhé!')`; 
             } 
             
-            let badgeHtml = !isDone 
-                ? `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>` 
-                : `<span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-1 rounded shadow-sm border border-emerald-200"><i class="fas fa-check-circle text-xs mr-1"></i>${myScoreStr}</span>`; 
-            
-            html += `<div onclick="${clickAction}" class="bg-white p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${isDone ? 'border-emerald-100 bg-emerald-50/40 opacity-90' : 'border-indigo-50'}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${isDone ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'}"><i class="fas ${isDone ? 'fa-check-circle' : 'fa-star'}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${badgeHtml}</div>`; 
+            html += `<div onclick="${clickAction}" class="p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${cardClass}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${iconClass}"><i class="fas ${iconSymbol}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${badgeHtml}</div>`; 
         }); 
     } 
     document.getElementById('content').innerHTML = html + `</div>`; 
