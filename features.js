@@ -1,6 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN TỐI ƯU SMART CACHE - TỐC ĐỘ 0 GIÂY)
-// Tích hợp: Tải ngầm Cache, Giữ Font/Size chữ, Game Bảo Vệ Trái Đất, Vòng Quay, Bảng Vàng
+// FILE: FEATURES.JS (BẢN BUNG FULL - HOÀN HẢO 100%)
+// Tích hợp: Tải ngầm Cache, Giữ Font/Size chữ, Game Bảo Vệ Trái Đất (Full Laser/Math Logic), Vòng Quay, Bảng Vàng
 // ==========================================
 
 let isSpinning = false;
@@ -281,7 +281,7 @@ window.toggleGroupQuestions = function(groupId) {
 };
 
 // ==========================================
-// 3. EDITOR ĐA PHƯƠNG TIỆN TÙY CHỈNH (Có Font/Size chữ)
+// 3. EDITOR ĐA PHƯƠNG TIỆN TÙY CHỈNH
 // ==========================================
 window.getRichTextToolbar = function(targetId) {
     return `
@@ -528,7 +528,7 @@ window.startQuiz = function(group, timeMins) {
 
 window.renderQuestion = function(index) { 
     if (index >= quiz.length) { window.finishQuiz(); return; } 
-    const q = quiz[index]; let colorTheme = (curSub === 'vietnamese' || curSub === 'tv') ? 'text-green-600' : 'text-indigo-600'; 
+    const q = quiz[index]; let colorTheme = (curSub === 'vietnamese' || curSub === 'tv') ? 'text-green-600' : 'textindigo-600'; 
     let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100' : '';
     let optionsHtml = ['a','b','c','d'].filter(k => q[k]).map(key => `<div onclick="window.checkAns(this, '${key}', '${q.correct}', ${index})" class="quiz-option p-4 sm:p-5 border-2 border-slate-100 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition btn-3d bg-white"><span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 uppercase text-lg shrink-0 shadow-inner">${key}</span><div class="font-bold text-slate-700 flex-1 text-base sm:text-lg leading-relaxed">${window.parseImg(q[key])}</div></div>`).join('');
     document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${window.parseImg(q.question)}</div></div><div class="space-y-4">${optionsHtml}</div></div>`; 
@@ -862,7 +862,6 @@ window.renderChuongThongBao = function(unreadMail, unreadLeave) {
     let bellHtml = `<div id="adminNotificationBell" class="fixed bottom-8 right-6 z-[80] flex flex-col items-end fade-in"><div id="adminNotiPopup" class="hidden bg-white p-4 rounded-2xl shadow-2xl border border-slate-100 mb-3 w-64 origin-bottom-right transition-all"><h4 class="font-black text-slate-700 mb-3 border-b pb-2"><i class="fas fa-bell text-yellow-500 mr-2 animate-pulse"></i>Thông báo mới</h4>${unreadMail > 0 ? `<div onclick="window.moQuanLyThu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-pink-50 rounded-xl mb-2 cursor-pointer hover:bg-pink-100 transition"><span class="font-bold text-pink-700 text-sm"><i class="fas fa-envelope mr-2"></i>Thư bí mật</span><span class="bg-pink-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadMail}</span></div>` : ''}${unreadLeave > 0 ? `<div onclick="window.moDonTu(); document.getElementById('adminNotiPopup').classList.add('hidden');" class="flex justify-between items-center p-2 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition"><span class="font-bold text-red-700 text-sm"><i class="fas fa-file-signature mr-2"></i>Đơn xin phép</span><span class="bg-red-500 text-white text-xs font-black px-2 py-1 rounded-full">${unreadLeave}</span></div>` : ''}</div><button onclick="document.getElementById('adminNotiPopup').classList.toggle('hidden')" class="relative w-14 h-14 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full shadow-[0_8px_30px_rgb(245,158,11/0.5)] hover:scale-110 transition flex items-center justify-center text-white text-2xl btn-3d animate-bounce border-2 border-white"><i class="fas fa-bell"></i><span class="absolute -top-2 -right-2 bg-red-600 text-white text-[11px] font-black w-6 h-6 flex items-center justify-center rounded-full border-2 border-white shadow-sm">${totalUnread}</span></button></div>`; document.body.insertAdjacentHTML('beforeend', bellHtml); 
 };
 
-// Đã giảm tần suất kiểm tra thông báo từ 5s xuống 60s để tránh làm treo máy
 setInterval(() => { 
     if (window.currentUser && window.currentUser.role === 'admin') { 
         if (!window.hasCheckedAdminNoti) { window.hasCheckedAdminNoti = true; window.kiemTraThongBaoAdmin(); } 
@@ -870,13 +869,13 @@ setInterval(() => {
 }, 60000); 
 
 // ==========================================
-// 9. CÔNG CỤ CHUNG & ĐỒNG BỘ
+// 9. CÔNG CỤ CHUNG TẢI NGẦM & ĐỒNG BỘ
 // ==========================================
 let checkLoginInterval = setInterval(() => { 
     if (window.currentUser && !window.isAllDataLoaded && !window.isFetchingBackground) { 
         window.isFetchingBackground = true; 
         clearInterval(checkLoginInterval);
-        // Cốt lõi tối ưu tốc độ: Đợi người dùng vào trang chủ ổn định (3 giây) rồi mới đi tải dữ liệu
+        // TẢI NGẦM: Đợi 3 giây để giao diện trang chủ load xong
         setTimeout(() => { window.loadAllDataOnce(false, true).catch(e => console.log("Lỗi tải ngầm")); }, 3000);
     } 
 }, 1000);
@@ -886,7 +885,7 @@ window.dongBoDuLieu = async function() {
     document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ MÁY CHỦ..."; 
     try { 
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'clear_cache', data: {} }) }); 
-        localStorage.removeItem('eduDataCache'); // Xóa Cache để ép tải mới hoàn toàn
+        localStorage.removeItem('eduDataCache'); // Xóa sạch Cache
         window.isAllDataLoaded = false; 
         alert("Đồng bộ thành công! Hệ thống sẽ tự tải lại."); 
         location.reload(); 
@@ -917,13 +916,8 @@ window.showHappyBirthdayUI = function() {
     document.body.appendChild(overlay); window.safeConfetti(); 
 };
 
-document.addEventListener('play', function(e) { 
-    var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); } 
-    var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); } 
-}, true);
-
 // ==========================================
-// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (FULL)
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
@@ -989,22 +983,25 @@ window.moGameBaoVeTraiDat = function() {
 };
 
 window.mgTaoPhepTinh = function(level) {
-    let ops = ['+', '-', 'x', ':']; let op = ops[Math.floor(Math.random() * ops.length)]; let a, b, ans;
-    if (level === 1) { 
-        if (op === '+') { a = Math.floor(Math.random()*40)+10; b = Math.floor(Math.random()*40)+10; ans = a+b; }
-        else if (op === '-') { a = Math.floor(Math.random()*50)+30; b = Math.floor(Math.random()*(a-10))+10; ans = a-b; }
-        else if (op === 'x') { a = Math.floor(Math.random()*4)+2; b = Math.floor(Math.random()*9)+2; ans = a*b; }
-        else { b = Math.floor(Math.random()*4)+2; ans = Math.floor(Math.random()*9)+2; a = b*ans; }
-    } else if (level === 2) { 
-        if (op === '+') { a = Math.floor(Math.random()*50)+40; b = Math.floor(Math.random()*50)+10; ans = a+b; }
-        else if (op === '-') { a = Math.floor(Math.random()*50)+50; b = Math.floor(Math.random()*(a-10))+10; ans = a-b; }
-        else if (op === 'x') { a = Math.floor(Math.random()*4)+6; b = Math.floor(Math.random()*9)+2; ans = a*b; }
-        else { b = Math.floor(Math.random()*4)+6; ans = Math.floor(Math.random()*9)+2; a = b*ans; }
-    } else { 
-        if (op === '+') { a = Math.floor(Math.random()*50)+50; b = Math.floor(Math.random()*50)+50; ans = a+b; }
-        else if (op === '-') { a = Math.floor(Math.random()*50)+100; b = Math.floor(Math.random()*80)+20; ans = a-b; }
-        else if (op === 'x') { a = Math.floor(Math.random()*20)+11; b = Math.floor(Math.random()*8)+2; ans = a*b; }
-        else { b = Math.floor(Math.random()*8)+2; ans = Math.floor(Math.random()*20)+11; a = b*ans; }
+    let rand = Math.random(); let a, b, ans, op;
+
+    if (level === 1) {
+        if (rand < 0.2) { a = Math.floor(Math.random() * 40) + 10; b = Math.floor(Math.random() * 40) + 10; op = '+'; ans = a + b; } 
+        else if (rand < 0.4) { a = Math.floor(Math.random() * 70) + 20; b = Math.floor(Math.random() * (a - 10)) + 10; op = '-'; ans = a - b; } 
+        else if (rand < 0.6) { a = Math.floor(Math.random() * 4) + 2; b = Math.floor(Math.random() * 9) + 2; op = 'x'; ans = a * b; } 
+        else if (rand < 0.8) { b = Math.floor(Math.random() * 4) + 2; ans = Math.floor(Math.random() * 9) + 2; a = b * ans; op = ':'; } 
+        else { let base = Math.floor(Math.random() * 89) + 10; if (Math.random() < 0.5) { a = base; b = 10; op = 'x'; ans = a * b; } else { ans = base; b = 10; a = ans * b; op = ':'; } }
+    } 
+    else if (level === 2) {
+        if (rand < 0.15) { a = Math.floor(Math.random() * 4) + 6; b = Math.floor(Math.random() * 9) + 2; op = 'x'; ans = a * b; } 
+        else if (rand < 0.30) { b = Math.floor(Math.random() * 4) + 6; ans = Math.floor(Math.random() * 9) + 2; a = b * ans; op = ':'; } 
+        else if (rand < 0.70) { let num1 = Math.floor(Math.random() * 8) + 2; let num2 = (Math.floor(Math.random() * 8) + 2) * 10; if (Math.random() < 0.5) { a = num1; b = num2; op = 'x'; ans = a * b; } else { b = num1; ans = num2; a = b * ans; op = ':'; } } 
+        else { let base = Math.floor(Math.random() * 89) + 10; if (Math.random() < 0.5) { a = base; b = 100; op = 'x'; ans = a * b; } else { ans = base; b = 100; a = ans * b; op = ':'; } }
+    } 
+    else {
+        if (rand < 0.4) { let num1 = Math.floor(Math.random() * 8) + 2; let isHundred = Math.random() < 0.5; let num2 = (Math.floor(Math.random() * 8) + 2) * (isHundred ? 100 : 1000); if (Math.random() < 0.5) { a = num1; b = num2; op = 'x'; ans = a * b; } else { b = num1; ans = num2; a = b * ans; op = ':'; } } 
+        else if (rand < 0.7) { let base = Math.floor(Math.random() * 89) + 10; if (Math.random() < 0.5) { a = base; b = 1000; op = 'x'; ans = a * b; } else { ans = base; b = 1000; a = ans * b; op = ':'; } } 
+        else { if (Math.random() < 0.5) { a = Math.floor(Math.random() * 50) + 45; b = Math.floor(Math.random() * 50) + 45; op = '+'; ans = a + b; } else { a = Math.floor(Math.random() * 50) + 100; b = Math.floor(Math.random() * 80) + 20; op = '-'; ans = a - b; } }
     }
     return { q: `${a} ${op} ${b}`, a: ans.toString() };
 };
@@ -1024,7 +1021,7 @@ window.mgStartLevel = function() {
         let id = 'mt_' + Date.now();
         let left = Math.random() * 70 + 10; 
         let el = document.createElement('div');
-        el.id = id; el.className = "absolute p-2 bg-gradient-to-b from-red-600 to-orange-500 border-2 border-yellow-300 text-white font-black text-sm rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.8)] z-10 flex flex-col items-center justify-center transition-all duration-75";
+        el.id = id; el.className = "absolute p-2 bg-gradient-to-b from-red-600 to-orange-500 border-2 border-yellow-300 text-white font-black text-sm rounded-xl shadow-[0_0_15px_rgba(239,68,68,0.8)] z-10 flex items-center justify-center whitespace-nowrap min-w-[70px]";
         el.style.left = left + '%'; el.style.top = '-10%'; el.innerHTML = `${pt.q}`;
         document.getElementById('mg-sky').appendChild(el);
         mathGame.meteors.push({ id: id, ans: pt.a, top: -10, el: el });
@@ -1053,7 +1050,7 @@ window.mgStartLevel = function() {
     }, 20);
 };
 
-window.mgType = function(n) { let inp = document.getElementById('mg-input'); if(inp.innerText.length < 5) inp.innerText += n; };
+window.mgType = function(n) { let inp = document.getElementById('mg-input'); if(inp.innerText.length < 6) inp.innerText += n; };
 window.mgClear = function() { document.getElementById('mg-input').innerText = ""; };
 
 window.mgShoot = function() {
@@ -1072,14 +1069,17 @@ window.mgShoot = function() {
         let m = mathGame.meteors[hitIndex];
         
         let cannon = document.getElementById('mg-cannon');
-        if (cannon && m.el) {
+        let sky = document.getElementById('mg-sky');
+        
+        if (cannon && m.el && sky) {
+            let rectSky = sky.getBoundingClientRect();
             let rectC = cannon.getBoundingClientRect(); 
             let rectM = m.el.getBoundingClientRect();   
             
-            let startX = rectC.left + rectC.width / 2;
-            let startY = rectC.top;
-            let endX = rectM.left + rectM.width / 2;
-            let endY = rectM.top + rectM.height / 2;
+            let startX = (rectC.left - rectSky.left) + rectC.width / 2;
+            let startY = (rectC.top - rectSky.top);
+            let endX = (rectM.left - rectSky.left) + rectM.width / 2;
+            let endY = (rectM.top - rectSky.top) + rectM.height / 2;
             
             let length = Math.hypot(endX - startX, endY - startY);
             let angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
@@ -1092,11 +1092,10 @@ window.mgShoot = function() {
             laser.style.height = '6px';
             laser.style.transformOrigin = '0 50%'; 
             laser.style.transform = `rotate(${angle}deg)`;
-            document.getElementById('gameUI').appendChild(laser);
+            sky.appendChild(laser);
             
             cannon.style.transform = 'translateY(10px)';
             setTimeout(() => cannon.style.transform = 'translateY(0)', 100);
-            
             setTimeout(() => laser.remove(), 150);
         }
 
