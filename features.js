@@ -1,6 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN FULL VIP - ĐỘNG CƠ KÉO THẢ)
-// Tích hợp: Smart Cache, Kéo Thả Đa Điểm, Chống Gian Lận, Game Laser Toán, Bảng Vàng
+// FILE: FEATURES.JS (BẢN FULL VIP - ĐÃI NGỘ CÁN SỰ CUỐI TUẦN)
+// Tích hợp: UI Chọn Loại Câu Hỏi, Smart Cache, Kéo Thả Đa Điểm, Chống Gian Lận, Game Toán, Bảng Vàng
 // ==========================================
 
 let isSpinning = false;
@@ -35,7 +35,41 @@ window.safeConfetti = function() {
 };
 
 // ==========================================
-// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG (CÓ BỘ NHỚ ĐỆM SIÊU TỐC)
+// HÀM XỬ LÝ LƯỢT QUAY HẰNG NGÀY & THƯỞNG CUỐI TUẦN
+// ==========================================
+window.getDailySpinLog = function(todayStr) {
+    if (!currentUser) return { date: todayStr, extra: 0, usedFree: false };
+    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
+    
+    if (spinLog.date !== todayStr) {
+        spinLog = { date: todayStr, extra: 0, usedFree: false };
+        
+        // Kiểm tra xem hôm nay có phải là Thứ 6, Thứ 7, Chủ Nhật không (0: CN, 5: T6, 6: T7)
+        let d = new Date().getDay();
+        if (d === 0 || d === 5 || d === 6) {
+            let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
+            let userInfoStr = JSON.stringify(currentUser).toLowerCase();
+            let isOfficer = chucVu.includes('lớp trưởng') || userInfoStr.includes('lớp trưởng') ||
+                            chucVu.includes('phó ht') || userInfoStr.includes('phó ht') ||
+                            chucVu.includes('phó vtm') || userInfoStr.includes('phó vtm') ||
+                            chucVu.includes('phó lđ') || userInfoStr.includes('phó lđ') ||
+                            chucVu.includes('tt1') || userInfoStr.includes('tt1') ||
+                            chucVu.includes('tt2') || userInfoStr.includes('tt2') ||
+                            chucVu.includes('tt3') || userInfoStr.includes('tt3') ||
+                            chucVu.includes('tt4') || userInfoStr.includes('tt4');
+            
+            // Nếu là cán sự lớp và vào cuối tuần, cộng 1 lượt extra -> Tổng 2 lượt quay/ngày
+            if (isOfficer) {
+                spinLog.extra += 1; 
+            }
+        }
+        localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+    }
+    return spinLog;
+};
+
+// ==========================================
+// 0. BỘ NÃO TẢI DỮ LIỆU TỔNG
 // ==========================================
 window.loadAllDataOnce = async function(force = false, silent = false) {
     if (window.isAllDataLoaded && !force) return true;
@@ -253,79 +287,22 @@ window.getRichTextToolbar = function(targetId) {
             <button onclick="document.execCommand('bold', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-black text-slate-700">B</button>
             <button onclick="document.execCommand('italic', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 italic font-serif text-slate-700">I</button>
             <button onclick="document.execCommand('underline', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 underline font-serif text-slate-700">U</button>
-            <button onclick="document.execCommand('superscript', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 font-bold text-slate-700 text-sm">X²</button>
-            <div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8"><input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer"></div>
-            
+            <div class="relative flex items-center bg-white rounded shadow-sm px-1 hover:bg-slate-200 h-8" title="Màu chữ">
+                <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer">
+            </div>
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            
-            <select onchange="document.execCommand('fontName', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1">
-                <option value="">Kiểu chữ...</option><option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier New</option><option value="Tahoma">Tahoma</option><option value="Verdana">Verdana</option>
-            </select>
-            <select onchange="document.execCommand('fontSize', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1">
-                <option value="">Cỡ chữ...</option><option value="1">Rất nhỏ</option><option value="2">Nhỏ</option><option value="3">Bình thường</option><option value="4">Vừa</option><option value="5">Lớn</option><option value="6">Rất lớn</option><option value="7">Khổng lồ</option>
-            </select>
-
-            <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            
             <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-left"></i></button>
             <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-center"></i></button>
             <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-right"></i></button>
-            
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            
             <button onclick="document.execCommand('insertText', false, '___')" class="px-2 h-8 bg-yellow-50 rounded hover:bg-yellow-100 text-yellow-700 font-bold text-xs flex items-center gap-1 border border-yellow-200 shadow-sm transition"><i class="far fa-square"></i> Ô Trống</button>
-            <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200"><i class="fas fa-link"></i> Link</button>
-            <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200"><i class="fas fa-image"></i> Ảnh</button>
-            <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200"><i class="fab fa-youtube"></i> Video</button>
-            <button onclick="window.chenAmThanh('${targetId}')" class="px-2 h-8 bg-green-50 rounded hover:bg-green-100 text-green-700 font-bold text-xs flex items-center gap-1 border border-green-200"><i class="fas fa-music"></i> Nghe</button>
-            <button onclick="window.chenPDF('${targetId}')" class="px-2 h-8 bg-orange-50 rounded hover:bg-orange-100 text-orange-700 font-bold text-xs flex items-center gap-1 border border-orange-200"><i class="fas fa-file-pdf"></i> PDF</button>
-            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ ảnh...</option><option value="30%">Thu nhỏ 30%</option><option value="60%">Vừa 60%</option><option value="100%">Phóng to 100%</option></select>
+            <button onclick="chenAnhVaoEditor('${targetId}')" class="px-3 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200"><i class="fas fa-image"></i> Ảnh</button>
+            <select onchange="resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ ảnh</option><option value="30%">Nhỏ (30%)</option><option value="60%">Vừa (60%)</option><option value="100%">Lớn (100%)</option></select>
         </div>
     `;
-};
+}
 
-window.chenAmThanh = function(targetId) {
-    const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:"); if (!url) return;
-    const audioTitle = prompt("Nhập tiêu đề cho bài nghe:", "BÀI NGHE AUDIO"); if (!audioTitle) return;
-    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); let audioHtml = "";
-    if (driveMatch) { 
-        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" style="width: 100%; height: 80px; margin: 0 auto; display: block; border:none; border-radius: 8px; background: white;" allow="autoplay"></iframe></div><br>`; 
-    } else { 
-        let audioSrc = url; if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); } 
-        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; display: block; margin: 0 auto; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt không hỗ trợ.</audio></div><br>`; 
-    }
-    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
-};
-
-window.chenPDF = function(targetId) {
-    const url = prompt("Dán link file PDF từ Google Drive vào đây:"); if (!url) return;
-    const pdfTitle = prompt("Nhập tên hiển thị cho tài liệu:", "TÀI LIỆU PDF"); if (!pdfTitle) return;
-    let pdfSrc = url; let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if (driveMatch) pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; 
-    const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase;"><i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>${pdfTitle}</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
-    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, pdfHtml);
-};
-
-window.chenVideoYouTube = function(targetId) {
-    const url = prompt("Dán link Video (YouTube, Google Drive, GitHub) vào đây:"); if (!url) return;
-    const sizeInput = prompt("Chiếm bao nhiêu phần ngang? (Nhập số: 100, 80, 60...)", "100"); const videoWidth = sizeInput ? sizeInput + "%" : "100%";
-    let videoHtml = ""; const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    const wrapperStyle = `margin: 15px auto; width: ${videoWidth}; max-width: 800px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 12px; overflow: hidden;`;
-    if (ytMatch && ytMatch[2].length === 11) { 
-        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${ytMatch[2]}" allowfullscreen loading="lazy"></iframe></div><br>`; 
-    } else if (driveMatch) { 
-        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`; 
-    } else if (url.includes(".mp4") || url.includes("github.com")) { 
-        let videoSrc = url; if (url.includes("github.com") && url.includes("/blob/")) { videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); } 
-        videoHtml = `<div contenteditable="false" style="${wrapperStyle} padding: 10px; background: #f8fafc; border: 2px solid #e2e8f0; text-align: center;"><video controls style="width: 100%; border-radius: 8px; outline: none;"><source src="${videoSrc}" type="video/mp4">Trình duyệt không hỗ trợ.</video></div><br>`; 
-    } else { alert("Link Video không hợp lệ!"); return; }
-    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, videoHtml);
-};
-
-window.chenLinkVaoEditor = function(targetId) { 
-    const url = prompt("Dán đường link trang web vào đây:"); if (url) { const tenLink = prompt("Nhập chữ hiển thị:", "Bấm vào đây"); if (tenLink) { document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">${tenLink}</a>`); } } 
-};
-
-window.chenAnhVaoEditor = function(targetId) {
+function chenAnhVaoEditor(targetId) {
     const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; 
     input.onchange = async (e) => { 
         const file = e.target.files[0]; if (!file) return; 
@@ -342,24 +319,52 @@ window.chenAnhVaoEditor = function(targetId) {
                 try { 
                     const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'upload_image', data: { filename: file.name, mimeType: 'image/jpeg', base64: base64Data } }) }); 
                     const result = await response.json(); 
-                    if(result.url) { document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, `<div style="text-align: center;"><img src="${result.url}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div><br>`); } 
-                    else { alert("Lỗi! Không lấy được link ảnh."); } 
-                } catch(err) { alert("Lỗi mạng khi tải ảnh lên!"); } finally { document.getElementById('loader').style.display = 'none'; }
+                    if(result.url) { 
+                        document.getElementById(targetId).focus(); 
+                        document.execCommand('insertHTML', false, `<div style="text-align: center;"><img src="${result.url}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div><br>`); 
+                    } else { alert("Lỗi! Không lấy được link ảnh từ Server."); } 
+                } catch(err) { alert("Lỗi mạng khi tải ảnh lên!"); } 
+                document.getElementById('loader').style.display = 'none'; 
             }; img.src = event.target.result; 
         }; reader.readAsDataURL(file); 
     }; input.click(); 
-};
+}
 
 window.handleEditorClick = function(e) { 
-    document.querySelectorAll('div[contenteditable="true"] img').forEach(img => img.style.border = 'none'); window.currentSelectedImg = null; 
+    document.querySelectorAll('div[contenteditable="true"] img').forEach(img => img.style.border = 'none'); 
+    window.currentSelectedImg = null; 
     if (e.target.tagName === 'IMG') { e.target.style.border = '3px dashed #f97316'; window.currentSelectedImg = e.target; } 
 };
-window.resizeImg = function(size) { if(!size) return; if(!window.currentSelectedImg) return alert("Thầy hãy bấm chọn một tấm ảnh ở dưới trước khi chỉnh kích thước nhé!"); window.currentSelectedImg.style.width = size; window.currentSelectedImg.style.height = 'auto'; };
-window.parseImg = function(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); };
+
+window.resizeImg = function(size) { 
+    if(!size) return; 
+    if(!window.currentSelectedImg) return alert("Thầy hãy bấm chọn một tấm ảnh ở dưới trước khi chỉnh kích thước nhé!"); 
+    window.currentSelectedImg.style.width = size; window.currentSelectedImg.style.height = 'auto'; 
+};
+
+function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); }
 
 window.autoFillTime = function() { 
     let selectedGroup = document.getElementById('frmG').value; let existingQ = Data[curSub].find(q => q.group === selectedGroup); 
     if (existingQ && existingQ.time) { document.getElementById('frmT').value = existingQ.time; } 
+};
+
+window.changeQType = function() {
+    let val = document.getElementById("frmQType").value;
+    let hint = document.getElementById("qTypeHint");
+    let lblA = document.getElementById("lblA"); let lblB = document.getElementById("lblB");
+    let lblC = document.getElementById("lblC"); let lblD = document.getElementById("lblD");
+    let lblCorr = document.getElementById("lblCorr");
+    
+    if(val === 'dienkhuyet') {
+        hint.className = "mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in";
+        lblA.innerText = "Viên kẹo 1 (A)"; lblB.innerText = "Viên kẹo 2 (B)"; lblC.innerText = "Viên kẹo 3 (C)"; lblD.innerText = "Viên kẹo 4 (D)";
+        lblCorr.innerText = "Kéo viên kẹo nào vào ô trống?";
+    } else {
+        hint.className = "hidden";
+        lblA.innerText = "Đáp án A"; lblB.innerText = "Đáp án B"; lblC.innerText = "Đáp án C"; lblD.innerText = "Đáp án D";
+        lblCorr.innerText = "Chọn Đáp Án Đúng";
+    }
 };
 
 window.renderFormCauHoi = function(id) { 
@@ -376,11 +381,29 @@ window.renderFormCauHoi = function(id) {
         else if (cauHoiHtml.includes('[ĐOẠN VĂN]')) { baiDocHtml = cauHoiHtml.replace('[ĐOẠN VĂN]', '').trim(); cauHoiHtml = ""; } 
     }
 
+    let isDrag = /_{3,}/.test(cauHoiHtml);
+
     let formLayout = isTV ? 
-        `<div class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl"><label class="text-xs font-black text-yellow-700 uppercase tracking-wider block mb-2"><i class="fas fa-book-reader"></i> Khung Bài Đọc</label>${window.getRichTextToolbar('frmBaiDoc')}<div id="frmBaiDoc" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border border-yellow-300 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${baiDocHtml}</div></div><div class="w-full mb-4"><label class="text-xs font-black text-green-700 uppercase tracking-wider block mb-2"><i class="fas fa-question-circle"></i> Khung Câu Hỏi</label>${window.getRichTextToolbar('frmQ')}<div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border-2 border-green-200 p-4 rounded-xl outline-none focus:border-green-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div></div>` 
-        : 
-        `<div class="w-full mb-4"><label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-calculator"></i> Nội dung câu hỏi</label>${window.getRichTextToolbar('frmQ')}<div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[150px] bg-white border-2 border-indigo-200 p-4 rounded-xl outline-none focus:border-indigo-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div></div>`;
+        `<div class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl"><label class="text-xs font-black text-yellow-700 uppercase tracking-wider block mb-2"><i class="fas fa-book-reader"></i> Khung Bài Đọc</label>${window.getRichTextToolbar('frmBaiDoc')}<div id="frmBaiDoc" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border border-yellow-300 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${baiDocHtml}</div></div>` : ``;
         
+    formLayout += `
+        <div class="w-full mb-4">
+            <div class="mb-4 bg-indigo-50 border border-indigo-100 p-3 rounded-xl shadow-sm">
+                <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Loại Câu Hỏi</label>
+                <select id="frmQType" onchange="window.changeQType()" class="edit-input w-full bg-white border-2 border-indigo-200 p-2 rounded-xl font-bold text-indigo-700 outline-none focus:border-indigo-500 transition cursor-pointer">
+                    <option value="tracnghiem" ${!isDrag ? 'selected' : ''}>🔘 Trắc nghiệm chọn đáp án (A, B, C, D)</option>
+                    <option value="dienkhuyet" ${isDrag ? 'selected' : ''}>🧩 Kéo thả điền khuyết</option>
+                </select>
+                <div id="qTypeHint" class="${isDrag ? 'mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in' : 'hidden'}">
+                    <i class="fas fa-info-circle"></i> Hệ thống sẽ tạo trò chơi kéo thả. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!
+                </div>
+            </div>
+            <label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-edit"></i> Khung Câu Hỏi</label>
+            ${window.getRichTextToolbar('frmQ')}
+            <div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[150px] bg-white border-2 border-indigo-200 p-4 rounded-xl outline-none focus:border-indigo-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div>
+        </div>
+    `;
+
     document.getElementById('content').innerHTML = `
         <div class="flex items-center mb-6"><button onclick="window.quanLyNganHang('${curSub}')" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">${id ? 'SỬA CÂU HỎI' : 'TẠO CÂU HỎI MỚI'}</h2></div>
         <div class="bg-white p-5 rounded-3xl shadow border space-y-4 fade-in">
@@ -391,12 +414,12 @@ window.renderFormCauHoi = function(id) {
             </div>
             ${formLayout} 
             <div class="grid grid-cols-2 gap-3 mt-4">
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án A</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án B</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án C</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Đáp án D</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblA" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 1 (A)' : 'Đáp án A'}</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblB" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 2 (B)' : 'Đáp án B'}</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblC" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 3 (C)' : 'Đáp án C'}</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblD" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 4 (D)' : 'Đáp án D'}</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
             </div>
-            <div class="mt-4"><label class="text-xs font-bold text-slate-500 uppercase">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200"><option value="a" ${q.correct=='a'?'selected':''}>Đáp án A</option><option value="b" ${q.correct=='b'?'selected':''}>Đáp án B</option><option value="c" ${q.correct=='c'?'selected':''}>Đáp án C</option><option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option></select></div>
+            <div class="mt-4"><label id="lblCorr" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Kéo kẹo nào vào ô trống?' : 'Chọn Đáp Án Đúng'}</label><select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200"><option value="a" ${q.correct=='a'?'selected':''}>Đáp án A</option><option value="b" ${q.correct=='b'?'selected':''}>Đáp án B</option><option value="c" ${q.correct=='c'?'selected':''}>Đáp án C</option><option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option></select></div>
             <button onclick="window.luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-6 text-lg hover:bg-indigo-700 transition"><i class="fas fa-save mr-2"></i> LƯU CÂU HỎI LÊN HỆ THỐNG</button>
         </div>
     `; 
@@ -405,10 +428,18 @@ window.renderFormCauHoi = function(id) {
 window.luuCauHoi = async function(id) { 
     document.querySelectorAll('#frmQ img, #frmBaiDoc img').forEach(img => img.style.border = 'none'); window.currentSelectedImg = null;
     let finalQuestionText = document.getElementById("frmQ").innerHTML; let isTV = (curSub === 'vietnamese' || curSub === 'tv');
-    if (isTV) { let baiDocText = document.getElementById("frmBaiDoc").innerHTML.trim(); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
-    if (finalQuestionText.includes('data:image')) { alert("⚠️ CẢNH BÁO! Vui lòng dùng nút [Ảnh] để tải ảnh lên, KHÔNG dùng lệnh Copy/Dán (Ctrl+V) trực tiếp vào khung."); return; }
+    let typeVal = document.getElementById("frmQType").value;
+
+    if (typeVal === 'dienkhuyet' && !/_{3,}/.test(finalQuestionText)) {
+        alert("⚠️ CẢNH BÁO NHẦM LẪN:\n\nThầy đang chọn loại câu hỏi 'Kéo thả điền khuyết' nhưng trong nội dung câu hỏi chưa có chỗ nào chừa trống cả!\n\nThầy hãy đặt con trỏ chuột vào vị trí cần điền khuyết, sau đó bấm nút [Ô Trống] màu vàng trên thanh công cụ nhé!");
+        return;
+    }
+
+    if (isTV) { let baiDocText = (document.getElementById("frmBaiDoc") ? document.getElementById("frmBaiDoc").innerHTML.trim() : ""); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
+    
     const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" }; 
     if(!data.group || !finalQuestionText.trim()) { return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); }
+    
     document.getElementById('loader').style.display = 'flex'; 
     try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); window.isAllDataLoaded = false; alert("Lưu thành công!"); window.quanLyNganHang(curSub, true); } catch(e) { alert("Lỗi mạng! Không thể lưu câu hỏi."); } finally { document.getElementById('loader').style.display = 'none'; }
 };
@@ -571,7 +602,7 @@ window.initDragAndDrop = function(qIndex, correctKey) {
 
     const pointerMove = (e) => {
         if(!draggedItem) return;
-        e.preventDefault(); // Chống cuộn trang trên điện thoại
+        e.preventDefault(); 
         let pageX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
         let pageY = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
         moveItem(pageX, pageY);
@@ -616,7 +647,6 @@ window.initDragAndDrop = function(qIndex, correctKey) {
             }
             setTimeout(() => window.renderQuestion(qIndex + 1), 1200);
         } else {
-            // Nảy về vị trí cũ nếu trượt ra ngoài
             draggedItem.style.position = 'static';
             draggedItem.style.width = 'auto'; draggedItem.style.height = 'auto';
         }
@@ -677,14 +707,18 @@ window.finishQuiz = async function() {
     if (timer) clearInterval(timer); const maxPossibleScore = quiz.length * 10; let timeTaken = window.totalQuizTime - window.remainingQuizTime; 
     let halfTime = window.totalQuizTime / 2; let extraSpinsEarned = 0; let rewardMessage = "";
 
+    // Nạp SpinLog an toàn
+    let todayStr = new Date().toLocaleDateString('vi-VN');
+    let spinLog = window.getDailySpinLog(todayStr);
+
     if (score > 0 && score === maxPossibleScore) { 
         let previousMax = Data.log.find(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp && Number(l.score) === maxPossibleScore);
         if (!previousMax && currentUser.role === 'student') {
             if (timeTaken <= halfTime) { extraSpinsEarned = 2; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ! Đúng 100% siêu nhanh. Thưởng <b>+2 Lượt quay</b>!</p></div>`; } 
             else { extraSpinsEarned = 1; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! Đúng 100%. Thưởng <b>+1 Lượt quay</b>!</p></div>`; }
-            let todayStr = new Date().toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
-            if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
-            spinLog.extra += extraSpinsEarned; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
+            
+            spinLog.extra += extraSpinsEarned; 
+            localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
         } else if (previousMax && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`; }
         window.safeConfetti(); 
     } 
@@ -710,8 +744,7 @@ window.moVongQuay = async function() {
     if (!(await window.loadAllDataOnce())) return;
 
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
-    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
-    if (spinLog.date !== todayStr) { spinLog = { date: todayStr, extra: 0, usedFree: false }; }
+    let spinLog = window.getDailySpinLog(todayStr); // Gọi hàm kiểm tra nạp lượt an toàn
     
     let sliceAngle = 360 / PRIZES.length; let halfSlice = sliceAngle / 2;
     let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
@@ -762,8 +795,8 @@ window.renderSpinHistory = function(todayStr) {
 window.thucHienQuay = async function() {
     if(isSpinning) return;
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
-    let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
-    if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false };
+    let spinLog = window.getDailySpinLog(todayStr); // Gọi hàm nạp lượt an toàn
+    
     if (spinLog.usedFree && spinLog.extra <= 0) return alert("Con đã hết lượt quay!");
 
     isSpinning = true;
@@ -771,8 +804,49 @@ window.thucHienQuay = async function() {
     if (!spinLog.usedFree) { spinLog.usedFree = true; } else { spinLog.extra -= 1; }
     localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
+    // =====================================
+    // HỆ THỐNG VIP TỰ ĐỘNG NHẬN DIỆN TỪ GOOGLE SHEETS
+    // =====================================
+    let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
+    let userInfoStr = JSON.stringify(currentUser).toLowerCase(); 
+    
+    let isLopTruong = chucVu.includes('lớp trưởng') || userInfoStr.includes('lớp trưởng');
+    
+    let isLopPho = chucVu.includes('phó ht') || userInfoStr.includes('phó ht') ||
+                   chucVu.includes('phó vtm') || userInfoStr.includes('phó vtm') ||
+                   chucVu.includes('phó lđ') || userInfoStr.includes('phó lđ');
+
     let rand = Math.random() * 100; let idx = 0;
-    if (rand < 10) idx = 0; else if (rand < 30) idx = 1; else if (rand < 70) idx = 2; else if (rand < 75) idx = 3; else if (rand < 85) idx = 4; else if (rand < 90) idx = 5; else idx = 6; 
+
+    if (isLopTruong) {
+        // [CẤP 1] LỚP TRƯỞNG: 30% KHO BÁU
+        if (rand < 10) idx = 0;      
+        else if (rand < 25) idx = 1; 
+        else if (rand < 50) idx = 2; 
+        else if (rand < 55) idx = 3; 
+        else if (rand < 65) idx = 4; 
+        else if (rand < 70) idx = 5; 
+        else idx = 6;                
+    } else if (isLopPho) {
+        // [CẤP 2] LỚP PHÓ (HT, VTM, LĐ): 20% KHO BÁU
+        if (rand < 10) idx = 0;      
+        else if (rand < 25) idx = 1; 
+        else if (rand < 60) idx = 2; 
+        else if (rand < 65) idx = 3; 
+        else if (rand < 75) idx = 4; 
+        else if (rand < 80) idx = 5; 
+        else idx = 6;                
+    } else {
+        // [CẤP 3] TỔ TRƯỞNG & HỌC SINH BÌNH THƯỜNG: 10% KHO BÁU
+        if (rand < 10) idx = 0;      
+        else if (rand < 30) idx = 1; 
+        else if (rand < 70) idx = 2; 
+        else if (rand < 75) idx = 3; 
+        else if (rand < 85) idx = 4; 
+        else if (rand < 90) idx = 5; 
+        else idx = 6;                
+    }
+    // =====================================
 
     let sliceAngle = 360 / PRIZES.length; let wheel = document.getElementById('wheel'); 
     let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
@@ -996,22 +1070,6 @@ window.moDonTu = async function() {
     } catch (e) {}
 };
 
-window.viewProfile = function(id) { 
-    closeMenu(); const s = Data.hs.find(x => String(x.id) === String(id)); if(!s) return; 
-    const avatar = s.gender === 'Nữ' ? '<div class="w-24 h-24 bg-pink-100 text-pink-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-graduate"></i></div>' : '<div class="w-24 h-24 bg-blue-100 text-blue-500 rounded-full mx-auto flex items-center justify-center text-5xl mb-3 shadow-inner"><i class="fas fa-user-astronaut"></i></div>'; 
-    let cleanDob = s.dob || 'Chưa cập nhật'; if(cleanDob.includes('T') && cleanDob.includes('.000Z')) { const dt = new Date(cleanDob); cleanDob = ("0" + dt.getDate()).slice(-2) + "/" + ("0" + (dt.getMonth() + 1)).slice(-2) + "/" + dt.getFullYear(); } 
-    const renderPhone = (phone, label) => { 
-        if(!phone || phone.trim() === '') return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><span class="text-slate-400 italic text-xs">Chưa cập nhật</span></div>`; 
-        const cleanPhone = phone.toString().replace(/\D/g, ''); return `<div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">${label}</span><div class="flex items-center gap-2"><span class="font-bold text-slate-700 text-sm">${phone}</span><a href="tel:${cleanPhone}" class="w-7 h-7 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs hover:bg-green-600 hover:text-white transition"><i class="fas fa-phone"></i></a></div></div>`; 
-    }; 
-    const studentTitles = window.calculateTitle(s);
-    document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="${currentUser && currentUser.role==='admin'?'window.chuyenTrangQuanLy()':'veTrangChu()'}" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600 uppercase">HỒ SƠ CÁ NHÂN</h2></div><div class="bg-white p-6 rounded-[2rem] shadow-lg border-t-4 border-blue-50 fade-in relative overflow-hidden"><div class="text-center mb-6 relative z-10">${avatar}<h2 class="text-2xl font-black text-slate-800">${s.name}</h2><span class="bg-blue-50 text-blue-600 font-mono font-bold px-3 py-1 rounded-full text-xs mt-2 inline-block">ID: ${s.id}</span></div><div class="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-2xl p-4 text-white shadow-lg mb-6 flex items-center justify-between relative overflow-hidden"><div class="absolute -right-4 -bottom-4 text-white opacity-20 text-6xl"><i class="fas fa-gem"></i></div><div><p class="text-xs font-bold opacity-90 uppercase">Điểm tích lũy</p><p class="text-3xl font-black">${s.score || 0}</p></div><div class="text-right flex flex-col items-end gap-1 mt-1">${studentTitles}</div></div><div class="space-y-1"><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Ngày sinh</span><b class="text-slate-700">${cleanDob}</b></div><div class="flex justify-between items-center py-2 border-b border-slate-100"><span class="text-slate-400 font-bold uppercase text-[10px]">Giới tính</span><b class="text-slate-700">${s.gender || '-'}</b></div>${renderPhone(s.fatherPhone, "SĐT Cha")}${renderPhone(s.motherPhone, "SĐT Mẹ")}<div class="py-2"><span class="text-slate-400 font-bold uppercase text-[10px] block mb-1">Địa chỉ</span><b class="text-slate-700 text-sm leading-snug">${s.address || 'Chưa cập nhật'}</b></div></div></div>`; 
-};
-
-window.chuyenTrangQuanLy = function() { 
-    closeMenu(); let html = `<div class="flex items-center mb-6"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-blue-600">QUẢN LÝ HS</h2></div><div class="space-y-3">`; html += Data.hs.map(h => `<div onclick="window.viewProfile('${h.id}')" class="bg-white p-4 rounded-xl border flex justify-between items-center cursor-pointer hover:bg-slate-50 transition"><span class="font-bold text-slate-700">${h.name}</span><span class="text-xs text-gray-500">SĐT: ${h.fatherPhone || h.motherPhone || 'Chưa có'}</span></div>`).join(''); document.getElementById('content').innerHTML = html + "</div>"; 
-};
-
 window.kiemTraThongBaoAdmin = async function() { 
     if (!currentUser || currentUser.role !== 'admin') return; 
     try { 
@@ -1066,8 +1124,8 @@ window.checkSinhNhat = function() {
     if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) { 
         let currentYear = today.getFullYear(); let bonusKey = 'hpbd_bonus_' + currentYear + '_' + currentUser.id; 
         if (!localStorage.getItem(bonusKey)) { 
-            let todayStr = today.toLocaleDateString('vi-VN'); let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}'); 
-            if (spinLog.date !== todayStr) spinLog = { date: todayStr, extra: 0, usedFree: false }; 
+            let todayStr = today.toLocaleDateString('vi-VN'); 
+            let spinLog = window.getDailySpinLog(todayStr); // Đã dùng hàm nạp lượt an toàn
             spinLog.extra += 5; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); localStorage.setItem(bonusKey, 'true'); 
             try { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: "Sinh nhật " + currentYear, score_earned: 0, details: "Hệ thống tự động tặng 5 lượt quay nhân dịp sinh nhật!" } }) }); } catch(e) {} 
         } 
@@ -1080,6 +1138,11 @@ window.showHappyBirthdayUI = function() {
     overlay.innerHTML = `<div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]"><div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden"><button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button><div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div><h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">CHÚC MỪNG SINH NHẬT</h2><h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3><div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-4 relative"><i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i><p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p></div><div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 p-3 rounded-2xl mb-6 shadow-inner animate-pulse"><p class="text-orange-600 font-black text-sm"><i class="fas fa-gift text-xl mr-1 text-red-500"></i> LÌ XÌ TỪ THẦY HIỂN</p><p class="text-slate-700 font-bold text-xs mt-1">Hệ thống đã tự động cộng <span class="text-red-600 text-base font-black">5 LƯỢT QUAY</span> vào Vòng Quay May Mắn của con!</p></div><button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">CẢM ƠN THẦY Ạ!</button></div></div>`; 
     document.body.appendChild(overlay); window.safeConfetti(); 
 };
+
+document.addEventListener('play', function(e) { 
+    var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); } 
+    var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); } 
+}, true);
 
 // ==========================================
 // 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
@@ -1331,31 +1394,3 @@ window.thoatGameToan = async function(saveScore = false) {
     }
     document.getElementById('gameUI').remove(); veTrangChu();
 };
-
-// ==========================================
-// 11. HỆ THỐNG CHỐNG GIAN LẬN TỰ ĐỘNG
-// ==========================================
-document.addEventListener("visibilitychange", () => {
-    if (window.isQuizActive && document.hidden && currentUser && currentUser.role === 'student') {
-        window.cheatWarnings++;
-        if (window.cheatWarnings >= 3) {
-            alert("🚨 HỆ THỐNG BẢO MẬT: Con đã rời khỏi bài thi quá 3 lần!\nBài thi của con sẽ được nộp tự động ngay bây giờ để đảm bảo công bằng.");
-            window.finishQuiz();
-        } else {
-            alert(`⚠️ CẢNH BÁO NHẮC NHỞ (${window.cheatWarnings}/3):\nCon vừa rời khỏi màn hình bài thi!\nHãy tập trung tự làm bài, không được mở tab khác hoặc tra Google nhé. Quá 3 lần hệ thống sẽ tự nộp bài!`);
-        }
-    }
-});
-
-document.addEventListener("contextmenu", (e) => {
-    if (window.isQuizActive && currentUser && currentUser.role === 'student') {
-        e.preventDefault();
-    }
-});
-
-document.addEventListener("copy", (e) => {
-    if (window.isQuizActive && currentUser && currentUser.role === 'student') {
-        e.preventDefault();
-        alert("⚠️ Hệ thống: Không được copy câu hỏi con nhé!");
-    }
-});
