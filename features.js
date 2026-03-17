@@ -1005,20 +1005,18 @@ window.renderDanhSachTienDo = function() {
     let filteredStudents = Data.hs.filter(h => {
         if (fGroup === 'all' && fScore === 'all') return true;
         
-        // CHỈ LỌC CÁC MÔN HỌC CHÍNH KHÓA, BỎ QUA GAME VÀ VÒNG QUAY
-        let userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject));
+        let userLogs = Data.log.filter(l => String(l.id) === String(h.id));
         
-        // Nếu lọc theo Group (Tuần/Bài tập)
+        // Nếu lọc theo Group
         let validLogsForGroup = userLogs;
         if (fGroup !== 'all') {
             validLogsForGroup = userLogs.filter(l => l.group === fGroup);
             if (validLogsForGroup.length === 0) return false; // Chưa làm bài này
         }
         
-        // Nếu lọc theo Score (Điểm số)
+        // Nếu lọc theo Score (Lấy điểm cao nhất của bài được lọc, hoặc tất cả bài)
         if (fScore !== 'all') {
-            if (validLogsForGroup.length === 0) return false; 
-            let pct = 0;
+            let maxScoreFound = 0; let pct = 0;
             // Tìm % điểm cao nhất trong các bài hợp lệ
             validLogsForGroup.forEach(l => {
                 let qs = (l.subject === 'math') ? Data.math : Data.tv;
@@ -1029,77 +1027,13 @@ window.renderDanhSachTienDo = function() {
             });
             
             if (fScore === "100" && pct < 100) return false;
-            if (fScore === "90" && (pct < 90 || pct >= 100)) return false;
+            if (fScore === "90" && (pct < 90 || pct > 100)) return false;
             if (fScore === "70" && (pct < 70 || pct > 89)) return false;
             if (fScore === "50" && (pct < 50 || pct > 69)) return false;
             if (fScore === "0" && pct >= 50) return false;
         }
         return true;
     });
-
-    if (filteredStudents.length === 0) {
-        document.getElementById('danhSachTienDoRender').innerHTML = `<div class="col-span-full text-center py-10 opacity-60"><i class="fas fa-search text-5xl text-slate-300 mb-3"></i><p class="font-bold text-slate-400">Không tìm thấy học sinh nào phù hợp với bộ lọc.</p></div>`;
-        return;
-    }
-
-    filteredStudents.forEach(h => { 
-        // ĐẾM SỐ BÀI ĐÃ LÀM (CHỈ ĐẾM MÔN HỌC)
-        const userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject)); 
-        
-        // Lấy danh sách các bài ĐÃ LÀM duy nhất để vẽ thanh tiến độ
-        let uniqueDoneGroups = {};
-        userLogs.forEach(l => {
-            let key = (l.subject === 'tv' ? 'vietnamese' : l.subject) + '_' + l.group;
-            let qs = (l.subject === 'math') ? Data.math : Data.tv;
-            let count = qs.filter(q => q.group === l.group && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length; 
-            let maxPoss = count * 10 || 100;
-            let currentPct = (Number(l.score) / maxPoss) * 100;
-            
-            if (!uniqueDoneGroups[key] || currentPct > uniqueDoneGroups[key].pct) {
-                uniqueDoneGroups[key] = { group: l.group, pct: currentPct };
-            }
-        });
-
-        let doneCount = Object.keys(uniqueDoneGroups).length;
-        // Khóa giới hạn (Tránh trường hợp bị vọt qua 100%)
-        if (doneCount > total) doneCount = total;
-        let pctOverall = total ? Math.round((doneCount/total)*100) : 0; 
-        
-        // Vẽ các đốt màu cho thanh tiến độ
-        let segmentsHtml = "";
-        Object.values(uniqueDoneGroups).forEach(item => {
-            let color = 'bg-red-500'; // Dưới 50đ
-            if (item.pct >= 90) color = 'bg-green-500'; // Trên 90đ
-            else if (item.pct >= 70) color = 'bg-yellow-400'; // 70-89đ
-            else if (item.pct >= 50) color = 'bg-orange-500'; // 50-69đ
-            
-            segmentsHtml += `<div class="h-full flex-1 ${color} rounded-sm opacity-90"></div>`;
-        });
-        
-        // Vẽ các đoạn chưa làm (màu xám)
-        let emptyCount = total - doneCount;
-        for(let i=0; i<emptyCount; i++) {
-            segmentsHtml += `<div class="h-full flex-1 bg-slate-200 rounded-sm"></div>`;
-        }
-
-        let filteredHighlight = "";
-        if (fGroup !== 'all' || fScore !== 'all') {
-            filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white">Khớp bộ lọc</span>`;
-        }
-
-        htmlList += `<div onclick="window.xemChiTietTienDo('${h.id}', '${h.name}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex flex-col cursor-pointer hover:border-purple-300 hover:shadow-md transition relative">
-            ${filteredHighlight}
-            <div class="flex justify-between items-center mb-2">
-                <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div><span class="font-bold text-slate-700">${h.name}</span></div>
-                <div class="text-[11px] font-black text-slate-500">${doneCount}/${total} BÀI (${pctOverall}%)</div>
-            </div>
-            <div class="w-full h-2 flex gap-[2px] mt-1 p-[1px] bg-slate-100 rounded-md">
-                ${segmentsHtml}
-            </div>
-        </div>`; 
-    }); 
-    document.getElementById('danhSachTienDoRender').innerHTML = htmlList;
-};
 
     if (filteredStudents.length === 0) {
         document.getElementById('danhSachTienDoRender').innerHTML = `<div class="col-span-full text-center py-10 opacity-60"><i class="fas fa-search text-5xl text-slate-300 mb-3"></i><p class="font-bold text-slate-400">Không tìm thấy học sinh nào phù hợp với bộ lọc.</p></div>`;
