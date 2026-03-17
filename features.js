@@ -1,6 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN FULL VIP CUỐI CÙNG - KHÔNG LỖI)
-// Tích hợp: Smart Cache, Kéo Thả, Chống Gian Lận, Vòng Quay VIP Cán Sự, Bản Đồ Nhiệt Tiến Độ
+// FILE: FEATURES.JS (BẢN FULL VIP - MULTI-DROP KÉO THẢ ĐA ĐIỂM)
+// Tích hợp: Smart Cache, Kéo Thả Nhiều Ô Trống, Chống Gian Lận, Vòng Quay VIP Cán Sự, Bản Đồ Nhiệt
 // ==========================================
 
 let isSpinning = false;
@@ -31,7 +31,7 @@ window.safeConfetti = function() {
                 confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); 
             }
         }, 250);
-    } catch(e) { console.log("Không tải được hiệu ứng pháo hoa."); }
+    } catch(e) {}
 };
 
 // ==========================================
@@ -43,7 +43,6 @@ window.getDailySpinLog = function(todayStr) {
     
     if (spinLog.date !== todayStr) {
         spinLog = { date: todayStr, extra: 0, usedFree: false };
-        
         let d = new Date().getDay();
         if (d === 0 || d === 5 || d === 6) { // CN, T6, T7
             let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
@@ -56,8 +55,7 @@ window.getDailySpinLog = function(todayStr) {
                             chucVu.includes('tt2') || userInfoStr.includes('tt2') ||
                             chucVu.includes('tt3') || userInfoStr.includes('tt3') ||
                             chucVu.includes('tt4') || userInfoStr.includes('tt4');
-            
-            if (isOfficer) { spinLog.extra += 1; } // Tặng thêm 1 lượt
+            if (isOfficer) { spinLog.extra += 1; }
         }
         localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
     }
@@ -78,7 +76,6 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
                 if (parsed.math && parsed.tv && parsed.log) {
                     Data.math = parsed.math; Data.tv = parsed.tv; Data.vietnamese = parsed.tv;
                     Data.log = parsed.log; Data.caudo = parsed.caudo || []; window.isAllDataLoaded = true;
-                    
                     if (!window.isFetchingBackground) {
                         window.isFetchingBackground = true;
                         window.fetchFreshDataSilently(false).then(() => window.isFetchingBackground = false);
@@ -97,7 +94,6 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
             </div>
         `;
     }
-
     return await window.fetchFreshDataSilently(!silent);
 };
 
@@ -109,12 +105,9 @@ window.fetchFreshDataSilently = async function(showError = false) {
             fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json())
         ]);
-
         Data.math = Array.isArray(mRes) ? mRes : []; Data.tv = Array.isArray(tRes) ? tRes : []; Data.vietnamese = Data.tv;
         Data.log = Array.isArray(lRes) ? lRes : []; Data.caudo = Array.isArray(cRes) ? cRes : [];
-
         try { localStorage.setItem('eduDataCache', JSON.stringify({ math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo })); } catch(e) {}
-
         window.isAllDataLoaded = true; return true;
     } catch(e) {
         if (showError) {
@@ -345,21 +338,24 @@ window.autoFillTime = function() {
     if (existingQ && existingQ.time) { document.getElementById('frmT').value = existingQ.time; } 
 };
 
-window.changeQType = function() {
+window.changeQType = function(initialCorr = '') {
     let val = document.getElementById("frmQType").value;
     let hint = document.getElementById("qTypeHint");
     let lblA = document.getElementById("lblA"); let lblB = document.getElementById("lblB");
     let lblC = document.getElementById("lblC"); let lblD = document.getElementById("lblD");
-    let lblCorr = document.getElementById("lblCorr");
+    let corrContainer = document.getElementById("corrContainer");
+    
+    let curVal = initialCorr || (document.getElementById("frmCorr") ? document.getElementById("frmCorr").value : 'a');
     
     if(val === 'dienkhuyet') {
         hint.className = "mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in";
         lblA.innerText = "Viên kẹo 1 (A)"; lblB.innerText = "Viên kẹo 2 (B)"; lblC.innerText = "Viên kẹo 3 (C)"; lblD.innerText = "Viên kẹo 4 (D)";
-        lblCorr.innerText = "Kéo viên kẹo nào vào ô trống?";
+        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Kéo kẹo nào vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
     } else {
         hint.className = "hidden";
         lblA.innerText = "Đáp án A"; lblB.innerText = "Đáp án B"; lblC.innerText = "Đáp án C"; lblD.innerText = "Đáp án D";
-        lblCorr.innerText = "Chọn Đáp Án Đúng";
+        if(!['a','b','c','d'].includes(curVal.toLowerCase())) curVal = 'a';
+        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full bg-yellow-50 border-2 border-yellow-200 p-3 rounded-xl font-bold text-yellow-800 outline-none focus:border-yellow-500"><option value="a" ${curVal=='a'?'selected':''}>Đáp án A</option><option value="b" ${curVal=='b'?'selected':''}>Đáp án B</option><option value="c" ${curVal=='c'?'selected':''}>Đáp án C</option><option value="d" ${curVal=='d'?'selected':''}>Đáp án D</option></select>`;
     }
 };
 
@@ -415,10 +411,12 @@ window.renderFormCauHoi = function(id) {
                 <div><label id="lblC" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 3 (C)' : 'Đáp án C'}</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
                 <div><label id="lblD" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 4 (D)' : 'Đáp án D'}</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
             </div>
-            <div class="mt-4"><label id="lblCorr" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Kéo kẹo nào vào ô trống?' : 'Chọn Đáp Án Đúng'}</label><select id="frmCorr" class="edit-input w-full mt-1 bg-yellow-50 text-yellow-800 border-yellow-200"><option value="a" ${q.correct=='a'?'selected':''}>Đáp án A</option><option value="b" ${q.correct=='b'?'selected':''}>Đáp án B</option><option value="c" ${q.correct=='c'?'selected':''}>Đáp án C</option><option value="d" ${q.correct=='d'?'selected':''}>Đáp án D</option></select></div>
+            <div id="corrContainer" class="mt-4">
+                </div>
             <button onclick="window.luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-6 text-lg hover:bg-indigo-700 transition"><i class="fas fa-save mr-2"></i> LƯU CÂU HỎI LÊN HỆ THỐNG</button>
         </div>
     `; 
+    setTimeout(() => window.changeQType(q.correct), 50);
 };
 
 window.luuCauHoi = async function(id) { 
@@ -433,7 +431,9 @@ window.luuCauHoi = async function(id) {
 
     if (isTV) { let baiDocText = (document.getElementById("frmBaiDoc") ? document.getElementById("frmBaiDoc").innerHTML.trim() : ""); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
     
-    const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: document.getElementById("frmCorr").value, image: "" }; 
+    let corrVal = document.getElementById("frmCorr").value.trim().toLowerCase();
+    
+    const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: corrVal, image: "" }; 
     if(!data.group || !finalQuestionText.trim()) { return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); }
     
     document.getElementById('loader').style.display = 'flex'; 
@@ -448,7 +448,7 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI, CHỐNG GIAN LẬN & KÉO THẢ
+// 4. TIẾN TRÌNH LÀM BÀI, CHỐNG GIAN LẬN & KÉO THẢ MULTI-DROP
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); 
@@ -536,12 +536,12 @@ window.startQuiz = function(group, timeMins) {
         if (!readingPassage) readingPassage = "Hãy đọc kỹ các câu hỏi bên phải và chọn đáp án đúng nhất nhé!";
         document.getElementById('content').innerHTML = `
             <div class="sticky top-20 bg-[#f0f7ff] z-30 py-3 flex justify-between items-center mb-4"><div class="flex items-center gap-3"><button onclick="window.isQuizActive=false; window.loadSubject(curSub)" class="bg-white w-10 h-10 rounded-full shadow-sm text-slate-500 font-bold border"><i class="fas fa-times"></i></button><span class="font-black text-green-700 truncate max-w-[150px]">${curGrp}</span></div><div class="bg-white px-4 py-2 rounded-full font-black text-green-600 shadow-sm border border-green-100 flex items-center gap-2"><i class="fas fa-stopwatch text-orange-500 animate-pulse"></i><span id="quizTimer">00:00</span></div></div>
-            <div class="flex flex-col lg:flex-row gap-6"><div class="lg:w-1/2 bg-[#fffbeb] p-6 sm:p-8 rounded-[2rem] border-2 border-yellow-200 shadow-inner lg:h-[75vh] overflow-y-auto relative custom-scrollbar"><div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-4 py-1 rounded-bl-xl opacity-80">BÀI ĐỌC</div><h3 class="font-black text-yellow-800 text-xl mb-4 flex items-center gap-2 border-b-2 border-yellow-200 pb-3"><i class="fas fa-book-reader text-2xl"></i> NỘI DUNG ĐỌC HIỂU</h3><div class="text-slate-800 leading-[1.8] text-base sm:text-lg whitespace-pre-wrap font-medium pb-10 [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${window.parseImg(readingPassage)}</div></div><div class="lg:w-1/2" id="quizBox"></div></div>
+            <div class="flex flex-col lg:flex-row gap-6"><div class="lg:w-1/2 bg-[#fffbeb] p-6 sm:p-8 rounded-[2rem] border-2 border-yellow-200 shadow-inner lg:h-[75vh] overflow-y-auto relative custom-scrollbar"><div class="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-[10px] font-black px-4 py-1 rounded-bl-xl opacity-80">BÀI ĐỌC</div><h3 class="font-black text-yellow-800 text-xl mb-4 flex items-center gap-2 border-b-2 border-yellow-200 pb-3"><i class="fas fa-book-reader text-2xl"></i> NỘI DUNG ĐỌC HIỂU</h3><div class="text-slate-800 leading-[1.8] text-base sm:text-lg whitespace-pre-wrap font-medium pb-10 [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${window.parseImg(readingPassage)}</div></div><div class="lg:w-1/2 flex flex-col" id="quizBox"></div></div>
         `;
     } else { 
         document.getElementById('content').innerHTML = `
             <div class="sticky top-20 bg-[#f0f7ff] z-30 py-3 flex justify-between items-center mb-4"><div class="flex items-center gap-3"><button onclick="window.isQuizActive=false; window.loadSubject(curSub)" class="bg-white w-10 h-10 rounded-full shadow-sm text-slate-500 font-bold border"><i class="fas fa-times"></i></button><span class="font-black text-indigo-900 truncate max-w-[150px]">${curGrp}</span></div><div class="bg-white px-4 py-2 rounded-full font-black text-indigo-600 shadow-sm border border-indigo-100 flex items-center gap-2"><i class="fas fa-stopwatch text-orange-500 animate-pulse"></i><span id="quizTimer">00:00</span></div></div>
-            <div id="quizBox" class="bg-white p-5 sm:p-8 rounded-[2rem] shadow-xl border-4 border-white min-h-[400px] text-base sm:text-lg"></div>
+            <div id="quizBox" class="bg-white p-5 sm:p-8 rounded-[2rem] shadow-xl border-4 border-white min-h-[400px] text-base sm:text-lg flex flex-col"></div>
         `; 
     }
     window.renderQuestion(0); window.startTimer(timeMins * 60); 
@@ -550,52 +550,81 @@ window.startQuiz = function(group, timeMins) {
 window.renderQuestion = function(index) { 
     if (index >= quiz.length) { window.finishQuiz(); return; } 
     const q = quiz[index]; let colorTheme = (curSub === 'vietnamese' || curSub === 'tv') ? 'text-green-600' : 'text-indigo-600'; 
-    let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100' : '';
+    let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100 flex-1 flex flex-col' : 'flex-1 flex flex-col';
     
     let questionHtml = window.parseImg(q.question);
     let isDragMode = /_{3,}/.test(questionHtml);
 
     if (isDragMode) {
-        questionHtml = questionHtml.replace(/_{3,}/, `<div id="drop-zone" class="inline-flex items-center justify-center min-w-[80px] h-10 border-2 border-dashed border-indigo-400 bg-indigo-50/50 rounded-xl align-middle mx-2 text-indigo-400 font-bold transition-all px-4 overflow-hidden shadow-inner">Thả vào đây</div>`);
+        let dropCount = 0;
+        questionHtml = questionHtml.replace(/_{3,}/g, () => {
+            let id = 'drop-zone-' + dropCount; dropCount++;
+            return `<div id="${id}" class="drop-zone inline-flex items-center justify-center min-w-[70px] h-10 border-2 border-dashed border-indigo-400 bg-indigo-50/50 rounded-xl align-middle mx-1.5 text-indigo-800 font-bold transition-all px-2 shadow-inner empty:after:content-['Thả_vào'] empty:after:text-indigo-400 empty:after:opacity-70 empty:after:text-sm"></div>`;
+        });
         
         let dragItemsHtml = ['a','b','c','d'].filter(k => q[k]).map(key => `
-            <div class="drag-item touch-none p-3 bg-white border-2 border-indigo-200 rounded-xl shadow-sm text-center font-bold text-slate-700 cursor-grab hover:border-indigo-400 transition-transform active:scale-95 flex items-center justify-center" data-val="${key}">
+            <div class="drag-item touch-none p-3 bg-white border-2 border-indigo-200 rounded-xl shadow-sm text-center font-bold text-indigo-700 cursor-grab hover:border-indigo-400 transition-transform active:scale-95 flex items-center justify-center" data-val="${key}">
                 ${window.parseImg(q[key])}
             </div>
         `).join('');
         
-        document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200"><i class="fas fa-hand-pointer mr-1"></i> CÂU ${index + 1} / ${quiz.length} (KÉO THẢ)</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-loose [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div></div><div class="grid grid-cols-2 gap-4 mt-8">${dragItemsHtml}</div></div>`; 
+        document.getElementById("quizBox").innerHTML = `
+            <div class="${wrapperClass} fade-in">
+                <div class="mb-6">
+                    <div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200"><i class="fas fa-hand-pointer mr-1"></i> CÂU ${index + 1} / ${quiz.length} (KÉO THẢ)</div>
+                    <div class="text-xl sm:text-2xl font-bold text-slate-800 leading-[2.2] [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div>
+                </div>
+                <div class="mt-auto">
+                    <div id="drag-container" class="grid grid-cols-2 gap-3 min-h-[100px] p-4 bg-indigo-50/50 rounded-2xl border-2 border-dashed border-indigo-200 shadow-inner">
+                        ${dragItemsHtml}
+                    </div>
+                    <button id="btnSubmitDrag" onclick="window.checkDragAns('${q.correct}', ${index})" class="hidden w-full mt-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-xl hover:scale-[1.02] transition"><i class="fas fa-check-circle mr-2"></i> CHỐT ĐÁP ÁN</button>
+                </div>
+            </div>`; 
         
         setTimeout(() => window.initDragAndDrop(index, q.correct), 100);
     } else {
         let optionsHtml = ['a','b','c','d'].filter(k => q[k]).map(key => `<div onclick="window.checkAns(this, '${key}', '${q.correct}', ${index})" class="quiz-option p-4 sm:p-5 border-2 border-slate-100 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition btn-3d bg-white"><span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 uppercase text-lg shrink-0 shadow-inner">${key}</span><div class="font-bold text-slate-700 flex-1 text-base sm:text-lg leading-relaxed">${window.parseImg(q[key])}</div></div>`).join('');
-        document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div></div><div class="space-y-4">${optionsHtml}</div></div>`; 
+        document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div></div><div class="space-y-4 mt-auto">${optionsHtml}</div></div>`; 
     }
 };
 
+// Động cơ kéo thả Đa Điểm Multi-Drop
 window.initDragAndDrop = function(qIndex, correctKey) {
     const items = document.querySelectorAll('.drag-item');
-    const dropZone = document.getElementById('drop-zone');
-    if(!dropZone || items.length === 0) return;
+    const dropZones = document.querySelectorAll('.drop-zone');
+    const container = document.getElementById('drag-container');
+    const btnSubmit = document.getElementById('btnSubmitDrag');
+    
+    if(dropZones.length === 0 || items.length === 0) return;
 
     let draggedItem = null; let startX, startY;
+
+    const checkSubmitState = () => {
+        let allFilled = true;
+        dropZones.forEach(dz => { if(dz.children.length === 0) allFilled = false; });
+        if(allFilled) btnSubmit.classList.remove('hidden');
+        else btnSubmit.classList.add('hidden');
+    };
 
     const moveItem = (pageX, pageY) => {
         if(!draggedItem) return;
         draggedItem.style.left = pageX - startX + 'px';
         draggedItem.style.top = pageY - startY + 'px';
         
-        const dropRect = dropZone.getBoundingClientRect();
-        if (pageX > dropRect.left && pageX < dropRect.right && pageY > dropRect.top && pageY < dropRect.bottom) {
-            dropZone.classList.add('bg-indigo-200', 'border-indigo-600', 'scale-105');
-        } else {
-            dropZone.classList.remove('bg-indigo-200', 'border-indigo-600', 'scale-105');
-        }
+        dropZones.forEach(dz => {
+            const dropRect = dz.getBoundingClientRect();
+            if (pageX > dropRect.left && pageX < dropRect.right && pageY > dropRect.top && pageY < dropRect.bottom) {
+                dz.classList.add('bg-indigo-200', 'border-indigo-600', 'scale-105');
+            } else {
+                dz.classList.remove('bg-indigo-200', 'border-indigo-600', 'scale-105');
+            }
+        });
     };
 
     const pointerMove = (e) => {
         if(!draggedItem) return;
-        e.preventDefault(); 
+        e.preventDefault(); // Chống cuộn màn hình
         let pageX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
         let pageY = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
         moveItem(pageX, pageY);
@@ -606,43 +635,40 @@ window.initDragAndDrop = function(qIndex, correctKey) {
         let pageX = e.type.includes('mouse') ? e.pageX : e.changedTouches[0].pageX;
         let pageY = e.type.includes('mouse') ? e.pageY : e.changedTouches[0].pageY;
         
-        const dropRect = dropZone.getBoundingClientRect();
-        const isInside = (pageX > dropRect.left && pageX < dropRect.right && pageY > dropRect.top && pageY < dropRect.bottom);
+        let droppedIn = null;
+        dropZones.forEach(dz => {
+            const dropRect = dz.getBoundingClientRect();
+            if (pageX > dropRect.left && pageX < dropRect.right && pageY > dropRect.top && pageY < dropRect.bottom) {
+                droppedIn = dz;
+            }
+            dz.classList.remove('bg-indigo-200', 'border-indigo-600', 'scale-105');
+        });
         
         draggedItem.classList.remove('shadow-2xl', 'scale-105', 'border-indigo-500', 'z-50');
-        dropZone.classList.remove('bg-indigo-200', 'border-indigo-600', 'scale-105');
+        draggedItem.style.position = 'static';
+        draggedItem.style.width = 'auto'; draggedItem.style.height = 'auto';
 
         document.removeEventListener('mousemove', pointerMove);
         document.removeEventListener('touchmove', pointerMove);
         document.removeEventListener('mouseup', pointerUp);
         document.removeEventListener('touchend', pointerUp);
 
-        if (isInside) {
-            let selectedKey = draggedItem.getAttribute('data-val');
-            items.forEach(el => { el.style.pointerEvents = 'none'; if(el !== draggedItem) el.style.opacity = '0.3'; });
-            
-            draggedItem.style.position = 'relative';
-            draggedItem.style.left = '0'; draggedItem.style.top = '0';
-            draggedItem.style.width = '100%'; draggedItem.style.height = '100%';
-            draggedItem.style.margin = '0';
-            dropZone.innerHTML = ''; dropZone.appendChild(draggedItem);
-            
-            if (selectedKey === correctKey.toLowerCase()) {
-                dropZone.classList.add('!bg-green-100', '!border-green-500');
-                draggedItem.classList.add('!bg-green-100', '!text-green-800', '!border-transparent');
-                score += 10;
-            } else {
-                dropZone.classList.add('!bg-red-100', '!border-red-500');
-                draggedItem.classList.add('!bg-red-100', '!text-red-800', '!border-transparent');
-                const q = quiz[qIndex];
-                let questionReplaced = window.parseImg(q.question).replace(/_{3,}/, '[LỖI SAI]');
-                wrongAnswersLog.push(`<div class="bg-white p-4 rounded-xl border border-red-200 mb-3 shadow-sm"><p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-red-500">Câu ${qIndex+1}:</span> ${questionReplaced}</p><div class="space-y-2 mt-3"><p class="text-red-600 text-sm bg-red-50 p-2 rounded-lg border border-red-100"><i class="fas fa-times-circle mr-1"></i> <b>Bé ghép sai (${selectedKey.toUpperCase()}):</b> <span class="font-medium">${window.parseImg(q[selectedKey])}</span></p><p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng (${correctKey.toUpperCase()}):</b> <span class="font-medium">${window.parseImg(q[correctKey])}</span></p></div></div>`);
+        if (droppedIn) {
+            // Nếu ô đã có kẹo, trả kẹo cũ về hộp
+            if (droppedIn.children.length > 0 && droppedIn.children[0] !== draggedItem) {
+                container.appendChild(droppedIn.children[0]);
             }
-            setTimeout(() => window.renderQuestion(qIndex + 1), 1200);
+            droppedIn.innerHTML = '';
+            droppedIn.appendChild(draggedItem);
+            draggedItem.style.width = '100%';
+            draggedItem.style.height = '100%';
+            draggedItem.style.margin = '0';
         } else {
-            draggedItem.style.position = 'static';
-            draggedItem.style.width = 'auto'; draggedItem.style.height = 'auto';
+            // Rơi ra ngoài thì trả về hộp
+            container.appendChild(draggedItem);
         }
+        
+        checkSubmitState();
         draggedItem = null;
     };
 
@@ -650,10 +676,13 @@ window.initDragAndDrop = function(qIndex, correctKey) {
         draggedItem = e.currentTarget;
         const rect = draggedItem.getBoundingClientRect();
         
+        document.body.style.overflow = 'hidden';
+        
         draggedItem.style.width = rect.width + 'px';
         draggedItem.style.height = rect.height + 'px';
         draggedItem.style.position = 'fixed';
         draggedItem.style.zIndex = '50';
+        draggedItem.style.margin = '0';
         draggedItem.classList.add('shadow-2xl', 'scale-105', 'border-indigo-500');
 
         let pageX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
@@ -666,6 +695,10 @@ window.initDragAndDrop = function(qIndex, correctKey) {
         document.addEventListener('mouseup', pointerUp);
         document.addEventListener('touchend', pointerUp);
         
+        const endScrollLock = () => { document.body.style.overflow = ''; };
+        document.addEventListener('mouseup', endScrollLock, {once:true});
+        document.addEventListener('touchend', endScrollLock, {once:true});
+        
         moveItem(pageX, pageY);
     };
 
@@ -673,6 +706,44 @@ window.initDragAndDrop = function(qIndex, correctKey) {
         item.addEventListener('mousedown', pointerDown);
         item.addEventListener('touchstart', pointerDown, {passive: false});
     });
+};
+
+// Hàm chấm điểm Kéo thả Đa điểm
+window.checkDragAns = function(correctStr, index) {
+    document.querySelectorAll('.drag-item').forEach(x => x.style.pointerEvents = 'none');
+    document.getElementById('btnSubmitDrag').classList.add('hidden');
+    
+    let userAnsArr = [];
+    document.querySelectorAll('.drop-zone').forEach(dz => {
+        if(dz.children[0]) userAnsArr.push(dz.children[0].getAttribute('data-val'));
+    });
+    
+    let userAnsStr = userAnsArr.join(',').toLowerCase();
+    let expectedStr = correctStr.toLowerCase().replace(/\s/g, ''); 
+    
+    const q = quiz[index];
+    
+    if (userAnsStr === expectedStr) {
+        document.querySelectorAll('.drop-zone').forEach(dz => {
+            dz.classList.add('!bg-green-100', '!border-green-500');
+            dz.children[0].classList.add('!bg-green-100', '!text-green-800', '!border-transparent');
+        });
+        score += 10;
+    } else {
+        document.querySelectorAll('.drop-zone').forEach(dz => {
+            dz.classList.add('!bg-red-100', '!border-red-500');
+            dz.children[0].classList.add('!bg-red-100', '!text-red-800', '!border-transparent');
+        });
+        
+        let questionReplaced = window.parseImg(q.question).replace(/_{3,}/g, '[___]');
+        let userAnsText = userAnsArr.map(k => q[k] ? window.parseImg(q[k]).replace(/<[^>]*>?/gm, '') : '').join(' | ');
+        let expectedArr = expectedStr.split(',');
+        let expectedAnsText = expectedArr.map(k => q[k] ? window.parseImg(q[k]).replace(/<[^>]*>?/gm, '') : '').join(' | ');
+
+        wrongAnswersLog.push(`<div class="bg-white p-4 rounded-xl border border-red-200 mb-3 shadow-sm"><p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-red-500">Câu ${index+1}:</span> ${questionReplaced}</p><div class="space-y-2 mt-3"><p class="text-red-600 text-sm bg-red-50 p-2 rounded-lg border border-red-100"><i class="fas fa-times-circle mr-1"></i> <b>Bé ghép sai (${userAnsStr.toUpperCase()}):</b> <span class="font-medium">${userAnsText}</span></p><p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng (${expectedStr.toUpperCase()}):</b> <span class="font-medium">${expectedAnsText}</span></p></div></div>`);
+    }
+    
+    setTimeout(() => window.renderQuestion(index + 1), 1500);
 };
 
 window.checkAns = function(el, selected, correct, index) { 
@@ -911,7 +982,7 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (LỌC 3 TẦNG & 2 THANH BẢN ĐỒ NHIỆT)
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (BẢN ĐỒ NHIỆT ĐÃ FIX LỖI 100%)
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
@@ -940,7 +1011,6 @@ window.moTienDo = async function() {
     const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); 
     const allGroups = [...new Set([...mathGroups, ...tvGroups])].sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
     
-    // Lưu trữ số lượng bài tập của từng môn
     window.totalMathAssignments = mathGroups.length;
     window.totalTvAssignments = tvGroups.length;
 
@@ -1003,18 +1073,15 @@ window.renderDanhSachTienDo = function() {
         
         let userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject));
         
-        // 1. Lọc theo Môn
         if (fSub === 'math') userLogs = userLogs.filter(l => l.subject === 'math');
         if (fSub === 'tv') userLogs = userLogs.filter(l => l.subject === 'tv' || l.subject === 'vietnamese');
 
-        // 2. Lọc theo Bài/Tuần
         let validLogsForGroup = userLogs;
         if (fGroup !== 'all') {
             validLogsForGroup = userLogs.filter(l => l.group === fGroup);
             if (validLogsForGroup.length === 0) return false; 
         }
         
-        // 3. Lọc theo Mức điểm
         if (fScore !== 'all') {
             if (validLogsForGroup.length === 0) return false; 
             let pct = 0;
@@ -1040,7 +1107,6 @@ window.renderDanhSachTienDo = function() {
         return;
     }
 
-    // Hàm phụ trợ tạo thanh tiến độ (Bản đồ nhiệt) cho 1 môn
     const buildSegments = (logs, subjectCode, totalAssigments) => {
         let uniqueDoneGroups = {};
         let subLogs = logs.filter(l => subjectCode === 'math' ? l.subject === 'math' : (l.subject === 'tv' || l.subject === 'vietnamese'));
