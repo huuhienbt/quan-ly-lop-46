@@ -1154,12 +1154,25 @@ window.renderDanhSachTienDo = function() {
             filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white z-10">Khớp bộ lọc</span>`;
         }
 
+        // Lấy danh hiệu và điểm tổng
+        let studentTitles = window.calculateTitle(h);
+        let currentScore = Number(h.score) || 0;
+
         htmlList += `
         <div onclick="window.xemChiTietTienDo('${h.id}', '${h.name.replace(/'/g, "\\'")}')" class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col cursor-pointer hover:border-purple-300 hover:shadow-md transition relative">
             ${filteredHighlight}
+            
             <div class="flex items-center gap-3 mb-4 border-b border-slate-50 pb-3">
-                <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-black shadow-inner text-xl"><i class="fas fa-user"></i></div>
-                <span class="font-black text-slate-700 text-lg">${h.name}</span>
+                <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-black shadow-inner text-xl shrink-0"><i class="fas fa-user"></i></div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="font-black text-slate-700 text-lg truncate">${h.name}</span>
+                        <span class="font-black text-indigo-600 text-base shrink-0">${currentScore} <span class="text-[10px] text-slate-400 font-bold uppercase">điểm</span></span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 mt-1 empty:hidden">
+                        ${studentTitles}
+                    </div>
+                </div>
             </div>
             
             <div class="space-y-4 w-full">
