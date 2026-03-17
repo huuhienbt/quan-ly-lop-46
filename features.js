@@ -911,7 +911,7 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (LỌC 3 TẦNG & 2 THANH BẢN ĐỒ NHIỆT)
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
@@ -940,37 +940,47 @@ window.moTienDo = async function() {
     const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); 
     const allGroups = [...new Set([...mathGroups, ...tvGroups])].sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
     
-    window.totalAssignmentsForProgress = mathGroups.length + tvGroups.length; 
+    // Lưu trữ số lượng bài tập của từng môn
+    window.totalMathAssignments = mathGroups.length;
+    window.totalTvAssignments = tvGroups.length;
 
     let filterGroupHtml = `<option value="all">Tất cả Bài tập / Tuần</option>` + allGroups.map(g => `<option value="${g}">${g}</option>`).join('');
 
     let html = `
         <div class="flex items-center mb-4">
             <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-purple-600 uppercase">TIẾN ĐỘ CHUNG</h2>
+            <h2 class="font-black text-xl text-purple-600 uppercase">TIẾN ĐỘ HỌC TẬP</h2>
         </div>
         
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-6 fade-in">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-slate-100 mb-6 fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-filter"></i> Lọc theo Bài / Tuần</label>
-                    <select id="filterProgGroup" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400">
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-book"></i> Môn học</label>
+                    <select id="filterProgSub" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400">
+                        <option value="all">Tất cả Môn</option>
+                        <option value="math">📐 Toán</option>
+                        <option value="tv">📖 Tiếng Việt</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-filter"></i> Lọc Bài / Tuần</label>
+                    <select id="filterProgGroup" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400">
                         ${filterGroupHtml}
                     </select>
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-bullseye"></i> Lọc theo Mức điểm</label>
-                    <select id="filterProgScore" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400">
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-bullseye"></i> Lọc Mức điểm</label>
+                    <select id="filterProgScore" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400">
                         <option value="all">Tất cả mức điểm</option>
                         <option value="100">💯 100đ (Tuyệt đối)</option>
                         <option value="90">🟢 Từ 90 - 100đ (Giỏi)</option>
                         <option value="70">🟡 Từ 70 - 89đ (Khá)</option>
                         <option value="50">🟠 Từ 50 - 69đ (TB)</option>
-                        <option value="0">🔴 Dưới 50đ (Cần cố gắng)</option>
+                        <option value="0">🔴 Dưới 50đ (Cố gắng)</option>
                     </select>
                 </div>
             </div>
-            <p class="text-[11px] text-slate-400 mt-3 italic text-center"><i class="fas fa-info-circle"></i> Thanh tiến độ hiển thị các đốt màu tương ứng với điểm số từng bài của học sinh.</p>
+            <p class="text-[11px] text-slate-400 mt-4 italic text-center"><i class="fas fa-info-circle"></i> Bản đồ nhiệt được tách thành 2 thanh riêng biệt cho Toán và Tiếng Việt.</p>
         </div>
 
         <div id="danhSachTienDoRender" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in"></div>
@@ -980,23 +990,31 @@ window.moTienDo = async function() {
 };
 
 window.renderDanhSachTienDo = function() {
+    let fSub = document.getElementById('filterProgSub').value;
     let fGroup = document.getElementById('filterProgGroup').value;
     let fScore = document.getElementById('filterProgScore').value;
     
     let htmlList = "";
-    let total = window.totalAssignmentsForProgress;
+    let tMath = window.totalMathAssignments;
+    let tTv = window.totalTvAssignments;
     
     let filteredStudents = Data.hs.filter(h => {
-        if (fGroup === 'all' && fScore === 'all') return true;
+        if (fSub === 'all' && fGroup === 'all' && fScore === 'all') return true;
         
         let userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject));
         
+        // 1. Lọc theo Môn
+        if (fSub === 'math') userLogs = userLogs.filter(l => l.subject === 'math');
+        if (fSub === 'tv') userLogs = userLogs.filter(l => l.subject === 'tv' || l.subject === 'vietnamese');
+
+        // 2. Lọc theo Bài/Tuần
         let validLogsForGroup = userLogs;
         if (fGroup !== 'all') {
             validLogsForGroup = userLogs.filter(l => l.group === fGroup);
             if (validLogsForGroup.length === 0) return false; 
         }
         
+        // 3. Lọc theo Mức điểm
         if (fScore !== 'all') {
             if (validLogsForGroup.length === 0) return false; 
             let pct = 0;
@@ -1022,54 +1040,82 @@ window.renderDanhSachTienDo = function() {
         return;
     }
 
-    filteredStudents.forEach(h => { 
-        const userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject)); 
-        
+    // Hàm phụ trợ tạo thanh tiến độ (Bản đồ nhiệt) cho 1 môn
+    const buildSegments = (logs, subjectCode, totalAssigments) => {
         let uniqueDoneGroups = {};
-        userLogs.forEach(l => {
-            let key = (l.subject === 'tv' ? 'vietnamese' : l.subject) + '_' + l.group;
+        let subLogs = logs.filter(l => subjectCode === 'math' ? l.subject === 'math' : (l.subject === 'tv' || l.subject === 'vietnamese'));
+        
+        subLogs.forEach(l => {
             let qs = (l.subject === 'math') ? Data.math : Data.tv;
             let count = qs.filter(q => q.group === l.group && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length; 
             let maxPoss = count * 10 || 100;
             let currentPct = (Number(l.score) / maxPoss) * 100;
             
-            if (!uniqueDoneGroups[key] || currentPct > uniqueDoneGroups[key].pct) {
-                uniqueDoneGroups[key] = { group: l.group, pct: currentPct };
+            if (!uniqueDoneGroups[l.group] || currentPct > uniqueDoneGroups[l.group].pct) {
+                uniqueDoneGroups[l.group] = { pct: currentPct };
             }
         });
 
         let doneCount = Object.keys(uniqueDoneGroups).length;
-        if (doneCount > total) doneCount = total;
-        let pctOverall = total ? Math.round((doneCount/total)*100) : 0; 
+        if (doneCount > totalAssigments) doneCount = totalAssigments;
         
         let segmentsHtml = "";
         Object.values(uniqueDoneGroups).forEach(item => {
-            let color = 'bg-red-500';
-            if (item.pct >= 90) color = 'bg-green-500';
-            else if (item.pct >= 70) color = 'bg-yellow-400';
-            else if (item.pct >= 50) color = 'bg-orange-500';
-            
-            segmentsHtml += `<div class="h-full flex-1 ${color} rounded-sm opacity-90"></div>`;
+            let color = 'bg-red-500'; 
+            if (item.pct >= 90) color = 'bg-green-500'; 
+            else if (item.pct >= 70) color = 'bg-yellow-400'; 
+            else if (item.pct >= 50) color = 'bg-orange-500'; 
+            segmentsHtml += `<div class="h-full flex-1 ${color} rounded-sm opacity-90 shadow-sm"></div>`;
         });
         
-        let emptyCount = total - doneCount;
+        let emptyCount = totalAssigments - doneCount;
         for(let i=0; i<emptyCount; i++) {
             segmentsHtml += `<div class="h-full flex-1 bg-slate-200 rounded-sm"></div>`;
         }
+        
+        let pctOverall = totalAssigments ? Math.round((doneCount/totalAssigments)*100) : 0; 
+        return { segmentsHtml, doneCount, pctOverall, totalAssigments };
+    };
+
+    filteredStudents.forEach(h => { 
+        const userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject)); 
+        
+        let mathData = buildSegments(userLogs, 'math', tMath);
+        let tvData = buildSegments(userLogs, 'tv', tTv);
 
         let filteredHighlight = "";
-        if (fGroup !== 'all' || fScore !== 'all') {
-            filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white">Khớp bộ lọc</span>`;
+        if (fSub !== 'all' || fGroup !== 'all' || fScore !== 'all') {
+            filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white z-10">Khớp bộ lọc</span>`;
         }
 
-        htmlList += `<div onclick="window.xemChiTietTienDo('${h.id}', '${h.name.replace(/'/g, "\\'")}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex flex-col cursor-pointer hover:border-purple-300 hover:shadow-md transition relative">
+        htmlList += `
+        <div onclick="window.xemChiTietTienDo('${h.id}', '${h.name.replace(/'/g, "\\'")}')" class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col cursor-pointer hover:border-purple-300 hover:shadow-md transition relative">
             ${filteredHighlight}
-            <div class="flex justify-between items-center mb-2">
-                <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div><span class="font-bold text-slate-700">${h.name}</span></div>
-                <div class="text-[11px] font-black text-slate-500">${doneCount}/${total} BÀI (${pctOverall}%)</div>
+            <div class="flex items-center gap-3 mb-4 border-b border-slate-50 pb-3">
+                <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-black shadow-inner text-xl"><i class="fas fa-user"></i></div>
+                <span class="font-black text-slate-700 text-lg">${h.name}</span>
             </div>
-            <div class="w-full h-2 flex gap-[2px] mt-1 p-[1px] bg-slate-100 rounded-md">
-                ${segmentsHtml}
+            
+            <div class="space-y-4 w-full">
+                <div class="w-full">
+                    <div class="flex justify-between items-end mb-1.5">
+                        <span class="text-[11px] font-black text-blue-600 uppercase tracking-wider"><i class="fas fa-calculator mr-1 opacity-70"></i>Toán</span>
+                        <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">${mathData.doneCount}/${mathData.totalAssigments} bài (${mathData.pctOverall}%)</span>
+                    </div>
+                    <div class="w-full h-2.5 flex gap-[2px] p-[1px] bg-slate-50 border border-slate-100 rounded-md">
+                        ${mathData.segmentsHtml}
+                    </div>
+                </div>
+                
+                <div class="w-full">
+                    <div class="flex justify-between items-end mb-1.5">
+                        <span class="text-[11px] font-black text-green-600 uppercase tracking-wider"><i class="fas fa-book-open mr-1 opacity-70"></i>Tiếng Việt</span>
+                        <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded">${tvData.doneCount}/${tvData.totalAssigments} bài (${tvData.pctOverall}%)</span>
+                    </div>
+                    <div class="w-full h-2.5 flex gap-[2px] p-[1px] bg-slate-50 border border-slate-100 rounded-md">
+                        ${tvData.segmentsHtml}
+                    </div>
+                </div>
             </div>
         </div>`; 
     }); 
