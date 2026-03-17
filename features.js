@@ -1,6 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN FULL VIP - ĐÃI NGỘ CÁN SỰ CUỐI TUẦN)
-// Tích hợp: UI Chọn Loại Câu Hỏi, Smart Cache, Kéo Thả Đa Điểm, Chống Gian Lận, Game Toán, Bảng Vàng
+// FILE: FEATURES.JS (BẢN FULL VIP CUỐI CÙNG - KHÔNG LỖI)
+// Tích hợp: Smart Cache, Kéo Thả, Chống Gian Lận, Vòng Quay VIP Cán Sự, Bản Đồ Nhiệt Tiến Độ
 // ==========================================
 
 let isSpinning = false;
@@ -44,9 +44,8 @@ window.getDailySpinLog = function(todayStr) {
     if (spinLog.date !== todayStr) {
         spinLog = { date: todayStr, extra: 0, usedFree: false };
         
-        // Kiểm tra xem hôm nay có phải là Thứ 6, Thứ 7, Chủ Nhật không (0: CN, 5: T6, 6: T7)
         let d = new Date().getDay();
-        if (d === 0 || d === 5 || d === 6) {
+        if (d === 0 || d === 5 || d === 6) { // CN, T6, T7
             let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
             let userInfoStr = JSON.stringify(currentUser).toLowerCase();
             let isOfficer = chucVu.includes('lớp trưởng') || userInfoStr.includes('lớp trưởng') ||
@@ -58,10 +57,7 @@ window.getDailySpinLog = function(todayStr) {
                             chucVu.includes('tt3') || userInfoStr.includes('tt3') ||
                             chucVu.includes('tt4') || userInfoStr.includes('tt4');
             
-            // Nếu là cán sự lớp và vào cuối tuần, cộng 1 lượt extra -> Tổng 2 lượt quay/ngày
-            if (isOfficer) {
-                spinLog.extra += 1; 
-            }
+            if (isOfficer) { spinLog.extra += 1; } // Tặng thêm 1 lượt
         }
         localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
     }
@@ -452,7 +448,7 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI, CHỐNG GIAN LẬN & ĐỘNG CƠ KÉO THẢ
+// 4. TIẾN TRÌNH LÀM BÀI, CHỐNG GIAN LẬN & KÉO THẢ
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); 
@@ -557,10 +553,9 @@ window.renderQuestion = function(index) {
     let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100' : '';
     
     let questionHtml = window.parseImg(q.question);
-    let isDragMode = /_{3,}/.test(questionHtml); // Nhận diện tự động dấu ___
+    let isDragMode = /_{3,}/.test(questionHtml);
 
     if (isDragMode) {
-        // Render Dạng Kéo Thả (Drag and Drop)
         questionHtml = questionHtml.replace(/_{3,}/, `<div id="drop-zone" class="inline-flex items-center justify-center min-w-[80px] h-10 border-2 border-dashed border-indigo-400 bg-indigo-50/50 rounded-xl align-middle mx-2 text-indigo-400 font-bold transition-all px-4 overflow-hidden shadow-inner">Thả vào đây</div>`);
         
         let dragItemsHtml = ['a','b','c','d'].filter(k => q[k]).map(key => `
@@ -573,13 +568,11 @@ window.renderQuestion = function(index) {
         
         setTimeout(() => window.initDragAndDrop(index, q.correct), 100);
     } else {
-        // Render Trắc nghiệm A B C D Bình thường
         let optionsHtml = ['a','b','c','d'].filter(k => q[k]).map(key => `<div onclick="window.checkAns(this, '${key}', '${q.correct}', ${index})" class="quiz-option p-4 sm:p-5 border-2 border-slate-100 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition btn-3d bg-white"><span class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black text-slate-500 uppercase text-lg shrink-0 shadow-inner">${key}</span><div class="font-bold text-slate-700 flex-1 text-base sm:text-lg leading-relaxed">${window.parseImg(q[key])}</div></div>`).join('');
         document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div></div><div class="space-y-4">${optionsHtml}</div></div>`; 
     }
 };
 
-// Hàm xử lý Kéo thả Đa điểm
 window.initDragAndDrop = function(qIndex, correctKey) {
     const items = document.querySelectorAll('.drag-item');
     const dropZone = document.getElementById('drop-zone');
@@ -707,7 +700,6 @@ window.finishQuiz = async function() {
     if (timer) clearInterval(timer); const maxPossibleScore = quiz.length * 10; let timeTaken = window.totalQuizTime - window.remainingQuizTime; 
     let halfTime = window.totalQuizTime / 2; let extraSpinsEarned = 0; let rewardMessage = "";
 
-    // Nạp SpinLog an toàn
     let todayStr = new Date().toLocaleDateString('vi-VN');
     let spinLog = window.getDailySpinLog(todayStr);
 
@@ -744,7 +736,7 @@ window.moVongQuay = async function() {
     if (!(await window.loadAllDataOnce())) return;
 
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
-    let spinLog = window.getDailySpinLog(todayStr); // Gọi hàm kiểm tra nạp lượt an toàn
+    let spinLog = window.getDailySpinLog(todayStr); 
     
     let sliceAngle = 360 / PRIZES.length; let halfSlice = sliceAngle / 2;
     let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
@@ -795,7 +787,7 @@ window.renderSpinHistory = function(todayStr) {
 window.thucHienQuay = async function() {
     if(isSpinning) return;
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
-    let spinLog = window.getDailySpinLog(todayStr); // Gọi hàm nạp lượt an toàn
+    let spinLog = window.getDailySpinLog(todayStr); 
     
     if (spinLog.usedFree && spinLog.extra <= 0) return alert("Con đã hết lượt quay!");
 
@@ -804,14 +796,10 @@ window.thucHienQuay = async function() {
     if (!spinLog.usedFree) { spinLog.usedFree = true; } else { spinLog.extra -= 1; }
     localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
 
-    // =====================================
-    // HỆ THỐNG VIP TỰ ĐỘNG NHẬN DIỆN TỪ GOOGLE SHEETS
-    // =====================================
     let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
     let userInfoStr = JSON.stringify(currentUser).toLowerCase(); 
     
     let isLopTruong = chucVu.includes('lớp trưởng') || userInfoStr.includes('lớp trưởng');
-    
     let isLopPho = chucVu.includes('phó ht') || userInfoStr.includes('phó ht') ||
                    chucVu.includes('phó vtm') || userInfoStr.includes('phó vtm') ||
                    chucVu.includes('phó lđ') || userInfoStr.includes('phó lđ');
@@ -819,7 +807,6 @@ window.thucHienQuay = async function() {
     let rand = Math.random() * 100; let idx = 0;
 
     if (isLopTruong) {
-        // [CẤP 1] LỚP TRƯỞNG: 30% KHO BÁU
         if (rand < 10) idx = 0;      
         else if (rand < 25) idx = 1; 
         else if (rand < 50) idx = 2; 
@@ -828,7 +815,6 @@ window.thucHienQuay = async function() {
         else if (rand < 70) idx = 5; 
         else idx = 6;                
     } else if (isLopPho) {
-        // [CẤP 2] LỚP PHÓ (HT, VTM, LĐ): 20% KHO BÁU
         if (rand < 10) idx = 0;      
         else if (rand < 25) idx = 1; 
         else if (rand < 60) idx = 2; 
@@ -837,7 +823,6 @@ window.thucHienQuay = async function() {
         else if (rand < 80) idx = 5; 
         else idx = 6;                
     } else {
-        // [CẤP 3] TỔ TRƯỞNG & HỌC SINH BÌNH THƯỜNG: 10% KHO BÁU
         if (rand < 10) idx = 0;      
         else if (rand < 30) idx = 1; 
         else if (rand < 70) idx = 2; 
@@ -846,7 +831,6 @@ window.thucHienQuay = async function() {
         else if (rand < 90) idx = 5; 
         else idx = 6;                
     }
-    // =====================================
 
     let sliceAngle = 360 / PRIZES.length; let wheel = document.getElementById('wheel'); 
     let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
@@ -927,7 +911,7 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (BỘ LỌC & BẢN ĐỒ NHIỆT MÀU SẮC)
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
@@ -1005,19 +989,17 @@ window.renderDanhSachTienDo = function() {
     let filteredStudents = Data.hs.filter(h => {
         if (fGroup === 'all' && fScore === 'all') return true;
         
-        let userLogs = Data.log.filter(l => String(l.id) === String(h.id));
+        let userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject));
         
-        // Nếu lọc theo Group
         let validLogsForGroup = userLogs;
         if (fGroup !== 'all') {
             validLogsForGroup = userLogs.filter(l => l.group === fGroup);
-            if (validLogsForGroup.length === 0) return false; // Chưa làm bài này
+            if (validLogsForGroup.length === 0) return false; 
         }
         
-        // Nếu lọc theo Score (Lấy điểm cao nhất của bài được lọc, hoặc tất cả bài)
         if (fScore !== 'all') {
-            let maxScoreFound = 0; let pct = 0;
-            // Tìm % điểm cao nhất trong các bài hợp lệ
+            if (validLogsForGroup.length === 0) return false; 
+            let pct = 0;
             validLogsForGroup.forEach(l => {
                 let qs = (l.subject === 'math') ? Data.math : Data.tv;
                 let count = qs.filter(q => q.group === l.group && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length; 
@@ -1027,7 +1009,7 @@ window.renderDanhSachTienDo = function() {
             });
             
             if (fScore === "100" && pct < 100) return false;
-            if (fScore === "90" && (pct < 90 || pct > 100)) return false;
+            if (fScore === "90" && (pct < 90 || pct >= 100)) return false;
             if (fScore === "70" && (pct < 70 || pct > 89)) return false;
             if (fScore === "50" && (pct < 50 || pct > 69)) return false;
             if (fScore === "0" && pct >= 50) return false;
@@ -1041,9 +1023,8 @@ window.renderDanhSachTienDo = function() {
     }
 
     filteredStudents.forEach(h => { 
-        const userLogs = Data.log.filter(l => String(l.id) === String(h.id)); 
+        const userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject)); 
         
-        // Lấy danh sách các bài ĐÃ LÀM duy nhất để vẽ thanh tiến độ
         let uniqueDoneGroups = {};
         userLogs.forEach(l => {
             let key = (l.subject === 'tv' ? 'vietnamese' : l.subject) + '_' + l.group;
@@ -1058,9 +1039,9 @@ window.renderDanhSachTienDo = function() {
         });
 
         let doneCount = Object.keys(uniqueDoneGroups).length;
+        if (doneCount > total) doneCount = total;
         let pctOverall = total ? Math.round((doneCount/total)*100) : 0; 
         
-        // Vẽ các đốt màu cho thanh tiến độ
         let segmentsHtml = "";
         Object.values(uniqueDoneGroups).forEach(item => {
             let color = 'bg-red-500';
@@ -1068,11 +1049,9 @@ window.renderDanhSachTienDo = function() {
             else if (item.pct >= 70) color = 'bg-yellow-400';
             else if (item.pct >= 50) color = 'bg-orange-500';
             
-            // Mỗi đốt chiếm chiều rộng tỉ lệ thuận, có gap nhỏ
             segmentsHtml += `<div class="h-full flex-1 ${color} rounded-sm opacity-90"></div>`;
         });
         
-        // Đoạn chưa làm
         let emptyCount = total - doneCount;
         for(let i=0; i<emptyCount; i++) {
             segmentsHtml += `<div class="h-full flex-1 bg-slate-200 rounded-sm"></div>`;
@@ -1083,7 +1062,7 @@ window.renderDanhSachTienDo = function() {
             filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white">Khớp bộ lọc</span>`;
         }
 
-        htmlList += `<div onclick="window.xemChiTietTienDo('${h.id}', '${h.name}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex flex-col cursor-pointer hover:border-purple-300 hover:shadow-md transition relative">
+        htmlList += `<div onclick="window.xemChiTietTienDo('${h.id}', '${h.name.replace(/'/g, "\\'")}')" class="bg-white p-4 rounded-2xl border-2 border-transparent shadow-sm flex flex-col cursor-pointer hover:border-purple-300 hover:shadow-md transition relative">
             ${filteredHighlight}
             <div class="flex justify-between items-center mb-2">
                 <div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-black"><i class="fas fa-user"></i></div><span class="font-bold text-slate-700">${h.name}</span></div>
@@ -1260,7 +1239,7 @@ window.checkSinhNhat = function() {
         let currentYear = today.getFullYear(); let bonusKey = 'hpbd_bonus_' + currentYear + '_' + currentUser.id; 
         if (!localStorage.getItem(bonusKey)) { 
             let todayStr = today.toLocaleDateString('vi-VN'); 
-            let spinLog = window.getDailySpinLog(todayStr); // Đã dùng hàm nạp lượt an toàn
+            let spinLog = window.getDailySpinLog(todayStr);
             spinLog.extra += 5; localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog)); localStorage.setItem(bonusKey, 'true'); 
             try { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: "Sinh nhật " + currentYear, score_earned: 0, details: "Hệ thống tự động tặng 5 lượt quay nhân dịp sinh nhật!" } }) }); } catch(e) {} 
         } 
@@ -1273,11 +1252,6 @@ window.showHappyBirthdayUI = function() {
     overlay.innerHTML = `<div class="bg-gradient-to-br from-pink-400 via-red-500 to-yellow-500 p-1 rounded-[2.5rem] shadow-2xl max-w-sm w-full transform transition-all scale-100 animate-[cascadeDrop_0.8s_ease-out_forwards]"><div class="bg-white rounded-[2.4rem] p-8 text-center relative overflow-hidden"><button onclick="document.getElementById('hpbdModal').remove()" class="absolute top-3 right-4 text-slate-300 hover:text-red-500 transition font-bold text-3xl">&times;</button><div class="text-7xl mb-2 mt-2 animate-bounce">🎂</div><h2 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500 uppercase tracking-wide mb-2">CHÚC MỪNG SINH NHẬT</h2><h3 class="text-3xl font-black text-slate-800 mb-4">${currentUser.name}</h3><div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 mb-4 relative"><i class="fas fa-quote-left text-orange-200 text-3xl absolute -top-2 -left-2"></i><p class="text-slate-700 font-bold text-sm leading-relaxed relative z-10">Thầy Hiển và tập thể lớp Bốn 6 chúc con thêm tuổi mới luôn vui vẻ, mạnh khỏe, chăm ngoan và đạt được thật nhiều bông hoa điểm 10 nhé! 💖</p></div><div class="bg-gradient-to-r from-yellow-100 to-orange-100 border-2 border-yellow-300 p-3 rounded-2xl mb-6 shadow-inner animate-pulse"><p class="text-orange-600 font-black text-sm"><i class="fas fa-gift text-xl mr-1 text-red-500"></i> LÌ XÌ TỪ THẦY HIỂN</p><p class="text-slate-700 font-bold text-xs mt-1">Hệ thống đã tự động cộng <span class="text-red-600 text-base font-black">5 LƯỢT QUAY</span> vào Vòng Quay May Mắn của con!</p></div><button onclick="document.getElementById('hpbdModal').remove()" class="bg-gradient-to-r from-pink-500 to-orange-500 text-white w-full py-4 rounded-2xl font-black shadow-lg btn-3d text-lg hover:scale-[1.02] transition">CẢM ƠN THẦY Ạ!</button></div></div>`; 
     document.body.appendChild(overlay); window.safeConfetti(); 
 };
-
-document.addEventListener('play', function(e) { 
-    var audios = document.getElementsByTagName('audio'); for (var i = 0; i < audios.length; i++) { if (audios[i] != e.target) audios[i].pause(); } 
-    var videos = document.getElementsByTagName('video'); for (var i = 0; i < videos.length; i++) { if (videos[i] != e.target) videos[i].pause(); } 
-}, true);
 
 // ==========================================
 // 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
@@ -1529,3 +1503,31 @@ window.thoatGameToan = async function(saveScore = false) {
     }
     document.getElementById('gameUI').remove(); veTrangChu();
 };
+
+// ==========================================
+// 11. HỆ THỐNG CHỐNG GIAN LẬN TỰ ĐỘNG
+// ==========================================
+document.addEventListener("visibilitychange", () => {
+    if (window.isQuizActive && document.hidden && currentUser && currentUser.role === 'student') {
+        window.cheatWarnings++;
+        if (window.cheatWarnings >= 3) {
+            alert("🚨 HỆ THỐNG BẢO MẬT: Con đã rời khỏi bài thi quá 3 lần!\nBài thi của con sẽ được nộp tự động ngay bây giờ để đảm bảo công bằng.");
+            window.finishQuiz();
+        } else {
+            alert(`⚠️ CẢNH BÁO NHẮC NHỞ (${window.cheatWarnings}/3):\nCon vừa rời khỏi màn hình bài thi!\nHãy tập trung tự làm bài, không được mở tab khác hoặc tra Google nhé. Quá 3 lần hệ thống sẽ tự nộp bài!`);
+        }
+    }
+});
+
+document.addEventListener("contextmenu", (e) => {
+    if (window.isQuizActive && currentUser && currentUser.role === 'student') {
+        e.preventDefault();
+    }
+});
+
+document.addEventListener("copy", (e) => {
+    if (window.isQuizActive && currentUser && currentUser.role === 'student') {
+        e.preventDefault();
+        alert("⚠️ Hệ thống: Không được copy câu hỏi con nhé!");
+    }
+});
