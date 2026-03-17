@@ -1656,3 +1656,84 @@ document.addEventListener("copy", (e) => {
         alert("⚠️ Hệ thống: Không được copy câu hỏi con nhé!");
     }
 });
+
+// ==========================================
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ CẤU TRÚC ĐIỂM)
+// ==========================================
+window.chuyenTrangQuanLy = async function() { 
+    closeMenu(); 
+    if (!(await window.loadAllDataOnce())) return;
+
+    let html = `
+        <div class="flex items-center mb-6">
+            <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-xl text-blue-600 uppercase">QUẢN LÝ ĐIỂM & HỌC SINH</h2>
+        </div>
+        <p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-chart-pie mr-1"></i> Bảng phân tích chi tiết nguồn điểm của từng học sinh</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">
+    `; 
+    
+    // Tính toán bóc tách điểm cho từng học sinh
+    let studentStats = Data.hs.map(h => {
+        let logs = Data.log.filter(l => String(l.id) === String(h.id));
+        let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
+        
+        logs.forEach(l => {
+            let s = Number(l.score) || 0;
+            if (l.subject === 'math') mathPts += s;
+            else if (l.subject === 'tv' || l.subject === 'vietnamese') tvPts += s;
+            else if (l.subject === 'LuckySpin') spinPts += s;
+            else if (l.subject === 'MathGame') gamePts += s;
+        });
+        
+        let totalCalculated = mathPts + tvPts + spinPts + gamePts; 
+        return { ...h, mathPts, tvPts, spinPts, gamePts, totalCalculated };
+    });
+
+    // Sắp xếp học sinh theo Tổng điểm từ cao xuống thấp
+    studentStats.sort((a,b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+
+    studentStats.forEach((s) => {
+        let currentScore = Number(s.score) || 0;
+        html += `
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center font-black text-xl shadow-inner"><i class="fas fa-user-graduate"></i></div>
+                    <div>
+                        <div class="font-black text-slate-700 text-lg">${s.name}</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 inline-block px-2 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng điểm</div>
+                    <div class="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">${currentScore}</div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-4 gap-2 text-center">
+                <div class="bg-indigo-50/50 p-2 rounded-xl border border-indigo-100/50">
+                    <div class="text-[10px] font-black text-indigo-500 uppercase mb-1"><i class="fas fa-calculator"></i> Toán</div>
+                    <div class="font-bold text-indigo-700 text-sm">${s.mathPts}</div>
+                </div>
+                <div class="bg-green-50/50 p-2 rounded-xl border border-green-100/50">
+                    <div class="text-[10px] font-black text-green-500 uppercase mb-1"><i class="fas fa-book-open"></i> T.Việt</div>
+                    <div class="font-bold text-green-700 text-sm">${s.tvPts}</div>
+                </div>
+                <div class="bg-yellow-50/50 p-2 rounded-xl border border-yellow-100/50">
+                    <div class="text-[10px] font-black text-yellow-600 uppercase mb-1"><i class="fas fa-dharmachakra"></i> V.Quay</div>
+                    <div class="font-bold text-yellow-700 text-sm">${s.spinPts}</div>
+                </div>
+                <div class="bg-red-50/50 p-2 rounded-xl border border-red-100/50">
+                    <div class="text-[10px] font-black text-red-500 uppercase mb-1"><i class="fas fa-rocket"></i> Game</div>
+                    <div class="font-bold text-red-700 text-sm">${s.gamePts}</div>
+                </div>
+            </div>
+            
+            <button onclick="window.viewProfile('${s.id}')" class="w-full mt-4 bg-slate-50 text-slate-500 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100"><i class="fas fa-id-card mr-1"></i> Xem hồ sơ chi tiết</button>
+        </div>
+        `;
+    });
+
+    document.getElementById('content').innerHTML = html + "</div>"; 
+};
