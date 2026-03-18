@@ -287,18 +287,71 @@ window.getRichTextToolbar = function(targetId) {
                 <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer">
             </div>
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
+            
+            <select onchange="document.execCommand('fontName', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Kiểu chữ</option><option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier</option><option value="Tahoma">Tahoma</option></select>
+            <select onchange="document.execCommand('fontSize', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ chữ</option><option value="1">Nhỏ</option><option value="3">Vừa</option><option value="5">Lớn</option><option value="7">Khổng lồ</option></select>
+            
+            <div class="w-px h-6 bg-slate-300 mx-1"></div>
             <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-left"></i></button>
             <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-center"></i></button>
             <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-right"></i></button>
+            
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
             <button onclick="document.execCommand('insertText', false, '___')" class="px-2 h-8 bg-yellow-50 rounded hover:bg-yellow-100 text-yellow-700 font-bold text-xs flex items-center gap-1 border border-yellow-200 shadow-sm transition"><i class="far fa-square"></i> Ô Trống</button>
-            <button onclick="chenAnhVaoEditor('${targetId}')" class="px-3 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200"><i class="fas fa-image"></i> Ảnh</button>
-            <select onchange="resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ ảnh</option><option value="30%">Nhỏ (30%)</option><option value="60%">Vừa (60%)</option><option value="100%">Lớn (100%)</option></select>
+            
+            <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200"><i class="fas fa-link"></i> Link</button>
+            <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200"><i class="fas fa-image"></i> Ảnh</button>
+            <button onclick="window.chenVideoYouTube('${targetId}')" class="px-2 h-8 bg-red-50 rounded hover:bg-red-100 text-red-600 font-bold text-xs flex items-center gap-1 border border-red-200"><i class="fab fa-youtube"></i> Video</button>
+            <button onclick="window.chenAmThanh('${targetId}')" class="px-2 h-8 bg-green-50 rounded hover:bg-green-100 text-green-700 font-bold text-xs flex items-center gap-1 border border-green-200"><i class="fas fa-music"></i> Nghe</button>
+            <button onclick="window.chenPDF('${targetId}')" class="px-2 h-8 bg-orange-50 rounded hover:bg-orange-100 text-orange-700 font-bold text-xs flex items-center gap-1 border border-orange-200"><i class="fas fa-file-pdf"></i> PDF</button>
+            
+            <select onchange="window.resizeImg(this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ ảnh</option><option value="30%">Nhỏ (30%)</option><option value="60%">Vừa (60%)</option><option value="100%">Lớn (100%)</option></select>
         </div>
     `;
-}
+};
 
-function chenAnhVaoEditor(targetId) {
+window.chenAmThanh = function(targetId) {
+    const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:"); if (!url) return;
+    const audioTitle = prompt("Nhập tiêu đề cho bài nghe:", "BÀI NGHE AUDIO"); if (!audioTitle) return;
+    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); let audioHtml = "";
+    if (driveMatch) { 
+        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" style="width: 100%; height: 80px; margin: 0 auto; display: block; border:none; border-radius: 8px; background: white;" allow="autoplay"></iframe></div><br>`; 
+    } else { 
+        let audioSrc = url; if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); } 
+        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; display: block; margin: 0 auto; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt không hỗ trợ.</audio></div><br>`; 
+    }
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
+};
+
+window.chenPDF = function(targetId) {
+    const url = prompt("Dán link file PDF từ Google Drive vào đây:"); if (!url) return;
+    const pdfTitle = prompt("Nhập tên hiển thị cho tài liệu:", "TÀI LIỆU PDF"); if (!pdfTitle) return;
+    let pdfSrc = url; let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if (driveMatch) pdfSrc = `https://drive.google.com/file/d/${driveMatch[1]}/preview`; 
+    const pdfHtml = `<div contenteditable="false" style="margin: 15px 0; width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><div style="background: #f1f5f9; padding: 10px 15px; font-size: 13px; font-weight: bold; color: #475569; border-bottom: 1px solid #e2e8f0; text-transform: uppercase;"><i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>${pdfTitle}</div><iframe src="${pdfSrc}" width="100%" height="500px" style="border: none;" allow="autoplay" loading="lazy"></iframe></div><br>`;
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, pdfHtml);
+};
+
+window.chenVideoYouTube = function(targetId) {
+    const url = prompt("Dán link Video (YouTube, Google Drive, GitHub) vào đây:"); if (!url) return;
+    const sizeInput = prompt("Chiếm bao nhiêu phần ngang? (Nhập số: 100, 80, 60...)", "100"); const videoWidth = sizeInput ? sizeInput + "%" : "100%";
+    let videoHtml = ""; const ytMatch = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/); const driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    const wrapperStyle = `margin: 15px auto; width: ${videoWidth}; max-width: 800px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 12px; overflow: hidden;`;
+    if (ytMatch && ytMatch[2].length === 11) { 
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://www.youtube.com/embed/${ytMatch[2]}" allowfullscreen loading="lazy"></iframe></div><br>`; 
+    } else if (driveMatch) { 
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} position: relative; padding-bottom: calc(${videoWidth} * 0.5625); height: 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" src="https://drive.google.com/file/d/${driveMatch[1]}/preview" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><br>`; 
+    } else if (url.includes(".mp4") || url.includes("github.com")) { 
+        let videoSrc = url; if (url.includes("github.com") && url.includes("/blob/")) { videoSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); } 
+        videoHtml = `<div contenteditable="false" style="${wrapperStyle} padding: 10px; background: #f8fafc; border: 2px solid #e2e8f0; text-align: center;"><video controls style="width: 100%; border-radius: 8px; outline: none;"><source src="${videoSrc}" type="video/mp4">Trình duyệt không hỗ trợ.</video></div><br>`; 
+    } else { alert("Link Video không hợp lệ!"); return; }
+    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, videoHtml);
+};
+
+window.chenLinkVaoEditor = function(targetId) { 
+    const url = prompt("Dán đường link trang web vào đây:"); if (url) { const tenLink = prompt("Nhập chữ hiển thị:", "Bấm vào đây"); if (tenLink) { document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" style="color: blue; text-decoration: underline; font-weight: bold;">${tenLink}</a>`); } } 
+};
+
+window.chenAnhVaoEditor = function(targetId) {
     const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; 
     input.onchange = async (e) => { 
         const file = e.target.files[0]; if (!file) return; 
@@ -324,7 +377,7 @@ function chenAnhVaoEditor(targetId) {
             }; img.src = event.target.result; 
         }; reader.readAsDataURL(file); 
     }; input.click(); 
-}
+};
 
 window.handleEditorClick = function(e) { 
     document.querySelectorAll('div[contenteditable="true"] img').forEach(img => img.style.border = 'none'); 
@@ -338,121 +391,7 @@ window.resizeImg = function(size) {
     window.currentSelectedImg.style.width = size; window.currentSelectedImg.style.height = 'auto'; 
 };
 
-function parseImg(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); }
-
-window.autoFillTime = function() { 
-    let selectedGroup = document.getElementById('frmG').value; let existingQ = Data[curSub].find(q => q.group === selectedGroup); 
-    if (existingQ && existingQ.time) { document.getElementById('frmT').value = existingQ.time; } 
-};
-
-window.changeQType = function(initialCorr = '') {
-    let val = document.getElementById("frmQType").value;
-    let hint = document.getElementById("qTypeHint");
-    let lblA = document.getElementById("lblA"); let lblB = document.getElementById("lblB");
-    let lblC = document.getElementById("lblC"); let lblD = document.getElementById("lblD");
-    let corrContainer = document.getElementById("corrContainer");
-    
-    let curVal = initialCorr || (document.getElementById("frmCorr") ? document.getElementById("frmCorr").value : 'a');
-    
-    if(val === 'dienkhuyet') {
-        hint.className = "mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in";
-        lblA.innerText = "Từ gợi ý 1 (A)"; lblB.innerText = "Từ gợi ý 2 (B)"; lblC.innerText = "Từ gợi ý 3 (C)"; lblD.innerText = "Từ gợi ý 4 (D)";
-        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Thứ tự điền vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
-    } else {
-        hint.className = "hidden";
-        lblA.innerText = "Đáp án A"; lblB.innerText = "Đáp án B"; lblC.innerText = "Đáp án C"; lblD.innerText = "Đáp án D";
-        if(!['a','b','c','d'].includes(curVal.toLowerCase())) curVal = 'a';
-        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full bg-yellow-50 border-2 border-yellow-200 p-3 rounded-xl font-bold text-yellow-800 outline-none focus:border-yellow-500"><option value="a" ${curVal=='a'?'selected':''}>Đáp án A</option><option value="b" ${curVal=='b'?'selected':''}>Đáp án B</option><option value="c" ${curVal=='c'?'selected':''}>Đáp án C</option><option value="d" ${curVal=='d'?'selected':''}>Đáp án D</option></select>`;
-    }
-};
-
-window.renderFormCauHoi = function(id) { 
-    const q = id ? Data[curSub].find(x => x.id === id) : { group: '', time: 20, question: '', a: '', b: '', c: '', d: '', correct: 'a', image: '' }; 
-    const groups = [...new Set(Data[curSub].map(x => x.group))].filter(g => g); 
-    const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`; 
-    
-    let isTV = (curSub === 'vietnamese' || curSub === 'tv'); let baiDocHtml = ""; let cauHoiHtml = window.parseImg(q.question || "");
-    if (q.image) { cauHoiHtml += `<br><div style="text-align: center;"><img src="${q.image}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div>`; }
-    
-    if (isTV && cauHoiHtml) { 
-        let match = cauHoiHtml.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s); 
-        if (match) { baiDocHtml = match[1]; cauHoiHtml = cauHoiHtml.replace(match[0], '').trim(); } 
-        else if (cauHoiHtml.includes('[ĐOẠN VĂN]')) { baiDocHtml = cauHoiHtml.replace('[ĐOẠN VĂN]', '').trim(); cauHoiHtml = ""; } 
-    }
-
-    let isDrag = /_{3,}/.test(cauHoiHtml);
-
-    let formLayout = isTV ? 
-        `<div class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl"><label class="text-xs font-black text-yellow-700 uppercase tracking-wider block mb-2"><i class="fas fa-book-reader"></i> Khung Bài Đọc</label>${window.getRichTextToolbar('frmBaiDoc')}<div id="frmBaiDoc" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border border-yellow-300 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${baiDocHtml}</div></div>` : ``;
-        
-    formLayout += `
-        <div class="w-full mb-4">
-            <div class="mb-4 bg-indigo-50 border border-indigo-100 p-3 rounded-xl shadow-sm">
-                <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Loại Câu Hỏi</label>
-                <select id="frmQType" onchange="window.changeQType()" class="edit-input w-full bg-white border-2 border-indigo-200 p-2 rounded-xl font-bold text-indigo-700 outline-none focus:border-indigo-500 transition cursor-pointer">
-                    <option value="tracnghiem" ${!isDrag ? 'selected' : ''}>🔘 Trắc nghiệm chọn đáp án (A, B, C, D)</option>
-                    <option value="dienkhuyet" ${isDrag ? 'selected' : ''}>🧩 Bấm chọn Điền khuyết</option>
-                </select>
-                <div id="qTypeHint" class="${isDrag ? 'mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in' : 'hidden'}">
-                    <i class="fas fa-info-circle"></i> Hệ thống sẽ tạo dạng Bấm-Điền-Từ. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!
-                </div>
-            </div>
-            <label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-edit"></i> Khung Câu Hỏi</label>
-            ${window.getRichTextToolbar('frmQ')}
-            <div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[150px] bg-white border-2 border-indigo-200 p-4 rounded-xl outline-none focus:border-indigo-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div>
-        </div>
-    `;
-
-    document.getElementById('content').innerHTML = `
-        <div class="flex items-center mb-6"><button onclick="window.quanLyNganHang('${curSub}')" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">${id ? 'SỬA CÂU HỎI' : 'TẠO CÂU HỎI MỚI'}</h2></div>
-        <div class="bg-white p-5 rounded-3xl shadow border space-y-4 fade-in">
-            ${dl} 
-            <div class="grid grid-cols-3 gap-3 mb-4">
-                <div class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase">Tên Bài Tập</label><input type="text" id="frmG" list="groupList" value="${q.group}" oninput="window.autoFillTime()" onchange="window.autoFillTime()" class="edit-input w-full mt-1" placeholder="Ví dụ: Tuần 1"></div>
-                <div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div>
-            </div>
-            ${formLayout} 
-            <div class="grid grid-cols-2 gap-3 mt-4">
-                <div><label id="lblA" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 1 (A)' : 'Đáp án A'}</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
-                <div><label id="lblB" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 2 (B)' : 'Đáp án B'}</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
-                <div><label id="lblC" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 3 (C)' : 'Đáp án C'}</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
-                <div><label id="lblD" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 4 (D)' : 'Đáp án D'}</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
-            </div>
-            <div id="corrContainer" class="mt-4">
-                </div>
-            <button onclick="window.luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-6 text-lg hover:bg-indigo-700 transition"><i class="fas fa-save mr-2"></i> LƯU CÂU HỎI LÊN HỆ THỐNG</button>
-        </div>
-    `; 
-    setTimeout(() => window.changeQType(q.correct), 50);
-};
-
-window.luuCauHoi = async function(id) { 
-    document.querySelectorAll('#frmQ img, #frmBaiDoc img').forEach(img => img.style.border = 'none'); window.currentSelectedImg = null;
-    let finalQuestionText = document.getElementById("frmQ").innerHTML; let isTV = (curSub === 'vietnamese' || curSub === 'tv');
-    let typeVal = document.getElementById("frmQType").value;
-
-    if (typeVal === 'dienkhuyet' && !/_{3,}/.test(finalQuestionText)) {
-        alert("⚠️ CẢNH BÁO NHẦM LẪN:\n\nThầy đang chọn loại câu hỏi 'Điền khuyết' nhưng trong nội dung câu hỏi chưa có chỗ nào chừa trống cả!\n\nThầy hãy đặt con trỏ chuột vào vị trí cần điền, sau đó bấm nút [Ô Trống] màu vàng trên thanh công cụ nhé!");
-        return;
-    }
-
-    if (isTV) { let baiDocText = (document.getElementById("frmBaiDoc") ? document.getElementById("frmBaiDoc").innerHTML.trim() : ""); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
-    
-    let corrVal = document.getElementById("frmCorr").value.trim().toLowerCase();
-    
-    const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: corrVal, image: "" }; 
-    if(!data.group || !finalQuestionText.trim()) { return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); }
-    
-    document.getElementById('loader').style.display = 'flex'; 
-    try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); window.isAllDataLoaded = false; alert("Lưu thành công!"); window.quanLyNganHang(curSub, true); } catch(e) { alert("Lỗi mạng! Không thể lưu câu hỏi."); } finally { document.getElementById('loader').style.display = 'none'; }
-};
-
-window.xoaCauHoi = async function(id) { 
-    if(confirm("Chắc chắn xóa câu hỏi này?")) { 
-        document.getElementById('loader').style.display = 'flex'; 
-        try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); window.isAllDataLoaded = false; alert("Đã xóa!"); window.quanLyNganHang(curSub, true); } catch(e) {} finally { document.getElementById('loader').style.display = 'none'; } 
-    } 
-};
+window.parseImg = function(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); };
 
 // ==========================================
 // 4. TIẾN TRÌNH LÀM BÀI & ĐỘNG CƠ BẤM CHỌN ĐIỀN TỪ
