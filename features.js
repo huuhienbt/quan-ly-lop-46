@@ -1716,7 +1716,7 @@ window.mgGameOver = async function(isWin = false) {
             <div class="text-6xl mb-4 animate-bounce">${iconSmile}</div>
             <h2 class="text-3xl font-black ${titleColor} mb-2 uppercase text-center">${msg}</h2>
             <p class="text-slate-300 font-bold mb-6">Số điểm đạt được: <span class="text-yellow-400 text-2xl ml-1">${mathGame.score}</span></p>
-            <button onclick="window.thoatGameToan(true)" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-xl font-black text-xl hover:scale-105 transition shadow-[0_0_15px_blue]">NHẬN THƯỞNG & THOÁT</button>
+            <button id="btnNhanThuongGame" onclick="this.disabled=true; this.innerText='ĐANG LƯU ĐIỂM...'; window.thoatGameToan(true)" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-4 rounded-xl font-black text-xl hover:scale-105 transition shadow-[0_0_15px_blue]">NHẬN THƯỞNG & THOÁT</button>
         </div>
     `;
 };
@@ -1725,13 +1725,43 @@ window.thoatGameToan = async function(saveScore = false) {
     clearInterval(mathGame.loop); clearInterval(mathGame.spawn);
     if(saveScore && mathGame.score > 0 && currentUser.role === 'student') {
         try { 
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "MathGame", group: "Bảo vệ Trái Đất", score_earned: mathGame.score, details: "Chơi game đạt " + mathGame.score + " điểm." } }) }); 
-            Data.log.push({ id: currentUser.id, subject: "MathGame", group: "Bảo vệ Trái Đất", score: mathGame.score, time: new Date().toISOString(), details: "" }); 
+            // NÂNG CẤP 1: Bổ sung thêm biến "score" để Google Sheets không bị lỗi từ chối lưu dữ liệu
+            await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'nop_bai', 
+                    data: { 
+                        id_hs: currentUser.id, 
+                        subject: "MathGame", 
+                        group: "Bảo vệ Trái Đất", 
+                        score: mathGame.score, 
+                        score_earned: mathGame.score, 
+                        details: "Chơi game đạt " + mathGame.score + " điểm." 
+                    } 
+                }) 
+            }); 
+            
+            // NÂNG CẤP 2: Bổ sung biến "real_added" để bảng Quản lý Học sinh của thầy hiển thị đúng số liệu
+            Data.log.push({ 
+                id: currentUser.id, 
+                subject: "MathGame", 
+                group: "Bảo vệ Trái Đất", 
+                score: mathGame.score, 
+                real_added: mathGame.score, 
+                time: new Date().toISOString(), 
+                details: "" 
+            }); 
+            
             currentUser.score = Number(currentUser.score) + mathGame.score;
             alert(`Chúc mừng con đã xuất sắc đem về ${mathGame.score} điểm cho tài khoản của mình!`);
-        } catch(e) { alert("Đã lưu điểm vào máy, nhưng mạng hơi chậm nên chưa đồng bộ được lên bảng vàng."); }
+        } catch(e) { 
+            alert("Mạng hơi chậm nên chưa đồng bộ được lên bảng vàng, con hãy thử F5 tải lại trang nhé!"); 
+        }
     }
-    document.getElementById('gameUI').remove(); veTrangChu();
+    
+    let gameUI = document.getElementById('gameUI');
+    if (gameUI) gameUI.remove(); 
+    veTrangChu(); 
 };
 
 // ==========================================
