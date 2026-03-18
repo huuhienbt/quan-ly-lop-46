@@ -1,6 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN FULL VIP - ĐỘNG CƠ CLICK & DROP ĐIỀN TỪ)
-// Tích hợp: Smart Cache, Bấm Chọn Điền Từ (Thay Kéo Thả), Chống Gian Lận, Vòng Quay VIP, Bản Đồ Nhiệt
+// FILE: FEATURES.JS (BẢN FULL VIP 100% - KHÔNG BỊ CẮT XÉN)
+// Tích hợp: Soạn Đề Full Option, Kéo Thả Multi-drop (Bấm Chọn), Vòng Quay VIP, Bản Đồ Tiến Độ, Game Toán
 // ==========================================
 
 let isSpinning = false;
@@ -31,21 +31,17 @@ window.safeConfetti = function() {
                 confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); 
             }
         }, 250);
-    } catch(e) { console.log("Không tải được hiệu ứng pháo hoa."); }
+    } catch(e) {}
 };
 
-// ==========================================
-// HÀM XỬ LÝ LƯỢT QUAY HẰNG NGÀY & THƯỞNG CUỐI TUẦN
-// ==========================================
 window.getDailySpinLog = function(todayStr) {
     if (!currentUser) return { date: todayStr, extra: 0, usedFree: false };
     let spinLog = JSON.parse(localStorage.getItem('spinLog_' + currentUser.id) || '{"date": "", "extra": 0, "usedFree": false}');
     
     if (spinLog.date !== todayStr) {
         spinLog = { date: todayStr, extra: 0, usedFree: false };
-        
         let d = new Date().getDay();
-        if (d === 0 || d === 5 || d === 6) { // CN, T6, T7
+        if (d === 0 || d === 5 || d === 6) { 
             let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
             let userInfoStr = JSON.stringify(currentUser).toLowerCase();
             let isOfficer = chucVu.includes('lớp trưởng') || userInfoStr.includes('lớp trưởng') ||
@@ -56,8 +52,7 @@ window.getDailySpinLog = function(todayStr) {
                             chucVu.includes('tt2') || userInfoStr.includes('tt2') ||
                             chucVu.includes('tt3') || userInfoStr.includes('tt3') ||
                             chucVu.includes('tt4') || userInfoStr.includes('tt4');
-            
-            if (isOfficer) { spinLog.extra += 1; } // Tặng thêm 1 lượt
+            if (isOfficer) { spinLog.extra += 1; }
         }
         localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
     }
@@ -78,7 +73,6 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
                 if (parsed.math && parsed.tv && parsed.log) {
                     Data.math = parsed.math; Data.tv = parsed.tv; Data.vietnamese = parsed.tv;
                     Data.log = parsed.log; Data.caudo = parsed.caudo || []; window.isAllDataLoaded = true;
-                    
                     if (!window.isFetchingBackground) {
                         window.isFetchingBackground = true;
                         window.fetchFreshDataSilently(false).then(() => window.isFetchingBackground = false);
@@ -97,7 +91,6 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
             </div>
         `;
     }
-
     return await window.fetchFreshDataSilently(!silent);
 };
 
@@ -109,12 +102,9 @@ window.fetchFreshDataSilently = async function(showError = false) {
             fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json())
         ]);
-
         Data.math = Array.isArray(mRes) ? mRes : []; Data.tv = Array.isArray(tRes) ? tRes : []; Data.vietnamese = Data.tv;
         Data.log = Array.isArray(lRes) ? lRes : []; Data.caudo = Array.isArray(cRes) ? cRes : [];
-
         try { localStorage.setItem('eduDataCache', JSON.stringify({ math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo })); } catch(e) {}
-
         window.isAllDataLoaded = true; return true;
     } catch(e) {
         if (showError) {
@@ -392,6 +382,121 @@ window.resizeImg = function(size) {
 };
 
 window.parseImg = function(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); };
+
+window.autoFillTime = function() { 
+    let selectedGroup = document.getElementById('frmG').value; let existingQ = Data[curSub].find(q => q.group === selectedGroup); 
+    if (existingQ && existingQ.time) { document.getElementById('frmT').value = existingQ.time; } 
+};
+
+window.changeQType = function(initialCorr = '') {
+    let val = document.getElementById("frmQType").value;
+    let hint = document.getElementById("qTypeHint");
+    let lblA = document.getElementById("lblA"); let lblB = document.getElementById("lblB");
+    let lblC = document.getElementById("lblC"); let lblD = document.getElementById("lblD");
+    let corrContainer = document.getElementById("corrContainer");
+    
+    let curVal = initialCorr || (document.getElementById("frmCorr") ? document.getElementById("frmCorr").value : 'a');
+    
+    if(val === 'dienkhuyet') {
+        hint.className = "mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in";
+        lblA.innerText = "Từ gợi ý 1 (A)"; lblB.innerText = "Từ gợi ý 2 (B)"; lblC.innerText = "Từ gợi ý 3 (C)"; lblD.innerText = "Từ gợi ý 4 (D)";
+        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Thứ tự điền vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
+    } else {
+        hint.className = "hidden";
+        lblA.innerText = "Đáp án A"; lblB.innerText = "Đáp án B"; lblC.innerText = "Đáp án C"; lblD.innerText = "Đáp án D";
+        if(!['a','b','c','d'].includes(curVal.toLowerCase())) curVal = 'a';
+        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full bg-yellow-50 border-2 border-yellow-200 p-3 rounded-xl font-bold text-yellow-800 outline-none focus:border-yellow-500"><option value="a" ${curVal=='a'?'selected':''}>Đáp án A</option><option value="b" ${curVal=='b'?'selected':''}>Đáp án B</option><option value="c" ${curVal=='c'?'selected':''}>Đáp án C</option><option value="d" ${curVal=='d'?'selected':''}>Đáp án D</option></select>`;
+    }
+};
+
+window.renderFormCauHoi = function(id) { 
+    const q = id ? Data[curSub].find(x => x.id === id) : { group: '', time: 20, question: '', a: '', b: '', c: '', d: '', correct: 'a', image: '' }; 
+    const groups = [...new Set(Data[curSub].map(x => x.group))].filter(g => g); 
+    const dl = `<datalist id="groupList">${groups.map(g => `<option value="${g}">`).join('')}</datalist>`; 
+    
+    let isTV = (curSub === 'vietnamese' || curSub === 'tv'); let baiDocHtml = ""; let cauHoiHtml = window.parseImg(q.question || "");
+    if (q.image) { cauHoiHtml += `<br><div style="text-align: center;"><img src="${q.image}" loading="lazy" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: inline-block; cursor: pointer;"></div>`; }
+    
+    if (isTV && cauHoiHtml) { 
+        let match = cauHoiHtml.match(/\[BAIDOC\](.*?)\[\/BAIDOC\]/s); 
+        if (match) { baiDocHtml = match[1]; cauHoiHtml = cauHoiHtml.replace(match[0], '').trim(); } 
+        else if (cauHoiHtml.includes('[ĐOẠN VĂN]')) { baiDocHtml = cauHoiHtml.replace('[ĐOẠN VĂN]', '').trim(); cauHoiHtml = ""; } 
+    }
+
+    let isDrag = /_{3,}/.test(cauHoiHtml);
+
+    let formLayout = isTV ? 
+        `<div class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl"><label class="text-xs font-black text-yellow-700 uppercase tracking-wider block mb-2"><i class="fas fa-book-reader"></i> Khung Bài Đọc</label>${window.getRichTextToolbar('frmBaiDoc')}<div id="frmBaiDoc" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border border-yellow-300 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${baiDocHtml}</div></div>` : ``;
+        
+    formLayout += `
+        <div class="w-full mb-4">
+            <div class="mb-4 bg-indigo-50 border border-indigo-100 p-3 rounded-xl shadow-sm">
+                <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Loại Câu Hỏi</label>
+                <select id="frmQType" onchange="window.changeQType()" class="edit-input w-full bg-white border-2 border-indigo-200 p-2 rounded-xl font-bold text-indigo-700 outline-none focus:border-indigo-500 transition cursor-pointer">
+                    <option value="tracnghiem" ${!isDrag ? 'selected' : ''}>🔘 Trắc nghiệm chọn đáp án (A, B, C, D)</option>
+                    <option value="dienkhuyet" ${isDrag ? 'selected' : ''}>🧩 Bấm chọn Điền khuyết</option>
+                </select>
+                <div id="qTypeHint" class="${isDrag ? 'mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in' : 'hidden'}">
+                    <i class="fas fa-info-circle"></i> Hệ thống sẽ tạo dạng Bấm-Điền-Từ. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!
+                </div>
+            </div>
+            <label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-edit"></i> Khung Câu Hỏi</label>
+            ${window.getRichTextToolbar('frmQ')}
+            <div id="frmQ" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[150px] bg-white border-2 border-indigo-200 p-4 rounded-xl outline-none focus:border-indigo-500 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${cauHoiHtml}</div>
+        </div>
+    `;
+
+    document.getElementById('content').innerHTML = `
+        <div class="flex items-center mb-6"><button onclick="window.quanLyNganHang('${curSub}')" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-600">${id ? 'SỬA CÂU HỎI' : 'TẠO CÂU HỎI MỚI'}</h2></div>
+        <div class="bg-white p-5 rounded-3xl shadow border space-y-4 fade-in">
+            ${dl} 
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div class="col-span-2"><label class="text-xs font-bold text-slate-500 uppercase">Tên Bài Tập</label><input type="text" id="frmG" list="groupList" value="${q.group}" oninput="window.autoFillTime()" onchange="window.autoFillTime()" class="edit-input w-full mt-1" placeholder="Ví dụ: Tuần 1"></div>
+                <div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div>
+            </div>
+            ${formLayout} 
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <div><label id="lblA" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 1 (A)' : 'Đáp án A'}</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblB" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 2 (B)' : 'Đáp án B'}</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblC" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 3 (C)' : 'Đáp án C'}</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblD" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 4 (D)' : 'Đáp án D'}</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
+            </div>
+            <div id="corrContainer" class="mt-4">
+                </div>
+            <button onclick="window.luuCauHoi('${id || ''}')" class="w-full bg-indigo-600 text-white py-4 rounded-xl font-black btn-3d shadow-lg mt-6 text-lg hover:bg-indigo-700 transition"><i class="fas fa-save mr-2"></i> LƯU CÂU HỎI LÊN HỆ THỐNG</button>
+        </div>
+    `; 
+    setTimeout(() => window.changeQType(q.correct), 50);
+};
+
+window.luuCauHoi = async function(id) { 
+    document.querySelectorAll('#frmQ img, #frmBaiDoc img').forEach(img => img.style.border = 'none'); window.currentSelectedImg = null;
+    let finalQuestionText = document.getElementById("frmQ").innerHTML; let isTV = (curSub === 'vietnamese' || curSub === 'tv');
+    let typeVal = document.getElementById("frmQType").value;
+
+    if (typeVal === 'dienkhuyet' && !/_{3,}/.test(finalQuestionText)) {
+        alert("⚠️ CẢNH BÁO NHẦM LẪN:\n\nThầy đang chọn loại câu hỏi 'Điền khuyết' nhưng trong nội dung câu hỏi chưa có chỗ nào chừa trống cả!\n\nThầy hãy đặt con trỏ chuột vào vị trí cần điền, sau đó bấm nút [Ô Trống] màu vàng trên thanh công cụ nhé!");
+        return;
+    }
+
+    if (isTV) { let baiDocText = (document.getElementById("frmBaiDoc") ? document.getElementById("frmBaiDoc").innerHTML.trim() : ""); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
+    
+    let corrVal = document.getElementById("frmCorr").value.trim().toLowerCase();
+    
+    const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: corrVal, image: "" }; 
+    if(!data.group || !finalQuestionText.trim()) { return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); }
+    
+    document.getElementById('loader').style.display = 'flex'; 
+    try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); window.isAllDataLoaded = false; alert("Lưu thành công!"); window.quanLyNganHang(curSub, true); } catch(e) { alert("Lỗi mạng! Không thể lưu câu hỏi."); } finally { document.getElementById('loader').style.display = 'none'; }
+};
+
+window.xoaCauHoi = async function(id) { 
+    if(confirm("Chắc chắn xóa câu hỏi này?")) { 
+        document.getElementById('loader').style.display = 'flex'; 
+        try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: 'xoa_cau_hoi', data: { id: id, subject: curSub } }) }); window.isAllDataLoaded = false; alert("Đã xóa!"); window.quanLyNganHang(curSub, true); } catch(e) {} finally { document.getElementById('loader').style.display = 'none'; } 
+    } 
+};
+
 // ==========================================
 // 4. TIẾN TRÌNH LÀM BÀI & ĐỘNG CƠ BẤM CHỌN ĐIỀN TỪ
 // ==========================================
@@ -887,7 +992,7 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (BẢN ĐỒ NHIỆT ĐÃ FIX LỖI 100%)
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
