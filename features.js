@@ -1723,9 +1723,12 @@ window.mgGameOver = async function(isWin = false) {
 
 window.thoatGameToan = async function(saveScore = false) {
     clearInterval(mathGame.loop); clearInterval(mathGame.spawn);
-    if(saveScore && mathGame.score > 0 && currentUser.role === 'student') {
+    
+    if (saveScore && mathGame.score > 0 && currentUser && currentUser.role === 'student') {
+        // Bật màn hình chờ để bảo vệ mạng
+        document.getElementById('loader').style.display = 'flex'; 
+        
         try { 
-            // NÂNG CẤP 1: Bổ sung thêm biến "score" để Google Sheets không bị lỗi từ chối lưu dữ liệu
             await fetch(API_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
@@ -1734,14 +1737,13 @@ window.thoatGameToan = async function(saveScore = false) {
                         id_hs: currentUser.id, 
                         subject: "MathGame", 
                         group: "Bảo vệ Trái Đất", 
-                        score: mathGame.score, 
-                        score_earned: mathGame.score, 
+                        score: mathGame.score,          // QUAN TRỌNG: Lấp đầy Cột Điểm (D)
+                        score_earned: mathGame.score,   // QUAN TRỌNG: Cộng vào Tổng Điểm (I)
                         details: "Chơi game đạt " + mathGame.score + " điểm." 
                     } 
                 }) 
             }); 
             
-            // NÂNG CẤP 2: Bổ sung biến "real_added" để bảng Quản lý Học sinh của thầy hiển thị đúng số liệu
             Data.log.push({ 
                 id: currentUser.id, 
                 subject: "MathGame", 
@@ -1749,13 +1751,15 @@ window.thoatGameToan = async function(saveScore = false) {
                 score: mathGame.score, 
                 real_added: mathGame.score, 
                 time: new Date().toISOString(), 
-                details: "" 
+                details: "Chơi game đạt " + mathGame.score + " điểm." 
             }); 
             
             currentUser.score = Number(currentUser.score) + mathGame.score;
             alert(`Chúc mừng con đã xuất sắc đem về ${mathGame.score} điểm cho tài khoản của mình!`);
         } catch(e) { 
-            alert("Mạng hơi chậm nên chưa đồng bộ được lên bảng vàng, con hãy thử F5 tải lại trang nhé!"); 
+            alert("Lỗi mạng, hệ thống chưa kịp đồng bộ điểm lên bảng vàng!"); 
+        } finally {
+            document.getElementById('loader').style.display = 'none'; 
         }
     }
     
@@ -1763,7 +1767,6 @@ window.thoatGameToan = async function(saveScore = false) {
     if (gameUI) gameUI.remove(); 
     veTrangChu(); 
 };
-
 // ==========================================
 // 11. HỆ THỐNG CHỐNG GIAN LẬN TỰ ĐỘNG
 // ==========================================
