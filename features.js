@@ -1913,7 +1913,7 @@ window.chuyenTrangQuanLy = async function() {
     document.getElementById('content').innerHTML = html + "</div>"; 
 };
 
-// Hàm xử lý Thưởng Nóng trực tiếp từ Web
+// Hàm xử lý Thưởng Nóng trực tiếp từ Web (ĐÃ FIX LỖI TẠO DÒNG MỚI + BỔ SUNG SCORE)
 window.thuongNong = async function(studentId, studentName, currentScore) {
     let pointStr = prompt(`Nhập số điểm muốn thưởng cho học sinh ${studentName}:\n(Có thể nhập số âm nếu muốn trừ điểm phạt)`, "20");
     if (!pointStr) return;
@@ -1925,6 +1925,11 @@ window.thuongNong = async function(studentId, studentName, currentScore) {
     if (reason === null) reason = points > 0 ? "Thưởng nóng từ GVCN" : "Phạt từ GVCN";
 
     document.getElementById('loader').style.display = 'flex';
+    
+    // THỦ THUẬT ÉP TẠO DÒNG MỚI: Đính kèm thời gian thực
+    let thoiGianThuc = new Date().toLocaleString('vi-VN');
+    let uniqueBonusSession = "Thưởng/Phạt (" + thoiGianThuc + ")";
+
     try {
         // Gửi lệnh lên Google Sheets bằng action nop_bai
         await fetch(API_URL, { 
@@ -1934,8 +1939,9 @@ window.thuongNong = async function(studentId, studentName, currentScore) {
                 data: { 
                     id_hs: studentId, 
                     subject: "Bonus", 
-                    group: "Thưởng/Phạt", 
-                    score_earned: points, 
+                    group: uniqueBonusSession, 
+                    score: points,             // QUAN TRỌNG: Lấp đầy Cột Điểm
+                    score_earned: points,      // QUAN TRỌNG: Cộng vào Tổng điểm
                     details: reason 
                 } 
             }) 
@@ -1945,7 +1951,7 @@ window.thuongNong = async function(studentId, studentName, currentScore) {
         Data.log.push({
             id: studentId,
             subject: "Bonus",
-            group: "Thưởng/Phạt",
+            group: uniqueBonusSession,
             score: points,
             real_added: points,
             time: new Date().toISOString(),
