@@ -1754,6 +1754,10 @@ window.thoatGameToan = async function(saveScore = false) {
         // Bật màn hình chờ để bảo vệ mạng
         document.getElementById('loader').style.display = 'flex'; 
         
+        // THỦ THUẬT ÉP TẠO DÒNG MỚI: Đính kèm thời gian thực vào tên Game
+        let thoiGianThuc = new Date().toLocaleString('vi-VN');
+        let uniqueGameSession = "Bảo vệ Trái Đất (" + thoiGianThuc + ")";
+        
         try { 
             await fetch(API_URL, { 
                 method: 'POST', 
@@ -1762,9 +1766,9 @@ window.thoatGameToan = async function(saveScore = false) {
                     data: { 
                         id_hs: currentUser.id, 
                         subject: "MathGame", 
-                        group: "Bảo vệ Trái Đất", 
-                        score: mathGame.score,          // QUAN TRỌNG: Lấp đầy Cột Điểm (D)
-                        score_earned: mathGame.score,   // QUAN TRỌNG: Cộng vào Tổng Điểm (I)
+                        group: uniqueGameSession, 
+                        score: mathGame.score,          
+                        score_earned: mathGame.score,   
                         details: "Chơi game đạt " + mathGame.score + " điểm." 
                     } 
                 }) 
@@ -1773,7 +1777,7 @@ window.thoatGameToan = async function(saveScore = false) {
             Data.log.push({ 
                 id: currentUser.id, 
                 subject: "MathGame", 
-                group: "Bảo vệ Trái Đất", 
+                group: uniqueGameSession, 
                 score: mathGame.score, 
                 real_added: mathGame.score, 
                 time: new Date().toISOString(), 
