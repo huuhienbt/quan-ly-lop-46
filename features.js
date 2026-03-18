@@ -1678,7 +1678,7 @@ document.addEventListener("copy", (e) => {
 });
 
 // ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ CẤU TRÚC ĐIỂM)
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ CẤU TRÚC ĐIỂM & THƯỞNG NÓNG)
 // ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
@@ -1698,9 +1698,7 @@ window.chuyenTrangQuanLy = async function() {
         let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
         
         logs.forEach(l => {
-            // ĐIỂM SÁNG: Nếu là log cũ (không có real_added), cộng dồn như cũ. Nếu log mới, chỉ cộng phần thực nhận.
             let s = l.real_added !== undefined ? Number(l.real_added) : (Number(l.score) || 0);
-            
             if (l.subject === 'math') mathPts += s;
             else if (l.subject === 'tv' || l.subject === 'vietnamese') tvPts += s;
             else if (l.subject === 'LuckySpin') spinPts += s;
@@ -1756,10 +1754,64 @@ window.chuyenTrangQuanLy = async function() {
                 </div>
             </div>
             
-            <button onclick="window.viewProfile('${s.id}')" class="w-full mt-4 bg-slate-50 text-slate-500 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100"><i class="fas fa-id-card mr-1"></i> Xem hồ sơ chi tiết</button>
+            <div class="flex gap-2 mt-4">
+                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-slate-50 text-slate-500 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
+                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-500 hover:text-white transition border border-pink-100 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng nóng</button>
+            </div>
         </div>
         `;
     });
 
     document.getElementById('content').innerHTML = html + "</div>"; 
+};
+
+// Hàm xử lý Thưởng Nóng trực tiếp từ Web
+window.thuongNong = async function(studentId, studentName, currentScore) {
+    let pointStr = prompt(`Nhập số điểm muốn thưởng cho học sinh ${studentName}:\n(Có thể nhập số âm nếu muốn trừ điểm phạt)`, "20");
+    if (!pointStr) return;
+    
+    let points = parseInt(pointStr);
+    if (isNaN(points) || points === 0) return alert("Số điểm không hợp lệ!");
+    
+    let reason = prompt(`Nhập lý do thưởng/phạt (Tùy chọn):`, points > 0 ? "Thưởng nóng hăng hái học tập" : "Trừ điểm vi phạm nội quy");
+    if (reason === null) reason = points > 0 ? "Thưởng nóng từ GVCN" : "Phạt từ GVCN";
+
+    document.getElementById('loader').style.display = 'flex';
+    try {
+        // Gửi lệnh lên Google Sheets bằng action nop_bai
+        await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'nop_bai', 
+                data: { 
+                    id_hs: studentId, 
+                    subject: "Bonus", 
+                    group: "Thưởng/Phạt", 
+                    score_earned: points, 
+                    details: reason 
+                } 
+            }) 
+        });
+        
+        // Cập nhật dữ liệu tạm thời trên Web để hiện ngay mà không cần tải lại trang
+        Data.log.push({
+            id: studentId,
+            subject: "Bonus",
+            group: "Thưởng/Phạt",
+            score: points,
+            real_added: points,
+            time: new Date().toISOString(),
+            details: reason
+        });
+        
+        let hs = Data.hs.find(x => String(x.id) === String(studentId));
+        if (hs) hs.score = Number(hs.score) + points;
+        
+        alert(`Đã ${points > 0 ? 'cộng' : 'trừ'} thành công ${Math.abs(points)} điểm cho ${studentName}!`);
+        window.chuyenTrangQuanLy(); // Tải lại giao diện Quản lý Học sinh
+    } catch (e) {
+        alert("Lỗi mạng, chưa cập nhật được điểm!");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+    }
 };
