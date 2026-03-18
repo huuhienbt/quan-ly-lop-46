@@ -784,6 +784,26 @@ window.finishQuiz = async function() {
     let todayStr = new Date().toLocaleDateString('vi-VN');
     let spinLog = window.getDailySpinLog(todayStr);
 
+    // --- NÂNG CẤP: QUÉT CÁC CÂU BỎ TRỐNG (DO HẾT GIỜ HOẶC ÉP NỘP VÌ GIAN LẬN) ---
+    if (typeof currentQIndex !== 'undefined' && currentQIndex < quiz.length) {
+        for (let i = currentQIndex; i < quiz.length; i++) {
+            let q = quiz[i];
+            let qTextReplaced = window.parseImg(q.question).replace(/_{3,}/g, '[___]');
+            let correctStr = q.correct.toLowerCase().replace(/\s/g, '');
+            let expectedAnsText = "";
+            
+            if (correctStr.length === 1 && ['a','b','c','d'].includes(correctStr)) {
+                expectedAnsText = window.parseImg(q[correctStr]);
+            } else {
+                let expectedArr = correctStr.split(',');
+                expectedAnsText = expectedArr.map(k => q[k] ? window.parseImg(q[k]).replace(/<[^>]*>?/gm, '') : '').join(' | ');
+            }
+
+            wrongAnswersLog.push(`<div class="bg-white p-4 rounded-xl border border-orange-200 mb-3 shadow-sm"><p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-orange-500">Câu ${i+1} (Bỏ trống):</span> ${qTextReplaced}</p><div class="space-y-2 mt-3"><p class="text-orange-600 text-sm bg-orange-50 p-2 rounded-lg border border-orange-100"><i class="fas fa-exclamation-triangle mr-1"></i> <b>Hết giờ / Bị ép nộp (Chưa làm)</b></p><p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng:</b> <span class="font-medium">${expectedAnsText}</span></p></div></div>`);
+        }
+    }
+    // -------------------------------------------------------------------------
+
     // THUẬT TOÁN TÍNH ĐIỂM CHÊNH LỆCH (ÁP DỤNG TỪ NAY VỀ SAU)
     let previousLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp);
     let previousMaxScore = previousLogs.length > 0 ? Math.max(...previousLogs.map(l => Number(l.score) || 0)) : 0;
@@ -801,6 +821,23 @@ window.finishQuiz = async function() {
         } else if (previousMaxLog && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`; }
         window.safeConfetti(); 
     } 
+    
+    let scoreMsg = actualScoreEarned > 0 ? `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
+    
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button onclick="window.loadSubject('${curSub}')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
+    
+    if(currentUser.role === 'student') { 
+        let submitTime = new Date().toISOString(); let detailsToSave = wrongAnswersLog.join('');
+        if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
+        
+        currentUser.score = Number(currentUser.score) + actualScoreEarned;
+
+        try { 
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }); 
+            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
+        } catch(e){}
+    } 
+};
     
     let scoreMsg = actualScoreEarned > 0 ? `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
     
