@@ -1,6 +1,6 @@
 // ==========================================
-// FILE: FEATURES.JS (BẢN FULL VIP - MULTI-DROP KÉO THẢ ĐA ĐIỂM)
-// Tích hợp: Smart Cache, Kéo Thả Nhiều Ô Trống, Chống Gian Lận, Vòng Quay VIP Cán Sự, Bản Đồ Nhiệt
+// FILE: FEATURES.JS (BẢN FULL VIP - ĐỘNG CƠ CLICK & DROP ĐIỀN TỪ)
+// Tích hợp: Smart Cache, Bấm Chọn Điền Từ (Thay Kéo Thả), Chống Gian Lận, Vòng Quay VIP, Bản Đồ Nhiệt
 // ==========================================
 
 let isSpinning = false;
@@ -31,7 +31,7 @@ window.safeConfetti = function() {
                 confetti({ startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999, particleCount: 50 * ((end - Date.now()) / dur), origin: { x: Math.random(), y: Math.random() - 0.2 } }); 
             }
         }, 250);
-    } catch(e) {}
+    } catch(e) { console.log("Không tải được hiệu ứng pháo hoa."); }
 };
 
 // ==========================================
@@ -43,6 +43,7 @@ window.getDailySpinLog = function(todayStr) {
     
     if (spinLog.date !== todayStr) {
         spinLog = { date: todayStr, extra: 0, usedFree: false };
+        
         let d = new Date().getDay();
         if (d === 0 || d === 5 || d === 6) { // CN, T6, T7
             let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
@@ -55,7 +56,8 @@ window.getDailySpinLog = function(todayStr) {
                             chucVu.includes('tt2') || userInfoStr.includes('tt2') ||
                             chucVu.includes('tt3') || userInfoStr.includes('tt3') ||
                             chucVu.includes('tt4') || userInfoStr.includes('tt4');
-            if (isOfficer) { spinLog.extra += 1; }
+            
+            if (isOfficer) { spinLog.extra += 1; } // Tặng thêm 1 lượt
         }
         localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
     }
@@ -76,6 +78,7 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
                 if (parsed.math && parsed.tv && parsed.log) {
                     Data.math = parsed.math; Data.tv = parsed.tv; Data.vietnamese = parsed.tv;
                     Data.log = parsed.log; Data.caudo = parsed.caudo || []; window.isAllDataLoaded = true;
+                    
                     if (!window.isFetchingBackground) {
                         window.isFetchingBackground = true;
                         window.fetchFreshDataSilently(false).then(() => window.isFetchingBackground = false);
@@ -94,6 +97,7 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
             </div>
         `;
     }
+
     return await window.fetchFreshDataSilently(!silent);
 };
 
@@ -105,9 +109,12 @@ window.fetchFreshDataSilently = async function(showError = false) {
             fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json())
         ]);
+
         Data.math = Array.isArray(mRes) ? mRes : []; Data.tv = Array.isArray(tRes) ? tRes : []; Data.vietnamese = Data.tv;
         Data.log = Array.isArray(lRes) ? lRes : []; Data.caudo = Array.isArray(cRes) ? cRes : [];
+
         try { localStorage.setItem('eduDataCache', JSON.stringify({ math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo })); } catch(e) {}
+
         window.isAllDataLoaded = true; return true;
     } catch(e) {
         if (showError) {
@@ -349,8 +356,8 @@ window.changeQType = function(initialCorr = '') {
     
     if(val === 'dienkhuyet') {
         hint.className = "mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in";
-        lblA.innerText = "Viên kẹo 1 (A)"; lblB.innerText = "Viên kẹo 2 (B)"; lblC.innerText = "Viên kẹo 3 (C)"; lblD.innerText = "Viên kẹo 4 (D)";
-        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Kéo kẹo nào vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
+        lblA.innerText = "Từ gợi ý 1 (A)"; lblB.innerText = "Từ gợi ý 2 (B)"; lblC.innerText = "Từ gợi ý 3 (C)"; lblD.innerText = "Từ gợi ý 4 (D)";
+        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Thứ tự điền vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
     } else {
         hint.className = "hidden";
         lblA.innerText = "Đáp án A"; lblB.innerText = "Đáp án B"; lblC.innerText = "Đáp án C"; lblD.innerText = "Đáp án D";
@@ -384,10 +391,10 @@ window.renderFormCauHoi = function(id) {
                 <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Loại Câu Hỏi</label>
                 <select id="frmQType" onchange="window.changeQType()" class="edit-input w-full bg-white border-2 border-indigo-200 p-2 rounded-xl font-bold text-indigo-700 outline-none focus:border-indigo-500 transition cursor-pointer">
                     <option value="tracnghiem" ${!isDrag ? 'selected' : ''}>🔘 Trắc nghiệm chọn đáp án (A, B, C, D)</option>
-                    <option value="dienkhuyet" ${isDrag ? 'selected' : ''}>🧩 Kéo thả điền khuyết</option>
+                    <option value="dienkhuyet" ${isDrag ? 'selected' : ''}>🧩 Bấm chọn Điền khuyết</option>
                 </select>
                 <div id="qTypeHint" class="${isDrag ? 'mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in' : 'hidden'}">
-                    <i class="fas fa-info-circle"></i> Hệ thống sẽ tạo trò chơi kéo thả. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!
+                    <i class="fas fa-info-circle"></i> Hệ thống sẽ tạo dạng Bấm-Điền-Từ. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!
                 </div>
             </div>
             <label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-edit"></i> Khung Câu Hỏi</label>
@@ -406,10 +413,10 @@ window.renderFormCauHoi = function(id) {
             </div>
             ${formLayout} 
             <div class="grid grid-cols-2 gap-3 mt-4">
-                <div><label id="lblA" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 1 (A)' : 'Đáp án A'}</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
-                <div><label id="lblB" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 2 (B)' : 'Đáp án B'}</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
-                <div><label id="lblC" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 3 (C)' : 'Đáp án C'}</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
-                <div><label id="lblD" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Viên kẹo 4 (D)' : 'Đáp án D'}</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblA" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 1 (A)' : 'Đáp án A'}</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblB" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 2 (B)' : 'Đáp án B'}</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblC" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 3 (C)' : 'Đáp án C'}</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
+                <div><label id="lblD" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 4 (D)' : 'Đáp án D'}</label><input type="text" id="frmD" value="${q.d}" class="edit-input w-full mt-1"></div>
             </div>
             <div id="corrContainer" class="mt-4">
                 </div>
@@ -425,7 +432,7 @@ window.luuCauHoi = async function(id) {
     let typeVal = document.getElementById("frmQType").value;
 
     if (typeVal === 'dienkhuyet' && !/_{3,}/.test(finalQuestionText)) {
-        alert("⚠️ CẢNH BÁO NHẦM LẪN:\n\nThầy đang chọn loại câu hỏi 'Kéo thả điền khuyết' nhưng trong nội dung câu hỏi chưa có chỗ nào chừa trống cả!\n\nThầy hãy đặt con trỏ chuột vào vị trí cần điền khuyết, sau đó bấm nút [Ô Trống] màu vàng trên thanh công cụ nhé!");
+        alert("⚠️ CẢNH BÁO NHẦM LẪN:\n\nThầy đang chọn loại câu hỏi 'Điền khuyết' nhưng trong nội dung câu hỏi chưa có chỗ nào chừa trống cả!\n\nThầy hãy đặt con trỏ chuột vào vị trí cần điền, sau đó bấm nút [Ô Trống] màu vàng trên thanh công cụ nhé!");
         return;
     }
 
@@ -448,7 +455,7 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI, CHỐNG GIAN LẬN & KÉO THẢ MULTI-DROP
+// 4. TIẾN TRÌNH LÀM BÀI & ĐỘNG CƠ BẤM CHỌN ĐIỀN TỪ
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); 
@@ -559,11 +566,11 @@ window.renderQuestion = function(index) {
         let dropCount = 0;
         questionHtml = questionHtml.replace(/_{3,}/g, () => {
             let id = 'drop-zone-' + dropCount; dropCount++;
-            return `<div id="${id}" class="drop-zone inline-flex items-center justify-center min-w-[70px] h-10 border-2 border-dashed border-indigo-400 bg-indigo-50/50 rounded-xl align-middle mx-1.5 text-indigo-800 font-bold transition-all px-2 shadow-inner empty:after:content-['Thả_vào'] empty:after:text-indigo-400 empty:after:opacity-70 empty:after:text-sm"></div>`;
+            return `<div id="${id}" class="drop-zone inline-flex items-center justify-center min-w-[70px] h-10 border-2 border-dashed border-indigo-400 bg-indigo-50/50 rounded-xl align-middle mx-1.5 text-indigo-800 font-bold transition-all px-2 shadow-inner cursor-pointer hover:bg-indigo-100 empty:after:content-['Bấm_chọn'] empty:after:text-indigo-400 empty:after:opacity-70 empty:after:text-sm"></div>`;
         });
         
         let dragItemsHtml = ['a','b','c','d'].filter(k => q[k]).map(key => `
-            <div class="drag-item touch-none p-3 bg-white border-2 border-indigo-200 rounded-xl shadow-sm text-center font-bold text-indigo-700 cursor-grab hover:border-indigo-400 transition-transform active:scale-95 flex items-center justify-center" data-val="${key}">
+            <div class="drag-item p-3 bg-white border-2 border-indigo-200 rounded-xl shadow-sm text-center font-bold text-indigo-700 cursor-pointer hover:border-orange-400 transition-all active:scale-95 flex items-center justify-center" data-val="${key}">
                 ${window.parseImg(q[key])}
             </div>
         `).join('');
@@ -571,11 +578,12 @@ window.renderQuestion = function(index) {
         document.getElementById("quizBox").innerHTML = `
             <div class="${wrapperClass} fade-in">
                 <div class="mb-6">
-                    <div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200"><i class="fas fa-hand-pointer mr-1"></i> CÂU ${index + 1} / ${quiz.length} (KÉO THẢ)</div>
+                    <div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200"><i class="fas fa-hand-pointer mr-1"></i> CÂU ${index + 1} / ${quiz.length} (CHỌN TỪ VÀO CHỖ TRỐNG)</div>
                     <div class="text-xl sm:text-2xl font-bold text-slate-800 leading-[2.2] [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div>
                 </div>
                 <div class="mt-auto">
-                    <div id="drag-container" class="grid grid-cols-2 gap-3 min-h-[100px] p-4 bg-indigo-50/50 rounded-2xl border-2 border-dashed border-indigo-200 shadow-inner">
+                    <p class="text-xs font-bold text-orange-500 mb-2 text-center animate-pulse"><i class="fas fa-lightbulb"></i> Hướng dẫn: Bấm chọn 1 từ bên dưới, sau đó bấm vào ô trống để điền.</p>
+                    <div id="drag-container" class="grid grid-cols-2 gap-3 min-h-[100px] p-4 bg-indigo-50/50 rounded-2xl border-2 border-dashed border-indigo-200 shadow-inner cursor-pointer">
                         ${dragItemsHtml}
                     </div>
                     <button id="btnSubmitDrag" onclick="window.checkDragAns('${q.correct}', ${index})" class="hidden w-full mt-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-xl hover:scale-[1.02] transition"><i class="fas fa-check-circle mr-2"></i> CHỐT ĐÁP ÁN</button>
@@ -589,7 +597,6 @@ window.renderQuestion = function(index) {
     }
 };
 
-// Động cơ kéo thả Đa Điểm Multi-Drop
 window.initDragAndDrop = function(qIndex, correctKey) {
     const items = document.querySelectorAll('.drag-item');
     const dropZones = document.querySelectorAll('.drop-zone');
@@ -598,7 +605,7 @@ window.initDragAndDrop = function(qIndex, correctKey) {
     
     if(dropZones.length === 0 || items.length === 0) return;
 
-    let draggedItem = null; let startX, startY;
+    let selectedItem = null;
 
     const checkSubmitState = () => {
         let allFilled = true;
@@ -607,108 +614,68 @@ window.initDragAndDrop = function(qIndex, correctKey) {
         else btnSubmit.classList.add('hidden');
     };
 
-    const moveItem = (pageX, pageY) => {
-        if(!draggedItem) return;
-        draggedItem.style.left = pageX - startX + 'px';
-        draggedItem.style.top = pageY - startY + 'px';
-        
-        dropZones.forEach(dz => {
-            const dropRect = dz.getBoundingClientRect();
-            if (pageX > dropRect.left && pageX < dropRect.right && pageY > dropRect.top && pageY < dropRect.bottom) {
-                dz.classList.add('bg-indigo-200', 'border-indigo-600', 'scale-105');
-            } else {
-                dz.classList.remove('bg-indigo-200', 'border-indigo-600', 'scale-105');
-            }
+    const clearSelection = () => {
+        items.forEach(item => {
+            item.classList.remove('ring-4', 'ring-orange-400', 'scale-105', 'bg-orange-50', 'shadow-md', 'border-orange-400', 'z-10');
+            item.classList.add('bg-white', 'border-indigo-200');
         });
-    };
-
-    const pointerMove = (e) => {
-        if(!draggedItem) return;
-        e.preventDefault(); // Chống cuộn màn hình
-        let pageX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
-        let pageY = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
-        moveItem(pageX, pageY);
-    };
-
-    const pointerUp = (e) => {
-        if(!draggedItem) return;
-        let pageX = e.type.includes('mouse') ? e.pageX : e.changedTouches[0].pageX;
-        let pageY = e.type.includes('mouse') ? e.pageY : e.changedTouches[0].pageY;
-        
-        let droppedIn = null;
-        dropZones.forEach(dz => {
-            const dropRect = dz.getBoundingClientRect();
-            if (pageX > dropRect.left && pageX < dropRect.right && pageY > dropRect.top && pageY < dropRect.bottom) {
-                droppedIn = dz;
-            }
-            dz.classList.remove('bg-indigo-200', 'border-indigo-600', 'scale-105');
-        });
-        
-        draggedItem.classList.remove('shadow-2xl', 'scale-105', 'border-indigo-500', 'z-50');
-        draggedItem.style.position = 'static';
-        draggedItem.style.width = 'auto'; draggedItem.style.height = 'auto';
-
-        document.removeEventListener('mousemove', pointerMove);
-        document.removeEventListener('touchmove', pointerMove);
-        document.removeEventListener('mouseup', pointerUp);
-        document.removeEventListener('touchend', pointerUp);
-
-        if (droppedIn) {
-            // Nếu ô đã có kẹo, trả kẹo cũ về hộp
-            if (droppedIn.children.length > 0 && droppedIn.children[0] !== draggedItem) {
-                container.appendChild(droppedIn.children[0]);
-            }
-            droppedIn.innerHTML = '';
-            droppedIn.appendChild(draggedItem);
-            draggedItem.style.width = '100%';
-            draggedItem.style.height = '100%';
-            draggedItem.style.margin = '0';
-        } else {
-            // Rơi ra ngoài thì trả về hộp
-            container.appendChild(draggedItem);
-        }
-        
-        checkSubmitState();
-        draggedItem = null;
-    };
-
-    const pointerDown = (e) => {
-        draggedItem = e.currentTarget;
-        const rect = draggedItem.getBoundingClientRect();
-        
-        document.body.style.overflow = 'hidden';
-        
-        draggedItem.style.width = rect.width + 'px';
-        draggedItem.style.height = rect.height + 'px';
-        draggedItem.style.position = 'fixed';
-        draggedItem.style.zIndex = '50';
-        draggedItem.style.margin = '0';
-        draggedItem.classList.add('shadow-2xl', 'scale-105', 'border-indigo-500');
-
-        let pageX = e.type.includes('mouse') ? e.pageX : e.touches[0].pageX;
-        let pageY = e.type.includes('mouse') ? e.pageY : e.touches[0].pageY;
-        
-        startX = pageX - rect.left; startY = pageY - rect.top;
-        
-        document.addEventListener('mousemove', pointerMove, {passive: false});
-        document.addEventListener('touchmove', pointerMove, {passive: false});
-        document.addEventListener('mouseup', pointerUp);
-        document.addEventListener('touchend', pointerUp);
-        
-        const endScrollLock = () => { document.body.style.overflow = ''; };
-        document.addEventListener('mouseup', endScrollLock, {once:true});
-        document.addEventListener('touchend', endScrollLock, {once:true});
-        
-        moveItem(pageX, pageY);
+        dropZones.forEach(dz => dz.classList.remove('ring-4', 'ring-orange-300', 'shadow-lg'));
+        selectedItem = null;
     };
 
     items.forEach(item => {
-        item.addEventListener('mousedown', pointerDown);
-        item.addEventListener('touchstart', pointerDown, {passive: false});
+        item.onclick = function(e) {
+            e.stopPropagation();
+            if (selectedItem === this) {
+                clearSelection(); 
+            } else {
+                clearSelection();
+                selectedItem = this;
+                this.classList.remove('bg-white', 'border-indigo-200');
+                this.classList.add('ring-4', 'ring-orange-400', 'scale-105', 'bg-orange-50', 'shadow-md', 'border-orange-400', 'z-10');
+                dropZones.forEach(dz => {
+                    if (dz.children.length === 0 || dz.children[0] !== this) {
+                        dz.classList.add('ring-4', 'ring-orange-300', 'shadow-lg');
+                    }
+                });
+            }
+        };
     });
+
+    dropZones.forEach(dz => {
+        dz.onclick = function(e) {
+            e.stopPropagation();
+            if (selectedItem) {
+                if (this.children.length > 0 && this.children[0] !== selectedItem) {
+                    let oldItem = this.children[0];
+                    container.appendChild(oldItem);
+                    oldItem.style.width = 'auto';
+                    oldItem.style.height = 'auto';
+                }
+                this.innerHTML = '';
+                this.appendChild(selectedItem);
+                selectedItem.style.width = '100%';
+                selectedItem.style.height = '100%';
+                selectedItem.style.margin = '0';
+                clearSelection();
+                checkSubmitState();
+            } else if (this.children.length > 0) {
+                this.children[0].click();
+            }
+        };
+    });
+
+    container.onclick = function(e) {
+        if (selectedItem && selectedItem.parentElement !== container) {
+            container.appendChild(selectedItem);
+            selectedItem.style.width = 'auto';
+            selectedItem.style.height = 'auto';
+            clearSelection();
+            checkSubmitState();
+        }
+    };
 };
 
-// Hàm chấm điểm Kéo thả Đa điểm
 window.checkDragAns = function(correctStr, index) {
     document.querySelectorAll('.drag-item').forEach(x => x.style.pointerEvents = 'none');
     document.getElementById('btnSubmitDrag').classList.add('hidden');
@@ -1154,14 +1121,12 @@ window.renderDanhSachTienDo = function() {
             filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white z-10">Khớp bộ lọc</span>`;
         }
 
-        // Lấy danh hiệu và điểm tổng
         let studentTitles = window.calculateTitle(h);
         let currentScore = Number(h.score) || 0;
 
         htmlList += `
         <div onclick="window.xemChiTietTienDo('${h.id}', '${h.name.replace(/'/g, "\\'")}')" class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col cursor-pointer hover:border-purple-300 hover:shadow-md transition relative">
             ${filteredHighlight}
-            
             <div class="flex items-center gap-3 mb-4 border-b border-slate-50 pb-3">
                 <div class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-black shadow-inner text-xl shrink-0"><i class="fas fa-user"></i></div>
                 <div class="flex-1 min-w-0">
@@ -1673,7 +1638,6 @@ window.chuyenTrangQuanLy = async function() {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">
     `; 
     
-    // Tính toán bóc tách điểm cho từng học sinh
     let studentStats = Data.hs.map(h => {
         let logs = Data.log.filter(l => String(l.id) === String(h.id));
         let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
@@ -1690,7 +1654,6 @@ window.chuyenTrangQuanLy = async function() {
         return { ...h, mathPts, tvPts, spinPts, gamePts, totalCalculated };
     });
 
-    // Sắp xếp học sinh theo Tổng điểm từ cao xuống thấp
     studentStats.sort((a,b) => (Number(b.score) || 0) - (Number(a.score) || 0));
 
     studentStats.forEach((s) => {
