@@ -1306,7 +1306,7 @@ window.xemLoiSai = function(studentId, subjectCode, group) {
     document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); 
 };
 
-// HÀM XỬ LÝ VIỆC MỞ LẠI BÀI CHO HỌC SINH
+// HÀM XỬ LÝ VIỆC MỞ LẠI BÀI CHO HỌC SINH (ĐÃ FIX LỖI THIẾU BIẾN SCORE)
 window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
     if(!confirm(`⚠️ CHÚ Ý: Thầy có chắc chắn muốn MỞ LẠI bài [${group}] cho em ${studentName} không?\n\nHành động này sẽ hủy kết quả hiện tại của bài này để em có thể làm lại từ đầu (Điểm của bài này cũng sẽ bị trừ khỏi tổng kết).`)) return;
 
@@ -1319,12 +1319,38 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
     try {
         // 1. Trừ điểm khỏi Tổng Kết (Nếu trước đó con có điểm)
         if (pointsToDeduct > 0) {
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: studentId, subject: "Bonus", group: "Hoàn tác điểm lỗi mạng", score_earned: -pointsToDeduct, details: `Hệ thống tự động trừ ${pointsToDeduct} điểm do GVCN mở lại bài ${group}` } }) });
+            await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'nop_bai', 
+                    data: { 
+                        id_hs: studentId, 
+                        subject: "Bonus", 
+                        group: "Hoàn tác điểm lỗi mạng", 
+                        score: -pointsToDeduct,         // QUAN TRỌNG: Bổ sung score để Sheets không từ chối
+                        score_earned: -pointsToDeduct, 
+                        details: `Hệ thống tự động trừ ${pointsToDeduct} điểm do GVCN mở lại bài ${group}` 
+                    } 
+                }) 
+            });
         }
         
         // 2. Gắn cờ RESET gửi lên Google Sheets
         let resetTime = new Date().toISOString();
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: studentId, subject: "RESET", group: group, score_earned: 0, details: subjectCode } }) });
+        await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'nop_bai', 
+                data: { 
+                    id_hs: studentId, 
+                    subject: "RESET", 
+                    group: group, 
+                    score: 0,                           // QUAN TRỌNG: Bổ sung score cho cờ Reset
+                    score_earned: 0, 
+                    details: subjectCode 
+                } 
+            }) 
+        });
 
         // 3. Xử lý trực tiếp trên giao diện để có hiệu ứng mượt mà không cần F5
         Data.log = Data.log.filter(l => !(String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group));
