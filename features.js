@@ -102,9 +102,22 @@ window.fetchFreshDataSilently = async function(showError = false) {
             fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json())
         ]);
+
         Data.math = Array.isArray(mRes) ? mRes : []; Data.tv = Array.isArray(tRes) ? tRes : []; Data.vietnamese = Data.tv;
-        Data.log = Array.isArray(lRes) ? lRes : []; Data.caudo = Array.isArray(cRes) ? cRes : [];
+        
+        // THUẬT TOÁN ĐỌC CỜ "RESET" ĐỂ MỞ LẠI BÀI CHO HỌC SINH
+        let rawLog = Array.isArray(lRes) ? lRes : []; 
+        let resetLogs = rawLog.filter(l => l.subject === "RESET");
+        resetLogs.forEach(rLog => {
+            rawLog = rawLog.filter(l => !(String(l.id) === String(rLog.id) && (l.subject === rLog.details || (rLog.details === 'vietnamese' && l.subject === 'tv')) && l.group === rLog.group && new Date(l.time) < new Date(rLog.time)));
+        });
+        Data.log = rawLog;
+        // ---------------------------------------------------
+        
+        Data.caudo = Array.isArray(cRes) ? cRes : [];
+
         try { localStorage.setItem('eduDataCache', JSON.stringify({ math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo })); } catch(e) {}
+
         window.isAllDataLoaded = true; return true;
     } catch(e) {
         if (showError) {
@@ -1262,14 +1275,16 @@ window.xemChiTietTienDo = function(studentId, studentName) {
                 const isMax = (Number(log.score) >= maxScore && maxScore > 0);
                 const hasMistakes = log.details && String(log.details).includes('border-red-200');
                 
-                // ĐÃ FIX LỖI Ở ĐÂY: Thêm điều kiện điểm phải > 0 thì mới xét vế không có lỗi sai
                 const isTuyetDoi = isMax || (Number(log.score) > 0 && !hasMistakes);
                 
                 const btnChiTiet = isTuyetDoi 
                     ? `<span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200 shadow-sm"><i class="fas fa-star text-yellow-500 mr-1"></i>Tuyệt đối</span>` 
                     : `<button onclick="window.xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Lỗi sai</button>`; 
                 
-                return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500 text-lg"></i><span class="font-bold text-slate-700 text-sm">${grp}</span></div><div class="flex items-center gap-3"><span class="font-black text-indigo-600 text-lg">${log.score}đ</span>${btnChiTiet}</div></div>`; 
+                // THÊM NÚT MỞ LẠI BÀI (MÀU CAM) DÀNH CHO GIÁO VIÊN
+                const btnMoLai = `<button onclick="window.moLaiBai('${studentId}', '${studentName}', '${subjectCode}', '${grp}')" class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1 rounded hover:bg-orange-600 hover:text-white transition shadow-sm ml-1" title="Xóa kết quả để em làm lại từ đầu"><i class="fas fa-undo"></i> Mở lại</button>`;
+                
+                return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500 text-lg"></i><span class="font-bold text-slate-700 text-sm">${grp}</span></div><div class="flex items-center gap-2"><span class="font-black text-indigo-600 text-lg mr-1">${log.score}đ</span>${btnChiTiet}${btnMoLai}</div></div>`; 
             } else { return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; } 
         }).join(''); 
     }; 
@@ -1281,6 +1296,42 @@ window.xemLoiSai = function(studentId, subjectCode, group) {
     let groupLogs = Data.log.filter(l => String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group);
     groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
     document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); 
+};
+
+// HÀM XỬ LÝ VIỆC MỞ LẠI BÀI CHO HỌC SINH
+window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
+    if(!confirm(`⚠️ CHÚ Ý: Thầy có chắc chắn muốn MỞ LẠI bài [${group}] cho em ${studentName} không?\n\nHành động này sẽ hủy kết quả hiện tại của bài này để em có thể làm lại từ đầu (Điểm của bài này cũng sẽ bị trừ khỏi tổng kết).`)) return;
+
+    // Tìm xem trước đó con đã được cộng bao nhiêu điểm từ bài này để chuẩn bị trừ đi
+    let groupLogs = Data.log.filter(l => String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group);
+    let maxScoreObj = groupLogs.sort((a,b) => (Number(b.real_added)||0) - (Number(a.real_added)||0))[0];
+    let pointsToDeduct = maxScoreObj ? (Number(maxScoreObj.real_added) || 0) : 0;
+
+    document.getElementById('loader').style.display = 'flex';
+    try {
+        // 1. Trừ điểm khỏi Tổng Kết (Nếu trước đó con có điểm)
+        if (pointsToDeduct > 0) {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: studentId, subject: "Bonus", group: "Hoàn tác điểm lỗi mạng", score_earned: -pointsToDeduct, details: `Hệ thống tự động trừ ${pointsToDeduct} điểm do GVCN mở lại bài ${group}` } }) });
+        }
+        
+        // 2. Gắn cờ RESET gửi lên Google Sheets
+        let resetTime = new Date().toISOString();
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: studentId, subject: "RESET", group: group, score_earned: 0, details: subjectCode } }) });
+
+        // 3. Xử lý trực tiếp trên giao diện để có hiệu ứng mượt mà không cần F5
+        Data.log = Data.log.filter(l => !(String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group));
+        Data.log.push({ id: studentId, subject: "RESET", group: group, score: 0, time: resetTime, details: subjectCode });
+        
+        let hs = Data.hs.find(x => String(x.id) === String(studentId));
+        if(hs && pointsToDeduct > 0) hs.score = Number(hs.score) - pointsToDeduct;
+
+        alert("Đã mở lại bài thành công! Em " + studentName + " đã có thể vào làm lại bài này.");
+        window.xemChiTietTienDo(studentId, studentName); // Reload Popup chi tiết
+    } catch(e) {
+        alert("Lỗi mạng, chưa thể mở lại bài!");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+    }
 };
 
 // ==========================================
