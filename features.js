@@ -580,7 +580,8 @@ window.startQuiz = function(group, timeMins) {
         if (qText !== "" || q.a || q.b) { quiz.push({ ...q, question: qText }); }
     });
     
-    quiz = quiz.sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; wrongAnswersLog = []; 
+    // ĐÃ FIX: Thêm biến window.answeredQuestions để đếm chính xác số câu đã làm
+    quiz = quiz.sort(() => Math.random() - 0.5).slice(0, 10); currentQIndex = 0; score = 0; wrongAnswersLog = []; window.answeredQuestions = 0;
     
     if (curSub === 'vietnamese' || curSub === 'tv') {
         if (!readingPassage) readingPassage = "Hãy đọc kỹ các câu hỏi bên phải và chọn đáp án đúng nhất nhé!";
@@ -723,6 +724,8 @@ window.checkDragAns = function(correctStr, index) {
     document.querySelectorAll('.drag-item').forEach(x => x.style.pointerEvents = 'none');
     document.getElementById('btnSubmitDrag').classList.add('hidden');
     
+    window.answeredQuestions++; // Đánh dấu đã trả lời xong 1 câu
+    
     let userAnsArr = [];
     document.querySelectorAll('.drop-zone').forEach(dz => {
         if(dz.children[0]) userAnsArr.push(dz.children[0].getAttribute('data-val'));
@@ -758,6 +761,8 @@ window.checkDragAns = function(correctStr, index) {
 
 window.checkAns = function(el, selected, correct, index) { 
     document.querySelectorAll('.quiz-option').forEach(x => x.classList.add('pointer-events-none', 'opacity-70')); const q = quiz[index]; 
+    window.answeredQuestions++; // Đánh dấu đã trả lời xong 1 câu
+    
     if (selected === correct.toLowerCase()) { el.classList.add('!bg-green-100', '!border-green-500', '!text-green-800', 'scale-[1.02]'); score += 10; } 
     else { 
         el.classList.add('!bg-red-100', '!border-red-500', '!text-red-800', 'scale-[0.98]'); 
@@ -783,6 +788,25 @@ window.finishQuiz = async function() {
 
     let todayStr = new Date().toLocaleDateString('vi-VN');
     let spinLog = window.getDailySpinLog(todayStr);
+
+    // THUẬT TOÁN TÓM CỔ CÂU BỎ TRỐNG
+    if (typeof window.answeredQuestions !== 'undefined' && window.answeredQuestions < quiz.length) {
+        for (let i = window.answeredQuestions; i < quiz.length; i++) {
+            let q = quiz[i];
+            let qTextReplaced = window.parseImg(q.question).replace(/_{3,}/g, '[___]');
+            let correctStr = q.correct.toLowerCase().replace(/\s/g, '');
+            let expectedAnsText = "";
+            
+            if (correctStr.length === 1 && ['a','b','c','d'].includes(correctStr)) {
+                expectedAnsText = window.parseImg(q[correctStr]);
+            } else {
+                let expectedArr = correctStr.split(',');
+                expectedAnsText = expectedArr.map(k => q[k] ? window.parseImg(q[k]).replace(/<[^>]*>?/gm, '') : '').join(' | ');
+            }
+
+            wrongAnswersLog.push(`<div class="bg-white p-4 rounded-xl border border-orange-200 mb-3 shadow-sm"><p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-orange-500">Câu ${i+1} (Bỏ trống):</span> ${qTextReplaced}</p><div class="space-y-2 mt-3"><p class="text-orange-600 text-sm bg-orange-50 p-2 rounded-lg border border-orange-100"><i class="fas fa-exclamation-triangle mr-1"></i> <b>Hết giờ / Bị ép nộp (Chưa làm)</b></p><p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng:</b> <span class="font-medium">${expectedAnsText}</span></p></div></div>`);
+        }
+    }
 
     // THUẬT TOÁN TÍNH ĐIỂM CHÊNH LỆCH (ÁP DỤNG TỪ NAY VỀ SAU)
     let previousLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp);
@@ -814,7 +838,6 @@ window.finishQuiz = async function() {
 
         try { 
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }); 
-            // Cập nhật cấu trúc Log: Lưu thêm biến "real_added" để hệ thống phân biệt cũ/mới
             Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
         } catch(e){}
     } 
