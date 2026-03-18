@@ -290,17 +290,12 @@ window.getRichTextToolbar = function(targetId) {
                 <input type="color" onchange="document.execCommand('foreColor', false, this.value)" class="w-5 h-5 border-0 bg-transparent cursor-pointer">
             </div>
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
-            
-            <select onchange="document.execCommand('fontName', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Kiểu chữ</option><option value="Arial">Arial</option><option value="Times New Roman">Times New Roman</option><option value="Courier New">Courier</option><option value="Tahoma">Tahoma</option></select>
-            <select onchange="document.execCommand('fontSize', false, this.value); this.value='';" class="h-8 text-xs font-bold text-slate-600 bg-white border border-slate-200 rounded shadow-sm outline-none px-1"><option value="">Cỡ chữ</option><option value="1">Nhỏ</option><option value="3">Vừa</option><option value="5">Lớn</option><option value="7">Khổng lồ</option></select>
-            
-            <div class="w-px h-6 bg-slate-300 mx-1"></div>
             <button onclick="document.execCommand('justifyLeft', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-left"></i></button>
             <button onclick="document.execCommand('justifyCenter', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-center"></i></button>
             <button onclick="document.execCommand('justifyRight', false, null)" class="w-8 h-8 bg-white rounded shadow-sm hover:bg-slate-200 text-slate-600"><i class="fas fa-align-right"></i></button>
-            
             <div class="w-px h-6 bg-slate-300 mx-1"></div>
             <button onclick="document.execCommand('insertText', false, '___')" class="px-2 h-8 bg-yellow-50 rounded hover:bg-yellow-100 text-yellow-700 font-bold text-xs flex items-center gap-1 border border-yellow-200 shadow-sm transition"><i class="far fa-square"></i> Ô Trống</button>
+            <button onclick="window.chenPhanSo('${targetId}')" class="px-2 h-8 bg-cyan-50 rounded hover:bg-cyan-100 text-cyan-700 font-bold text-xs flex items-center gap-1 border border-cyan-200 shadow-sm transition"><i class="fas fa-divide"></i> Phân số</button>
             
             <button onclick="window.chenLinkVaoEditor('${targetId}')" class="px-2 h-8 bg-blue-50 rounded hover:bg-blue-100 text-blue-700 font-bold text-xs flex items-center gap-1 border border-blue-200"><i class="fas fa-link"></i> Link</button>
             <button onclick="window.chenAnhVaoEditor('${targetId}')" class="px-2 h-8 bg-indigo-50 rounded shadow-sm hover:bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center gap-1 border border-indigo-200"><i class="fas fa-image"></i> Ảnh</button>
@@ -313,17 +308,22 @@ window.getRichTextToolbar = function(targetId) {
     `;
 };
 
-window.chenAmThanh = function(targetId) {
-    const url = prompt("Dán link file MP3 (từ Google Drive hoặc GitHub) vào đây:"); if (!url) return;
-    const audioTitle = prompt("Nhập tiêu đề cho bài nghe:", "BÀI NGHE AUDIO"); if (!audioTitle) return;
-    let driveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); let audioHtml = "";
-    if (driveMatch) { 
-        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><iframe src="https://drive.google.com/file/d/${driveMatch[1]}/preview" style="width: 100%; height: 80px; margin: 0 auto; display: block; border:none; border-radius: 8px; background: white;" allow="autoplay"></iframe></div><br>`; 
-    } else { 
-        let audioSrc = url; if (url.includes("github.com") && url.includes("/blob/")) { audioSrc = url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/"); } 
-        audioHtml = `<div contenteditable="false" style="margin: 15px auto; max-width: 600px; text-align: center; background: #f8fafc; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);"><p style="font-size: 13px; color: #0284c7; font-weight: black; margin-bottom: 12px; text-transform: uppercase;"><i class="fas fa-headphones-alt mr-1"></i> ${audioTitle}</p><audio controls style="width: 100%; display: block; margin: 0 auto; outline: none; border-radius: 8px;"><source src="${audioSrc}" type="audio/mpeg">Trình duyệt không hỗ trợ.</audio></div><br>`; 
+window.chenPhanSo = function(targetId) {
+    const tuSo = prompt("Nhập TỬ SỐ:");
+    if (tuSo === null || tuSo.trim() === "") return;
+    const mauSo = prompt("Nhập MẪU SỐ:");
+    if (mauSo === null || mauSo.trim() === "") return;
+
+    // Khối HTML tạo phân số 2 tầng
+    const fractionHtml = `<span contenteditable="false" style="display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 4px; font-weight: bold; line-height: 1.2;"><span style="border-bottom: 2px solid currentColor; padding: 0 4px;">${tuSo}</span><span style="padding: 0 4px;">${mauSo}</span></span>&nbsp;`;
+    
+    // Tự động chèn vào khung nội dung thầy đang click chuột
+    let target = window.lastActiveEditor || targetId;
+    let editor = document.getElementById(target);
+    if (editor) {
+        editor.focus();
+        document.execCommand('insertHTML', false, fractionHtml);
     }
-    document.getElementById(targetId).focus(); document.execCommand('insertHTML', false, audioHtml);
 };
 
 window.chenPDF = function(targetId) {
@@ -394,7 +394,15 @@ window.resizeImg = function(size) {
     window.currentSelectedImg.style.width = size; window.currentSelectedImg.style.height = 'auto'; 
 };
 
-window.parseImg = function(t) { return (t||"").toString().replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">').replace(/\n/g,'<br>'); };
+window.parseImg = function(t) { 
+    let str = (t||"").toString();
+    // 1. Dịch link ảnh
+    str = str.replace(/\[img:(.*?)\]/g, '<img src="$1" loading="lazy" class="rounded border my-2">');
+    // 2. Dịch mật mã phân số ps(tử/mẫu)
+    str = str.replace(/ps\(([^/]+)\/([^)]+)\)/gi, '<span style="display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 4px; font-weight: bold; line-height: 1.2; font-size: 0.9em;"><span style="border-bottom: 2px solid currentColor; padding: 0 4px;">$1</span><span style="padding: 0 4px;">$2</span></span>');
+    // 3. Dịch dấu xuống dòng
+    return str.replace(/\n/g,'<br>'); 
+};
 
 window.autoFillTime = function() { 
     let selectedGroup = document.getElementById('frmG').value; let existingQ = Data[curSub].find(q => q.group === selectedGroup); 
