@@ -784,26 +784,38 @@ window.finishQuiz = async function() {
     let todayStr = new Date().toLocaleDateString('vi-VN');
     let spinLog = window.getDailySpinLog(todayStr);
 
+    // THUẬT TOÁN TÍNH ĐIỂM CHÊNH LỆCH (ÁP DỤNG TỪ NAY VỀ SAU)
+    let previousLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp);
+    let previousMaxScore = previousLogs.length > 0 ? Math.max(...previousLogs.map(l => Number(l.score) || 0)) : 0;
+    let actualScoreEarned = score - previousMaxScore;
+    if (actualScoreEarned < 0) actualScoreEarned = 0; // Không trừ điểm nếu làm lại điểm thấp hơn
+
     if (score > 0 && score === maxPossibleScore) { 
-        let previousMax = Data.log.find(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp && Number(l.score) === maxPossibleScore);
-        if (!previousMax && currentUser.role === 'student') {
+        let previousMaxLog = previousLogs.find(l => Number(l.score) === maxPossibleScore);
+        if (!previousMaxLog && currentUser.role === 'student') {
             if (timeTaken <= halfTime) { extraSpinsEarned = 2; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ! Đúng 100% siêu nhanh. Thưởng <b>+2 Lượt quay</b>!</p></div>`; } 
             else { extraSpinsEarned = 1; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! Đúng 100%. Thưởng <b>+1 Lượt quay</b>!</p></div>`; }
             
             spinLog.extra += extraSpinsEarned; 
             localStorage.setItem('spinLog_' + currentUser.id, JSON.stringify(spinLog));
-        } else if (previousMax && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`; }
+        } else if (previousMaxLog && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`; }
         window.safeConfetti(); 
     } 
     
-    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${rewardMessage}<button onclick="window.loadSubject('${curSub}')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
+    let scoreMsg = actualScoreEarned > 0 ? `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
+    
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button onclick="window.loadSubject('${curSub}')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
     
     if(currentUser.role === 'student') { 
         let submitTime = new Date().toISOString(); let detailsToSave = wrongAnswersLog.join('');
         if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
+        
+        currentUser.score = Number(currentUser.score) + actualScoreEarned;
+
         try { 
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score, details: detailsToSave } }) }); 
-            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, time: submitTime, details: detailsToSave }); 
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }); 
+            // Cập nhật cấu trúc Log: Lưu thêm biến "real_added" để hệ thống phân biệt cũ/mới
+            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
         } catch(e){}
     } 
 };
@@ -1686,21 +1698,25 @@ window.chuyenTrangQuanLy = async function() {
         let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
         
         logs.forEach(l => {
-            let s = Number(l.score) || 0;
+            // ĐIỂM SÁNG: Nếu là log cũ (không có real_added), cộng dồn như cũ. Nếu log mới, chỉ cộng phần thực nhận.
+            let s = l.real_added !== undefined ? Number(l.real_added) : (Number(l.score) || 0);
+            
             if (l.subject === 'math') mathPts += s;
             else if (l.subject === 'tv' || l.subject === 'vietnamese') tvPts += s;
             else if (l.subject === 'LuckySpin') spinPts += s;
             else if (l.subject === 'MathGame') gamePts += s;
         });
         
+        let currentScore = Number(h.score) || 0;
         let totalCalculated = mathPts + tvPts + spinPts + gamePts; 
-        return { ...h, mathPts, tvPts, spinPts, gamePts, totalCalculated };
+        let bonusPts = currentScore - totalCalculated; 
+        
+        return { ...h, mathPts, tvPts, spinPts, gamePts, bonusPts, currentScore };
     });
 
-    studentStats.sort((a,b) => (Number(b.score) || 0) - (Number(a.score) || 0));
+    studentStats.sort((a,b) => b.currentScore - a.currentScore);
 
     studentStats.forEach((s) => {
-        let currentScore = Number(s.score) || 0;
         html += `
         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
@@ -1713,26 +1729,30 @@ window.chuyenTrangQuanLy = async function() {
                 </div>
                 <div class="text-right">
                     <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng điểm</div>
-                    <div class="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">${currentScore}</div>
+                    <div class="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">${s.currentScore}</div>
                 </div>
             </div>
             
-            <div class="grid grid-cols-4 gap-2 text-center">
-                <div class="bg-indigo-50/50 p-2 rounded-xl border border-indigo-100/50">
-                    <div class="text-[10px] font-black text-indigo-500 uppercase mb-1"><i class="fas fa-calculator"></i> Toán</div>
+            <div class="grid grid-cols-5 gap-1.5 text-center">
+                <div class="bg-indigo-50/50 p-1.5 sm:p-2 rounded-xl border border-indigo-100/50">
+                    <div class="text-[8px] sm:text-[9px] font-black text-indigo-500 uppercase mb-1"><i class="fas fa-calculator"></i> Toán</div>
                     <div class="font-bold text-indigo-700 text-sm">${s.mathPts}</div>
                 </div>
-                <div class="bg-green-50/50 p-2 rounded-xl border border-green-100/50">
-                    <div class="text-[10px] font-black text-green-500 uppercase mb-1"><i class="fas fa-book-open"></i> T.Việt</div>
+                <div class="bg-green-50/50 p-1.5 sm:p-2 rounded-xl border border-green-100/50">
+                    <div class="text-[8px] sm:text-[9px] font-black text-green-500 uppercase mb-1"><i class="fas fa-book-open"></i> T.Việt</div>
                     <div class="font-bold text-green-700 text-sm">${s.tvPts}</div>
                 </div>
-                <div class="bg-yellow-50/50 p-2 rounded-xl border border-yellow-100/50">
-                    <div class="text-[10px] font-black text-yellow-600 uppercase mb-1"><i class="fas fa-dharmachakra"></i> V.Quay</div>
+                <div class="bg-yellow-50/50 p-1.5 sm:p-2 rounded-xl border border-yellow-100/50">
+                    <div class="text-[8px] sm:text-[9px] font-black text-yellow-600 uppercase mb-1"><i class="fas fa-dharmachakra"></i> V.Quay</div>
                     <div class="font-bold text-yellow-700 text-sm">${s.spinPts}</div>
                 </div>
-                <div class="bg-red-50/50 p-2 rounded-xl border border-red-100/50">
-                    <div class="text-[10px] font-black text-red-500 uppercase mb-1"><i class="fas fa-rocket"></i> Game</div>
+                <div class="bg-red-50/50 p-1.5 sm:p-2 rounded-xl border border-red-100/50">
+                    <div class="text-[8px] sm:text-[9px] font-black text-red-500 uppercase mb-1"><i class="fas fa-rocket"></i> Game</div>
                     <div class="font-bold text-red-700 text-sm">${s.gamePts}</div>
+                </div>
+                <div class="bg-pink-50/50 p-1.5 sm:p-2 rounded-xl border border-pink-100/50">
+                    <div class="text-[8px] sm:text-[9px] font-black text-pink-500 uppercase mb-1"><i class="fas fa-gift"></i> Thưởng</div>
+                    <div class="font-bold text-pink-700 text-sm">${s.bonusPts}</div>
                 </div>
             </div>
             
