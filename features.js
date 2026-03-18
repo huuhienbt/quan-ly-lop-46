@@ -1239,7 +1239,10 @@ window.xemChiTietTienDo = function(studentId, studentName) {
                 const isMax = (Number(log.score) >= maxScore && maxScore > 0);
                 const hasMistakes = log.details && String(log.details).includes('border-red-200');
                 
-                const btnChiTiet = (isMax || !hasMistakes) 
+                // ĐÃ FIX LỖI Ở ĐÂY: Thêm điều kiện điểm phải > 0 thì mới xét vế không có lỗi sai
+                const isTuyetDoi = isMax || (Number(log.score) > 0 && !hasMistakes);
+                
+                const btnChiTiet = isTuyetDoi 
                     ? `<span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200 shadow-sm"><i class="fas fa-star text-yellow-500 mr-1"></i>Tuyệt đối</span>` 
                     : `<button onclick="window.xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Lỗi sai</button>`; 
                 
