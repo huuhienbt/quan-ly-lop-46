@@ -1521,7 +1521,9 @@ window.moGameBaoVeTraiDat = function() {
     let todayStr = new Date().toLocaleDateString('vi-VN');
     let gameLog = JSON.parse(localStorage.getItem('mathGame_' + currentUser.id) || '{"date": "", "plays": 0}');
     if (gameLog.date !== todayStr) gameLog = { date: todayStr, plays: 0 };
-    if (gameLog.plays >= 3) return alert("Hôm nay con đã xuất kích đủ 3 lần rồi. Hãy nghỉ ngơi và quay lại bảo vệ Trái Đất vào ngày mai nhé!");
+    
+    // ĐÃ SỬA: Lời nhắn mới theo đúng ý thầy Hiển
+    if (gameLog.plays >= 1) return alert("Trái Đất hôm nay đã được an toàn nhờ công của con! Bây giờ là lúc dành thời gian ôn tập bài học. Hẹn gặp lại chiến binh nhí vào ngày mai nha!");
 
     gameLog.plays += 1;
     localStorage.setItem('mathGame_' + currentUser.id, JSON.stringify(gameLog));
