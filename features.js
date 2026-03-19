@@ -130,6 +130,9 @@ window.fetchFreshDataSilently = async function(showError = false) {
 // ==========================================
 // 1. GÓC HỌC TẬP
 // ==========================================
+// ==========================================
+// 1. GÓC HỌC TẬP (ĐÃ CHÈN AVATAR VÀO BẢNG VÀNG)
+// ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
     if (!(await window.loadAllDataOnce())) return;
@@ -203,10 +206,29 @@ window.moGocHocTap = async function() {
             if (s.score >= 5000) { titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`; nameColor = "text-red-600 font-black drop-shadow-md"; rowStyles += " border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)] ring-2 ring-red-200 ring-offset-1 animate-pulse"; } 
             else if (s.score >= 4000) { titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`; nameColor = "text-purple-700 font-bold drop-shadow-sm"; rowStyles += " border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]"; } 
             else if (s.score >= 3000) { titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`; nameColor = "text-emerald-700 font-bold"; rowStyles += " border-2 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]"; } 
-            else { if (actualDisplayRank === 1) rowStyles += " border-yellow-300 shadow-sm"; else if (actualDisplayRank === 2) rowStyles += " border-gray-300"; else if (actualDisplayRank === 3) rowStyles += " border-orange-200"; else rowStyles += " border-slate-100"; }
+            else { if (actualDisplayRank === 1) rowStyles += " border-yellow-300 shadow-sm"; else if (actualDisplayRank === 2) rowStyles += " border-gray-300"; else if (actualDisplayRank === 3) rowStyles += " border-orange-200"; else rowStyles += " border-emerald-200"; } // Giữ viền xanh cho các hạng dưới theo ý thầy
 
             let allBadges = ""; if (titleBadge || ongVangBadge) { allBadges = `<div class="flex flex-wrap gap-1">${titleBadge}${ongVangBadge}</div>`; }
-            return `<div class="flex items-center justify-between p-3 mb-2 rounded-xl transition-all relative border ${rowStyles}"><div class="flex items-center gap-3"><div class="w-10 text-center flex justify-center shrink-0">${rankIcon}</div><div class="flex flex-col"><span class="${nameColor} text-sm sm:text-base tracking-wide">${s.name}</span>${allBadges}</div></div><div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm shrink-0">${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span></div></div>`; 
+            
+            // LẤY ẢNH ĐẠI DIỆN CỦA HỌC SINH
+            let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+            let avatarHtml = `<img src="${avatarUrl}" class="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover shrink-0">`;
+
+            // CHÈN ẢNH VÀO GIỮA HUY CHƯƠNG VÀ TÊN
+            return `
+            <div class="flex items-center justify-between p-3 mb-2 rounded-xl transition-all relative border ${rowStyles}">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="w-8 text-center flex justify-center shrink-0">${rankIcon}</div>
+                    ${avatarHtml}
+                    <div class="flex flex-col ml-1">
+                        <span class="${nameColor} text-sm sm:text-base tracking-wide">${s.name}</span>
+                        ${allBadges}
+                    </div>
+                </div>
+                <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm shrink-0">
+                    ${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span>
+                </div>
+            </div>`; 
         }).join(''); 
         
         let personalMsg = ""; 
