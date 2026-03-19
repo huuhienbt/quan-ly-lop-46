@@ -1971,3 +1971,159 @@ window.thuongNong = async function(studentId, studentName, currentScore) {
         document.getElementById('loader').style.display = 'none';
     }
 };
+// ==========================================
+// 13. HỒ SƠ CÁ NHÂN & ĐỔI ẢNH ĐẠI DIỆN (BẢN CHUẨN ĐỒNG BỘ ĐÁM MÂY)
+// ==========================================
+
+// Hàm tìm ảnh đại diện từ mạng Google Sheets
+window.layAnhDaiDien = function(studentId, studentName) {
+    let avatarLogs = Data.log.filter(l => String(l.id) === String(studentId) && l.subject === "Avatar");
+    if (avatarLogs.length > 0) {
+        avatarLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+        return avatarLogs[0].details; 
+    }
+    return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(studentName) + '&background=random&color=fff&size=200&bold=true';
+};
+
+window.moHoSoCaNhan = function() {
+    if(!currentUser) return showLogin();
+    closeMenu();
+    
+    // Lấy ảnh từ mạng
+    let savedAvatar = window.layAnhDaiDien(currentUser.id, currentUser.name);
+    
+    // Load ảnh đó lên thanh menu góc phải luôn
+    let btnAvatar = document.getElementById('btnHeaderAvatar');
+    let headerImg = document.getElementById('headerAvatarImg');
+    if(btnAvatar && headerImg) {
+        btnAvatar.classList.remove('hidden');
+        headerImg.src = savedAvatar;
+    }
+    
+    // Tính toán danh hiệu
+    let studentTitles = window.calculateTitle ? window.calculateTitle(currentUser) : "";
+    if(!studentTitles) studentTitles = `<span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-lg font-bold">Chiến binh mới</span>`;
+
+    document.getElementById('content').innerHTML = `
+        <div class="flex items-center mb-6 fade-in">
+            <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-xl text-indigo-600 uppercase">HỒ SƠ CỦA TÔI</h2>
+        </div>
+        
+        <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in max-w-sm mx-auto relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+            
+            <div class="relative z-10 mt-10">
+                <div class="relative inline-block group cursor-pointer" onclick="window.doiAnhDaiDien()" title="Bấm để đổi ảnh đại diện">
+                    <img id="myAvatarImg" src="${savedAvatar}" class="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
+                    <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                
+                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${currentUser.name}</h3>
+                <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
+                
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex justify-around shadow-inner">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng điểm</p>
+                        <p class="text-2xl font-black text-indigo-600">${currentUser.score || 0}</p>
+                    </div>
+                    <div class="w-px bg-slate-200"></div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vé làm lại</p>
+                        <p class="text-2xl font-black text-orange-500">${localStorage.getItem('redo_tokens_'+currentUser.id) || 0}</p>
+                    </div>
+                </div>
+                
+                <button onclick="window.doiAnhDaiDien()" class="w-full mt-6 bg-indigo-50 text-indigo-600 font-bold py-3 rounded-xl border border-indigo-100 hover:bg-indigo-600 hover:text-white transition shadow-sm btn-3d">
+                    <i class="fas fa-upload mr-1"></i> Tải ảnh từ máy lên
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+window.doiAnhDaiDien = function() {
+    const input = document.createElement('input'); 
+    input.type = 'file'; 
+    input.accept = 'image/*'; 
+    input.onchange = async (e) => { 
+        const file = e.target.files[0]; 
+        if (!file) return; 
+        
+        document.getElementById('loader').style.display = 'flex'; 
+        let loaderText = document.querySelector('#loader p');
+        if(loaderText) loaderText.innerText = "ĐANG TỐI ƯU & LƯU ẢNH LÊN MẠNG...";
+        
+        const reader = new FileReader(); 
+        reader.onload = function(event) { 
+            const img = new Image(); 
+            img.onload = async function() { 
+                const canvas = document.createElement('canvas'); 
+                
+                const size = Math.min(img.width, img.height);
+                const startX = (img.width - size) / 2;
+                const startY = (img.height - size) / 2;
+                
+                const MAX_SIZE = 300; 
+                canvas.width = MAX_SIZE; 
+                canvas.height = MAX_SIZE; 
+                
+                const ctx = canvas.getContext('2d'); 
+                ctx.drawImage(img, startX, startY, size, size, 0, 0, MAX_SIZE, MAX_SIZE); 
+                
+                const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1]; 
+                
+                try { 
+                    const response = await fetch(API_URL, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ action: 'upload_image', data: { filename: file.name, mimeType: 'image/jpeg', base64: base64Data } }) 
+                    }); 
+                    const result = await response.json(); 
+                    
+                    if(result.url) { 
+                        await fetch(API_URL, { 
+                            method: 'POST', 
+                            body: JSON.stringify({ 
+                                action: 'nop_bai', 
+                                data: { 
+                                    id_hs: currentUser.id, 
+                                    subject: "Avatar", 
+                                    group: "Ảnh đại diện", 
+                                    score: 0, 
+                                    score_earned: 0, 
+                                    details: result.url 
+                                } 
+                            }) 
+                        });
+                        
+                        Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.subject === "Avatar")); 
+                        Data.log.push({
+                            id: currentUser.id, subject: "Avatar", group: "Ảnh đại diện", 
+                            score: 0, real_added: 0, time: new Date().toISOString(), details: result.url
+                        });
+                        
+                        // Cập nhật ảnh ở cả 2 nơi (Hồ sơ và Góc phải)
+                        let avatarImg = document.getElementById('myAvatarImg');
+                        if(avatarImg) avatarImg.src = result.url;
+                        let headerImg = document.getElementById('headerAvatarImg');
+                        if(headerImg) headerImg.src = result.url;
+                        
+                        alert('Tuyệt vời! Ảnh đại diện của con đã được đồng bộ lên hệ thống.');
+                    } else { 
+                        alert("Lỗi! Không lấy được link ảnh từ Server."); 
+                    } 
+                } catch(err) { 
+                    alert("Lỗi mạng khi tải ảnh lên!"); 
+                } finally {
+                    document.getElementById('loader').style.display = 'none'; 
+                    if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+                }
+            }; 
+            img.src = event.target.result; 
+        }; 
+        reader.readAsDataURL(file); 
+    }; 
+    input.click(); 
+};
