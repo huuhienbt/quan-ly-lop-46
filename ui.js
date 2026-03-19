@@ -16,30 +16,34 @@ function veTrangChu() {
 function setupUI() {
     document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('loader').style.display='none'; document.getElementById('mainApp').classList.remove('hidden');
     const headerNameEl = document.getElementById('headerName'); const badgeDiv = headerNameEl ? headerNameEl.closest('[onclick]') : null; 
-    const roleTextEl = badgeDiv ? badgeDiv.querySelector('p') : null; const avatarBox = badgeDiv ? badgeDiv.querySelector('div.bg-white') : null; const logoutBtn = document.querySelector('[onclick="window.logout()"]');
+    const roleTextEl = badgeDiv ? badgeDiv.querySelector('p') : null; const logoutBtn = document.querySelector('[onclick="window.logout()"]');
 
-    // Lấy 2 thành phần của vòng tròn góc phải
     let menuIcon = document.getElementById('menuIcon');
     let headerAvatarImg = document.getElementById('headerAvatarImg');
+    let menuSideAvatar = document.getElementById('menuSideAvatar'); // Bổ sung ảnh trong menu
 
     if(currentUser) {
         if(headerNameEl) headerNameEl.innerText = currentUser.role === 'admin' ? 'GVCN' : currentUser.name.split(" ").pop();
         document.getElementById('menuName').innerText = currentUser.name; 
         if(badgeDiv) badgeDiv.setAttribute('onclick', 'toggleMenu()');
         if(roleTextEl) { roleTextEl.style.display = 'block'; roleTextEl.innerText = currentUser.role === 'admin' ? 'GVCN' : 'HỌC SINH'; }
-        if(avatarBox) { avatarBox.style.display = 'flex'; avatarBox.innerHTML = currentUser.role === 'admin' ? '<i class="fas fa-chalkboard-teacher text-blue-600"></i>' : '<i class="fas fa-user-graduate text-blue-600"></i>'; }
         if(logoutBtn) logoutBtn.style.display = '';
 
-        // XỬ LÝ: Hiện ảnh đại diện, giấu icon 3 gạch
-        if(headerAvatarImg && menuIcon) {
-            if (currentUser.role === 'student' && window.layAnhDaiDien) {
-                headerAvatarImg.src = window.layAnhDaiDien(currentUser.id, currentUser.name);
+        // ĐỔ ĐỮ LIỆU ẢNH VÀO CẢ 2 NƠI (GÓC PHẢI & TRONG MENU TRƯỢT)
+        if (currentUser.role === 'student' && window.layAnhDaiDien) {
+            let avatarUrl = window.layAnhDaiDien(currentUser.id, currentUser.name);
+            
+            if(headerAvatarImg && menuIcon) {
+                headerAvatarImg.src = avatarUrl;
                 headerAvatarImg.classList.remove('hidden');
                 menuIcon.classList.add('hidden');
-            } else {
-                headerAvatarImg.classList.add('hidden');
-                menuIcon.classList.remove('hidden');
             }
+            if(menuSideAvatar) {
+                menuSideAvatar.innerHTML = `<img src="${avatarUrl}" class="w-full h-full object-cover">`;
+            }
+        } else if (currentUser.role === 'admin') {
+            if(headerAvatarImg && menuIcon) { headerAvatarImg.classList.add('hidden'); menuIcon.classList.remove('hidden'); }
+            if(menuSideAvatar) menuSideAvatar.innerHTML = `<i class="fas fa-chalkboard-teacher text-blue-600"></i>`;
         }
 
         if(currentUser.role === 'admin') {
@@ -64,13 +68,10 @@ function setupUI() {
         }
     } else {
         if(headerNameEl) headerNameEl.innerText = "Đăng nhập"; document.getElementById('menuName').innerText = "Khách"; 
-        if(badgeDiv) badgeDiv.setAttribute('onclick', 'window.showLogin()'); if(roleTextEl) roleTextEl.style.display = 'none'; if(avatarBox) avatarBox.style.display = 'none'; if(logoutBtn) logoutBtn.style.display = 'none';
+        if(badgeDiv) badgeDiv.setAttribute('onclick', 'window.showLogin()'); if(roleTextEl) roleTextEl.style.display = 'none'; if(logoutBtn) logoutBtn.style.display = 'none';
         
-        // Khi chưa đăng nhập, chỉ hiện nút 3 gạch
-        if(headerAvatarImg && menuIcon) {
-            headerAvatarImg.classList.add('hidden');
-            menuIcon.classList.remove('hidden');
-        }
+        if(headerAvatarImg && menuIcon) { headerAvatarImg.classList.add('hidden'); menuIcon.classList.remove('hidden'); }
+        if(menuSideAvatar) menuSideAvatar.innerHTML = `<i class="fas fa-user-graduate text-blue-600"></i>`;
 
         document.getElementById('menuStudent').innerHTML = `
             <div onclick="window.showLogin()" class="p-4 bg-blue-50 text-blue-700 rounded-xl font-black flex items-center gap-3 cursor-pointer mb-3 shadow-sm hover:bg-blue-100 transition border border-blue-100"><i class="fas fa-sign-in-alt w-6 text-xl"></i> ĐĂNG NHẬP NGAY</div>
