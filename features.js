@@ -1922,6 +1922,7 @@ window.chuyenTrangQuanLy = async function() {
 };
 
 // HÀM MỚI: Popup xem hồ sơ học sinh dành riêng cho Thầy Hiển
+// HÀM MỚI: Popup xem hồ sơ học sinh (ĐÃ NÂNG CẤP CHO PHÉP GVCN ĐỔI ẢNH)
 window.viewProfile = function(studentId) {
     let s = Data.hs.find(x => String(x.id) === String(studentId));
     if (!s) return;
@@ -1939,7 +1940,13 @@ window.viewProfile = function(studentId) {
             <button onclick="document.getElementById('profileModalAdmin').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/20 text-white rounded-full hover:bg-red-500 transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
             
             <div class="relative z-10 mt-6">
-                <img src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white">
+                <div class="relative inline-block group cursor-pointer" onclick="window.gvDoiAnhHocSinh('${s.id}', '${s.name.replace(/'/g, "\\'")}')" title="Bấm để đổi ảnh cho học sinh này">
+                    <img id="adminViewAvatarImg" src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
+                    <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                
                 <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${s.name}</h3>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${s.chucvu || 'Học sinh'}</p>
                 <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
@@ -1966,6 +1973,93 @@ window.viewProfile = function(studentId) {
         </div>
     `;
     document.body.appendChild(overlay);
+};
+
+// HÀM MỚI: GVCN thao tác tải ảnh lên cho học sinh
+window.gvDoiAnhHocSinh = function(studentId, studentName) {
+    const input = document.createElement('input'); 
+    input.type = 'file'; 
+    input.accept = 'image/*'; 
+    input.onchange = async (e) => { 
+        const file = e.target.files[0]; 
+        if (!file) return; 
+        
+        document.getElementById('loader').style.display = 'flex'; 
+        let loaderText = document.querySelector('#loader p');
+        if(loaderText) loaderText.innerText = `ĐANG LƯU ẢNH CHO ${studentName.toUpperCase()}...`;
+        
+        const reader = new FileReader(); 
+        reader.onload = function(event) { 
+            const img = new Image(); 
+            img.onload = async function() { 
+                const canvas = document.createElement('canvas'); 
+                
+                const size = Math.min(img.width, img.height);
+                const startX = (img.width - size) / 2;
+                const startY = (img.height - size) / 2;
+                
+                const MAX_SIZE = 300; 
+                canvas.width = MAX_SIZE; 
+                canvas.height = MAX_SIZE; 
+                
+                const ctx = canvas.getContext('2d'); 
+                ctx.drawImage(img, startX, startY, size, size, 0, 0, MAX_SIZE, MAX_SIZE); 
+                
+                const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1]; 
+                
+                try { 
+                    const response = await fetch(API_URL, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ action: 'upload_image', data: { filename: file.name, mimeType: 'image/jpeg', base64: base64Data } }) 
+                    }); 
+                    const result = await response.json(); 
+                    
+                    if(result.url) { 
+                        // Lưu link ảnh vào Sheets với tên của học sinh đó
+                        await fetch(API_URL, { 
+                            method: 'POST', 
+                            body: JSON.stringify({ 
+                                action: 'nop_bai', 
+                                data: { 
+                                    id_hs: studentId, 
+                                    subject: "Avatar", 
+                                    group: "Ảnh đại diện", 
+                                    score: 0, 
+                                    score_earned: 0, 
+                                    details: result.url 
+                                } 
+                            }) 
+                        });
+                        
+                        Data.log = Data.log.filter(l => !(String(l.id) === String(studentId) && l.subject === "Avatar")); 
+                        Data.log.push({
+                            id: studentId, subject: "Avatar", group: "Ảnh đại diện", 
+                            score: 0, real_added: 0, time: new Date().toISOString(), details: result.url
+                        });
+                        
+                        alert(`Đã đổi ảnh đại diện thành công cho em ${studentName}!`);
+                        
+                        // Tắt khung hồ sơ hiện tại và mở lại bảng quản lý để load ảnh mới
+                        if (document.getElementById('profileModalAdmin')) {
+                            document.getElementById('profileModalAdmin').remove();
+                        }
+                        window.chuyenTrangQuanLy();
+                        
+                    } else { 
+                        alert("Lỗi! Không lấy được link ảnh từ Server."); 
+                    } 
+                } catch(err) { 
+                    alert("Lỗi mạng khi tải ảnh lên!"); 
+                } finally {
+                    document.getElementById('loader').style.display = 'none'; 
+                    if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+                }
+            }; 
+            img.src = event.target.result; 
+        }; 
+        reader.readAsDataURL(file); 
+    }; 
+    input.click(); 
 };
 
 // Hàm xử lý Thưởng Nóng trực tiếp từ Web (ĐÃ FIX LỖI TẠO DÒNG MỚI + BỔ SUNG SCORE)
@@ -2164,7 +2258,7 @@ window.doiAnhDaiDien = function() {
                         if(headerImg) headerImg.src = result.url;
                         let menuSideImg = document.querySelector('#menuSideAvatar img');
                         if(menuSideImg) menuSideImg.src = result.url;
-                        
+
                         alert('Tuyệt vời! Ảnh đại diện của con đã được đồng bộ lên hệ thống.');
                     } else { 
                         alert("Lỗi! Không lấy được link ảnh từ Server."); 
