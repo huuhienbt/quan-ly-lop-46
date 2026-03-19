@@ -2157,11 +2157,13 @@ window.doiAnhDaiDien = function() {
                             score: 0, real_added: 0, time: new Date().toISOString(), details: result.url
                         });
                         
-                        // Cập nhật ảnh ở cả 2 nơi (Hồ sơ và Góc phải)
+                        // Cập nhật ảnh ở cả 3 nơi lập tức
                         let avatarImg = document.getElementById('myAvatarImg');
                         if(avatarImg) avatarImg.src = result.url;
                         let headerImg = document.getElementById('headerAvatarImg');
                         if(headerImg) headerImg.src = result.url;
+                        let menuSideImg = document.querySelector('#menuSideAvatar img');
+                        if(menuSideImg) menuSideImg.src = result.url;
                         
                         alert('Tuyệt vời! Ảnh đại diện của con đã được đồng bộ lên hệ thống.');
                     } else { 
