@@ -1830,6 +1830,9 @@ document.addEventListener("copy", (e) => {
 // ==========================================
 // 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ CẤU TRÚC ĐIỂM & THƯỞNG NÓNG)
 // ==========================================
+// ==========================================
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ CẤU TRÚC ĐIỂM & THƯỞNG NÓNG)
+// ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
     if (!(await window.loadAllDataOnce())) return;
@@ -1865,11 +1868,14 @@ window.chuyenTrangQuanLy = async function() {
     studentStats.sort((a,b) => b.currentScore - a.currentScore);
 
     studentStats.forEach((s) => {
+        // Lấy ảnh đại diện mạng của học sinh
+        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+
         html += `
         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
             <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center font-black text-xl shadow-inner"><i class="fas fa-user-graduate"></i></div>
+                    <img src="${avatarUrl}" class="w-12 h-12 rounded-full object-cover shadow-inner border-2 border-indigo-100">
                     <div>
                         <div class="font-black text-slate-700 text-lg">${s.name}</div>
                         <div class="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 inline-block px-2 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
@@ -1913,6 +1919,53 @@ window.chuyenTrangQuanLy = async function() {
     });
 
     document.getElementById('content').innerHTML = html + "</div>"; 
+};
+
+// HÀM MỚI: Popup xem hồ sơ học sinh dành riêng cho Thầy Hiển
+window.viewProfile = function(studentId) {
+    let s = Data.hs.find(x => String(x.id) === String(studentId));
+    if (!s) return;
+    
+    let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+    let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
+    let currentScore = Number(s.score) || 0;
+    
+    let overlay = document.createElement('div'); 
+    overlay.id = "profileModalAdmin"; 
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
+    overlay.innerHTML = `
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center relative animate-[cascadeDrop_0.4s_ease-out_forwards] overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+            <button onclick="document.getElementById('profileModalAdmin').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/20 text-white rounded-full hover:bg-red-500 transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
+            
+            <div class="relative z-10 mt-6">
+                <img src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white">
+                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${s.name}</h3>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${s.chucvu || 'Học sinh'}</p>
+                <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
+                
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner mb-6 text-left">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-trophy text-yellow-500 mr-1"></i> Tổng điểm</span>
+                        <span class="text-lg font-black text-indigo-600">${currentScore}</span>
+                    </div>
+                    <div class="w-full h-px bg-slate-200 mb-3"></div>
+                    <div>
+                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1"><i class="fas fa-phone-alt text-green-500 mr-1"></i> SĐT Phụ huynh</span>
+                        <div class="flex justify-between text-sm font-bold text-slate-600">
+                            <span>Bố: ${s.fatherPhone || '---'}</span>
+                            <span>Mẹ: ${s.motherPhone || '---'}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button onclick="document.getElementById('profileModalAdmin').remove()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 hover:text-slate-800 transition shadow-sm">
+                    ĐÓNG HỒ SƠ
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
 };
 
 // Hàm xử lý Thưởng Nóng trực tiếp từ Web (ĐÃ FIX LỖI TẠO DÒNG MỚI + BỔ SUNG SCORE)
