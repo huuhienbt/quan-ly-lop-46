@@ -39,7 +39,8 @@ function setupUI() {
             document.getElementById('menuTeacher').classList.remove('hidden'); document.getElementById('menuStudent').classList.add('hidden');
         } else {
             document.getElementById('menuStudent').innerHTML = `
-                <div onclick="window.viewProfile('${currentUser.id}')" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-id-card text-yellow-600 w-6"></i> Hồ sơ cá nhân</div>
+                <div onclick="if(window.moHoSoCaNhan) window.moHoSoCaNhan()" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-yellow-600 transition"><i class="fas fa-id-card text-yellow-500 w-6 text-xl"></i> Hồ sơ cá nhân</div>
+                <div class="border-b border-slate-100 my-1"></div>
                 <div onclick="window.moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư</div>
                 <div onclick="window.moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-500 w-6"></i> Lời muốn nói</div>
             `;
@@ -57,7 +58,6 @@ function setupUI() {
         document.getElementById('menuStudent').classList.remove('hidden'); document.getElementById('menuTeacher').classList.add('hidden');
     }
 }
-
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
