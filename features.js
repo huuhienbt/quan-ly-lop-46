@@ -1419,6 +1419,9 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
 // ==========================================
 // 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (GIỚI HẠN 10 THƯ/NGÀY BẠN BÈ)
 // ==========================================
+// ==========================================
+// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (BẢN VƯỢT TƯỜNG LỬA GOOGLE)
+// ==========================================
 window.moHopThuBiMat = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu();
@@ -1426,17 +1429,13 @@ window.moHopThuBiMat = async function() {
 
     let today = new Date();
 
-    // 1. TÌM THƯ BẠN BÈ & THẦY HIỂN GỬI (Đã gộp chung bằng cờ TeacherMessage)
-    let receivedMsgs = Data.log.filter(l => 
-        (l.subject === "PeerMessage" && String(l.group) === String(currentUser.id)) ||
-        (l.subject === "TeacherMessage" && String(l.id) === String(currentUser.id))
-    );
+    // 1. Tìm thư bạn bè & Thầy Hiển gửi cho mình
+    let receivedMsgs = Data.log.filter(l => l.subject === "PeerMessage" && String(l.group) === String(currentUser.id));
     receivedMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
 
     let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
     let optionsHtml = studentsList.map(s => `<option value="${s.id}">👦👧 Bạn: ${s.name}</option>`).join('');
 
-    // 2. Kiểm tra số lượng thư đã gửi cho bạn bè hôm nay
     let sentToday = Data.log.filter(l => {
         if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
         let d = new Date(l.time);
@@ -1448,12 +1447,14 @@ window.moHopThuBiMat = async function() {
     let messagesLeft = MAX_PEER_MESSAGES - sentToday.length;
     let canSend = messagesLeft > 0;
 
-    // 3. Render danh sách hòm thư đến
     let inboxHtml = receivedMsgs.length === 0 
         ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có ai gửi thư cho con.</p></div>` 
         : receivedMsgs.map(msg => {
-            // Nhận diện thư của Thầy
-            let isTeacher = msg.subject === "TeacherMessage"; 
+            // MẬT MÃ NHẬN DIỆN THƯ CỦA THẦY HIỂN
+            let contentStr = msg.details || "";
+            let isTeacher = contentStr.startsWith("[GVCN] ");
+            let displayContent = isTeacher ? contentStr.replace("[GVCN] ", "") : contentStr;
+
             let sender = Data.hs.find(s => String(s.id) === String(msg.id));
             let senderName = isTeacher ? "👨‍🏫 Thầy Hiển (GVCN)" : (sender ? sender.name : "Một người bạn");
             let timeSent = new Date(msg.time).toLocaleString('vi-VN');
@@ -1483,14 +1484,13 @@ window.moHopThuBiMat = async function() {
                         </div>
                         <p class="font-medium text-sm p-3 rounded-xl border relative mt-2 ${msgTheme}">
                             <i class="fas fa-caret-left absolute -left-2 top-3 text-xl drop-shadow-sm ${arrowTheme}"></i>
-                            ${msg.details}
+                            ${displayContent}
                         </p>
                     </div>
                 </div>
             `;
         }).join('');
 
-    // 4. Render form gửi thư
     let sendFormHtml = canSend ? `
         <div class="flex-1 flex flex-col relative z-10 space-y-4">
             <div>
@@ -1503,17 +1503,14 @@ window.moHopThuBiMat = async function() {
                     ${optionsHtml}
                 </select>
             </div>
-
             <div class="flex-1 flex flex-col">
                 <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
                 <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Viết điều con muốn nói vào đây..."></textarea>
             </div>
-            
             <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
                 <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
                 <span class="font-bold text-slate-600 text-sm">Gửi giấu tên <span class="text-pink-400 text-xs">(Chỉ áp dụng gửi cho Thầy)</span></span>
             </label>
-            
             <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-rocket mr-2"></i> GỬI THƯ ĐI</button>
         </div>
     ` : `
@@ -1524,17 +1521,14 @@ window.moHopThuBiMat = async function() {
                     <option value="gvcn" class="font-black text-pink-600">👨‍🏫 Thầy Hiển (GVCN) - Không giới hạn</option>
                 </select>
             </div>
-
             <div class="flex-1 flex flex-col">
                 <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
                 <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Con đã xài hết lượt gửi cho bạn bè hôm nay. Form này hiện chỉ để gửi cho Thầy Hiển thôi nhé..."></textarea>
             </div>
-            
             <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
                 <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
                 <span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span>
             </label>
-            
             <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button>
             <p class="text-xs text-center text-red-500 font-bold mt-2"><i class="fas fa-info-circle"></i> Con đã gửi tối đa 10 bức thư cho bạn bè hôm nay. Mai quay lại nhé!</p>
         </div>
@@ -1546,10 +1540,8 @@ window.moHopThuBiMat = async function() {
             <div class="bg-[#fff0f5] p-5 sm:p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 flex flex-col h-[550px] relative overflow-hidden">
                 <i class="fas fa-heart absolute -right-4 -bottom-4 text-8xl text-pink-500 opacity-5 pointer-events-none"></i>
                 <h3 class="text-lg font-black text-pink-600 mb-4 border-b border-pink-200 pb-3 flex items-center relative z-10"><i class="fas fa-paper-plane mr-2 text-xl"></i>Soạn thư mới</h3>
-                
                 ${sendFormHtml}
             </div>
-
             <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col h-[550px]">
                 <h3 class="text-lg font-black text-slate-800 mb-4 border-b border-slate-50 pb-3 flex items-center"><i class="fas fa-envelope-open-text text-pink-500 mr-2 text-xl"></i>Hòm thư của con <span class="ml-auto bg-pink-100 text-pink-600 text-[10px] font-bold px-2 py-1 rounded-full">${receivedMsgs.length} thư</span></h3>
                 <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
@@ -1560,11 +1552,9 @@ window.moHopThuBiMat = async function() {
     `;
 };
 
-// Hàm phụ: Bấm nút "Trả lời" thì tự động nhảy tên lên ô Chọn người nhận
 window.chonNguoiNhan = function(id) {
     let select = document.getElementById('mailReceiver');
     if(select) {
-        // Kiểm tra xem ID có trong danh sách select không
         let exists = false;
         for(let i=0; i<select.options.length; i++) {
             if(select.options[i].value === id) { exists = true; break; }
@@ -1580,10 +1570,13 @@ window.chonNguoiNhan = function(id) {
 
 window.guiThuBiMat = async function() {
     let receiverId = document.getElementById('mailReceiver').value;
-    const content = document.getElementById('mailContent').value.trim(); 
+    let content = document.getElementById('mailContent').value.trim(); 
     const isAnon = document.getElementById('mailAnon').checked; 
     
     if(!content) return alert("Con chưa viết gì cả!"); 
+
+    // Bẻ khóa an toàn: Ngăn chặn học sinh gõ chữ [GVCN] để giả mạo thầy
+    if (content.startsWith("[GVCN]")) content = content.replace(/\[GVCN\]/g, "[HS]");
 
     if (receiverId !== 'gvcn') {
         let today = new Date();
@@ -1613,7 +1606,7 @@ window.guiThuBiMat = async function() {
     } catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
 
-// HÀM MỚI DÀNH CHO GVCN: Gửi thư thẳng cho 1 học sinh
+// Động cơ xử lý lệnh Gửi thư của Giáo Viên (LÁCH LUẬT BẢO MẬT THÀNH CÔNG)
 window.gvTraLoiThu = async function(studentId, studentName) {
     let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
     if (!replyContent || !replyContent.trim()) return;
@@ -1621,15 +1614,18 @@ window.gvTraLoiThu = async function(studentId, studentName) {
     document.getElementById('loader').style.display = 'flex';
     try {
         let submitTime = new Date().toISOString();
+        let safeContent = "[GVCN] " + replyContent.trim();
+        
+        // Mượn ID của chính học sinh đó để gửi (Google Sheets sẽ cho qua)
         await fetch(API_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
                 action: 'nop_bai', 
-                data: { id_hs: "GVCN", subject: "PeerMessage", group: studentId, score: 0, score_earned: 0, details: replyContent.trim() } 
+                data: { id_hs: studentId, subject: "PeerMessage", group: studentId, score: 0, score_earned: 0, details: safeContent } 
             }) 
         });
         
-        Data.log.push({ id: "GVCN", subject: "PeerMessage", group: studentId, score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
+        Data.log.push({ id: studentId, subject: "PeerMessage", group: studentId, score: 0, real_added: 0, time: submitTime, details: safeContent });
         alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
     } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
