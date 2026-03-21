@@ -1429,10 +1429,7 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
     }
 };
 
-// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (BẢN VƯỢT TƯỜNG LỬA CHUẨN 100%)
-// ==========================================
-// ==========================================
-// 7. HÒM THƯ TÍCH HỢP (BẢN CHUẨN KẾT HỢP DATA INTERCEPTOR)
+// 7. HÒM THƯ TÍCH HỢP (BẢN CHUẨN ĐỌC DỮ LIỆU TỪ NHẬT KÝ)
 // ==========================================
 window.moHopThuBiMat = async function() {
     if(!currentUser) return showLogin(); 
@@ -1443,7 +1440,11 @@ window.moHopThuBiMat = async function() {
 
     let today = new Date();
 
-    let receivedMsgs = Data.log.filter(l => l.subject === "PeerMessage" && String(l.group) === String(currentUser.id));
+    // 1. TÌM THƯ BẠN BÈ GỬI (PeerMessage) VÀ THƯ THẦY HIỂN GỬI (TeacherReply)
+    let receivedMsgs = Data.log.filter(l => 
+        (l.subject === "PeerMessage" && String(l.group) === String(currentUser.id)) ||
+        (l.subject === "TeacherReply" && String(l.id) === String(currentUser.id)) // Khớp chuẩn xác với mã HS ở Cột A
+    );
     receivedMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
 
     let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
@@ -1462,8 +1463,8 @@ window.moHopThuBiMat = async function() {
     let inboxHtml = receivedMsgs.length === 0 
         ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có ai gửi thư cho con.</p></div>` 
         : receivedMsgs.map(msg => {
-            // CHỖ SỬA QUAN TRỌNG: Bắt trực tiếp ID "GVCN" không cần thông qua danh sách học sinh nữa
-            let isTeacher = (String(msg.id) === "GVCN");
+            // Phân biệt thư của Thầy hay của Bạn
+            let isTeacher = (msg.subject === "TeacherReply"); 
             let sender = Data.hs.find(s => String(s.id) === String(msg.id));
             let senderName = isTeacher ? "👨‍🏫 Thầy Hiển (GVCN)" : (sender ? sender.name : "Một người bạn");
             let timeSent = new Date(msg.time).toLocaleString('vi-VN');
@@ -1472,7 +1473,7 @@ window.moHopThuBiMat = async function() {
                 ? 'https://ui-avatars.com/api/?name=Thầy+Hiển&background=0D8ABC&color=fff' 
                 : (window.layAnhDaiDien ? window.layAnhDaiDien(msg.id, senderName) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(senderName) + '&background=random&color=fff');
             
-            let replyId = isTeacher ? 'gvcn' : msg.id; 
+            let replyId = isTeacher ? 'gvcn' : msg.id;
             let btnReply = `<button onclick="window.chonNguoiNhan('${replyId}')" class="text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm border ${isTeacher ? 'bg-blue-100 text-blue-600 hover:bg-blue-500 border-blue-200' : 'bg-pink-100 text-pink-600 hover:bg-pink-500 border-pink-200'} hover:text-white"><i class="fas fa-reply"></i> Trả lời</button>`;
 
             let boxTheme = isTeacher ? 'bg-blue-50 border-blue-200' : 'bg-white border-pink-100';
@@ -1612,6 +1613,7 @@ window.guiThuBiMat = async function() {
 };
 
 // CHỖ SỬA QUAN TRỌNG: ÉP HỆ THỐNG GỬI ID LÀ "GVCN" XUYÊN TƯỜNG LỬA
+// Động cơ xử lý lệnh Gửi thư của Giáo Viên (GHI CHUẨN ID VÀO NHẬT KÝ LÀM BÀI)
 window.gvTraLoiThu = async function(studentId, studentName) {
     let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
     if (!replyContent || !replyContent.trim()) return;
@@ -1620,15 +1622,23 @@ window.gvTraLoiThu = async function(studentId, studentName) {
     try {
         let submitTime = new Date().toISOString();
         
+        // Tuyệt chiêu: Lấy chính ID của học sinh đó để điền vào Cột A (Tránh lỗi undefined)
         await fetch(API_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
                 action: 'nop_bai', 
-                data: { id_hs: "GVCN", subject: "PeerMessage", group: studentId, score: 0, score_earned: 0, details: replyContent.trim() } 
+                data: { 
+                    id_hs: studentId,            // Cột A: Điền đúng mã HS (vd: HS19)
+                    subject: "TeacherReply",     // Cột B: Nhãn nhận diện thư của Thầy
+                    group: "GVCN",               // Cột C
+                    score: 0, 
+                    score_earned: 0, 
+                    details: replyContent.trim() // Nội dung thư
+                } 
             }) 
         });
         
-        Data.log.push({ id: "GVCN", subject: "PeerMessage", group: studentId, score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
+        Data.log.push({ id: studentId, subject: "TeacherReply", group: "GVCN", score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
         alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
     } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
