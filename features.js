@@ -1570,7 +1570,7 @@ window.moGameBaoVeTraiDat = async function() {
     });
     
     if (daChoiGameHomNay) {
-        alert("🛡️ HỆ THỐNG BẢO MẬT:\n\nTrái Đất hôm nay đã được an toàn nhờ công của con! Bây giờ là lúc dành thời gian ôn tập bài học. Hẹn gặp lại chiến binh nhí vào ngày mai nha!");
+        alert("Trái Đất hôm nay đã được an toàn nhờ công của con! Bây giờ là lúc dành thời gian ôn tập bài học. Hẹn gặp lại chiến binh nhí vào ngày mai nha!");
         if (window.veTrangChu) veTrangChu();
         return; 
     }
