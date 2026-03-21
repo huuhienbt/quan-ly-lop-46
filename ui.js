@@ -194,6 +194,7 @@ async function xoaThongBao(id) {
 // ========================================================
 // NÂNG CẤP QUẢN LÝ THƯ TÍCH HỢP (GÁN Ở CUỐI FILE UI.JS)
 // ========================================================
+// HÀM QUẢN LÝ THƯ TÍCH HỢP (GỒM THƯ GỬI GVCN VÀ THƯ GIAO LƯU)
 window.moQuanLyThu = async function() { 
     closeMenu(); 
     document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải toàn bộ thư từ hệ thống...</p></div>`; 
@@ -216,7 +217,6 @@ window.moQuanLyThu = async function() {
                 let senderDisplay = isAnon ? `<span class="text-purple-600"><i class="fas fa-user-secret"></i> Ẩn danh (Thực tế: ${l.name})</span>` : `<span class="text-blue-600"><i class="fas fa-user"></i> ${l.name}</span>`; 
                 let anonBadge = isAnon ? `<span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-1 rounded ml-2">THƯ ẨN DANH</span>` : '';
                 
-                // Nút trả lời của GVCN
                 let btnReply = `<button onclick="window.gvTraLoiThu('${l.id}', '${l.name.replace(/'/g, "\\'")}')" class="text-[11px] bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-200"><i class="fas fa-reply mr-1"></i> Trả lời em này</button>`;
 
                 htmlToTeacher += `<div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 ${isAnon ? 'border-purple-400' : 'border-pink-400'} hover:shadow-md transition relative">
@@ -233,8 +233,8 @@ window.moQuanLyThu = async function() {
             htmlToTeacher += `</div>`;
         }
 
-        // 2. TẢI THƯ HỌC SINH GIAO LƯU 
-        let peerMsgs = Data.log.filter(l => l.subject === "PeerMessage" && l.id !== "GVCN");
+        // 2. TẢI THƯ HỌC SINH GIAO LƯU (Đã lọc bỏ thư do GVCN gửi)
+        let peerMsgs = Data.log.filter(l => l.subject === "PeerMessage" && !(l.details || "").startsWith("[GVCN]"));
         peerMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
 
         let htmlPeer = "";
@@ -250,7 +250,6 @@ window.moQuanLyThu = async function() {
                 
                 let timeSent = ""; try { let d = new Date(msg.time); timeSent = isNaN(d) ? msg.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = msg.time; }
                 
-                // Nút Nhắc nhở/Trả lời cho học sinh đang giao lưu
                 let btnReplyGV = `<button onclick="window.gvTraLoiThu('${msg.id}', '${senderName.replace(/'/g, "\\'")}')" class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1.5 rounded-lg hover:bg-orange-600 hover:text-white transition shadow-sm border border-orange-200 mt-2"><i class="fas fa-bullhorn mr-1"></i> Nhắc nhở / Trả lời</button>`;
 
                 htmlPeer += `
