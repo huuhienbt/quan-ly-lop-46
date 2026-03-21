@@ -902,7 +902,7 @@ window.moVongQuay = async function() {
     });
     
     if (daQuayHomNay) {
-        alert("Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé.");
+        alert("Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé!");
         return veTrangChu();
     }
     // ------------------------------------
@@ -1545,19 +1545,23 @@ window.showHappyBirthdayUI = function() {
 };
 
 // ==========================================
-// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT 
-// ==========================================
-let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
-
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (CÓ Ổ KHÓA ĐÁM MÂY CHỐNG ĐỔI MÁY)
 // ==========================================
 // 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (CÓ BẢO MẬT CHỐNG ĐỔI MÁY)
 // ==========================================
+// ==========================================
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (CÓ Ổ KHÓA ĐÁM MÂY CHỐNG ĐỔI MÁY)
+// ==========================================
+let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
+
 window.moGameBaoVeTraiDat = async function() {
     if(!currentUser) return showLogin();
     closeMenu();
-    if (!(await window.loadAllDataOnce())) return;
 
-    // --- Ổ KHÓA BẢO MẬT CHỐNG ĐỔI MÁY ---
+    // 1. Ép hệ thống tải dữ liệu mới nhất từ Google Sheets (chống lỗi Cache)
+    if (!(await window.loadAllDataOnce(true))) return;
+
+    // 2. Ổ KHÓA BẢO MẬT: Quét trực tiếp trên máy chủ xem hôm nay có nộp điểm Game chưa
     let todayGame = new Date();
     let daChoiGameHomNay = Data.log.some(l => {
         if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
@@ -1566,11 +1570,12 @@ window.moGameBaoVeTraiDat = async function() {
     });
     
     if (daChoiGameHomNay) {
-        alert("🛡️ HỆ THỐNG BẢO MẬT: Nhiệm vụ Bảo Vệ Trái Đất hôm nay đã hoàn tất! Tàu vũ trụ đang cần bảo dưỡng, con hãy quay lại vào ngày mai nhé.");
-        return veTrangChu(); 
+        alert("🛡️ HỆ THỐNG BẢO MẬT:\n\nTrái Đất hôm nay đã được an toàn nhờ công của con! Bây giờ là lúc dành thời gian ôn tập bài học. Hẹn gặp lại chiến binh nhí vào ngày mai nha!");
+        if (window.veTrangChu) veTrangChu();
+        return; 
     }
-    // ------------------------------------
 
+    // 3. Nếu máy chủ xác nhận chưa chơi -> Cho phép vào Game
     mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true };
 
     document.getElementById('content').innerHTML = `
