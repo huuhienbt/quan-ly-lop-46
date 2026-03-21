@@ -1431,6 +1431,9 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
 
 // 7. HÒM THƯ TÍCH HỢP (BẢN CHUẨN ĐỌC DỮ LIỆU TỪ NHẬT KÝ)
 // ==========================================
+// ==========================================
+// 7. HÒM THƯ TÍCH HỢP (BẢN CHUẨN ĐỌC DỮ LIỆU TỪ NHẬT KÝ)
+// ==========================================
 window.moHopThuBiMat = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu();
@@ -1562,22 +1565,6 @@ window.moHopThuBiMat = async function() {
     `;
 };
 
-window.chonNguoiNhan = function(id) {
-    let select = document.getElementById('mailReceiver');
-    if(select) {
-        let exists = false;
-        for(let i=0; i<select.options.length; i++) {
-            if(select.options[i].value === id) { exists = true; break; }
-        }
-        if(exists) {
-            select.value = id;
-            document.getElementById('mailContent').focus();
-        } else {
-            alert("Con đã hết lượt gửi thư cho bạn bè hôm nay nên không thể trả lời bạn ngay lúc này. Hãy đợi đến ngày mai nhé!");
-        }
-    }
-};
-
 window.guiThuBiMat = async function() {
     let receiverId = document.getElementById('mailReceiver').value;
     let content = document.getElementById('mailContent').value.trim(); 
@@ -1614,6 +1601,7 @@ window.guiThuBiMat = async function() {
 
 // CHỖ SỬA QUAN TRỌNG: ÉP HỆ THỐNG GỬI ID LÀ "GVCN" XUYÊN TƯỜNG LỬA
 // Động cơ xử lý lệnh Gửi thư của Giáo Viên (GHI CHUẨN ID VÀO NHẬT KÝ LÀM BÀI)
+// Động cơ xử lý lệnh Gửi thư của Giáo Viên (GHI CHUẨN ID VÀO NHẬT KÝ LÀM BÀI)
 window.gvTraLoiThu = async function(studentId, studentName) {
     let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
     if (!replyContent || !replyContent.trim()) return;
@@ -1622,7 +1610,7 @@ window.gvTraLoiThu = async function(studentId, studentName) {
     try {
         let submitTime = new Date().toISOString();
         
-        // Tuyệt chiêu: Lấy chính ID của học sinh đó để điền vào Cột A (Tránh lỗi undefined)
+        // Tuyệt chiêu: Ép buộc ghi ID học sinh vào Cột A (tránh lỗi undefined)
         await fetch(API_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
