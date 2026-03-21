@@ -1,5 +1,6 @@
 // ==========================================
 // FILE 2: UI.JS (CHUẨN - CHỈ CHỨA GIAO DIỆN & BẢNG TIN)
+// Đã tích hợp: Avartar Menu, Nút Ra Đa, Quản lý Thư gộp chung
 // ==========================================
 
 const contentArea = document.getElementById('content');
@@ -20,7 +21,7 @@ function setupUI() {
 
     let menuIcon = document.getElementById('menuIcon');
     let headerAvatarImg = document.getElementById('headerAvatarImg');
-    let menuSideAvatar = document.getElementById('menuSideAvatar'); // Bổ sung ảnh trong menu
+    let menuSideAvatar = document.getElementById('menuSideAvatar');
 
     if(currentUser) {
         if(headerNameEl) headerNameEl.innerText = currentUser.role === 'admin' ? 'GVCN' : currentUser.name.split(" ").pop();
@@ -29,7 +30,7 @@ function setupUI() {
         if(roleTextEl) { roleTextEl.style.display = 'block'; roleTextEl.innerText = currentUser.role === 'admin' ? 'GVCN' : 'HỌC SINH'; }
         if(logoutBtn) logoutBtn.style.display = '';
 
-        // ĐỔ ĐỮ LIỆU ẢNH VÀO CẢ 2 NƠI (GÓC PHẢI & TRONG MENU TRƯỢT)
+        // ĐỔ DỮ LIỆU ẢNH VÀO CẢ 2 NƠI (GÓC PHẢI & TRONG MENU TRƯỢT)
         if (currentUser.role === 'student' && window.layAnhDaiDien) {
             let avatarUrl = window.layAnhDaiDien(currentUser.id, currentUser.name);
             
@@ -48,21 +49,22 @@ function setupUI() {
 
         if(currentUser.role === 'admin') {
             document.getElementById('menuTeacher').innerHTML = `
-                <div onclick="window.chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-users text-blue-600 w-6"></i> Quản lý Học sinh</div>
-                <div onclick="moThongBao()" class="p-3 hover:bg-orange-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-bullhorn text-orange-600 w-6"></i> Quản lý Bảng tin</div>
-                <div onclick="window.moDonTu()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư xin phép</div>
-                <div onclick="window.moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-600 w-6"></i> Thư Học Sinh</div>
-                <div onclick="window.moTienDo()" class="p-3 hover:bg-purple-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-chart-line text-purple-600 w-6"></i> Tiến độ Học tập</div>
-                <div onclick="window.quanLyNganHang('math')" class="p-3 hover:bg-indigo-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-calculator text-indigo-600 w-6"></i> Kho Toán</div>
-                <div onclick="window.quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-book text-green-600 w-6"></i> Kho Tiếng Việt</div>
+                <div onclick="window.chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-blue-600 transition"><i class="fas fa-users text-blue-500 w-6 text-xl"></i> Quản lý Học sinh</div>
+                <div onclick="moThongBao()" class="p-3 hover:bg-orange-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-orange-600 transition"><i class="fas fa-bullhorn text-orange-500 w-6 text-xl"></i> Quản lý Bảng tin</div>
+                <div onclick="if(window.moRaDaHoatDong) window.moRaDaHoatDong()" class="p-3 hover:bg-emerald-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-emerald-600 transition"><i class="fas fa-broadcast-tower text-emerald-500 w-6 text-xl"></i> Ra đa lớp học</div>
+                <div onclick="window.moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-pink-600 transition"><i class="fas fa-comment-dots text-pink-500 w-6 text-xl"></i> Quản lý Thư & Tin nhắn</div>
+                <div onclick="window.moDonTu()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-red-600 transition"><i class="fas fa-envelope-open-text text-red-500 w-6 text-xl"></i> Hộp thư xin phép</div>
+                <div onclick="window.moTienDo()" class="p-3 hover:bg-purple-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-purple-600 transition"><i class="fas fa-chart-line text-purple-500 w-6 text-xl"></i> Tiến độ Học tập</div>
+                <div onclick="window.quanLyNganHang('math')" class="p-3 hover:bg-indigo-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-indigo-600 transition"><i class="fas fa-calculator text-indigo-500 w-6 text-xl"></i> Kho Toán</div>
+                <div onclick="window.quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-green-600 transition"><i class="fas fa-book text-green-500 w-6 text-xl"></i> Kho Tiếng Việt</div>
             `;
             document.getElementById('menuTeacher').classList.remove('hidden'); document.getElementById('menuStudent').classList.add('hidden');
         } else {
             document.getElementById('menuStudent').innerHTML = `
                 <div onclick="if(window.moHoSoCaNhan) window.moHoSoCaNhan()" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-yellow-600 transition"><i class="fas fa-id-card text-yellow-500 w-6 text-xl"></i> Hồ sơ cá nhân</div>
                 <div class="border-b border-slate-100 my-1"></div>
-                <div onclick="window.moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư</div>
-                <div onclick="window.moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-500 w-6"></i> Lời muốn nói</div>
+                <div onclick="window.moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-red-600 transition"><i class="fas fa-envelope-open-text text-red-500 w-6 text-xl"></i> Hộp thư xin phép</div>
+                <div onclick="window.moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-pink-600 transition"><i class="fas fa-comment-dots text-pink-500 w-6 text-xl"></i> Lời muốn nói</div>
             `;
             document.getElementById('menuStudent').classList.remove('hidden'); document.getElementById('menuTeacher').classList.add('hidden');
         }
@@ -81,13 +83,15 @@ function setupUI() {
         document.getElementById('menuStudent').classList.remove('hidden'); document.getElementById('menuTeacher').classList.add('hidden');
     }
 }
+
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in pb-10">
             <button onclick="window.chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-users text-3xl text-blue-600"></i><span class="font-bold text-slate-700">Học sinh</span></button>
             <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Bảng tin</span></button>
+            <button onclick="if(window.moRaDaHoatDong) window.moRaDaHoatDong()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-emerald-100 flex flex-col items-center gap-3 btn-3d relative overflow-hidden"><div class="absolute inset-0 bg-emerald-50 opacity-0 hover:opacity-100 transition"></div><i class="fas fa-broadcast-tower text-3xl text-emerald-500 relative z-10 animate-pulse"></i><span class="font-bold text-slate-700 relative z-10">Ra đa lớp</span></button>
+            <button onclick="window.moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-comment-dots text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Quản lý Thư</span></button>
             <button onclick="window.moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Xin phép</span></button>
-            <button onclick="window.moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-comment-dots text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Thư HS</span></button>
             <button onclick="window.moTienDo()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-purple-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-chart-line text-3xl text-purple-600"></i><span class="font-bold text-slate-700">Tiến độ</span></button>
             <button onclick="window.quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-indigo-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700">Kho Toán</span></button>
             <button onclick="window.quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-book text-3xl text-green-600"></i><span class="font-bold text-slate-700">Kho T.Việt</span></button>
