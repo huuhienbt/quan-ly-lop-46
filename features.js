@@ -1422,6 +1422,9 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
 // ==========================================
 // 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (BẢN VƯỢT TƯỜNG LỬA GOOGLE)
 // ==========================================
+// ==========================================
+// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (BẢN VƯỢT TƯỜNG LỬA CHUẨN 100%)
+// ==========================================
 window.moHopThuBiMat = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu();
@@ -1429,13 +1432,17 @@ window.moHopThuBiMat = async function() {
 
     let today = new Date();
 
-    // 1. Tìm thư bạn bè & Thầy Hiển gửi cho mình
-    let receivedMsgs = Data.log.filter(l => l.subject === "PeerMessage" && String(l.group) === String(currentUser.id));
+    // 1. TÌM THƯ BẠN BÈ GỬI (PeerMessage) VÀ THƯ THẦY HIỂN GỬI (TeacherReply)
+    let receivedMsgs = Data.log.filter(l => 
+        (l.subject === "PeerMessage" && String(l.group) === String(currentUser.id)) ||
+        (l.subject === "TeacherReply" && String(l.id) === String(currentUser.id))
+    );
     receivedMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
 
     let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
     let optionsHtml = studentsList.map(s => `<option value="${s.id}">👦👧 Bạn: ${s.name}</option>`).join('');
 
+    // 2. Kiểm tra số lượng thư đã gửi cho bạn bè hôm nay
     let sentToday = Data.log.filter(l => {
         if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
         let d = new Date(l.time);
@@ -1447,14 +1454,12 @@ window.moHopThuBiMat = async function() {
     let messagesLeft = MAX_PEER_MESSAGES - sentToday.length;
     let canSend = messagesLeft > 0;
 
+    // 3. Render danh sách hòm thư đến
     let inboxHtml = receivedMsgs.length === 0 
         ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có ai gửi thư cho con.</p></div>` 
         : receivedMsgs.map(msg => {
-            // MẬT MÃ NHẬN DIỆN THƯ CỦA THẦY HIỂN
-            let contentStr = msg.details || "";
-            let isTeacher = contentStr.startsWith("[GVCN] ");
-            let displayContent = isTeacher ? contentStr.replace("[GVCN] ", "") : contentStr;
-
+            // Giải mã thư của Thầy
+            let isTeacher = msg.subject === "TeacherReply"; 
             let sender = Data.hs.find(s => String(s.id) === String(msg.id));
             let senderName = isTeacher ? "👨‍🏫 Thầy Hiển (GVCN)" : (sender ? sender.name : "Một người bạn");
             let timeSent = new Date(msg.time).toLocaleString('vi-VN');
@@ -1484,13 +1489,14 @@ window.moHopThuBiMat = async function() {
                         </div>
                         <p class="font-medium text-sm p-3 rounded-xl border relative mt-2 ${msgTheme}">
                             <i class="fas fa-caret-left absolute -left-2 top-3 text-xl drop-shadow-sm ${arrowTheme}"></i>
-                            ${displayContent}
+                            ${msg.details}
                         </p>
                     </div>
                 </div>
             `;
         }).join('');
 
+    // 4. Render form gửi thư
     let sendFormHtml = canSend ? `
         <div class="flex-1 flex flex-col relative z-10 space-y-4">
             <div>
