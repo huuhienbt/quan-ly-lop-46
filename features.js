@@ -1,4 +1,29 @@
 // ==========================================
+// =======================================================
+// MÀNG LỌC DỮ LIỆU ĐẦU VÀO (BẢN RÚT GỌN CHỈ ẨN TÊN GVCN)
+// =======================================================
+(function initDataFilter() {
+    let checkData = setInterval(() => {
+        // Đợi tải xong dữ liệu danh sách học sinh
+        if (window.Data && window.Data.hs && window.Data.hs.length > 0) {
+            
+            // Tìm xem có dòng GVCN không
+            let thayHien = window.Data.hs.find(s => s.id === 'GVCN');
+            
+            if (thayHien) {
+                // LÀM SẠCH: Xóa dòng GVCN ra khỏi mảng học sinh để không bị hiện lên Bảng Vàng, Radar...
+                window.Data.hs = window.Data.hs.filter(s => s.id !== 'GVCN');
+                
+                // Dừng vòng lặp sau khi đã giấu xong
+                clearInterval(checkData);
+            } else if (window.isAllDataLoaded) {
+                // Nếu đã load xong hết mà không thấy GVCN thì cũng dừng vòng lặp cho nhẹ máy
+                clearInterval(checkData);
+            }
+        }
+    }, 100); // Quét mỗi 0.1 giây lúc mới mở web
+})();
+// =======================================================
 // FILE: FEATURES.JS (BẢN FULL VIP 100% - KHÔNG BỊ CẮT XÉN)
 // Tích hợp: Soạn Đề Full Option, Kéo Thả Multi-drop (Bấm Chọn), Vòng Quay VIP, Bản Đồ Tiến Độ, Game Toán
 // ==========================================
