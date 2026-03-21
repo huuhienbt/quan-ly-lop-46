@@ -2699,3 +2699,136 @@ window.moRaDaHoatDong = async function() {
     html += `</div></div>`;
     document.getElementById('content').innerHTML = html;
 };
+// ========================================================
+// TÍCH HỢP QUẢN LÝ THƯ VÀ TRẢ LỜI THƯ (DÁN CUỐI FILE)
+// ========================================================
+window.moQuanLyThu = async function() { 
+    closeMenu(); 
+    document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải toàn bộ thư từ hệ thống...</p></div>`; 
+    
+    // Nạp dữ liệu log điểm để lấy thư học sinh gửi nhau
+    if (!(await window.loadAllDataOnce())) return;
+
+    try {
+        // 1. TẢI THƯ HỌC SINH GỬI CHO THẦY HIỂN
+        const letters = await (await fetch(API_URL + "?type=mailbox&t=" + Date.now())).json();
+        if (currentUser && currentUser.role === 'admin') { localStorage.setItem('admin_read_mail_' + currentUser.id, letters.length); window.kiemTraThongBaoAdmin(); }
+        
+        let htmlToTeacher = "";
+        if(letters.length === 0) { 
+            htmlToTeacher = `<div class="text-center py-10 text-slate-400 font-bold"><i class="fas fa-comment-dots text-5xl mb-3 text-slate-200"></i><br>Chưa có thư nào.</div>`; 
+        } else {
+            htmlToTeacher = `<div class="space-y-4">`;
+            letters.forEach(l => {
+                let timeSent = ""; try { let d = new Date(l.time); timeSent = isNaN(d) ? l.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = l.time; }
+                let isAnon = (String(l.isAnonymous).toLowerCase() === "true"); 
+                let senderDisplay = isAnon ? `<span class="text-purple-600"><i class="fas fa-user-secret"></i> Ẩn danh (Thực tế: ${l.name})</span>` : `<span class="text-blue-600"><i class="fas fa-user"></i> ${l.name}</span>`; 
+                let anonBadge = isAnon ? `<span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-1 rounded ml-2">THƯ ẨN DANH</span>` : '';
+                
+                // NÚT TRẢ LỜI CỦA GVCN NẰM Ở ĐÂY
+                let btnReply = `<button onclick="window.gvTraLoiThu('${l.id}', '${l.name.replace(/'/g, "\\'")}')" class="text-[11px] bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-200"><i class="fas fa-reply mr-1"></i> Trả lời em này</button>`;
+
+                htmlToTeacher += `<div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 ${isAnon ? 'border-purple-400' : 'border-pink-400'} hover:shadow-md transition relative">
+                    <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2">
+                        <div class="font-bold text-sm">${senderDisplay} ${anonBadge}</div>
+                        <div class="text-[10px] text-slate-400 flex flex-col items-end gap-2">
+                            <span><i class="fas fa-clock"></i> ${timeSent}</span>
+                            ${btnReply}
+                        </div>
+                    </div>
+                    <div class="text-slate-700 text-base whitespace-pre-wrap font-medium bg-slate-50 p-3 rounded-xl">"${l.content}"</div>
+                </div>`;
+            }); 
+            htmlToTeacher += `</div>`;
+        }
+
+        // 2. TẢI THƯ HỌC SINH GỬI CHO NHAU ĐỂ GVCN GIÁM SÁT
+        let peerMsgs = Data.log.filter(l => l.subject === "PeerMessage" && l.id !== "GVCN");
+        peerMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
+
+        let htmlPeer = "";
+        if(peerMsgs.length === 0) {
+            htmlPeer = `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-5xl text-slate-300 mb-3 block"></i><p class="font-bold text-slate-400">Chưa có bức thư nào được gửi.</p></div>`;
+        } else {
+            htmlPeer = `<div class="space-y-4">`;
+            peerMsgs.forEach(msg => {
+                let sender = Data.hs.find(s => String(s.id) === String(msg.id));
+                let receiver = Data.hs.find(s => String(s.id) === String(msg.group)); 
+                let senderName = sender ? sender.name : "Không rõ";
+                let receiverName = receiver ? receiver.name : "Không rõ";
+                
+                let timeSent = ""; try { let d = new Date(msg.time); timeSent = isNaN(d) ? msg.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = msg.time; }
+                
+                let btnReplyGV = `<button onclick="window.gvTraLoiThu('${msg.id}', '${senderName.replace(/'/g, "\\'")}')" class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1.5 rounded-lg hover:bg-orange-600 hover:text-white transition shadow-sm border border-orange-200 mt-2"><i class="fas fa-bullhorn mr-1"></i> Nhắc nhở / Trả lời</button>`;
+
+                htmlPeer += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-indigo-400 hover:shadow-md transition">
+                        <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-3">
+                            <div class="text-sm font-black text-slate-700 flex items-center flex-wrap gap-2">
+                                <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg border border-blue-100 shadow-sm"><i class="fas fa-user mr-1"></i> ${senderName}</span> 
+                                <i class="fas fa-arrow-right text-slate-400"></i> 
+                                <span class="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg border border-orange-100 shadow-sm"><i class="fas fa-user-check mr-1"></i> ${receiverName}</span>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <div class="text-[10px] text-slate-400 font-bold bg-slate-50 px-2 py-1 rounded-full"><i class="fas fa-clock mr-1"></i>${timeSent}</div>
+                                ${btnReplyGV}
+                            </div>
+                        </div>
+                        <p class="text-slate-800 text-sm font-medium whitespace-pre-wrap leading-relaxed">" ${msg.details} "</p>
+                    </div>
+                `;
+            });
+            htmlPeer += `</div>`;
+        }
+
+        // 3. RÁP LÊN MÀN HÌNH CHIA 2 CỘT
+        let finalHtml = `
+            <div class="flex items-center mb-6 fade-in">
+                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-black text-xl text-pink-600 uppercase">QUẢN LÝ THƯ & TIN NHẮN</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10 fade-in">
+                <div class="bg-pink-50/50 p-5 rounded-[2rem] border-2 border-pink-100 flex flex-col h-[700px] shadow-sm">
+                    <h3 class="text-lg font-black text-pink-700 mb-4 border-b border-pink-200 pb-3 flex items-center"><i class="fas fa-envelope-open-text text-pink-500 mr-2 text-xl"></i>Thư gửi Thầy Hiển <span class="ml-auto bg-pink-100 text-pink-600 text-[10px] font-bold px-2 py-1 rounded-full">${letters.length} thư</span></h3>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                        ${htmlToTeacher}
+                    </div>
+                </div>
+
+                <div class="bg-indigo-50/50 p-5 rounded-[2rem] border-2 border-indigo-100 flex flex-col h-[700px] shadow-sm">
+                    <h3 class="text-lg font-black text-indigo-700 mb-4 border-b border-indigo-200 pb-3 flex items-center"><i class="fas fa-comments text-indigo-500 mr-2 text-xl"></i>Học sinh nhắn cho nhau <span class="ml-auto bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-full">${peerMsgs.length} thư</span></h3>
+                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                        ${htmlPeer}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('content').innerHTML = finalHtml;
+
+    } catch (e) { 
+        document.getElementById('content').innerHTML = `<p class="text-center text-red-500 mt-10 font-bold">Lỗi tải dữ liệu hộp thư.</p>`; 
+    }
+};
+
+// Động cơ xử lý lệnh Gửi thư của Giáo Viên
+window.gvTraLoiThu = async function(studentId, studentName) {
+    let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
+    if (!replyContent || !replyContent.trim()) return;
+
+    document.getElementById('loader').style.display = 'flex';
+    try {
+        let submitTime = new Date().toISOString();
+        await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'nop_bai', 
+                data: { id_hs: "GVCN", subject: "PeerMessage", group: studentId, score: 0, score_earned: 0, details: replyContent.trim() } 
+            }) 
+        });
+        
+        Data.log.push({ id: "GVCN", subject: "PeerMessage", group: studentId, score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
+        alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
+    } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
+};
