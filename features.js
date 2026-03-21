@@ -1399,10 +1399,15 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
 // ==========================================
 // 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ
 // ==========================================
+// ==========================================
+// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (GIỚI HẠN 10 THƯ/NGÀY BẠN BÈ)
+// ==========================================
 window.moHopThuBiMat = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu();
     if (!(await window.loadAllDataOnce())) return;
+
+    let today = new Date();
 
     // 1. Tìm thư bạn bè & Thầy Hiển gửi cho mình
     let receivedMsgs = Data.log.filter(l => l.subject === "PeerMessage" && String(l.group) === String(currentUser.id));
@@ -1411,11 +1416,23 @@ window.moHopThuBiMat = async function() {
     let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
     let optionsHtml = studentsList.map(s => `<option value="${s.id}">👦👧 Bạn: ${s.name}</option>`).join('');
 
-    // 2. Render danh sách hòm thư đến (Có phân biệt thư của GVCN)
+    // 2. Kiểm tra số lượng thư đã gửi cho bạn bè hôm nay
+    let sentToday = Data.log.filter(l => {
+        if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
+        let d = new Date(l.time);
+        if (isNaN(d)) return false;
+        return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    });
+    
+    const MAX_PEER_MESSAGES = 10;
+    let messagesLeft = MAX_PEER_MESSAGES - sentToday.length;
+    let canSend = messagesLeft > 0;
+
+    // 3. Render danh sách hòm thư đến
     let inboxHtml = receivedMsgs.length === 0 
         ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có ai gửi thư cho con.</p></div>` 
         : receivedMsgs.map(msg => {
-            let isTeacher = msg.id === "GVCN"; // Phân biệt thư của Thầy
+            let isTeacher = msg.id === "GVCN"; 
             let sender = Data.hs.find(s => String(s.id) === String(msg.id));
             let senderName = isTeacher ? "👨‍🏫 Thầy Hiển (GVCN)" : (sender ? sender.name : "Một người bạn");
             let timeSent = new Date(msg.time).toLocaleString('vi-VN');
@@ -1424,7 +1441,6 @@ window.moHopThuBiMat = async function() {
                 ? 'https://ui-avatars.com/api/?name=Thầy+Hiển&background=0D8ABC&color=fff' 
                 : (window.layAnhDaiDien ? window.layAnhDaiDien(msg.id, senderName) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(senderName) + '&background=random&color=fff');
             
-            // Nút trả lời (Nếu là thư của Thầy thì trả lời về GVCN, nếu bạn thì trả lời bạn)
             let replyId = isTeacher ? 'gvcn' : msg.id;
             let btnReply = `<button onclick="window.chonNguoiNhan('${replyId}')" class="text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm border ${isTeacher ? 'bg-blue-100 text-blue-600 hover:bg-blue-500 border-blue-200' : 'bg-pink-100 text-pink-600 hover:bg-pink-500 border-pink-200'} hover:text-white"><i class="fas fa-reply"></i> Trả lời</button>`;
 
@@ -1453,6 +1469,56 @@ window.moHopThuBiMat = async function() {
             `;
         }).join('');
 
+    // 4. Render form gửi thư
+    let sendFormHtml = canSend ? `
+        <div class="flex-1 flex flex-col relative z-10 space-y-4">
+            <div>
+                <div class="flex justify-between items-end mb-1">
+                    <label class="text-xs font-black text-pink-400 uppercase tracking-wider block">Người nhận</label>
+                    <span class="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">Còn ${messagesLeft}/10 thư bạn bè</span>
+                </div>
+                <select id="mailReceiver" class="w-full bg-white border-2 border-pink-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-pink-400 transition shadow-inner">
+                    <option value="gvcn" class="font-black text-pink-600">👨‍🏫 Thầy Hiển (GVCN) - Không giới hạn</option>
+                    ${optionsHtml}
+                </select>
+            </div>
+
+            <div class="flex-1 flex flex-col">
+                <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
+                <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Viết điều con muốn nói vào đây..."></textarea>
+            </div>
+            
+            <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
+                <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
+                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên <span class="text-pink-400 text-xs">(Chỉ áp dụng gửi cho Thầy)</span></span>
+            </label>
+            
+            <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-rocket mr-2"></i> GỬI THƯ ĐI</button>
+        </div>
+    ` : `
+        <div class="flex-1 flex flex-col relative z-10 space-y-4">
+            <div>
+                <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Người nhận</label>
+                <select id="mailReceiver" class="w-full bg-white border-2 border-pink-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-pink-400 transition shadow-inner">
+                    <option value="gvcn" class="font-black text-pink-600">👨‍🏫 Thầy Hiển (GVCN) - Không giới hạn</option>
+                </select>
+            </div>
+
+            <div class="flex-1 flex flex-col">
+                <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
+                <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Con đã xài hết lượt gửi cho bạn bè hôm nay. Form này hiện chỉ để gửi cho Thầy Hiển thôi nhé..."></textarea>
+            </div>
+            
+            <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
+                <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
+                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span>
+            </label>
+            
+            <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button>
+            <p class="text-xs text-center text-red-500 font-bold mt-2"><i class="fas fa-info-circle"></i> Con đã gửi tối đa 10 bức thư cho bạn bè hôm nay. Mai quay lại nhé!</p>
+        </div>
+    `;
+
     document.getElementById('content').innerHTML = `
         ${getNavHtml('thubimat')}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10">
@@ -1460,27 +1526,7 @@ window.moHopThuBiMat = async function() {
                 <i class="fas fa-heart absolute -right-4 -bottom-4 text-8xl text-pink-500 opacity-5 pointer-events-none"></i>
                 <h3 class="text-lg font-black text-pink-600 mb-4 border-b border-pink-200 pb-3 flex items-center relative z-10"><i class="fas fa-paper-plane mr-2 text-xl"></i>Soạn thư mới</h3>
                 
-                <div class="flex-1 flex flex-col relative z-10 space-y-4">
-                    <div>
-                        <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Người nhận</label>
-                        <select id="mailReceiver" class="w-full bg-white border-2 border-pink-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-pink-400 transition shadow-inner">
-                            <option value="gvcn" class="font-black text-pink-600">👨‍🏫 Thầy Hiển (GVCN)</option>
-                            ${optionsHtml}
-                        </select>
-                    </div>
-
-                    <div class="flex-1 flex flex-col">
-                        <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
-                        <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Viết điều con muốn nói vào đây..."></textarea>
-                    </div>
-                    
-                    <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
-                        <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
-                        <span class="font-bold text-slate-600 text-sm">Gửi giấu tên <span class="text-pink-400 text-xs">(Chỉ áp dụng gửi cho Thầy)</span></span>
-                    </label>
-                    
-                    <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-rocket mr-2"></i> GỬI THƯ ĐI</button>
-                </div>
+                ${sendFormHtml}
             </div>
 
             <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col h-[550px]">
@@ -1497,8 +1543,17 @@ window.moHopThuBiMat = async function() {
 window.chonNguoiNhan = function(id) {
     let select = document.getElementById('mailReceiver');
     if(select) {
-        select.value = id;
-        document.getElementById('mailContent').focus();
+        // Kiểm tra xem ID có trong danh sách select không
+        let exists = false;
+        for(let i=0; i<select.options.length; i++) {
+            if(select.options[i].value === id) { exists = true; break; }
+        }
+        if(exists) {
+            select.value = id;
+            document.getElementById('mailContent').focus();
+        } else {
+            alert("Con đã hết lượt gửi thư cho bạn bè hôm nay nên không thể trả lời bạn ngay lúc này. Hãy đợi đến ngày mai nhé!");
+        }
     }
 };
 
@@ -1517,8 +1572,8 @@ window.guiThuBiMat = async function() {
             if (isNaN(d)) return false;
             return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
         });
-        if (sentToday.length > 0) {
-            return alert("Nhiệm vụ hôm nay hoàn tất! Mỗi ngày con chỉ được gửi 1 bức thư cho bạn bè thôi nhé. Ngày mai con hãy quay lại nha!");
+        if (sentToday.length >= 10) {
+            return alert("Nhiệm vụ hôm nay hoàn tất! Mỗi ngày con chỉ được gửi tối đa 10 bức thư cho bạn bè thôi nhé. Ngày mai con hãy quay lại nha!");
         }
     }
 
