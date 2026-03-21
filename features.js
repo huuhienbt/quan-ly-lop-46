@@ -1429,62 +1429,41 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
     }
 };
 
-// ==========================================
-// 7. THƯ BÍ MẬT & ĐƠN XIN PHÉP
-// ==========================================
-// ==========================================
-// 7. HÒM THƯ TÍCH HỢP (GỬI GVCN & GIAO LƯU BẠN BÈ)
-// ==========================================
-// ==========================================
-// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ
-// ==========================================
-// ==========================================
-// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (GIỚI HẠN 10 THƯ/NGÀY BẠN BÈ)
-// ==========================================
-// ==========================================
-// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (GIỚI HẠN 10 THƯ/NGÀY BẠN BÈ)
-// ==========================================
-// ==========================================
-// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (BẢN VƯỢT TƯỜNG LỬA GOOGLE)
-// ==========================================
-// ==========================================
 // 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (BẢN VƯỢT TƯỜNG LỬA CHUẨN 100%)
+// ==========================================
+// ==========================================
+// 7. HÒM THƯ TÍCH HỢP (BẢN CHUẨN KẾT HỢP DATA INTERCEPTOR)
 // ==========================================
 window.moHopThuBiMat = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu();
-    if (!(await window.loadAllDataOnce())) return;
+    
+    document.getElementById('content').innerHTML = `<div class="text-center py-10 mt-10"><i class="fas fa-spinner fa-spin text-5xl text-pink-500 mb-4 shadow-sm rounded-full"></i><p class="font-black text-slate-500 animate-pulse tracking-widest uppercase">Đang đồng bộ thư mới...</p></div>`;
+    if (!(await window.loadAllDataOnce(true))) return; 
 
     let today = new Date();
 
-    // 1. TÌM THƯ BẠN BÈ GỬI (PeerMessage) VÀ THƯ THẦY HIỂN GỬI (TeacherReply)
-    let receivedMsgs = Data.log.filter(l => 
-        (l.subject === "PeerMessage" && String(l.group) === String(currentUser.id)) ||
-        (l.subject === "TeacherReply" && String(l.id) === String(currentUser.id))
-    );
+    let receivedMsgs = Data.log.filter(l => l.subject === "PeerMessage" && String(l.group) === String(currentUser.id));
     receivedMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
 
     let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
     let optionsHtml = studentsList.map(s => `<option value="${s.id}">👦👧 Bạn: ${s.name}</option>`).join('');
 
-    // 2. Kiểm tra số lượng thư đã gửi cho bạn bè hôm nay
     let sentToday = Data.log.filter(l => {
         if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
         let d = new Date(l.time);
-        if (isNaN(d)) return false;
-        return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+        return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
     });
     
     const MAX_PEER_MESSAGES = 10;
     let messagesLeft = MAX_PEER_MESSAGES - sentToday.length;
     let canSend = messagesLeft > 0;
 
-    // 3. Render danh sách hòm thư đến
     let inboxHtml = receivedMsgs.length === 0 
         ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có ai gửi thư cho con.</p></div>` 
         : receivedMsgs.map(msg => {
-            // Giải mã thư của Thầy
-            let isTeacher = msg.subject === "TeacherReply"; 
+            // CHỖ SỬA QUAN TRỌNG: Bắt trực tiếp ID "GVCN" không cần thông qua danh sách học sinh nữa
+            let isTeacher = (String(msg.id) === "GVCN");
             let sender = Data.hs.find(s => String(s.id) === String(msg.id));
             let senderName = isTeacher ? "👨‍🏫 Thầy Hiển (GVCN)" : (sender ? sender.name : "Một người bạn");
             let timeSent = new Date(msg.time).toLocaleString('vi-VN');
@@ -1493,7 +1472,7 @@ window.moHopThuBiMat = async function() {
                 ? 'https://ui-avatars.com/api/?name=Thầy+Hiển&background=0D8ABC&color=fff' 
                 : (window.layAnhDaiDien ? window.layAnhDaiDien(msg.id, senderName) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(senderName) + '&background=random&color=fff');
             
-            let replyId = isTeacher ? 'gvcn' : msg.id;
+            let replyId = isTeacher ? 'gvcn' : msg.id; 
             let btnReply = `<button onclick="window.chonNguoiNhan('${replyId}')" class="text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm border ${isTeacher ? 'bg-blue-100 text-blue-600 hover:bg-blue-500 border-blue-200' : 'bg-pink-100 text-pink-600 hover:bg-pink-500 border-pink-200'} hover:text-white"><i class="fas fa-reply"></i> Trả lời</button>`;
 
             let boxTheme = isTeacher ? 'bg-blue-50 border-blue-200' : 'bg-white border-pink-100';
@@ -1521,7 +1500,6 @@ window.moHopThuBiMat = async function() {
             `;
         }).join('');
 
-    // 4. Render form gửi thư
     let sendFormHtml = canSend ? `
         <div class="flex-1 flex flex-col relative z-10 space-y-4">
             <div>
@@ -1606,16 +1584,12 @@ window.guiThuBiMat = async function() {
     
     if(!content) return alert("Con chưa viết gì cả!"); 
 
-    // Bẻ khóa an toàn: Ngăn chặn học sinh gõ chữ [GVCN] để giả mạo thầy
-    if (content.startsWith("[GVCN]")) content = content.replace(/\[GVCN\]/g, "[HS]");
-
     if (receiverId !== 'gvcn') {
         let today = new Date();
         let sentToday = Data.log.filter(l => {
             if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
             let d = new Date(l.time);
-            if (isNaN(d)) return false;
-            return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+            return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
         });
         if (sentToday.length >= 10) {
             return alert("Nhiệm vụ hôm nay hoàn tất! Mỗi ngày con chỉ được gửi tối đa 10 bức thư cho bạn bè thôi nhé. Ngày mai con hãy quay lại nha!");
@@ -1637,7 +1611,7 @@ window.guiThuBiMat = async function() {
     } catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
 
-// Động cơ xử lý lệnh Gửi thư của Giáo Viên (LÁCH LUẬT BẢO MẬT THÀNH CÔNG)
+// CHỖ SỬA QUAN TRỌNG: ÉP HỆ THỐNG GỬI ID LÀ "GVCN" XUYÊN TƯỜNG LỬA
 window.gvTraLoiThu = async function(studentId, studentName) {
     let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
     if (!replyContent || !replyContent.trim()) return;
@@ -1645,18 +1619,16 @@ window.gvTraLoiThu = async function(studentId, studentName) {
     document.getElementById('loader').style.display = 'flex';
     try {
         let submitTime = new Date().toISOString();
-        let safeContent = "[GVCN] " + replyContent.trim();
         
-        // Mượn ID của chính học sinh đó để gửi (Google Sheets sẽ cho qua)
         await fetch(API_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
                 action: 'nop_bai', 
-                data: { id_hs: studentId, subject: "PeerMessage", group: studentId, score: 0, score_earned: 0, details: safeContent } 
+                data: { id_hs: "GVCN", subject: "PeerMessage", group: studentId, score: 0, score_earned: 0, details: replyContent.trim() } 
             }) 
         });
         
-        Data.log.push({ id: studentId, subject: "PeerMessage", group: studentId, score: 0, real_added: 0, time: submitTime, details: safeContent });
+        Data.log.push({ id: "GVCN", subject: "PeerMessage", group: studentId, score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
         alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
     } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
