@@ -1393,17 +1393,142 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
 // ==========================================
 // 7. THƯ BÍ MẬT & ĐƠN XIN PHÉP
 // ==========================================
-window.moHopThuBiMat = function() {
-    if(!currentUser) return showLogin(); closeMenu();
-    document.getElementById('content').innerHTML = `${getNavHtml('thubimat')}<div class="bg-[#fff0f5] p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 space-y-5 fade-in relative overflow-hidden"><p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con.</p><textarea id="mailContent" class="w-full bg-white border-2 border-pink-200 p-4 rounded-2xl font-medium text-slate-700 outline-none focus:border-pink-400 transition min-h-[150px] relative z-10" placeholder="Viết điều con muốn nói vào đây..."></textarea><label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100"><input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer"><span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span></label><button onclick="window.guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button></div>`;
+// ==========================================
+// 7. HÒM THƯ TÍCH HỢP (GỬI GVCN & GIAO LƯU BẠN BÈ)
+// ==========================================
+window.moHopThuBiMat = async function() {
+    if(!currentUser) return showLogin(); 
+    closeMenu();
+    if (!(await window.loadAllDataOnce())) return;
+
+    // 1. Tìm thư bạn bè gửi cho mình
+    let receivedMsgs = Data.log.filter(l => l.subject === "PeerMessage" && String(l.group) === String(currentUser.id));
+    receivedMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
+
+    // 2. Tạo danh sách học sinh (Loại bỏ bản thân và giáo viên)
+    let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
+    let optionsHtml = studentsList.map(s => `<option value="${s.id}">👦👧 Bạn: ${s.name}</option>`).join('');
+
+    // 3. Render danh sách hòm thư đến
+    let inboxHtml = receivedMsgs.length === 0 
+        ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có bạn nào gửi thư cho con.</p></div>` 
+        : receivedMsgs.map(msg => {
+            let sender = Data.hs.find(s => String(s.id) === String(msg.id));
+            let senderName = sender ? sender.name : "Một người bạn";
+            let timeSent = new Date(msg.time).toLocaleString('vi-VN');
+            let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(msg.id, senderName) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(senderName) + '&background=random&color=fff';
+            
+            return `
+                <div class="bg-white p-4 rounded-2xl border border-pink-100 mb-3 hover:shadow-md transition flex gap-3 shadow-sm">
+                    <img src="${avatarUrl}" class="w-12 h-12 rounded-full border-2 border-pink-200 shadow-sm object-cover shrink-0">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-end mb-1">
+                            <p class="font-black text-pink-700 text-sm">${senderName}</p>
+                            <p class="text-[10px] text-pink-400 font-bold">${timeSent}</p>
+                        </div>
+                        <p class="text-slate-700 font-medium text-sm bg-pink-50 p-3 rounded-xl border border-pink-100 relative mt-2">
+                            <i class="fas fa-caret-left absolute -left-2 top-3 text-pink-50 text-xl drop-shadow-sm"></i>
+                            ${msg.details}
+                        </p>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    document.getElementById('content').innerHTML = `
+        ${getNavHtml('thubimat')}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10">
+            <div class="bg-[#fff0f5] p-5 sm:p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 flex flex-col h-[550px] relative overflow-hidden">
+                <i class="fas fa-heart absolute -right-4 -bottom-4 text-8xl text-pink-500 opacity-5 pointer-events-none"></i>
+                <h3 class="text-lg font-black text-pink-600 mb-4 border-b border-pink-200 pb-3 flex items-center relative z-10"><i class="fas fa-paper-plane mr-2 text-xl"></i>Soạn thư mới</h3>
+                
+                <div class="flex-1 flex flex-col relative z-10 space-y-4">
+                    <div>
+                        <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Người nhận</label>
+                        <select id="mailReceiver" class="w-full bg-white border-2 border-pink-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-pink-400 transition shadow-inner">
+                            <option value="gvcn" class="font-black text-pink-600">👨‍🏫 Thầy Hiển (GVCN)</option>
+                            ${optionsHtml}
+                        </select>
+                    </div>
+
+                    <div class="flex-1 flex flex-col">
+                        <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
+                        <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Viết điều con muốn nói vào đây..."></textarea>
+                    </div>
+                    
+                    <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
+                        <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
+                        <span class="font-bold text-slate-600 text-sm">Gửi giấu tên <span class="text-pink-400 text-xs">(Chỉ áp dụng gửi cho Thầy)</span></span>
+                    </label>
+                    
+                    <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-rocket mr-2"></i> GỬI THƯ ĐI</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col h-[550px]">
+                <h3 class="text-lg font-black text-slate-800 mb-4 border-b border-slate-50 pb-3 flex items-center"><i class="fas fa-envelope-open-text text-pink-500 mr-2 text-xl"></i>Thư bạn gửi con <span class="ml-auto bg-pink-100 text-pink-600 text-[10px] font-bold px-2 py-1 rounded-full">${receivedMsgs.length} thư</span></h3>
+                <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                    ${inboxHtml}
+                </div>
+            </div>
+        </div>
+    `;
 };
 
 window.guiThuBiMat = async function() {
-    const content = document.getElementById('mailContent').value.trim(); const isAnon = document.getElementById('mailAnon').checked; 
-    if(!content) return alert("Con chưa viết gì cả!"); document.getElementById('loader').style.display = 'flex';
-    try { await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); alert("Đã gửi thư thành công!"); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } finally { document.getElementById('loader').style.display = 'none'; }
-};
+    let receiverId = document.getElementById('mailReceiver').value;
+    const content = document.getElementById('mailContent').value.trim(); 
+    const isAnon = document.getElementById('mailAnon').checked; 
+    
+    if(!content) return alert("Con chưa viết gì cả!"); 
 
+    // Kiểm tra luật: 1 tin/ngày nếu gửi cho bạn bè
+    if (receiverId !== 'gvcn') {
+        let today = new Date();
+        let sentToday = Data.log.filter(l => {
+            if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
+            let d = new Date(l.time);
+            if (isNaN(d)) return false;
+            return d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+        });
+        if (sentToday.length > 0) {
+            return alert("Nhiệm vụ hôm nay hoàn tất! Mỗi ngày con chỉ được gửi 1 bức thư cho bạn bè thôi nhé. Ngày mai con hãy quay lại nha!");
+        }
+    }
+
+    document.getElementById('loader').style.display = 'flex';
+    let loaderText = document.querySelector('#loader p');
+    if(loaderText) loaderText.innerText = "ĐANG CHUYỂN PHÁT THƯ...";
+
+    try { 
+        if (receiverId === 'gvcn') {
+            // Nhánh 1: Gửi cho Thầy Hiển
+            await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); 
+            alert("Đã gửi thư cho GVCN thành công!");
+            veTrangChu();
+        } else {
+            // Nhánh 2: Gửi cho Bạn bè (Lưu qua hệ thống điểm)
+            let submitTime = new Date().toISOString();
+            await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'nop_bai', 
+                    data: { id_hs: currentUser.id, subject: "PeerMessage", group: receiverId, score: 0, score_earned: 0, details: content } 
+                }) 
+            });
+            // Cập nhật ngay vào màn hình
+            Data.log.push({ id: currentUser.id, subject: "PeerMessage", group: receiverId, score: 0, real_added: 0, time: submitTime, details: content });
+            alert("Tuyệt vời! Bức thư của con đã được gửi đến bạn ấy.");
+            window.moHopThuBiMat(); // Tải lại hòm thư để cập nhật giao diện
+        }
+    } catch(e) { 
+        alert("Lỗi mạng, chưa gửi được thư!"); 
+    } finally { 
+        document.getElementById('loader').style.display = 'none'; 
+        if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+    }
+};
 window.moXinPhep = function() { 
     if(!currentUser) return showLogin(); closeMenu(); 
     document.getElementById('content').innerHTML = `${getNavHtml('hopthu')}<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 fade-in"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại xin phép</label><select id="lType" onchange="window.changeLeaveType()" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Nghỉ học và bán trú">Nghỉ học và bán trú</option><option value="Nghỉ Bán trú">Nghỉ Bán trú</option></select></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian nghỉ</label><select id="lSession" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option></select></div></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lý do (Bệnh, việc gia đình...)</label><textarea id="lReason" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-medium text-slate-700 outline-none focus:border-red-400 transition" rows="3" placeholder="Nhập lý do chi tiết..."></textarea></div><button onclick="window.sendLeave()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-red-700 transition"><i class="fas fa-paper-plane mr-2"></i> GỬI ĐƠN CHO GVCN</button></div>`; document.getElementById('lDate').valueAsDate = new Date(Date.now()+86400000); 
