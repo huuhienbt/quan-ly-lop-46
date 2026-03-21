@@ -1,6 +1,5 @@
 // ==========================================
 // FILE 2: UI.JS (CHUẨN - CHỈ CHỨA GIAO DIỆN & BẢNG TIN)
-// Đã tích hợp: Avartar Menu, Nút Ra Đa, Quản lý Thư gộp chung
 // ==========================================
 
 const contentArea = document.getElementById('content');
@@ -21,7 +20,7 @@ function setupUI() {
 
     let menuIcon = document.getElementById('menuIcon');
     let headerAvatarImg = document.getElementById('headerAvatarImg');
-    let menuSideAvatar = document.getElementById('menuSideAvatar');
+    let menuSideAvatar = document.getElementById('menuSideAvatar'); // Bổ sung ảnh trong menu
 
     if(currentUser) {
         if(headerNameEl) headerNameEl.innerText = currentUser.role === 'admin' ? 'GVCN' : currentUser.name.split(" ").pop();
@@ -30,7 +29,7 @@ function setupUI() {
         if(roleTextEl) { roleTextEl.style.display = 'block'; roleTextEl.innerText = currentUser.role === 'admin' ? 'GVCN' : 'HỌC SINH'; }
         if(logoutBtn) logoutBtn.style.display = '';
 
-        // ĐỔ DỮ LIỆU ẢNH VÀO CẢ 2 NƠI (GÓC PHẢI & TRONG MENU TRƯỢT)
+        // ĐỔ ĐỮ LIỆU ẢNH VÀO CẢ 2 NƠI (GÓC PHẢI & TRONG MENU TRƯỢT)
         if (currentUser.role === 'student' && window.layAnhDaiDien) {
             let avatarUrl = window.layAnhDaiDien(currentUser.id, currentUser.name);
             
@@ -49,22 +48,21 @@ function setupUI() {
 
         if(currentUser.role === 'admin') {
             document.getElementById('menuTeacher').innerHTML = `
-                <div onclick="window.chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-blue-600 transition"><i class="fas fa-users text-blue-500 w-6 text-xl"></i> Quản lý Học sinh</div>
-                <div onclick="moThongBao()" class="p-3 hover:bg-orange-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-orange-600 transition"><i class="fas fa-bullhorn text-orange-500 w-6 text-xl"></i> Quản lý Bảng tin</div>
-                <div onclick="if(window.moRaDaHoatDong) window.moRaDaHoatDong()" class="p-3 hover:bg-emerald-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-emerald-600 transition"><i class="fas fa-broadcast-tower text-emerald-500 w-6 text-xl"></i> Ra đa lớp học</div>
-                <div onclick="window.moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-pink-600 transition"><i class="fas fa-comment-dots text-pink-500 w-6 text-xl"></i> Quản lý Thư & Tin nhắn</div>
-                <div onclick="window.moDonTu()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-red-600 transition"><i class="fas fa-envelope-open-text text-red-500 w-6 text-xl"></i> Hộp thư xin phép</div>
-                <div onclick="window.moTienDo()" class="p-3 hover:bg-purple-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-purple-600 transition"><i class="fas fa-chart-line text-purple-500 w-6 text-xl"></i> Tiến độ Học tập</div>
-                <div onclick="window.quanLyNganHang('math')" class="p-3 hover:bg-indigo-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-indigo-600 transition"><i class="fas fa-calculator text-indigo-500 w-6 text-xl"></i> Kho Toán</div>
-                <div onclick="window.quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-green-600 transition"><i class="fas fa-book text-green-500 w-6 text-xl"></i> Kho Tiếng Việt</div>
+                <div onclick="window.chuyenTrangQuanLy()" class="p-3 hover:bg-blue-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-users text-blue-600 w-6"></i> Quản lý Học sinh</div>
+                <div onclick="moThongBao()" class="p-3 hover:bg-orange-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-bullhorn text-orange-600 w-6"></i> Quản lý Bảng tin</div>
+                <div onclick="window.moDonTu()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư xin phép</div>
+                <div onclick="window.moQuanLyThu()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-600 w-6"></i> Thư Học Sinh</div>
+                <div onclick="window.moTienDo()" class="p-3 hover:bg-purple-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-chart-line text-purple-600 w-6"></i> Tiến độ Học tập</div>
+                <div onclick="window.quanLyNganHang('math')" class="p-3 hover:bg-indigo-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-calculator text-indigo-600 w-6"></i> Kho Toán</div>
+                <div onclick="window.quanLyNganHang('vietnamese')" class="p-3 hover:bg-green-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-book text-green-600 w-6"></i> Kho Tiếng Việt</div>
             `;
             document.getElementById('menuTeacher').classList.remove('hidden'); document.getElementById('menuStudent').classList.add('hidden');
         } else {
             document.getElementById('menuStudent').innerHTML = `
                 <div onclick="if(window.moHoSoCaNhan) window.moHoSoCaNhan()" class="p-3 hover:bg-yellow-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-yellow-600 transition"><i class="fas fa-id-card text-yellow-500 w-6 text-xl"></i> Hồ sơ cá nhân</div>
                 <div class="border-b border-slate-100 my-1"></div>
-                <div onclick="window.moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-red-600 transition"><i class="fas fa-envelope-open-text text-red-500 w-6 text-xl"></i> Hộp thư xin phép</div>
-                <div onclick="window.moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer text-slate-700 hover:text-pink-600 transition"><i class="fas fa-comment-dots text-pink-500 w-6 text-xl"></i> Lời muốn nói</div>
+                <div onclick="window.moXinPhep()" class="p-3 hover:bg-red-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-envelope-open-text text-red-600 w-6"></i> Hộp thư</div>
+                <div onclick="window.moHopThuBiMat()" class="p-3 hover:bg-pink-50 rounded-lg font-bold flex items-center gap-3 cursor-pointer"><i class="fas fa-comment-dots text-pink-500 w-6"></i> Lời muốn nói</div>
             `;
             document.getElementById('menuStudent').classList.remove('hidden'); document.getElementById('menuTeacher').classList.add('hidden');
         }
@@ -83,15 +81,13 @@ function setupUI() {
         document.getElementById('menuStudent').classList.remove('hidden'); document.getElementById('menuTeacher').classList.add('hidden');
     }
 }
-
 function renderDashboardAdmin() {
     contentArea.innerHTML = `
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in pb-10">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 fade-in">
             <button onclick="window.chuyenTrangQuanLy()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-users text-3xl text-blue-600"></i><span class="font-bold text-slate-700">Học sinh</span></button>
             <button onclick="moThongBao()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-bullhorn text-3xl text-orange-500"></i><span class="font-bold text-slate-700">Bảng tin</span></button>
-            <button onclick="if(window.moRaDaHoatDong) window.moRaDaHoatDong()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-emerald-100 flex flex-col items-center gap-3 btn-3d relative overflow-hidden"><div class="absolute inset-0 bg-emerald-50 opacity-0 hover:opacity-100 transition"></div><i class="fas fa-broadcast-tower text-3xl text-emerald-500 relative z-10 animate-pulse"></i><span class="font-bold text-slate-700 relative z-10">Ra đa lớp</span></button>
-            <button onclick="window.moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-comment-dots text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Quản lý Thư</span></button>
             <button onclick="window.moDonTu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-envelope text-3xl text-red-600"></i><span class="font-bold text-slate-700">Xin phép</span></button>
+            <button onclick="window.moQuanLyThu()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-pink-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-comment-dots text-3xl text-pink-500"></i><span class="font-bold text-slate-700">Thư HS</span></button>
             <button onclick="window.moTienDo()" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-purple-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-chart-line text-3xl text-purple-600"></i><span class="font-bold text-slate-700">Tiến độ</span></button>
             <button onclick="window.quanLyNganHang('math')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-indigo-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-calculator text-3xl text-indigo-600"></i><span class="font-bold text-slate-700">Kho Toán</span></button>
             <button onclick="window.quanLyNganHang('vietnamese')" class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-100 flex flex-col items-center gap-3 btn-3d"><i class="fas fa-book text-3xl text-green-600"></i><span class="font-bold text-slate-700">Kho T.Việt</span></button>
@@ -190,115 +186,3 @@ async function luuThongBaoLenServer() {
 async function xoaThongBao(id) { 
     if(confirm("Xóa thông báo này vĩnh viễn?")) { document.getElementById('loader').style.display = 'flex'; await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'xoa_thong_bao', data: { id: id } }) }); Data.notiList = Data.notiList.filter(x => x.id !== id); document.getElementById('loader').style.display = 'none'; moThongBao(); } 
 }
-
-// ========================================================
-// NÂNG CẤP QUẢN LÝ THƯ TÍCH HỢP (GÁN Ở CUỐI FILE UI.JS)
-// ========================================================
-// HÀM QUẢN LÝ THƯ TÍCH HỢP (GỒM THƯ GỬI GVCN VÀ THƯ GIAO LƯU)
-window.moQuanLyThu = async function() { 
-    closeMenu(); 
-    document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải toàn bộ thư từ hệ thống...</p></div>`; 
-    
-    if (!(await window.loadAllDataOnce())) return;
-
-    try {
-        // 1. TẢI THƯ GỬI CHO THẦY HIỂN
-        const letters = await (await fetch(API_URL + "?type=mailbox&t=" + Date.now())).json();
-        if (currentUser && currentUser.role === 'admin') { localStorage.setItem('admin_read_mail_' + currentUser.id, letters.length); window.kiemTraThongBaoAdmin(); }
-        
-        let htmlToTeacher = "";
-        if(letters.length === 0) { 
-            htmlToTeacher = `<div class="text-center py-10 text-slate-400 font-bold"><i class="fas fa-comment-dots text-5xl mb-3 text-slate-200"></i><br>Chưa có thư nào.</div>`; 
-        } else {
-            htmlToTeacher = `<div class="space-y-4">`;
-            letters.forEach(l => {
-                let timeSent = ""; try { let d = new Date(l.time); timeSent = isNaN(d) ? l.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = l.time; }
-                let isAnon = (String(l.isAnonymous).toLowerCase() === "true"); 
-                let senderDisplay = isAnon ? `<span class="text-purple-600"><i class="fas fa-user-secret"></i> Ẩn danh (Thực tế: ${l.name})</span>` : `<span class="text-blue-600"><i class="fas fa-user"></i> ${l.name}</span>`; 
-                let anonBadge = isAnon ? `<span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-1 rounded ml-2">THƯ ẨN DANH</span>` : '';
-                
-                let btnReply = `<button onclick="window.gvTraLoiThu('${l.id}', '${l.name.replace(/'/g, "\\'")}')" class="text-[11px] bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-200"><i class="fas fa-reply mr-1"></i> Trả lời em này</button>`;
-
-                htmlToTeacher += `<div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 ${isAnon ? 'border-purple-400' : 'border-pink-400'} hover:shadow-md transition relative">
-                    <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2">
-                        <div class="font-bold text-sm">${senderDisplay} ${anonBadge}</div>
-                        <div class="text-[10px] text-slate-400 flex flex-col items-end gap-2">
-                            <span><i class="fas fa-clock"></i> ${timeSent}</span>
-                            ${btnReply}
-                        </div>
-                    </div>
-                    <div class="text-slate-700 text-base whitespace-pre-wrap font-medium bg-slate-50 p-3 rounded-xl">"${l.content}"</div>
-                </div>`;
-            }); 
-            htmlToTeacher += `</div>`;
-        }
-
-        // 2. TẢI THƯ HỌC SINH GIAO LƯU (Đã lọc bỏ thư do GVCN gửi)
-        let peerMsgs = Data.log.filter(l => l.subject === "PeerMessage" && !(l.details || "").startsWith("[GVCN]"));
-        peerMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
-
-        let htmlPeer = "";
-        if(peerMsgs.length === 0) {
-            htmlPeer = `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-5xl text-slate-300 mb-3 block"></i><p class="font-bold text-slate-400">Chưa có bức thư nào được gửi.</p></div>`;
-        } else {
-            htmlPeer = `<div class="space-y-4">`;
-            peerMsgs.forEach(msg => {
-                let sender = Data.hs.find(s => String(s.id) === String(msg.id));
-                let receiver = Data.hs.find(s => String(s.id) === String(msg.group)); 
-                let senderName = sender ? sender.name : "Không rõ";
-                let receiverName = receiver ? receiver.name : "Không rõ";
-                
-                let timeSent = ""; try { let d = new Date(msg.time); timeSent = isNaN(d) ? msg.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = msg.time; }
-                
-                let btnReplyGV = `<button onclick="window.gvTraLoiThu('${msg.id}', '${senderName.replace(/'/g, "\\'")}')" class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1.5 rounded-lg hover:bg-orange-600 hover:text-white transition shadow-sm border border-orange-200 mt-2"><i class="fas fa-bullhorn mr-1"></i> Nhắc nhở / Trả lời</button>`;
-
-                htmlPeer += `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-indigo-400 hover:shadow-md transition">
-                        <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-3">
-                            <div class="text-sm font-black text-slate-700 flex items-center flex-wrap gap-2">
-                                <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg border border-blue-100 shadow-sm"><i class="fas fa-user mr-1"></i> ${senderName}</span> 
-                                <i class="fas fa-arrow-right text-slate-400"></i> 
-                                <span class="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg border border-orange-100 shadow-sm"><i class="fas fa-user-check mr-1"></i> ${receiverName}</span>
-                            </div>
-                            <div class="flex flex-col items-end">
-                                <div class="text-[10px] text-slate-400 font-bold bg-slate-50 px-2 py-1 rounded-full"><i class="fas fa-clock mr-1"></i>${timeSent}</div>
-                                ${btnReplyGV}
-                            </div>
-                        </div>
-                        <p class="text-slate-800 text-sm font-medium whitespace-pre-wrap leading-relaxed">" ${msg.details} "</p>
-                    </div>
-                `;
-            });
-            htmlPeer += `</div>`;
-        }
-
-        // 3. RÁP LÊN MÀN HÌNH CHIA 2 CỘT
-        let finalHtml = `
-            <div class="flex items-center mb-6 fade-in">
-                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
-                <h2 class="font-black text-xl text-pink-600 uppercase">QUẢN LÝ THƯ & TIN NHẮN</h2>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10 fade-in">
-                <div class="bg-pink-50/50 p-5 rounded-[2rem] border-2 border-pink-100 flex flex-col h-[700px] shadow-sm">
-                    <h3 class="text-lg font-black text-pink-700 mb-4 border-b border-pink-200 pb-3 flex items-center"><i class="fas fa-envelope-open-text text-pink-500 mr-2 text-xl"></i>Thư gửi Thầy Hiển <span class="ml-auto bg-pink-100 text-pink-600 text-[10px] font-bold px-2 py-1 rounded-full">${letters.length} thư</span></h3>
-                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                        ${htmlToTeacher}
-                    </div>
-                </div>
-
-                <div class="bg-indigo-50/50 p-5 rounded-[2rem] border-2 border-indigo-100 flex flex-col h-[700px] shadow-sm">
-                    <h3 class="text-lg font-black text-indigo-700 mb-4 border-b border-indigo-200 pb-3 flex items-center"><i class="fas fa-comments text-indigo-500 mr-2 text-xl"></i>Học sinh nhắn cho nhau <span class="ml-auto bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-full">${peerMsgs.length} thư</span></h3>
-                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                        ${htmlPeer}
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('content').innerHTML = finalHtml;
-
-    } catch (e) { 
-        document.getElementById('content').innerHTML = `<p class="text-center text-red-500 mt-10 font-bold">Lỗi tải dữ liệu hộp thư.</p>`; 
-    }
-};
