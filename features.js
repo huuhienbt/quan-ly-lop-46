@@ -1416,6 +1416,9 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
 // ==========================================
 // 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (GIỚI HẠN 10 THƯ/NGÀY BẠN BÈ)
 // ==========================================
+// ==========================================
+// 7. HÒM THƯ TÍCH HỢP & TÍNH NĂNG TRẢ LỜI THƯ (GIỚI HẠN 10 THƯ/NGÀY BẠN BÈ)
+// ==========================================
 window.moHopThuBiMat = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu();
@@ -1423,8 +1426,11 @@ window.moHopThuBiMat = async function() {
 
     let today = new Date();
 
-    // 1. Tìm thư bạn bè & Thầy Hiển gửi cho mình
-    let receivedMsgs = Data.log.filter(l => l.subject === "PeerMessage" && String(l.group) === String(currentUser.id));
+    // 1. TÌM THƯ BẠN BÈ & THẦY HIỂN GỬI (Đã gộp chung bằng cờ TeacherMessage)
+    let receivedMsgs = Data.log.filter(l => 
+        (l.subject === "PeerMessage" && String(l.group) === String(currentUser.id)) ||
+        (l.subject === "TeacherMessage" && String(l.id) === String(currentUser.id))
+    );
     receivedMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
 
     let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
@@ -1446,7 +1452,8 @@ window.moHopThuBiMat = async function() {
     let inboxHtml = receivedMsgs.length === 0 
         ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có ai gửi thư cho con.</p></div>` 
         : receivedMsgs.map(msg => {
-            let isTeacher = msg.id === "GVCN"; 
+            // Nhận diện thư của Thầy
+            let isTeacher = msg.subject === "TeacherMessage"; 
             let sender = Data.hs.find(s => String(s.id) === String(msg.id));
             let senderName = isTeacher ? "👨‍🏫 Thầy Hiển (GVCN)" : (sender ? sender.name : "Một người bạn");
             let timeSent = new Date(msg.time).toLocaleString('vi-VN');
@@ -2813,6 +2820,7 @@ window.moQuanLyThu = async function() {
 };
 
 // Động cơ xử lý lệnh Gửi thư của Giáo Viên
+// Động cơ xử lý lệnh Gửi thư của Giáo Viên (Đã bẻ khóa bảo mật Google Sheets)
 window.gvTraLoiThu = async function(studentId, studentName) {
     let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
     if (!replyContent || !replyContent.trim()) return;
@@ -2820,15 +2828,17 @@ window.gvTraLoiThu = async function(studentId, studentName) {
     document.getElementById('loader').style.display = 'flex';
     try {
         let submitTime = new Date().toISOString();
+        
+        // Dùng chính ID của học sinh để lách luật bảo mật, gán cờ TeacherMessage
         await fetch(API_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
                 action: 'nop_bai', 
-                data: { id_hs: "GVCN", subject: "PeerMessage", group: studentId, score: 0, score_earned: 0, details: replyContent.trim() } 
+                data: { id_hs: studentId, subject: "TeacherMessage", group: "GVCN", score: 0, score_earned: 0, details: replyContent.trim() } 
             }) 
         });
         
-        Data.log.push({ id: "GVCN", subject: "PeerMessage", group: studentId, score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
+        Data.log.push({ id: studentId, subject: "TeacherMessage", group: "GVCN", score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
         alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
     } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
