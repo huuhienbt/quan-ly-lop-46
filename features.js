@@ -886,13 +886,26 @@ window.finishQuiz = async function() {
     } 
 };
 
-// ==========================================
-// 5. VÒNG QUAY MAY MẮN
+// 5. VÒNG QUAY MAY MẮN (CÓ BẢO MẬT CHỐNG ĐỔI MÁY)
 // ==========================================
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu(); 
     if (!(await window.loadAllDataOnce())) return;
+
+    // --- Ổ KHÓA BẢO MẬT CHỐNG ĐỔI MÁY ---
+    let today = new Date();
+    let daQuayHomNay = Data.log.some(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "LuckySpin") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    });
+    
+    if (daQuayHomNay) {
+        alert("🛡️ HỆ THỐNG BẢO MẬT: Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé.");
+        return veTrangChu();
+    }
+    // ------------------------------------
 
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
     let spinLog = window.getDailySpinLog(todayStr); 
@@ -1536,19 +1549,27 @@ window.showHappyBirthdayUI = function() {
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
-window.moGameBaoVeTraiDat = function() {
+// ==========================================
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (CÓ BẢO MẬT CHỐNG ĐỔI MÁY)
+// ==========================================
+window.moGameBaoVeTraiDat = async function() {
     if(!currentUser) return showLogin();
     closeMenu();
+    if (!(await window.loadAllDataOnce())) return;
 
-    let todayStr = new Date().toLocaleDateString('vi-VN');
-    let gameLog = JSON.parse(localStorage.getItem('mathGame_' + currentUser.id) || '{"date": "", "plays": 0}');
-    if (gameLog.date !== todayStr) gameLog = { date: todayStr, plays: 0 };
+    // --- Ổ KHÓA BẢO MẬT CHỐNG ĐỔI MÁY ---
+    let todayGame = new Date();
+    let daChoiGameHomNay = Data.log.some(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
+    });
     
-    // ĐÃ SỬA: Lời nhắn mới theo đúng ý thầy Hiển
-    if (gameLog.plays >= 1) return alert("Trái Đất hôm nay đã được an toàn nhờ công của con! Bây giờ là lúc dành thời gian ôn tập bài học. Hẹn gặp lại chiến binh nhí vào ngày mai nha!");
-
-    gameLog.plays += 1;
-    localStorage.setItem('mathGame_' + currentUser.id, JSON.stringify(gameLog));
+    if (daChoiGameHomNay) {
+        alert("🛡️ HỆ THỐNG BẢO MẬT: Nhiệm vụ Bảo Vệ Trái Đất hôm nay đã hoàn tất! Tàu vũ trụ đang cần bảo dưỡng, con hãy quay lại vào ngày mai nhé.");
+        return veTrangChu(); 
+    }
+    // ------------------------------------
 
     mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true };
 
