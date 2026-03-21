@@ -892,8 +892,21 @@ window.finishQuiz = async function() {
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu(); 
-    if (!(await window.loadAllDataOnce())) return;
+if (!(await window.loadAllDataOnce())) return;
 
+    // --- Ổ KHÓA BẢO MẬT MÁY CHỦ: KIỂM TRA ĐÃ QUAY HÔM NAY CHƯA ---
+    let today = new Date();
+    let daQuayHomNay = Data.log.some(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "LuckySpin") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    });
+    
+    if (daQuayHomNay) {
+        alert("🛡️ HỆ THỐNG BẢO MẬT: Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé.");
+        return veTrangChu();
+    }
+    // -------------------------------------------------------------
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
     let spinLog = window.getDailySpinLog(todayStr); 
     
