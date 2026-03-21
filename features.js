@@ -902,7 +902,7 @@ window.moVongQuay = async function() {
     });
     
     if (daQuayHomNay) {
-        alert("🛡️ HỆ THỐNG BẢO MẬT: Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé.");
+        alert("Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé.");
         return veTrangChu();
     }
     // ------------------------------------
