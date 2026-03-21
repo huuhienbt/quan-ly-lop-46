@@ -892,9 +892,9 @@ window.finishQuiz = async function() {
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); 
     closeMenu(); 
-if (!(await window.loadAllDataOnce())) return;
+    if (!(await window.loadAllDataOnce())) return;
 
-    // --- Ổ KHÓA BẢO MẬT MÁY CHỦ: KIỂM TRA ĐÃ QUAY HÔM NAY CHƯA ---
+    // --- Ổ KHÓA BẢO MẬT MÁY CHỦ ---
     let today = new Date();
     let daQuayHomNay = Data.log.some(l => {
         if (String(l.id) !== String(currentUser.id) || l.subject !== "LuckySpin") return false;
@@ -906,7 +906,8 @@ if (!(await window.loadAllDataOnce())) return;
         alert("🛡️ HỆ THỐNG BẢO MẬT: Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé.");
         return veTrangChu();
     }
-    // -------------------------------------------------------------
+    // ---------------------------------
+
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
     let spinLog = window.getDailySpinLog(todayStr); 
     
@@ -1812,19 +1813,24 @@ window.showHappyBirthdayUI = function() {
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
-window.moGameBaoVeTraiDat = function() {
+window.moGameBaoVeTraiDat = async function() {
     if(!currentUser) return showLogin();
     closeMenu();
+    if (!(await window.loadAllDataOnce())) return;
 
-    let todayStr = new Date().toLocaleDateString('vi-VN');
-    let gameLog = JSON.parse(localStorage.getItem('mathGame_' + currentUser.id) || '{"date": "", "plays": 0}');
-    if (gameLog.date !== todayStr) gameLog = { date: todayStr, plays: 0 };
+    // --- Ổ KHÓA BẢO MẬT MÁY CHỦ ---
+    let todayGame = new Date();
+    let daChoiGameHomNay = Data.log.some(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
+    });
     
-    // ĐÃ SỬA: Lời nhắn mới theo đúng ý thầy Hiển
-    if (gameLog.plays >= 1) return alert("Trái Đất hôm nay đã được an toàn nhờ công của con! Bây giờ là lúc dành thời gian ôn tập bài học. Hẹn gặp lại chiến binh nhí vào ngày mai nha!");
-
-    gameLog.plays += 1;
-    localStorage.setItem('mathGame_' + currentUser.id, JSON.stringify(gameLog));
+    if (daChoiGameHomNay) {
+        alert("🛡️ HỆ THỐNG BẢO MẬT: Nhiệm vụ Bảo Vệ Trái Đất hôm nay đã hoàn tất! Tàu vũ trụ đang cần bảo dưỡng, con hãy quay lại vào ngày mai nhé.");
+        return veTrangChu(); 
+    }
+    // ---------------------------------
 
     mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true };
 
@@ -1844,7 +1850,6 @@ window.moGameBaoVeTraiDat = function() {
                     <p id="mg-score" class="text-2xl font-black text-emerald-400 leading-none">0</p>
                 </div>
             </div>
-
             <div id="mg-sky" class="flex-1 relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black">
                 <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(white 1px, transparent 1px); background-size: 30px 30px;"></div>
                 <div id="mg-combo-text" class="absolute top-1/4 left-1/2 -translate-x-1/2 text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-red-600 opacity-0 transition-opacity duration-300 drop-shadow-[0_0_10px_rgba(255,0,0,0.8)] z-10 pointer-events-none">COMBO x2 🔥</div>
@@ -1856,7 +1861,6 @@ window.moGameBaoVeTraiDat = function() {
                     </div>
                 </div>
             </div>
-
             <div class="bg-slate-800 p-2 pb-4 relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] border-t-2 border-slate-700 h-[28vh] max-h-[240px] flex flex-col justify-end">
                 <div class="max-w-md mx-auto w-full h-full flex flex-col">
                     <div class="bg-slate-900 border-2 border-slate-700 rounded-xl mb-2 flex-[0_0_36px] flex items-center justify-center">
@@ -2573,4 +2577,125 @@ window.doiAnhDaiDien = function() {
         reader.readAsDataURL(file); 
     }; 
     input.click(); 
+};
+// ==========================================
+// 14. TỰ ĐỘNG ĐỔI MÀU NỀN THEO NGÀY TRONG TUẦN
+// ==========================================
+window.doiMauNenTheoNgay = function() {
+    const header = document.querySelector('header');
+    if (!header) return;
+    
+    const day = new Date().getDay(); 
+    const themes = [
+        'bg-gradient-to-r from-red-100/90 via-orange-50/90 to-white/90 border-red-100', 
+        'bg-gradient-to-r from-amber-100/90 via-yellow-50/90 to-white/90 border-amber-100', 
+        'bg-gradient-to-r from-rose-100/90 via-pink-50/90 to-white/90 border-rose-100', 
+        'bg-gradient-to-r from-emerald-100/90 via-teal-50/90 to-white/90 border-emerald-100', 
+        'bg-gradient-to-r from-blue-100/90 via-sky-50/90 to-white/90 border-blue-100', 
+        'bg-gradient-to-r from-purple-100/90 via-fuchsia-50/90 to-white/90 border-purple-100', 
+        'bg-gradient-to-r from-indigo-100/90 via-cyan-50/90 to-white/90 border-indigo-100'  
+    ];
+    const baseClasses = "backdrop-blur-md sticky top-0 z-50 border-b px-4 sm:px-6 py-3 flex justify-between items-center shadow-sm transition-all duration-1000";
+    header.className = themes[day] + " " + baseClasses;
+};
+window.doiMauNenTheoNgay();
+document.addEventListener("DOMContentLoaded", window.doiMauNenTheoNgay);
+
+// ==========================================
+// 15. RA ĐA KIỂM TRA TRẠNG THÁI HOẠT ĐỘNG
+// ==========================================
+window.moRaDaHoatDong = async function() {
+    closeMenu();
+    if (!(await window.loadAllDataOnce())) return;
+
+    let html = `
+        <div class="flex items-center mb-6 fade-in">
+            <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-xl text-emerald-600 uppercase">RA ĐA HOẠT ĐỘNG</h2>
+        </div>
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 fade-in mb-10">
+            <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                <div>
+                    <h3 class="text-lg font-black text-slate-800"><i class="fas fa-broadcast-tower text-emerald-500 mr-2 animate-pulse"></i>Trạng thái lớp học</h3>
+                    <p class="text-xs text-slate-500 font-bold mt-1">Dựa trên các tương tác nộp bài, chơi game, quay thưởng gần nhất.</p>
+                </div>
+            </div>
+            <div class="space-y-3">
+    `;
+
+    const now = new Date();
+
+    let studentActivity = Data.hs.map(s => {
+        let userLogs = Data.log.filter(l => String(l.id) === String(s.id));
+        let lastActionTime = 0;
+        let lastActionName = "Chưa có hoạt động";
+
+        if (userLogs.length > 0) {
+            userLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+            let latestLog = userLogs[0];
+            
+            let d = new Date(latestLog.time);
+            if (!isNaN(d.getTime())) {
+                lastActionTime = d;
+                if (latestLog.subject === 'math') lastActionName = "Vừa làm Toán: " + latestLog.group;
+                else if (latestLog.subject === 'tv' || latestLog.subject === 'vietnamese') lastActionName = "Vừa làm T.Việt: " + latestLog.group;
+                else if (latestLog.subject === 'LuckySpin') lastActionName = "Vừa quay Vòng quay may mắn";
+                else if (latestLog.subject === 'MathGame') lastActionName = "Vừa chơi Bảo vệ Trái Đất";
+                else if (latestLog.subject === 'Avatar') lastActionName = "Vừa đổi Ảnh đại diện";
+                else if (latestLog.subject === 'PeerMessage') lastActionName = "Vừa gửi một bức thư";
+                else lastActionName = "Hoạt động: " + latestLog.group;
+            }
+        }
+        return { ...s, lastActionTime, lastActionName };
+    });
+
+    studentActivity.sort((a, b) => {
+        let timeA = a.lastActionTime ? a.lastActionTime.getTime() : 0;
+        let timeB = b.lastActionTime ? b.lastActionTime.getTime() : 0;
+        return timeB - timeA;
+    });
+
+    studentActivity.forEach(s => {
+        let statusHtml = ""; let timeString = "";
+        
+        if (!s.lastActionTime) {
+            statusHtml = `<span class="flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg"><div class="w-2 h-2 rounded-full bg-slate-300"></div> Vắng mặt</span>`;
+            timeString = "Chưa truy cập";
+        } else {
+            let diffMinutes = Math.floor((now - s.lastActionTime) / 60000);
+            if (diffMinutes < 30) {
+                statusHtml = `<span class="flex items-center gap-1.5 text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200 shadow-sm"><div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Đang học</span>`;
+                timeString = diffMinutes <= 1 ? "Vừa xong" : `${diffMinutes} phút trước`;
+            } else if (diffMinutes < 60 * 24) {
+                let hours = Math.floor(diffMinutes / 60);
+                statusHtml = `<span class="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg"><div class="w-2 h-2 rounded-full bg-blue-400"></div> Hôm nay</span>`;
+                timeString = `${hours} giờ trước`;
+            } else {
+                let days = Math.floor(diffMinutes / (60 * 24));
+                statusHtml = `<span class="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg"><div class="w-2 h-2 rounded-full bg-slate-400"></div> Offline</span>`;
+                timeString = `${days} ngày trước`;
+            }
+        }
+
+        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+
+        html += `
+            <div class="flex items-center justify-between p-3 bg-white border-2 border-slate-50 rounded-2xl hover:border-emerald-200 transition">
+                <div class="flex items-center gap-3">
+                    <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0">
+                    <div>
+                        <h4 class="font-black text-slate-700 text-sm sm:text-base">${s.name}</h4>
+                        <p class="text-[11px] font-medium text-slate-500 mt-0.5 truncate max-w-[150px] sm:max-w-xs">${s.lastActionName}</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    ${statusHtml}
+                    <span class="text-[10px] font-bold text-slate-400">${timeString}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `</div></div>`;
+    document.getElementById('content').innerHTML = html;
 };
