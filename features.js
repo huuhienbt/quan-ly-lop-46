@@ -2817,6 +2817,7 @@ window.moQuanLyThu = async function() {
 
 // Động cơ xử lý lệnh Gửi thư của Giáo Viên
 // Động cơ xử lý lệnh Gửi thư của Giáo Viên (Đã bẻ khóa bảo mật Google Sheets)
+// Động cơ xử lý lệnh Gửi thư của Giáo Viên (LÁCH LUẬT BẢO MẬT GOOGLE SHEETS TẬP 2)
 window.gvTraLoiThu = async function(studentId, studentName) {
     let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
     if (!replyContent || !replyContent.trim()) return;
@@ -2825,16 +2826,16 @@ window.gvTraLoiThu = async function(studentId, studentName) {
     try {
         let submitTime = new Date().toISOString();
         
-        // Dùng chính ID của học sinh để lách luật bảo mật, gán cờ TeacherMessage
+        // Tuyệt chiêu: Dùng chính ID của học sinh đó để đi xuyên tường lửa, gán nhãn "TeacherReply"
         await fetch(API_URL, { 
             method: 'POST', 
             body: JSON.stringify({ 
                 action: 'nop_bai', 
-                data: { id_hs: studentId, subject: "TeacherMessage", group: "GVCN", score: 0, score_earned: 0, details: replyContent.trim() } 
+                data: { id_hs: studentId, subject: "TeacherReply", group: "GVCN", score: 0, score_earned: 0, details: replyContent.trim() } 
             }) 
         });
         
-        Data.log.push({ id: studentId, subject: "TeacherMessage", group: "GVCN", score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
+        Data.log.push({ id: studentId, subject: "TeacherReply", group: "GVCN", score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
         alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
     } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
