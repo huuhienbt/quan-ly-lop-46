@@ -1,29 +1,4 @@
 // ==========================================
-// =======================================================
-// MÀNG LỌC DỮ LIỆU ĐẦU VÀO (BẢN RÚT GỌN CHỈ ẨN TÊN GVCN)
-// =======================================================
-(function initDataFilter() {
-    let checkData = setInterval(() => {
-        // Đợi tải xong dữ liệu danh sách học sinh
-        if (window.Data && window.Data.hs && window.Data.hs.length > 0) {
-            
-            // Tìm xem có dòng GVCN không
-            let thayHien = window.Data.hs.find(s => s.id === 'GVCN');
-            
-            if (thayHien) {
-                // LÀM SẠCH: Xóa dòng GVCN ra khỏi mảng học sinh để không bị hiện lên Bảng Vàng, Radar...
-                window.Data.hs = window.Data.hs.filter(s => s.id !== 'GVCN');
-                
-                // Dừng vòng lặp sau khi đã giấu xong
-                clearInterval(checkData);
-            } else if (window.isAllDataLoaded) {
-                // Nếu đã load xong hết mà không thấy GVCN thì cũng dừng vòng lặp cho nhẹ máy
-                clearInterval(checkData);
-            }
-        }
-    }, 100); // Quét mỗi 0.1 giây lúc mới mở web
-})();
-// =======================================================
 // FILE: FEATURES.JS (BẢN FULL VIP 100% - KHÔNG BỊ CẮT XÉN)
 // Tích hợp: Soạn Đề Full Option, Kéo Thả Multi-drop (Bấm Chọn), Vòng Quay VIP, Bản Đồ Tiến Độ, Game Toán
 // ==========================================
@@ -919,20 +894,6 @@ window.moVongQuay = async function() {
     closeMenu(); 
     if (!(await window.loadAllDataOnce())) return;
 
-    // --- Ổ KHÓA BẢO MẬT MÁY CHỦ ---
-    let today = new Date();
-    let daQuayHomNay = Data.log.some(l => {
-        if (String(l.id) !== String(currentUser.id) || l.subject !== "LuckySpin") return false;
-        let d = new Date(l.time);
-        return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-    });
-    
-    if (daQuayHomNay) {
-        alert("🛡️ HỆ THỐNG BẢO MẬT: Hôm nay con đã nhận thưởng từ Vòng Quay rồi! Hãy nhường cơ hội cho các bạn khác và quay lại vào ngày mai nhé.");
-        return veTrangChu();
-    }
-    // ---------------------------------
-
     let todayStr = new Date().toLocaleDateString('vi-VN'); 
     let spinLog = window.getDailySpinLog(todayStr); 
     
@@ -1429,262 +1390,20 @@ window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
     }
 };
 
-// 7. HÒM THƯ TÍCH HỢP (BẢN CHUẨN ĐỌC DỮ LIỆU TỪ NHẬT KÝ)
 // ==========================================
+// 7. THƯ BÍ MẬT & ĐƠN XIN PHÉP
 // ==========================================
-// 7. HÒM THƯ TÍCH HỢP (BẢN CHUẨN ĐỌC DỮ LIỆU TỪ NHẬT KÝ)
-// ==========================================
-window.moHopThuBiMat = async function() {
-    if(!currentUser) return showLogin(); 
-    closeMenu();
-    
-    document.getElementById('content').innerHTML = `<div class="text-center py-10 mt-10"><i class="fas fa-spinner fa-spin text-5xl text-pink-500 mb-4 shadow-sm rounded-full"></i><p class="font-black text-slate-500 animate-pulse tracking-widest uppercase">Đang đồng bộ thư mới...</p></div>`;
-    if (!(await window.loadAllDataOnce(true))) return; 
-
-    let today = new Date();
-
-    // 1. TÌM THƯ BẠN BÈ GỬI (PeerMessage) VÀ THƯ THẦY HIỂN GỬI (TeacherReply)
-    let receivedMsgs = Data.log.filter(l => 
-        (l.subject === "PeerMessage" && String(l.group) === String(currentUser.id)) ||
-        (l.subject === "TeacherReply" && String(l.id) === String(currentUser.id)) // Khớp chuẩn xác với mã HS ở Cột A
-    );
-    receivedMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
-
-    let studentsList = Data.hs.filter(s => String(s.id) !== String(currentUser.id) && s.role !== 'admin');
-    let optionsHtml = studentsList.map(s => `<option value="${s.id}">👦👧 Bạn: ${s.name}</option>`).join('');
-
-    let sentToday = Data.log.filter(l => {
-        if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
-        let d = new Date(l.time);
-        return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-    });
-    
-    const MAX_PEER_MESSAGES = 10;
-    let messagesLeft = MAX_PEER_MESSAGES - sentToday.length;
-    let canSend = messagesLeft > 0;
-
-    let inboxHtml = receivedMsgs.length === 0 
-        ? `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-6xl text-pink-200 mb-3 block"></i><p class="text-sm font-bold text-slate-400">Hòm thư trống.<br>Chưa có ai gửi thư cho con.</p></div>` 
-        : receivedMsgs.map(msg => {
-            // Phân biệt thư của Thầy hay của Bạn
-            let isTeacher = (msg.subject === "TeacherReply"); 
-            let sender = Data.hs.find(s => String(s.id) === String(msg.id));
-            let senderName = isTeacher ? "👨‍🏫 Thầy Hiển (GVCN)" : (sender ? sender.name : "Một người bạn");
-            let timeSent = new Date(msg.time).toLocaleString('vi-VN');
-            
-            let avatarUrl = isTeacher 
-                ? 'https://ui-avatars.com/api/?name=Thầy+Hiển&background=0D8ABC&color=fff' 
-                : (window.layAnhDaiDien ? window.layAnhDaiDien(msg.id, senderName) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(senderName) + '&background=random&color=fff');
-            
-            let replyId = isTeacher ? 'gvcn' : msg.id;
-            let btnReply = `<button onclick="window.chonNguoiNhan('${replyId}')" class="text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm border ${isTeacher ? 'bg-blue-100 text-blue-600 hover:bg-blue-500 border-blue-200' : 'bg-pink-100 text-pink-600 hover:bg-pink-500 border-pink-200'} hover:text-white"><i class="fas fa-reply"></i> Trả lời</button>`;
-
-            let boxTheme = isTeacher ? 'bg-blue-50 border-blue-200' : 'bg-white border-pink-100';
-            let nameTheme = isTeacher ? 'text-blue-700' : 'text-pink-700';
-            let msgTheme = isTeacher ? 'bg-white border-blue-200 text-blue-900' : 'bg-pink-50 border-pink-100 text-slate-700';
-            let arrowTheme = isTeacher ? 'text-white' : 'text-pink-50';
-
-            return `
-                <div class="p-4 rounded-2xl border mb-3 hover:shadow-md transition flex gap-3 shadow-sm ${boxTheme}">
-                    <img src="${avatarUrl}" class="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover shrink-0">
-                    <div class="flex-1">
-                        <div class="flex justify-between items-start mb-1">
-                            <div>
-                                <p class="font-black text-sm ${nameTheme}">${senderName}</p>
-                                <p class="text-[10px] text-slate-400 font-bold">${timeSent}</p>
-                            </div>
-                            ${btnReply}
-                        </div>
-                        <p class="font-medium text-sm p-3 rounded-xl border relative mt-2 ${msgTheme}">
-                            <i class="fas fa-caret-left absolute -left-2 top-3 text-xl drop-shadow-sm ${arrowTheme}"></i>
-                            ${msg.details}
-                        </p>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-    let sendFormHtml = canSend ? `
-        <div class="flex-1 flex flex-col relative z-10 space-y-4">
-            <div>
-                <div class="flex justify-between items-end mb-1">
-                    <label class="text-xs font-black text-pink-400 uppercase tracking-wider block">Người nhận</label>
-                    <span class="text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100">Còn ${messagesLeft}/10 thư bạn bè</span>
-                </div>
-                <select id="mailReceiver" class="w-full bg-white border-2 border-pink-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-pink-400 transition shadow-inner">
-                    <option value="gvcn" class="font-black text-pink-600">👨‍🏫 Thầy Hiển (GVCN) - Không giới hạn</option>
-                    ${optionsHtml}
-                </select>
-            </div>
-            <div class="flex-1 flex flex-col">
-                <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
-                <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Viết điều con muốn nói vào đây..."></textarea>
-            </div>
-            <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
-                <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
-                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên <span class="text-pink-400 text-xs">(Chỉ áp dụng gửi cho Thầy)</span></span>
-            </label>
-            <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-rocket mr-2"></i> GỬI THƯ ĐI</button>
-        </div>
-    ` : `
-        <div class="flex-1 flex flex-col relative z-10 space-y-4">
-            <div>
-                <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Người nhận</label>
-                <select id="mailReceiver" class="w-full bg-white border-2 border-pink-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-pink-400 transition shadow-inner">
-                    <option value="gvcn" class="font-black text-pink-600">👨‍🏫 Thầy Hiển (GVCN) - Không giới hạn</option>
-                </select>
-            </div>
-            <div class="flex-1 flex flex-col">
-                <label class="text-xs font-black text-pink-400 uppercase tracking-wider block mb-1">Nội dung thư</label>
-                <textarea id="mailContent" class="flex-1 w-full bg-white border-2 border-pink-200 p-4 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 transition shadow-inner custom-scrollbar resize-none" placeholder="Con đã xài hết lượt gửi cho bạn bè hôm nay. Form này hiện chỉ để gửi cho Thầy Hiển thôi nhé..."></textarea>
-            </div>
-            <label class="flex items-center gap-3 cursor-pointer bg-white p-3 rounded-xl border border-pink-100 shadow-sm w-full">
-                <input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer">
-                <span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span>
-            </label>
-            <button onclick="window.guiThuBiMat()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-lg hover:scale-[1.02] transition"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button>
-            <p class="text-xs text-center text-red-500 font-bold mt-2"><i class="fas fa-info-circle"></i> Con đã gửi tối đa 10 bức thư cho bạn bè hôm nay. Mai quay lại nhé!</p>
-        </div>
-    `;
-
-    document.getElementById('content').innerHTML = `
-        ${getNavHtml('thubimat')}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10">
-            <div class="bg-[#fff0f5] p-5 sm:p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 flex flex-col h-[550px] relative overflow-hidden">
-                <i class="fas fa-heart absolute -right-4 -bottom-4 text-8xl text-pink-500 opacity-5 pointer-events-none"></i>
-                <h3 class="text-lg font-black text-pink-600 mb-4 border-b border-pink-200 pb-3 flex items-center relative z-10"><i class="fas fa-paper-plane mr-2 text-xl"></i>Soạn thư mới</h3>
-                ${sendFormHtml}
-            </div>
-            <div class="bg-white p-5 sm:p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col h-[550px]">
-                <h3 class="text-lg font-black text-slate-800 mb-4 border-b border-slate-50 pb-3 flex items-center"><i class="fas fa-envelope-open-text text-pink-500 mr-2 text-xl"></i>Hòm thư của con <span class="ml-auto bg-pink-100 text-pink-600 text-[10px] font-bold px-2 py-1 rounded-full">${receivedMsgs.length} thư</span></h3>
-                <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                    ${inboxHtml}
-                </div>
-            </div>
-        </div>
-    `;
+window.moHopThuBiMat = function() {
+    if(!currentUser) return showLogin(); closeMenu();
+    document.getElementById('content').innerHTML = `${getNavHtml('thubimat')}<div class="bg-[#fff0f5] p-6 rounded-[2rem] shadow-sm border-2 border-pink-200 space-y-5 fade-in relative overflow-hidden"><p class="text-slate-600 font-bold text-sm relative z-10 leading-relaxed">Thầy Hiển luôn ở đây để lắng nghe con.</p><textarea id="mailContent" class="w-full bg-white border-2 border-pink-200 p-4 rounded-2xl font-medium text-slate-700 outline-none focus:border-pink-400 transition min-h-[150px] relative z-10" placeholder="Viết điều con muốn nói vào đây..."></textarea><label class="flex items-center gap-3 cursor-pointer relative z-10 bg-white p-3 rounded-xl border border-pink-100"><input type="checkbox" id="mailAnon" class="w-5 h-5 accent-pink-500 cursor-pointer"><span class="font-bold text-slate-600 text-sm">Gửi giấu tên</span></label><button onclick="window.guiThuBiMat()" class="w-full bg-pink-500 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-pink-600 transition relative z-10"><i class="fas fa-paper-plane mr-2"></i> GỬI CHO THẦY HIỂN</button></div>`;
 };
 
 window.guiThuBiMat = async function() {
-    let receiverId = document.getElementById('mailReceiver').value;
-    let content = document.getElementById('mailContent').value.trim(); 
-    const isAnon = document.getElementById('mailAnon').checked; 
-    
-    if(!content) return alert("Con chưa viết gì cả!"); 
-
-    if (receiverId !== 'gvcn') {
-        let today = new Date();
-        let sentToday = Data.log.filter(l => {
-            if (l.subject !== "PeerMessage" || String(l.id) !== String(currentUser.id)) return false;
-            let d = new Date(l.time);
-            return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
-        });
-        if (sentToday.length >= 10) {
-            return alert("Nhiệm vụ hôm nay hoàn tất! Mỗi ngày con chỉ được gửi tối đa 10 bức thư cho bạn bè thôi nhé. Ngày mai con hãy quay lại nha!");
-        }
-    }
-
-    document.getElementById('loader').style.display = 'flex';
-    try { 
-        if (receiverId === 'gvcn') {
-            await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); 
-            alert("Đã gửi thư cho GVCN thành công!"); veTrangChu();
-        } else {
-            let submitTime = new Date().toISOString();
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "PeerMessage", group: receiverId, score: 0, score_earned: 0, details: content } }) });
-            Data.log.push({ id: currentUser.id, subject: "PeerMessage", group: receiverId, score: 0, real_added: 0, time: submitTime, details: content });
-            alert("Tuyệt vời! Bức thư của con đã được gửi đến bạn ấy.");
-            window.moHopThuBiMat(); 
-        }
-    } catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } finally { document.getElementById('loader').style.display = 'none'; }
+    const content = document.getElementById('mailContent').value.trim(); const isAnon = document.getElementById('mailAnon').checked; 
+    if(!content) return alert("Con chưa viết gì cả!"); document.getElementById('loader').style.display = 'flex';
+    try { await fetch(API_URL, { method:'POST', body: JSON.stringify({ action:'gui_thu_bi_mat', data:{ id:currentUser.id, name:currentUser.name, isAnonymous: isAnon, content: content } }) }); alert("Đã gửi thư thành công!"); veTrangChu(); } catch(e) { alert("Lỗi mạng, chưa gửi được thư!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
 
-// CHỖ SỬA QUAN TRỌNG: ÉP HỆ THỐNG GỬI ID LÀ "GVCN" XUYÊN TƯỜNG LỬA
-// Động cơ xử lý lệnh Gửi thư của Giáo Viên (GHI CHUẨN ID VÀO NHẬT KÝ LÀM BÀI)
-// Động cơ xử lý lệnh Gửi thư của Giáo Viên (GHI CHUẨN ID VÀO NHẬT KÝ LÀM BÀI)
-window.gvTraLoiThu = async function(studentId, studentName) {
-    let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
-    if (!replyContent || !replyContent.trim()) return;
-
-    document.getElementById('loader').style.display = 'flex';
-    try {
-        let submitTime = new Date().toISOString();
-        
-        // Tuyệt chiêu: Ép buộc ghi ID học sinh vào Cột A (tránh lỗi undefined)
-        await fetch(API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ 
-                action: 'nop_bai', 
-                data: { 
-                    id_hs: studentId,            // Cột A: Điền đúng mã HS (vd: HS19)
-                    subject: "TeacherReply",     // Cột B: Nhãn nhận diện thư của Thầy
-                    group: "GVCN",               // Cột C
-                    score: 0, 
-                    score_earned: 0, 
-                    details: replyContent.trim() // Nội dung thư
-                } 
-            }) 
-        });
-        
-        Data.log.push({ id: studentId, subject: "TeacherReply", group: "GVCN", score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
-        alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
-    } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
-};
-
-// ==========================================
-// 17. GIÁO VIÊN KIỂM DUYỆT & TRẢ LỜI THƯ BẠN BÈ
-// ==========================================
-window.moKiemDuyetThuBanBe = async function() {
-    closeMenu();
-    if (!(await window.loadAllDataOnce())) return;
-
-    let html = `
-        <div class="flex items-center mb-6 fade-in">
-            <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-indigo-600 uppercase">KIỂM DUYỆT THƯ BẠN BÈ</h2>
-        </div>
-        <p class="text-xs text-slate-500 mb-6 text-center italic"><i class="fas fa-shield-alt text-indigo-400 mr-1"></i> Danh sách tất cả thư giao lưu của học sinh để GVCN giám sát</p>
-    `;
-
-    let peerMsgs = Data.log.filter(l => l.subject === "PeerMessage" && l.id !== "GVCN");
-    peerMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
-
-    if(peerMsgs.length === 0) {
-        html += `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-5xl text-slate-300 mb-3 block"></i><p class="font-bold text-slate-400">Lớp chưa có bức thư nào được gửi.</p></div>`;
-    } else {
-        let listHtml = peerMsgs.map(msg => {
-            let sender = Data.hs.find(s => String(s.id) === String(msg.id));
-            let receiver = Data.hs.find(s => String(s.id) === String(msg.group)); 
-            let senderName = sender ? sender.name : "Không rõ";
-            let receiverName = receiver ? receiver.name : "Không rõ";
-            
-            let timeSent = ""; try { let d = new Date(msg.time); timeSent = isNaN(d) ? msg.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = msg.time; }
-            
-            // Nút Thầy Hiển tham gia trả lời / nhắc nhở người gửi
-            let btnReplyGV = `<button onclick="window.gvTraLoiThu('${msg.id}', '${senderName.replace(/'/g, "\\'")}')" class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-200 mt-2"><i class="fas fa-reply mr-1"></i> Trả lời / Nhắc nhở em này</button>`;
-
-            return `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-indigo-400 mb-4 hover:shadow-md transition">
-                    <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-3">
-                        <div class="text-sm font-black text-slate-700 flex items-center flex-wrap gap-2">
-                            <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg border border-blue-100 shadow-sm"><i class="fas fa-user mr-1"></i> ${senderName}</span> 
-                            <i class="fas fa-arrow-right text-slate-400"></i> 
-                            <span class="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg border border-orange-100 shadow-sm"><i class="fas fa-user-check mr-1"></i> ${receiverName}</span>
-                        </div>
-                        <div class="flex flex-col items-end">
-                            <div class="text-[10px] text-slate-400 font-bold bg-slate-50 px-2 py-1 rounded-full"><i class="fas fa-clock mr-1"></i>${timeSent}</div>
-                            ${btnReplyGV}
-                        </div>
-                    </div>
-                    <p class="text-slate-800 text-sm font-medium whitespace-pre-wrap leading-relaxed">" ${msg.details} "</p>
-                </div>
-            `;
-        }).join('');
-        html += `<div class="space-y-2 pb-10 fade-in">${listHtml}</div>`;
-    }
-    
-    document.getElementById('content').innerHTML = html;
-};
 window.moXinPhep = function() { 
     if(!currentUser) return showLogin(); closeMenu(); 
     document.getElementById('content').innerHTML = `${getNavHtml('hopthu')}<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 space-y-5 fade-in"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Ngày nghỉ</label><input type="date" id="lDate" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700"></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4"><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Loại xin phép</label><select id="lType" onchange="window.changeLeaveType()" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Nghỉ học và bán trú">Nghỉ học và bán trú</option><option value="Nghỉ Bán trú">Nghỉ Bán trú</option></select></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Thời gian nghỉ</label><select id="lSession" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-bold text-slate-700 outline-none focus:border-red-400 transition"><option value="Cả ngày">Cả ngày</option><option value="Chỉ buổi sáng">Chỉ buổi sáng</option><option value="Chỉ buổi chiều">Chỉ buổi chiều</option></select></div></div><div><label class="text-xs font-black text-slate-400 uppercase tracking-wider block mb-1">Lý do (Bệnh, việc gia đình...)</label><textarea id="lReason" class="edit-input w-full bg-slate-50 border-2 border-slate-200 p-3 rounded-xl font-medium text-slate-700 outline-none focus:border-red-400 transition" rows="3" placeholder="Nhập lý do chi tiết..."></textarea></div><button onclick="window.sendLeave()" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg mt-2 text-lg hover:bg-red-700 transition"><i class="fas fa-paper-plane mr-2"></i> GỬI ĐƠN CHO GVCN</button></div>`; document.getElementById('lDate').valueAsDate = new Date(Date.now()+86400000); 
@@ -1817,24 +1536,19 @@ window.showHappyBirthdayUI = function() {
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
-window.moGameBaoVeTraiDat = async function() {
+window.moGameBaoVeTraiDat = function() {
     if(!currentUser) return showLogin();
     closeMenu();
-    if (!(await window.loadAllDataOnce())) return;
 
-    // --- Ổ KHÓA BẢO MẬT MÁY CHỦ ---
-    let todayGame = new Date();
-    let daChoiGameHomNay = Data.log.some(l => {
-        if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
-        let d = new Date(l.time);
-        return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
-    });
+    let todayStr = new Date().toLocaleDateString('vi-VN');
+    let gameLog = JSON.parse(localStorage.getItem('mathGame_' + currentUser.id) || '{"date": "", "plays": 0}');
+    if (gameLog.date !== todayStr) gameLog = { date: todayStr, plays: 0 };
     
-    if (daChoiGameHomNay) {
-        alert("🛡️ HỆ THỐNG BẢO MẬT: Nhiệm vụ Bảo Vệ Trái Đất hôm nay đã hoàn tất! Tàu vũ trụ đang cần bảo dưỡng, con hãy quay lại vào ngày mai nhé.");
-        return veTrangChu(); 
-    }
-    // ---------------------------------
+    // ĐÃ SỬA: Lời nhắn mới theo đúng ý thầy Hiển
+    if (gameLog.plays >= 1) return alert("Trái Đất hôm nay đã được an toàn nhờ công của con! Bây giờ là lúc dành thời gian ôn tập bài học. Hẹn gặp lại chiến binh nhí vào ngày mai nha!");
+
+    gameLog.plays += 1;
+    localStorage.setItem('mathGame_' + currentUser.id, JSON.stringify(gameLog));
 
     mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true };
 
@@ -1854,6 +1568,7 @@ window.moGameBaoVeTraiDat = async function() {
                     <p id="mg-score" class="text-2xl font-black text-emerald-400 leading-none">0</p>
                 </div>
             </div>
+
             <div id="mg-sky" class="flex-1 relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black">
                 <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(white 1px, transparent 1px); background-size: 30px 30px;"></div>
                 <div id="mg-combo-text" class="absolute top-1/4 left-1/2 -translate-x-1/2 text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-red-600 opacity-0 transition-opacity duration-300 drop-shadow-[0_0_10px_rgba(255,0,0,0.8)] z-10 pointer-events-none">COMBO x2 🔥</div>
@@ -1865,6 +1580,7 @@ window.moGameBaoVeTraiDat = async function() {
                     </div>
                 </div>
             </div>
+
             <div class="bg-slate-800 p-2 pb-4 relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] border-t-2 border-slate-700 h-[28vh] max-h-[240px] flex flex-col justify-end">
                 <div class="max-w-md mx-auto w-full h-full flex flex-col">
                     <div class="bg-slate-900 border-2 border-slate-700 rounded-xl mb-2 flex-[0_0_36px] flex items-center justify-center">
@@ -2581,262 +2297,4 @@ window.doiAnhDaiDien = function() {
         reader.readAsDataURL(file); 
     }; 
     input.click(); 
-};
-// ==========================================
-// 14. TỰ ĐỘNG ĐỔI MÀU NỀN THEO NGÀY TRONG TUẦN
-// ==========================================
-window.doiMauNenTheoNgay = function() {
-    const header = document.querySelector('header');
-    if (!header) return;
-    
-    const day = new Date().getDay(); 
-    const themes = [
-        'bg-gradient-to-r from-red-100/90 via-orange-50/90 to-white/90 border-red-100', 
-        'bg-gradient-to-r from-amber-100/90 via-yellow-50/90 to-white/90 border-amber-100', 
-        'bg-gradient-to-r from-rose-100/90 via-pink-50/90 to-white/90 border-rose-100', 
-        'bg-gradient-to-r from-emerald-100/90 via-teal-50/90 to-white/90 border-emerald-100', 
-        'bg-gradient-to-r from-blue-100/90 via-sky-50/90 to-white/90 border-blue-100', 
-        'bg-gradient-to-r from-purple-100/90 via-fuchsia-50/90 to-white/90 border-purple-100', 
-        'bg-gradient-to-r from-indigo-100/90 via-cyan-50/90 to-white/90 border-indigo-100'  
-    ];
-    const baseClasses = "backdrop-blur-md sticky top-0 z-50 border-b px-4 sm:px-6 py-3 flex justify-between items-center shadow-sm transition-all duration-1000";
-    header.className = themes[day] + " " + baseClasses;
-};
-window.doiMauNenTheoNgay();
-document.addEventListener("DOMContentLoaded", window.doiMauNenTheoNgay);
-
-// ==========================================
-// 15. RA ĐA KIỂM TRA TRẠNG THÁI HOẠT ĐỘNG
-// ==========================================
-window.moRaDaHoatDong = async function() {
-    closeMenu();
-    if (!(await window.loadAllDataOnce())) return;
-
-    let html = `
-        <div class="flex items-center mb-6 fade-in">
-            <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-emerald-600 uppercase">RA ĐA HOẠT ĐỘNG</h2>
-        </div>
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 fade-in mb-10">
-            <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-                <div>
-                    <h3 class="text-lg font-black text-slate-800"><i class="fas fa-broadcast-tower text-emerald-500 mr-2 animate-pulse"></i>Trạng thái lớp học</h3>
-                    <p class="text-xs text-slate-500 font-bold mt-1">Dựa trên các tương tác nộp bài, chơi game, quay thưởng gần nhất.</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-    `;
-
-    const now = new Date();
-
-    let studentActivity = Data.hs.map(s => {
-        let userLogs = Data.log.filter(l => String(l.id) === String(s.id));
-        let lastActionTime = 0;
-        let lastActionName = "Chưa có hoạt động";
-
-        if (userLogs.length > 0) {
-            userLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-            let latestLog = userLogs[0];
-            
-            let d = new Date(latestLog.time);
-            if (!isNaN(d.getTime())) {
-                lastActionTime = d;
-                if (latestLog.subject === 'math') lastActionName = "Vừa làm Toán: " + latestLog.group;
-                else if (latestLog.subject === 'tv' || latestLog.subject === 'vietnamese') lastActionName = "Vừa làm T.Việt: " + latestLog.group;
-                else if (latestLog.subject === 'LuckySpin') lastActionName = "Vừa quay Vòng quay may mắn";
-                else if (latestLog.subject === 'MathGame') lastActionName = "Vừa chơi Bảo vệ Trái Đất";
-                else if (latestLog.subject === 'Avatar') lastActionName = "Vừa đổi Ảnh đại diện";
-                else if (latestLog.subject === 'PeerMessage') lastActionName = "Vừa gửi một bức thư";
-                else lastActionName = "Hoạt động: " + latestLog.group;
-            }
-        }
-        return { ...s, lastActionTime, lastActionName };
-    });
-
-    studentActivity.sort((a, b) => {
-        let timeA = a.lastActionTime ? a.lastActionTime.getTime() : 0;
-        let timeB = b.lastActionTime ? b.lastActionTime.getTime() : 0;
-        return timeB - timeA;
-    });
-
-    studentActivity.forEach(s => {
-        let statusHtml = ""; let timeString = "";
-        
-        if (!s.lastActionTime) {
-            statusHtml = `<span class="flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg"><div class="w-2 h-2 rounded-full bg-slate-300"></div> Vắng mặt</span>`;
-            timeString = "Chưa truy cập";
-        } else {
-            let diffMinutes = Math.floor((now - s.lastActionTime) / 60000);
-            if (diffMinutes < 30) {
-                statusHtml = `<span class="flex items-center gap-1.5 text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200 shadow-sm"><div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Đang học</span>`;
-                timeString = diffMinutes <= 1 ? "Vừa xong" : `${diffMinutes} phút trước`;
-            } else if (diffMinutes < 60 * 24) {
-                let hours = Math.floor(diffMinutes / 60);
-                statusHtml = `<span class="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg"><div class="w-2 h-2 rounded-full bg-blue-400"></div> Hôm nay</span>`;
-                timeString = `${hours} giờ trước`;
-            } else {
-                let days = Math.floor(diffMinutes / (60 * 24));
-                statusHtml = `<span class="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg"><div class="w-2 h-2 rounded-full bg-slate-400"></div> Offline</span>`;
-                timeString = `${days} ngày trước`;
-            }
-        }
-
-        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-
-        html += `
-            <div class="flex items-center justify-between p-3 bg-white border-2 border-slate-50 rounded-2xl hover:border-emerald-200 transition">
-                <div class="flex items-center gap-3">
-                    <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0">
-                    <div>
-                        <h4 class="font-black text-slate-700 text-sm sm:text-base">${s.name}</h4>
-                        <p class="text-[11px] font-medium text-slate-500 mt-0.5 truncate max-w-[150px] sm:max-w-xs">${s.lastActionName}</p>
-                    </div>
-                </div>
-                <div class="flex flex-col items-end gap-1">
-                    ${statusHtml}
-                    <span class="text-[10px] font-bold text-slate-400">${timeString}</span>
-                </div>
-            </div>
-        `;
-    });
-
-    html += `</div></div>`;
-    document.getElementById('content').innerHTML = html;
-};
-// ========================================================
-// TÍCH HỢP QUẢN LÝ THƯ VÀ TRẢ LỜI THƯ (DÁN CUỐI FILE)
-// ========================================================
-window.moQuanLyThu = async function() { 
-    closeMenu(); 
-    document.getElementById('content').innerHTML = `<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-4xl text-pink-500 mb-3"></i><p class="font-bold text-slate-500">Đang tải toàn bộ thư từ hệ thống...</p></div>`; 
-    
-    // Nạp dữ liệu log điểm để lấy thư học sinh gửi nhau
-    if (!(await window.loadAllDataOnce())) return;
-
-    try {
-        // 1. TẢI THƯ HỌC SINH GỬI CHO THẦY HIỂN
-        const letters = await (await fetch(API_URL + "?type=mailbox&t=" + Date.now())).json();
-        if (currentUser && currentUser.role === 'admin') { localStorage.setItem('admin_read_mail_' + currentUser.id, letters.length); window.kiemTraThongBaoAdmin(); }
-        
-        let htmlToTeacher = "";
-        if(letters.length === 0) { 
-            htmlToTeacher = `<div class="text-center py-10 text-slate-400 font-bold"><i class="fas fa-comment-dots text-5xl mb-3 text-slate-200"></i><br>Chưa có thư nào.</div>`; 
-        } else {
-            htmlToTeacher = `<div class="space-y-4">`;
-            letters.forEach(l => {
-                let timeSent = ""; try { let d = new Date(l.time); timeSent = isNaN(d) ? l.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = l.time; }
-                let isAnon = (String(l.isAnonymous).toLowerCase() === "true"); 
-                let senderDisplay = isAnon ? `<span class="text-purple-600"><i class="fas fa-user-secret"></i> Ẩn danh (Thực tế: ${l.name})</span>` : `<span class="text-blue-600"><i class="fas fa-user"></i> ${l.name}</span>`; 
-                let anonBadge = isAnon ? `<span class="bg-purple-100 text-purple-700 text-[10px] font-black px-2 py-1 rounded ml-2">THƯ ẨN DANH</span>` : '';
-                
-                // NÚT TRẢ LỜI CỦA GVCN NẰM Ở ĐÂY
-                let btnReply = `<button onclick="window.gvTraLoiThu('${l.id}', '${l.name.replace(/'/g, "\\'")}')" class="text-[11px] bg-blue-50 text-blue-600 font-bold px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition shadow-sm border border-blue-200"><i class="fas fa-reply mr-1"></i> Trả lời em này</button>`;
-
-                htmlToTeacher += `<div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 ${isAnon ? 'border-purple-400' : 'border-pink-400'} hover:shadow-md transition relative">
-                    <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-2">
-                        <div class="font-bold text-sm">${senderDisplay} ${anonBadge}</div>
-                        <div class="text-[10px] text-slate-400 flex flex-col items-end gap-2">
-                            <span><i class="fas fa-clock"></i> ${timeSent}</span>
-                            ${btnReply}
-                        </div>
-                    </div>
-                    <div class="text-slate-700 text-base whitespace-pre-wrap font-medium bg-slate-50 p-3 rounded-xl">"${l.content}"</div>
-                </div>`;
-            }); 
-            htmlToTeacher += `</div>`;
-        }
-
-        // 2. TẢI THƯ HỌC SINH GỬI CHO NHAU ĐỂ GVCN GIÁM SÁT
-        let peerMsgs = Data.log.filter(l => l.subject === "PeerMessage" && l.id !== "GVCN");
-        peerMsgs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
-
-        let htmlPeer = "";
-        if(peerMsgs.length === 0) {
-            htmlPeer = `<div class="text-center py-10 opacity-60"><i class="fas fa-box-open text-5xl text-slate-300 mb-3 block"></i><p class="font-bold text-slate-400">Chưa có bức thư nào được gửi.</p></div>`;
-        } else {
-            htmlPeer = `<div class="space-y-4">`;
-            peerMsgs.forEach(msg => {
-                let sender = Data.hs.find(s => String(s.id) === String(msg.id));
-                let receiver = Data.hs.find(s => String(s.id) === String(msg.group)); 
-                let senderName = sender ? sender.name : "Không rõ";
-                let receiverName = receiver ? receiver.name : "Không rõ";
-                
-                let timeSent = ""; try { let d = new Date(msg.time); timeSent = isNaN(d) ? msg.time : d.toLocaleString('vi-VN'); } catch(e) { timeSent = msg.time; }
-                
-                let btnReplyGV = `<button onclick="window.gvTraLoiThu('${msg.id}', '${senderName.replace(/'/g, "\\'")}')" class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1.5 rounded-lg hover:bg-orange-600 hover:text-white transition shadow-sm border border-orange-200 mt-2"><i class="fas fa-bullhorn mr-1"></i> Nhắc nhở / Trả lời</button>`;
-
-                htmlPeer += `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-indigo-400 hover:shadow-md transition">
-                        <div class="flex justify-between items-start mb-3 border-b border-slate-50 pb-3">
-                            <div class="text-sm font-black text-slate-700 flex items-center flex-wrap gap-2">
-                                <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg border border-blue-100 shadow-sm"><i class="fas fa-user mr-1"></i> ${senderName}</span> 
-                                <i class="fas fa-arrow-right text-slate-400"></i> 
-                                <span class="bg-orange-50 text-orange-700 px-2 py-1 rounded-lg border border-orange-100 shadow-sm"><i class="fas fa-user-check mr-1"></i> ${receiverName}</span>
-                            </div>
-                            <div class="flex flex-col items-end">
-                                <div class="text-[10px] text-slate-400 font-bold bg-slate-50 px-2 py-1 rounded-full"><i class="fas fa-clock mr-1"></i>${timeSent}</div>
-                                ${btnReplyGV}
-                            </div>
-                        </div>
-                        <p class="text-slate-800 text-sm font-medium whitespace-pre-wrap leading-relaxed">" ${msg.details} "</p>
-                    </div>
-                `;
-            });
-            htmlPeer += `</div>`;
-        }
-
-        // 3. RÁP LÊN MÀN HÌNH CHIA 2 CỘT
-        let finalHtml = `
-            <div class="flex items-center mb-6 fade-in">
-                <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
-                <h2 class="font-black text-xl text-pink-600 uppercase">QUẢN LÝ THƯ & TIN NHẮN</h2>
-            </div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10 fade-in">
-                <div class="bg-pink-50/50 p-5 rounded-[2rem] border-2 border-pink-100 flex flex-col h-[700px] shadow-sm">
-                    <h3 class="text-lg font-black text-pink-700 mb-4 border-b border-pink-200 pb-3 flex items-center"><i class="fas fa-envelope-open-text text-pink-500 mr-2 text-xl"></i>Thư gửi Thầy Hiển <span class="ml-auto bg-pink-100 text-pink-600 text-[10px] font-bold px-2 py-1 rounded-full">${letters.length} thư</span></h3>
-                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                        ${htmlToTeacher}
-                    </div>
-                </div>
-
-                <div class="bg-indigo-50/50 p-5 rounded-[2rem] border-2 border-indigo-100 flex flex-col h-[700px] shadow-sm">
-                    <h3 class="text-lg font-black text-indigo-700 mb-4 border-b border-indigo-200 pb-3 flex items-center"><i class="fas fa-comments text-indigo-500 mr-2 text-xl"></i>Học sinh nhắn cho nhau <span class="ml-auto bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-full">${peerMsgs.length} thư</span></h3>
-                    <div class="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                        ${htmlPeer}
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('content').innerHTML = finalHtml;
-
-    } catch (e) { 
-        document.getElementById('content').innerHTML = `<p class="text-center text-red-500 mt-10 font-bold">Lỗi tải dữ liệu hộp thư.</p>`; 
-    }
-};
-
-// Động cơ xử lý lệnh Gửi thư của Giáo Viên
-// Động cơ xử lý lệnh Gửi thư của Giáo Viên (Đã bẻ khóa bảo mật Google Sheets)
-// Động cơ xử lý lệnh Gửi thư của Giáo Viên (LÁCH LUẬT BẢO MẬT GOOGLE SHEETS TẬP 2)
-window.gvTraLoiThu = async function(studentId, studentName) {
-    let replyContent = prompt(`Nhập nội dung thầy muốn gửi cho em ${studentName}:`);
-    if (!replyContent || !replyContent.trim()) return;
-
-    document.getElementById('loader').style.display = 'flex';
-    try {
-        let submitTime = new Date().toISOString();
-        
-        // Tuyệt chiêu: Dùng chính ID của học sinh đó để đi xuyên tường lửa, gán nhãn "TeacherReply"
-        await fetch(API_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ 
-                action: 'nop_bai', 
-                data: { id_hs: studentId, subject: "TeacherReply", group: "GVCN", score: 0, score_earned: 0, details: replyContent.trim() } 
-            }) 
-        });
-        
-        Data.log.push({ id: studentId, subject: "TeacherReply", group: "GVCN", score: 0, real_added: 0, time: submitTime, details: replyContent.trim() });
-        alert("Đã gửi tin nhắn cho " + studentName + " thành công!");
-    } catch (e) { alert("Lỗi mạng, chưa gửi được!"); } finally { document.getElementById('loader').style.display = 'none'; }
 };
