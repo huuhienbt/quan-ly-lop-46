@@ -1791,3 +1791,102 @@ window.moRaDaHoatDong = async function() {
     });
     html += `</div></div>`; document.getElementById('content').innerHTML = html;
 };
+// ==========================================
+// TÍNH NĂNG BỔ SUNG: NÚT RADAR TRẠNG THÁI LỚP (FLOATING BUTTON & MODAL)
+// Không ảnh hưởng đến Bảng Vàng
+// ==========================================
+
+// Hàm mở Popup danh sách trạng thái toàn lớp
+window.moModalTrangThaiLop = async function() {
+    if (!window.isAllDataLoaded) await window.loadAllDataOnce(false, true);
+    
+    let overlay = document.createElement('div');
+    overlay.id = "modalTrangThaiLop";
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in";
+    
+    const now = new Date();
+    
+    // Lấy toàn bộ học sinh và tính toán thời gian hoạt động cuối cùng
+    let students = Data.hs.filter(s => (s.role || '').toLowerCase() !== 'admin').map(s => {
+        let userLogs = Data.log.filter(l => String(l.id) === String(s.id));
+        let lastActionTime = 0; 
+        if (userLogs.length > 0) {
+            userLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+            let d = new Date(userLogs[0].time);
+            if (!isNaN(d.getTime())) lastActionTime = d;
+        }
+        return { ...s, lastActionTime, scoreVal: Number(s.score) || 0 };
+    });
+
+    // Sắp xếp: Ai đang Online lên đầu, sau đó sắp xếp theo điểm
+    students.sort((a, b) => {
+        let timeA = a.lastActionTime ? a.lastActionTime.getTime() : 0;
+        let timeB = b.lastActionTime ? b.lastActionTime.getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return b.scoreVal - a.scoreVal;
+    });
+
+    let listHtml = students.map(s => {
+        let statusDot = ""; let timeString = "";
+        if (!s.lastActionTime) { 
+            statusDot = "bg-slate-300"; timeString = "Chưa truy cập"; 
+        } else {
+            let diffMinutes = Math.floor((now - s.lastActionTime) / 60000);
+            if (diffMinutes < 30) { statusDot = "bg-emerald-500 animate-pulse ring-2 ring-emerald-200"; timeString = diffMinutes <= 1 ? "Đang Online" : `${diffMinutes} phút trước`; } 
+            else if (diffMinutes < 60 * 24) { statusDot = "bg-blue-400"; timeString = "Hôm nay"; } 
+            else { statusDot = "bg-slate-400"; timeString = "Offline"; }
+        }
+        
+        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+        
+        return `
+            <div class="flex items-center justify-between p-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition rounded-xl">
+                <div class="flex items-center gap-3">
+                    <div class="relative shrink-0">
+                        <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm">
+                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 ${statusDot} border-2 border-white rounded-full"></span>
+                    </div>
+                    <div>
+                        <div class="font-black text-slate-700 text-sm">${s.name}</div>
+                        <div class="text-[10px] text-slate-500 font-bold mt-0.5"><i class="fas fa-clock mr-1 opacity-70"></i>${timeString}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">${s.scoreVal} đ</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    overlay.innerHTML = `
+        <div class="bg-white w-full max-w-md rounded-[2rem] shadow-2xl relative flex flex-col max-h-[85vh] animate-[cascadeDrop_0.3s_ease-out_forwards]">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-[2rem]">
+                <h3 class="font-black text-lg text-emerald-600 uppercase flex items-center gap-2"><i class="fas fa-broadcast-tower animate-pulse"></i> Trạng Thái Lớp Học</h3>
+                <button onclick="document.getElementById('modalTrangThaiLop').remove()" class="w-8 h-8 bg-white text-slate-500 rounded-full hover:bg-red-500 hover:text-white transition shadow-sm font-bold text-xl flex items-center justify-center">&times;</button>
+            </div>
+            <div class="p-3 overflow-y-auto custom-scrollbar flex-1">
+                ${listHtml}
+            </div>
+            <div class="p-3 bg-slate-50 rounded-b-[2rem] border-t border-slate-100 text-center">
+                <p class="text-[10px] text-slate-400 font-bold italic">Danh sách hiển thị toàn bộ ${students.length} học sinh</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+};
+
+// Hàm tự động tạo nút Radar nổi ở góc màn hình
+window.taoNutTrangThaiNoi = function() {
+    if (document.getElementById('btnTrangThaiNoi')) return;
+    let btn = document.createElement('button');
+    btn.id = "btnTrangThaiNoi";
+    btn.onclick = window.moModalTrangThaiLop;
+    btn.className = "fixed bottom-6 left-6 z-50 bg-gradient-to-tr from-emerald-500 to-teal-400 text-white w-14 h-14 rounded-full flex justify-center items-center text-2xl shadow-[0_4px_15px_rgba(16,185,129,0.5)] border-2 border-white hover:scale-110 transition animate-bounce btn-3d";
+    btn.innerHTML = '<i class="fas fa-satellite-dish"></i>';
+    btn.title = "Xem trạng thái lớp học";
+    document.body.appendChild(btn);
+};
+
+// Kích hoạt tạo nút khi Web tải xong
+document.addEventListener("DOMContentLoaded", window.taoNutTrangThaiNoi);
+setTimeout(window.taoNutTrangThaiNoi, 1000);
