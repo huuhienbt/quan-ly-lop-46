@@ -2767,3 +2767,122 @@ window.checkSinhNhat = function() {
         window.showHappyBirthdayUI(); sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); 
     } 
 };
+// ==========================================
+// NÂNG CẤP: BẢNG ĐIỀU KHIỂN THƯỞNG NÓNG ĐA NĂNG
+// (Thầy copy và dán đoạn này vào DƯỚI CÙNG file features.js nhé)
+// ==========================================
+
+// Thay thế hàm thuongNong cũ bằng hàm mở Popup Giao diện
+window.thuongNong = function(studentId, studentName, currentScore) {
+    let overlay = document.createElement('div');
+    overlay.id = "thuongNongModal";
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in";
+    
+    overlay.innerHTML = `
+        <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-2xl w-full max-w-md relative animate-[cascadeDrop_0.3s_ease-out_forwards]">
+            <button onclick="document.getElementById('thuongNongModal').remove()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full hover:bg-red-500 hover:text-white transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner"><i class="fas fa-gift"></i></div>
+                <h3 class="text-xl font-black text-slate-800 uppercase tracking-wide">QUẢN LÝ TÀI SẢN</h3>
+                <p class="text-sm font-bold text-slate-500 mt-1">Học sinh: <span class="text-indigo-600">${studentName}</span></p>
+            </div>
+
+            <div class="space-y-4 text-left bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner">
+                <div class="flex items-center justify-between gap-4">
+                    <label class="text-xs font-black text-slate-600 uppercase w-24"><i class="fas fa-star text-indigo-500 mr-1"></i> Điểm</label>
+                    <input type="number" id="tn_points" value="0" class="w-full p-2.5 border-2 border-indigo-200 rounded-xl font-black text-indigo-600 text-center outline-none focus:border-indigo-500" placeholder="+/- Điểm">
+                </div>
+                
+                <div class="flex items-center justify-between gap-4">
+                    <label class="text-xs font-black text-slate-600 uppercase w-24"><i class="fas fa-dharmachakra text-yellow-500 mr-1"></i> V.Quay</label>
+                    <input type="number" id="tn_spins" value="0" class="w-full p-2.5 border-2 border-yellow-200 rounded-xl font-black text-yellow-600 text-center outline-none focus:border-yellow-500" placeholder="+/- Lượt">
+                </div>
+                
+                <div class="flex items-center justify-between gap-4">
+                    <label class="text-xs font-black text-slate-600 uppercase w-24"><i class="fas fa-ticket-alt text-orange-500 mr-1"></i> Vé / Lượt</label>
+                    <input type="number" id="tn_tickets" value="0" class="w-full p-2.5 border-2 border-orange-200 rounded-xl font-black text-orange-600 text-center outline-none focus:border-orange-500" placeholder="+/- Vé">
+                </div>
+
+                <div class="pt-2 border-t border-slate-200">
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1">Lý do (Tùy chọn)</label>
+                    <input type="text" id="tn_reason" placeholder="Vd: Thưởng hăng hái phát biểu" class="w-full p-2.5 border-2 border-slate-200 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 text-sm">
+                </div>
+                <p class="text-[10px] text-slate-400 italic text-center mt-2"><i class="fas fa-info-circle"></i> Nhập số âm (vd: -10) để trừ phạt học sinh.</p>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="window.xacNhanThuongNong('${studentId}', '${studentName}')" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black text-lg py-4 rounded-xl hover:scale-[1.02] transition shadow-lg btn-3d"><i class="fas fa-check-circle mr-1"></i> CẬP NHẬT TÀI SẢN</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+};
+
+// Hàm xử lý việc gửi dữ liệu từ Popup lên Máy chủ
+window.xacNhanThuongNong = async function(studentId, studentName) {
+    let pts = parseInt(document.getElementById('tn_points').value) || 0;
+    let spins = parseInt(document.getElementById('tn_spins').value) || 0;
+    let tickets = parseInt(document.getElementById('tn_tickets').value) || 0;
+    let reason = document.getElementById('tn_reason').value.trim();
+
+    if (pts === 0 && spins === 0 && tickets === 0) {
+        alert("Thầy cần nhập ít nhất một con số (Điểm, Lượt quay, hoặc Vé) để hệ thống xử lý nhé!");
+        return;
+    }
+
+    if (!reason) {
+        reason = (pts >= 0 && spins >= 0 && tickets >= 0) ? "Thưởng quà từ GVCN" : "Phạt trừ tài sản từ GVCN";
+    }
+
+    document.getElementById('thuongNongModal').remove();
+    document.getElementById('loader').style.display = 'flex';
+    document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ LÊN ĐÁM MÂY...";
+
+    let thoiGianThuc = new Date().toLocaleString('vi-VN');
+    let uniqueBonusSession = "Quản lý Tài sản (" + thoiGianThuc + ")";
+
+    try {
+        // 1. Cập nhật Điểm (nếu có thay đổi)
+        if (pts !== 0) {
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'nop_bai',
+                    data: { id_hs: studentId, subject: "Bonus", group: uniqueBonusSession, score: pts, score_earned: pts, details: reason }
+                })
+            });
+            // Lưu vào RAM web để hiện ngay
+            Data.log.push({ id: studentId, subject: "Bonus", group: uniqueBonusSession, score: pts, real_added: pts, time: new Date().toISOString(), details: reason });
+            let hs = Data.hs.find(x => String(x.id) === String(studentId));
+            if (hs) hs.score = Number(hs.score) + pts;
+        }
+
+        // 2. Cập nhật Lượt quay & Vé làm lại (nếu có thay đổi)
+        if (spins !== 0 || tickets !== 0) {
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'update_inventory',
+                    data: { id_hs: studentId, spins: spins, tickets: tickets }
+                })
+            });
+            // Lưu vào RAM web để hiện ngay
+            let hs = Data.hs.find(x => String(x.id) === String(studentId));
+            if(hs) {
+                hs.luotQuay = (Number(hs.luotQuay) || 0) + spins;
+                if(hs.luotQuay < 0) hs.luotQuay = 0;
+                hs.veLamLai = (Number(hs.veLamLai) || 0) + tickets;
+                if(hs.veLamLai < 0) hs.veLamLai = 0;
+            }
+        }
+
+        alert(`Thành công! Đã cập nhật tài sản cho ${studentName}.`);
+        window.chuyenTrangQuanLy(); // Tải lại bảng Quản lý Học sinh
+    } catch(e) {
+        alert("Lỗi mạng, chưa cập nhật được tài sản!");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        document.querySelector('#loader p').innerText = "ĐANG TẢI DỮ LIỆU...";
+    }
+};
