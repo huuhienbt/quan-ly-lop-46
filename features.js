@@ -2357,12 +2357,12 @@ window.moRaDaHoatDong = async function() {
     let html = `
         <div class="flex items-center mb-6 fade-in">
             <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-emerald-600 uppercase">RA ĐA HOẠT ĐỘNG</h2>
+            <h2 class="font-black text-xl text-emerald-600 uppercase">TRẠNG THÁI</h2>
         </div>
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 fade-in mb-10">
             <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
                 <div>
-                    <h3 class="text-lg font-black text-slate-800"><i class="fas fa-broadcast-tower text-emerald-500 mr-2 animate-pulse"></i>Trạng thái lớp học</h3>
+                    <h3 class="text-lg font-black text-slate-800"><i class="fas fa-broadcast-tower text-emerald-500 mr-2 animate-pulse"></i>Trạng thái hoạt động</h3>
                     <p class="text-xs text-slate-500 font-bold mt-1">Dựa trên các tương tác nộp bài, chơi game, quay thưởng gần nhất.</p>
                 </div>
             </div>
