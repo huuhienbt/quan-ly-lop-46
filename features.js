@@ -859,11 +859,23 @@ window.renderSpinHistory = function(todayStr) {
     let container = document.getElementById('spinHistoryContainer'); if (!container) return;
     let todayLogs = Data.log.filter(l => l.subject === "LuckySpin" && String(l.group).includes(todayStr));
     if (todayLogs.length === 0) { container.innerHTML = `<div class="bg-slate-50 rounded-2xl border border-slate-200 p-4 text-center"><p class="text-sm font-bold text-slate-400"><i class="fas fa-info-circle"></i> Hôm nay chưa có bạn nào thử vận may.</p></div>`; return; }
+    
     todayLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); 
+    
     let listItems = todayLogs.map(l => {
-        let hs = Data.hs.find(x => String(x.id) === String(l.id)); let name = hs ? hs.name : "Một bạn"; let prizeText = (l.details || "").replace("Quay trúng: ", "").split(" (")[0]; let textStyle = "text-orange-600 font-bold";
-        if(prizeText.includes("Kho Báu")) textStyle = "text-red-600 font-black animate-pulse"; if(prizeText.includes("Mất Lượt") || prizeText.includes("-10")) textStyle = "text-slate-400 font-medium";
-        return `<div class="py-2.5 border-b border-orange-100/50 last:border-0 text-[13px] text-slate-600 flex justify-between items-center"><span class="font-black text-blue-600 truncate mr-2"><i class="fas fa-user-circle text-blue-300 mr-1"></i>${name}</span> <span class="text-right ${textStyle}">${prizeText}</span></div>`;
+        let hs = Data.hs.find(x => String(x.id) === String(l.id)); 
+        let name = hs ? hs.name : "Một bạn"; 
+        let prizeText = (l.details || "").replace("Quay trúng: ", "").split(" (")[0]; 
+        let textStyle = "text-orange-600 font-bold";
+        
+        if(prizeText.includes("Kho Báu")) textStyle = "text-red-600 font-black animate-pulse"; 
+        if(prizeText.includes("Mất Lượt") || prizeText.includes("-10")) textStyle = "text-slate-400 font-medium";
+        
+        // TÍCH HỢP: Lấy link ảnh đại diện của học sinh
+        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(l.id, name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=random&color=fff';
+        
+        // Render kèm hình ảnh (thẻ <img>)
+        return `<div class="py-2.5 border-b border-orange-100/50 last:border-0 text-[13px] text-slate-600 flex justify-between items-center"><div class="flex items-center gap-2 overflow-hidden mr-2"><img src="${avatarUrl}" class="w-6 h-6 rounded-full object-cover border border-orange-200 shrink-0 shadow-sm"><span class="font-black text-blue-600 truncate">${name}</span></div> <span class="text-right shrink-0 ${textStyle}">${prizeText}</span></div>`;
     }).join('');
 
     let spacer = todayLogs.length < 4 ? `<div class="py-4 text-center text-orange-300 text-[11px] font-bold italic border-b border-orange-100/50">... chờ các bạn khác ...</div>` : ""; let animDuration = Math.max(todayLogs.length * 2.5, 10);
