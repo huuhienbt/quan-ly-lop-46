@@ -2886,3 +2886,347 @@ window.xacNhanThuongNong = async function(studentId, studentName) {
         document.querySelector('#loader p').innerText = "ĐANG TẢI DỮ LIỆU...";
     }
 };
+// ==========================================
+// TÍCH HỢP QUẢN LÝ LƯỢT CHƠI GAME VÀO KHO ĐỒ CLOUD
+// (Dán đoạn này xuống dưới cùng file features.js)
+// ==========================================
+
+window.updateKhoDoCloud = async function(spinsToAdd, ticketsToAdd, gamesToAdd = 0) {
+    if (!currentUser || currentUser.role !== 'student') return;
+    
+    currentUser.luotQuay = (Number(currentUser.luotQuay) || 0) + spinsToAdd;
+    currentUser.veLamLai = (Number(currentUser.veLamLai) || 0) + ticketsToAdd;
+    currentUser.luotGame = (Number(currentUser.luotGame) || 0) + gamesToAdd;
+    
+    if(currentUser.luotQuay < 0) currentUser.luotQuay = 0;
+    if(currentUser.veLamLai < 0) currentUser.veLamLai = 0;
+    if(currentUser.luotGame < 0) currentUser.luotGame = 0;
+
+    try {
+        await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'update_inventory',
+                data: { id_hs: currentUser.id, spins: spinsToAdd, tickets: ticketsToAdd, games: gamesToAdd }
+            })
+        });
+    } catch(e) { console.log("Lỗi đồng bộ kho đồ Cloud"); }
+};
+
+// 1. NÂNG CẤP GAME BẢO VỆ TRÁI ĐẤT: ĐỌC LƯỢT CHƠI TỪ ĐÁM MÂY
+window.moGameBaoVeTraiDat = async function() {
+    if(!currentUser) return showLogin();
+    closeMenu();
+
+    if (!(await window.loadAllDataOnce(true))) return;
+
+    let todayGame = new Date();
+    // Đếm xem hôm nay đã chơi bao nhiêu lần
+    let soLanDaChoiHomNay = Data.log.filter(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
+    }).length;
+    
+    // Tính tổng lượt game: 1 lượt free + số lượt trong kho đồ đám mây
+    let luotGameCloud = Number(currentUser.luotGame) || 0;
+    let tongLuotGame = 1 + luotGameCloud;
+
+    if (soLanDaChoiHomNay >= tongLuotGame) {
+        alert(`🛡️ HỆ THỐNG: Con đã dùng hết ${soLanDaChoiHomNay}/${tongLuotGame} lượt chơi Game hôm nay! Hãy cố gắng học tốt để xin Thầy thưởng thêm lượt nhé.`);
+        if (window.veTrangChu) veTrangChu();
+        return; 
+    }
+
+    mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true };
+
+    document.getElementById('content').innerHTML = `
+        <div id="gameUI" class="fixed inset-0 z-[100] bg-slate-900 overflow-hidden flex flex-col font-sans select-none touch-none">
+            <div class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-3 flex justify-between items-center text-white relative z-20">
+                <div class="flex items-center gap-2">
+                    <button onclick="window.thoatGameToan()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0 hover:bg-red-500 transition"><i class="fas fa-times"></i></button>
+                    <div id="mg-lives" class="text-red-400 text-[10px] sm:text-xs flex tracking-tighter">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️</div>
+                </div>
+                <div class="text-center absolute left-1/2 -translate-x-1/2 mt-1">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">CẤP ĐỘ <span id="mg-level" class="text-white text-sm">1</span></p>
+                    <p id="mg-time" class="text-xl font-black text-yellow-400 leading-none">01:00</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">ĐIỂM</p>
+                    <p id="mg-score" class="text-2xl font-black text-emerald-400 leading-none">0</p>
+                </div>
+            </div>
+
+            <div id="mg-sky" class="flex-1 relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-black">
+                <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(white 1px, transparent 1px); background-size: 30px 30px;"></div>
+                <div id="mg-combo-text" class="absolute top-1/4 left-1/2 -translate-x-1/2 text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-orange-400 to-red-600 opacity-0 transition-opacity duration-300 drop-shadow-[0_0_10px_rgba(255,0,0,0.8)] z-10 pointer-events-none">COMBO x2 🔥</div>
+                <div class="absolute bottom-0 left-0 w-full h-24 flex justify-center items-end">
+                    <div class="w-full h-16 bg-blue-500/20 rounded-t-[100%] border-t border-blue-400/30 blur-[2px] absolute bottom-0"></div>
+                    <div id="mg-cannon" class="w-16 h-10 bg-gradient-to-t from-slate-400 to-slate-200 rounded-t-xl relative z-10 border-2 border-b-0 border-slate-500 flex justify-center pt-1.5 shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-transform duration-75">
+                        <div class="w-5 h-5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_cyan]"></div>
+                        <div class="absolute -bottom-2 w-24 h-4 bg-slate-600 rounded-full blur-md"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-2 pb-4 relative z-20 shadow-[0_-10px_20px_rgba(0,0,0,0.5)] border-t-2 border-slate-700 h-[28vh] max-h-[240px] flex flex-col justify-end">
+                <div class="max-w-md mx-auto w-full h-full flex flex-col">
+                    <div class="bg-slate-900 border-2 border-slate-700 rounded-xl mb-2 flex-[0_0_36px] flex items-center justify-center">
+                        <span id="mg-input" class="text-xl font-black text-cyan-400 tracking-widest drop-shadow-[0_0_5px_cyan]"></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1.5 flex-1">
+                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button onclick="window.mgType(${n})" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-sm w-full h-full flex items-center justify-center">${n}</button>`).join('')}
+                        <button onclick="window.mgClear()" class="bg-red-500/20 text-red-400 border-red-500/50 font-black text-lg rounded-xl border-b-4 active:border-b-0 active:translate-y-1 hover:bg-red-500/30 transition shadow-sm w-full h-full flex items-center justify-center"><i class="fas fa-backspace"></i></button>
+                        <button onclick="window.mgType(0)" class="bg-slate-700 text-white font-black text-xl rounded-xl border-b-4 border-slate-900 active:border-b-0 active:translate-y-1 hover:bg-slate-600 transition shadow-sm w-full h-full flex items-center justify-center">0</button>
+                        <button onclick="window.mgShoot()" class="bg-gradient-to-t from-blue-600 to-cyan-500 text-white font-black text-lg rounded-xl border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 hover:opacity-90 transition shadow-[0_0_15px_rgba(6,182,212,0.4)] w-full h-full flex items-center justify-center"><i class="fas fa-crosshairs mr-1"></i> BẮN</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    window.mgStartLevel();
+};
+
+window.thoatGameToan = async function(saveScore = false) {
+    clearInterval(mathGame.loop); clearInterval(mathGame.spawn);
+    
+    if (saveScore && mathGame.score > 0 && currentUser && currentUser.role === 'student') {
+        document.getElementById('loader').style.display = 'flex'; 
+        
+        // TRỪ LƯỢT GAME TỪ ĐÁM MÂY NẾU ĐÃ CHƠI HẾT LƯỢT FREE
+        let todayGame = new Date();
+        let soLanTruocDo = Data.log.filter(l => {
+            if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
+            let d = new Date(l.time);
+            return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
+        }).length;
+
+        if (soLanTruocDo >= 1) {
+            window.updateKhoDoCloud(0, 0, -1); // Trừ 1 lượt chơi game
+        }
+        
+        let thoiGianThuc = new Date().toLocaleString('vi-VN');
+        let uniqueGameSession = "Bảo vệ Trái Đất (" + thoiGianThuc + ")";
+        
+        try { 
+            await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: 'nop_bai', 
+                    data: { 
+                        id_hs: currentUser.id, subject: "MathGame", group: uniqueGameSession, 
+                        score: mathGame.score, score_earned: mathGame.score, 
+                        details: "Chơi game đạt " + mathGame.score + " điểm." 
+                    } 
+                }) 
+            }); 
+            
+            Data.log.push({ 
+                id: currentUser.id, subject: "MathGame", group: uniqueGameSession, 
+                score: mathGame.score, real_added: mathGame.score, time: new Date().toISOString(), 
+                details: "Chơi game đạt " + mathGame.score + " điểm." 
+            }); 
+            
+            currentUser.score = Number(currentUser.score) + mathGame.score;
+            alert(`Chúc mừng con đã xuất sắc đem về ${mathGame.score} điểm cho tài khoản của mình!`);
+        } catch(e) { 
+            alert("Lỗi mạng, hệ thống chưa kịp đồng bộ điểm lên bảng vàng!"); 
+        } finally {
+            document.getElementById('loader').style.display = 'none'; 
+        }
+    }
+    
+    let gameUI = document.getElementById('gameUI');
+    if (gameUI) gameUI.remove(); 
+    veTrangChu(); 
+};
+
+// 2. NÂNG CẤP GIAO DIỆN QUẢN LÝ (HIỂN THỊ THÊM LƯỢT GAME)
+window.chuyenTrangQuanLy = async function() { 
+    closeMenu(); 
+    if (!(await window.loadAllDataOnce())) return;
+
+    let html = `
+        <div class="flex items-center mb-6">
+            <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-xl text-blue-600 uppercase">QUẢN LÝ ĐIỂM & HỌC SINH</h2>
+        </div>
+        <p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-chart-pie mr-1"></i> Bảng phân tích chi tiết điểm và kho đồ của từng học sinh</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">
+    `; 
+    
+    let studentStats = Data.hs.map(h => {
+        let logs = Data.log.filter(l => String(l.id) === String(h.id));
+        let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
+        
+        logs.forEach(l => {
+            let s = l.real_added !== undefined ? Number(l.real_added) : (Number(l.score) || 0);
+            if (l.subject === 'math') mathPts += s;
+            else if (l.subject === 'tv' || l.subject === 'vietnamese') tvPts += s;
+            else if (l.subject === 'LuckySpin') spinPts += s;
+            else if (l.subject === 'MathGame') gamePts += s;
+        });
+        
+        let currentScore = Number(h.score) || 0;
+        let totalCalculated = mathPts + tvPts + spinPts + gamePts; 
+        let bonusPts = currentScore - totalCalculated; 
+        
+        return { ...h, mathPts, tvPts, spinPts, gamePts, bonusPts, currentScore };
+    });
+
+    studentStats.sort((a,b) => b.currentScore - a.currentScore);
+
+    studentStats.forEach((s) => {
+        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+        
+        let luotQuay = Number(s.luotQuay) || 0;
+        let veLamLai = Number(s.veLamLai) || 0;
+        let luotGame = Number(s.luotGame) || 0;
+
+        html += `
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
+                <div class="flex items-center gap-3">
+                    <img src="${avatarUrl}" class="w-12 h-12 rounded-full object-cover shadow-inner border-2 border-indigo-100">
+                    <div>
+                        <div class="font-black text-slate-700 text-lg">${s.name}</div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 inline-block px-2 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng điểm</div>
+                    <div class="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">${s.currentScore}</div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-5 gap-1.5 text-center">
+                <div class="bg-indigo-50/50 p-1.5 sm:p-2 rounded-xl border border-indigo-100/50"><div class="text-[8px] sm:text-[9px] font-black text-indigo-500 uppercase mb-1"><i class="fas fa-calculator"></i> Toán</div><div class="font-bold text-indigo-700 text-sm">${s.mathPts}</div></div>
+                <div class="bg-green-50/50 p-1.5 sm:p-2 rounded-xl border border-green-100/50"><div class="text-[8px] sm:text-[9px] font-black text-green-500 uppercase mb-1"><i class="fas fa-book-open"></i> T.Việt</div><div class="font-bold text-green-700 text-sm">${s.tvPts}</div></div>
+                <div class="bg-yellow-50/50 p-1.5 sm:p-2 rounded-xl border border-yellow-100/50"><div class="text-[8px] sm:text-[9px] font-black text-yellow-600 uppercase mb-1"><i class="fas fa-dharmachakra"></i> V.Quay</div><div class="font-bold text-yellow-700 text-sm">${s.spinPts}</div></div>
+                <div class="bg-red-50/50 p-1.5 sm:p-2 rounded-xl border border-red-100/50"><div class="text-[8px] sm:text-[9px] font-black text-red-500 uppercase mb-1"><i class="fas fa-rocket"></i> Game</div><div class="font-bold text-red-700 text-sm">${s.gamePts}</div></div>
+                <div class="bg-pink-50/50 p-1.5 sm:p-2 rounded-xl border border-pink-100/50"><div class="text-[8px] sm:text-[9px] font-black text-pink-500 uppercase mb-1"><i class="fas fa-gift"></i> Thưởng</div><div class="font-bold text-pink-700 text-sm">${s.bonusPts}</div></div>
+            </div>
+            
+            <div class="flex justify-between bg-slate-50 mt-3 p-2.5 rounded-xl border border-slate-100 px-3 shadow-inner">
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex flex-col items-center gap-1">
+                    <span><i class="fas fa-dharmachakra text-yellow-500 text-sm"></i> V.Quay</span>
+                    <span class="text-yellow-600 font-black text-sm">${luotQuay}</span>
+                </div>
+                <div class="w-px bg-slate-200"></div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex flex-col items-center gap-1">
+                    <span><i class="fas fa-ticket-alt text-orange-500 text-sm"></i> Vé làm lại</span>
+                    <span class="text-orange-600 font-black text-sm">${veLamLai}</span>
+                </div>
+                <div class="w-px bg-slate-200"></div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex flex-col items-center gap-1">
+                    <span><i class="fas fa-rocket text-red-500 text-sm"></i> Lượt Game</span>
+                    <span class="text-red-600 font-black text-sm">${luotGame}</span>
+                </div>
+            </div>
+            
+            <div class="flex gap-2 mt-4">
+                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-slate-50 text-slate-500 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
+                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-500 hover:text-white transition border border-pink-100 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng nóng</button>
+            </div>
+        </div>
+        `;
+    });
+
+    document.getElementById('content').innerHTML = html + "</div>"; 
+};
+
+// 3. NÂNG CẤP POPUP THƯỞNG NÓNG (CHÈN THÊM Ô LƯỢT GAME)
+window.thuongNong = function(studentId, studentName, currentScore) {
+    let overlay = document.createElement('div');
+    overlay.id = "thuongNongModal";
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in";
+    
+    overlay.innerHTML = `
+        <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-2xl w-full max-w-md relative animate-[cascadeDrop_0.3s_ease-out_forwards]">
+            <button onclick="document.getElementById('thuongNongModal').remove()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full hover:bg-red-500 hover:text-white transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
+            
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-pink-100 text-pink-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner"><i class="fas fa-gift"></i></div>
+                <h3 class="text-xl font-black text-slate-800 uppercase tracking-wide">QUẢN LÝ TÀI SẢN</h3>
+                <p class="text-sm font-bold text-slate-500 mt-1">Học sinh: <span class="text-indigo-600">${studentName}</span></p>
+            </div>
+
+            <div class="space-y-3 text-left bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner">
+                <div class="flex items-center justify-between gap-4">
+                    <label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-star text-indigo-500 mr-1"></i> Điểm</label>
+                    <input type="number" id="tn_points" value="0" class="w-full p-2 border-2 border-indigo-200 rounded-xl font-black text-indigo-600 text-center outline-none focus:border-indigo-500" placeholder="+/-">
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                    <label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-dharmachakra text-yellow-500 mr-1"></i> V.Quay</label>
+                    <input type="number" id="tn_spins" value="0" class="w-full p-2 border-2 border-yellow-200 rounded-xl font-black text-yellow-600 text-center outline-none focus:border-yellow-500" placeholder="+/-">
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                    <label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-ticket-alt text-orange-500 mr-1"></i> Vé làm lại</label>
+                    <input type="number" id="tn_tickets" value="0" class="w-full p-2 border-2 border-orange-200 rounded-xl font-black text-orange-600 text-center outline-none focus:border-orange-500" placeholder="+/-">
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                    <label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-rocket text-red-500 mr-1"></i> Lượt Game</label>
+                    <input type="number" id="tn_games" value="0" class="w-full p-2 border-2 border-red-200 rounded-xl font-black text-red-600 text-center outline-none focus:border-red-500" placeholder="+/-">
+                </div>
+
+                <div class="pt-2 border-t border-slate-200 mt-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-1">Lý do (Tùy chọn)</label>
+                    <input type="text" id="tn_reason" placeholder="Vd: Thưởng điểm xuất sắc" class="w-full p-2 border-2 border-slate-200 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 text-sm">
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <button onclick="window.xacNhanThuongNong('${studentId}', '${studentName}')" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black text-lg py-4 rounded-xl hover:scale-[1.02] transition shadow-lg btn-3d"><i class="fas fa-check-circle mr-1"></i> CẬP NHẬT TÀI SẢN</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+};
+
+window.xacNhanThuongNong = async function(studentId, studentName) {
+    let pts = parseInt(document.getElementById('tn_points').value) || 0;
+    let spins = parseInt(document.getElementById('tn_spins').value) || 0;
+    let tickets = parseInt(document.getElementById('tn_tickets').value) || 0;
+    let games = parseInt(document.getElementById('tn_games').value) || 0;
+    let reason = document.getElementById('tn_reason').value.trim();
+
+    if (pts === 0 && spins === 0 && tickets === 0 && games === 0) {
+        alert("Thầy cần nhập ít nhất một con số (Điểm, Lượt quay, Vé, hoặc Lượt game) để cập nhật!"); return;
+    }
+
+    if (!reason) reason = (pts >= 0 && spins >= 0 && tickets >= 0 && games >= 0) ? "Thưởng quà từ GVCN" : "Phạt trừ tài sản từ GVCN";
+
+    document.getElementById('thuongNongModal').remove();
+    document.getElementById('loader').style.display = 'flex';
+    document.querySelector('#loader p').innerText = "ĐANG ĐỒNG BỘ LÊN ĐÁM MÂY...";
+
+    let thoiGianThuc = new Date().toLocaleString('vi-VN');
+    let uniqueBonusSession = "Quản lý Tài sản (" + thoiGianThuc + ")";
+
+    try {
+        if (pts !== 0) {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: studentId, subject: "Bonus", group: uniqueBonusSession, score: pts, score_earned: pts, details: reason } }) });
+            Data.log.push({ id: studentId, subject: "Bonus", group: uniqueBonusSession, score: pts, real_added: pts, time: new Date().toISOString(), details: reason });
+            let hs = Data.hs.find(x => String(x.id) === String(studentId));
+            if (hs) hs.score = Number(hs.score) + pts;
+        }
+
+        if (spins !== 0 || tickets !== 0 || games !== 0) {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'update_inventory', data: { id_hs: studentId, spins: spins, tickets: tickets, games: games } }) });
+            let hs = Data.hs.find(x => String(x.id) === String(studentId));
+            if(hs) {
+                hs.luotQuay = (Number(hs.luotQuay) || 0) + spins; if(hs.luotQuay < 0) hs.luotQuay = 0;
+                hs.veLamLai = (Number(hs.veLamLai) || 0) + tickets; if(hs.veLamLai < 0) hs.veLamLai = 0;
+                hs.luotGame = (Number(hs.luotGame) || 0) + games; if(hs.luotGame < 0) hs.luotGame = 0;
+            }
+        }
+
+        alert(`Thành công! Đã cập nhật tài sản cho ${studentName}.`);
+        window.chuyenTrangQuanLy(); 
+    } catch(e) {
+        alert("Lỗi mạng, chưa cập nhật được tài sản!");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        document.querySelector('#loader p').innerText = "ĐANG TẢI DỮ LIỆU...";
+    }
+};
