@@ -1792,8 +1792,7 @@ window.moRaDaHoatDong = async function() {
     html += `</div></div>`; document.getElementById('content').innerHTML = html;
 };
 // ==========================================
-// TÍNH NĂNG BỔ SUNG: NÚT RADAR TRẠNG THÁI LỚP (FLOATING BUTTON & MODAL)
-// Không ảnh hưởng đến Bảng Vàng
+// TÍNH NĂNG BỔ SUNG: NÚT RADAR TRẠNG THÁI LỚP (BẢN CẬP NHẬT MÀU SẮC & BỎ ĐIỂM)
 // ==========================================
 
 // Hàm mở Popup danh sách trạng thái toàn lớp
@@ -1806,7 +1805,7 @@ window.moModalTrangThaiLop = async function() {
     
     const now = new Date();
     
-    // Lấy toàn bộ học sinh và tính toán thời gian hoạt động cuối cùng
+    // Lấy toàn bộ học sinh và tính toán thời gian hoạt động cuối cùng (Bỏ tính điểm)
     let students = Data.hs.filter(s => (s.role || '').toLowerCase() !== 'admin').map(s => {
         let userLogs = Data.log.filter(l => String(l.id) === String(s.id));
         let lastActionTime = 0; 
@@ -1815,26 +1814,43 @@ window.moModalTrangThaiLop = async function() {
             let d = new Date(userLogs[0].time);
             if (!isNaN(d.getTime())) lastActionTime = d;
         }
-        return { ...s, lastActionTime, scoreVal: Number(s.score) || 0 };
+        return { ...s, lastActionTime };
     });
 
-    // Sắp xếp: Ai đang Online lên đầu, sau đó sắp xếp theo điểm
+    // Sắp xếp: Theo thời gian hoạt động mới nhất lên đầu
     students.sort((a, b) => {
         let timeA = a.lastActionTime ? a.lastActionTime.getTime() : 0;
         let timeB = b.lastActionTime ? b.lastActionTime.getTime() : 0;
-        if (timeB !== timeA) return timeB - timeA;
-        return b.scoreVal - a.scoreVal;
+        return timeB - timeA;
     });
 
     let listHtml = students.map(s => {
-        let statusDot = ""; let timeString = "";
+        let statusDot = ""; 
+        let timeString = ""; 
+        let statusBadge = "";
+
         if (!s.lastActionTime) { 
-            statusDot = "bg-slate-300"; timeString = "Chưa truy cập"; 
+            statusDot = "bg-black"; // Màu đen
+            timeString = "Chưa truy cập"; 
+            statusBadge = `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">Offline</span>`;
         } else {
             let diffMinutes = Math.floor((now - s.lastActionTime) / 60000);
-            if (diffMinutes < 30) { statusDot = "bg-emerald-500 animate-pulse ring-2 ring-emerald-200"; timeString = diffMinutes <= 1 ? "Đang Online" : `${diffMinutes} phút trước`; } 
-            else if (diffMinutes < 60 * 24) { statusDot = "bg-blue-400"; timeString = "Hôm nay"; } 
-            else { statusDot = "bg-slate-400"; timeString = "Offline"; }
+            if (diffMinutes < 30) { 
+                statusDot = "bg-green-500 animate-pulse ring-2 ring-green-200"; // Xanh lá
+                timeString = diffMinutes <= 1 ? "Vừa xong" : `${diffMinutes} phút trước`; 
+                statusBadge = `<span class="text-[10px] font-black text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-lg">Đang học</span>`;
+            } 
+            else if (diffMinutes < 60 * 24) { 
+                statusDot = "bg-blue-500"; // Xanh dương
+                let hours = Math.floor(diffMinutes / 60);
+                timeString = hours > 0 ? `${hours} giờ trước` : `${diffMinutes} phút trước`; 
+                statusBadge = `<span class="text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded-lg">Hôm nay</span>`;
+            } 
+            else { 
+                statusDot = "bg-black"; // Màu đen
+                timeString = "Trước đó"; 
+                statusBadge = `<span class="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">Offline</span>`;
+            }
         }
         
         let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
@@ -1844,15 +1860,15 @@ window.moModalTrangThaiLop = async function() {
                 <div class="flex items-center gap-3">
                     <div class="relative shrink-0">
                         <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm">
-                        <span class="absolute bottom-0 right-0 w-3.5 h-3.5 ${statusDot} border-2 border-white rounded-full"></span>
+                        <span class="absolute bottom-0 right-0 w-3 h-3 ${statusDot} border-2 border-white rounded-full"></span>
                     </div>
                     <div>
                         <div class="font-black text-slate-700 text-sm">${s.name}</div>
-                        <div class="text-[10px] text-slate-500 font-bold mt-0.5"><i class="fas fa-clock mr-1 opacity-70"></i>${timeString}</div>
+                        <div class="text-[10px] text-slate-500 font-medium mt-0.5"><i class="fas fa-clock mr-1 opacity-70"></i>${timeString}</div>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-xs font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100">${s.scoreVal} đ</div>
+                    ${statusBadge}
                 </div>
             </div>
         `;
