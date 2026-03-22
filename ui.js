@@ -108,8 +108,8 @@ function getNavHtml(active) {
         headerGreeting = `<div class="mb-5 fade-in"><h2 class="text-2xl font-black text-slate-800">Chào, ${currentUser.name}!</h2></div>`;
         vongQuayBtn = `<button onclick="window.moVongQuay()" class="font-black text-base sm:text-xl pb-2 transition ${active==='vongquay' ? 'text-yellow-500 border-b-4 border-yellow-500' : 'text-slate-400 hover:text-yellow-500'}">🎡 VÒNG QUAY</button>`;
         
-        // ĐÃ ĐỔI TÊN THÀNH HỘP THƯ
-        thuBiMatBtn = `<button onclick="window.moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}"><i class="fas fa-comment-dots"></i> HỘP THƯ</button>`;
+        // Đổi Icon thành Bức thư (fa-envelope)
+        thuBiMatBtn = `<button onclick="window.moHopThuBiMat()" class="font-black text-base sm:text-xl pb-2 transition ${active==='thubimat' ? 'text-pink-500 border-b-4 border-pink-500' : 'text-slate-400 hover:text-pink-500'}"><i class="fas fa-envelope"></i> HỘP THƯ</button>`;
     }
     
     return `
@@ -119,7 +119,7 @@ function getNavHtml(active) {
             <button onclick="window.moGocHocTap()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hoctap' ? 'text-indigo-600 border-b-4 border-indigo-500' : 'text-slate-400 hover:text-indigo-500'}"><i class="fas fa-rocket"></i> HỌC TẬP</button>
             ${vongQuayBtn}
             ${thuBiMatBtn}
-            <button onclick="window.moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}"><i class="fas fa-envelope-open-text"></i> XIN PHÉP</button>
+            <button onclick="window.moXinPhep()" class="font-black text-base sm:text-xl pb-2 transition ${active==='hopthu' ? 'text-red-600 border-b-4 border-red-500' : 'text-slate-400 hover:text-red-500'}"><i class="fas fa-file-signature"></i> XIN PHÉP</button>
         </div>
     `;
 }
