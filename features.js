@@ -1876,109 +1876,6 @@ document.addEventListener("copy", (e) => {
 });
 
 
-// ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ ĐIỂM & KHO ĐỒ CLOUD)
-// ==========================================
-window.chuyenTrangQuanLy = async function() { 
-    closeMenu(); 
-    if (!(await window.loadAllDataOnce())) return;
-
-    let html = `
-        <div class="flex items-center mb-6">
-            <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-blue-600 uppercase">QUẢN LÝ ĐIỂM & HỌC SINH</h2>
-        </div>
-        <p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-chart-pie mr-1"></i> Bảng phân tích chi tiết điểm và kho đồ của từng học sinh</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">
-    `; 
-    
-    let studentStats = Data.hs.map(h => {
-        let logs = Data.log.filter(l => String(l.id) === String(h.id));
-        let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
-        
-        logs.forEach(l => {
-            let s = l.real_added !== undefined ? Number(l.real_added) : (Number(l.score) || 0);
-            if (l.subject === 'math') mathPts += s;
-            else if (l.subject === 'tv' || l.subject === 'vietnamese') tvPts += s;
-            else if (l.subject === 'LuckySpin') spinPts += s;
-            else if (l.subject === 'MathGame') gamePts += s;
-        });
-        
-        let currentScore = Number(h.score) || 0;
-        let totalCalculated = mathPts + tvPts + spinPts + gamePts; 
-        let bonusPts = currentScore - totalCalculated; 
-        
-        return { ...h, mathPts, tvPts, spinPts, gamePts, bonusPts, currentScore };
-    });
-
-    studentStats.sort((a,b) => b.currentScore - a.currentScore);
-
-    studentStats.forEach((s) => {
-        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-        
-        // Đọc số liệu từ Kho đồ Cloud
-        let luotQuay = Number(s.luotQuay) || 0;
-        let veLamLai = Number(s.veLamLai) || 0;
-
-        html += `
-        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
-                <div class="flex items-center gap-3">
-                    <img src="${avatarUrl}" class="w-12 h-12 rounded-full object-cover shadow-inner border-2 border-indigo-100">
-                    <div>
-                        <div class="font-black text-slate-700 text-lg">${s.name}</div>
-                        <div class="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 inline-block px-2 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng điểm</div>
-                    <div class="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">${s.currentScore}</div>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-5 gap-1.5 text-center">
-                <div class="bg-indigo-50/50 p-1.5 sm:p-2 rounded-xl border border-indigo-100/50">
-                    <div class="text-[8px] sm:text-[9px] font-black text-indigo-500 uppercase mb-1"><i class="fas fa-calculator"></i> Toán</div>
-                    <div class="font-bold text-indigo-700 text-sm">${s.mathPts}</div>
-                </div>
-                <div class="bg-green-50/50 p-1.5 sm:p-2 rounded-xl border border-green-100/50">
-                    <div class="text-[8px] sm:text-[9px] font-black text-green-500 uppercase mb-1"><i class="fas fa-book-open"></i> T.Việt</div>
-                    <div class="font-bold text-green-700 text-sm">${s.tvPts}</div>
-                </div>
-                <div class="bg-yellow-50/50 p-1.5 sm:p-2 rounded-xl border border-yellow-100/50">
-                    <div class="text-[8px] sm:text-[9px] font-black text-yellow-600 uppercase mb-1"><i class="fas fa-dharmachakra"></i> V.Quay</div>
-                    <div class="font-bold text-yellow-700 text-sm">${s.spinPts}</div>
-                </div>
-                <div class="bg-red-50/50 p-1.5 sm:p-2 rounded-xl border border-red-100/50">
-                    <div class="text-[8px] sm:text-[9px] font-black text-red-500 uppercase mb-1"><i class="fas fa-rocket"></i> Game</div>
-                    <div class="font-bold text-red-700 text-sm">${s.gamePts}</div>
-                </div>
-                <div class="bg-pink-50/50 p-1.5 sm:p-2 rounded-xl border border-pink-100/50">
-                    <div class="text-[8px] sm:text-[9px] font-black text-pink-500 uppercase mb-1"><i class="fas fa-gift"></i> Thưởng</div>
-                    <div class="font-bold text-pink-700 text-sm">${s.bonusPts}</div>
-                </div>
-            </div>
-            
-            <div class="flex justify-between bg-slate-50 mt-3 p-2.5 rounded-xl border border-slate-100 px-4 shadow-inner">
-                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-                    <i class="fas fa-dharmachakra text-yellow-500 text-sm"></i> Lượt quay: <span class="text-yellow-600 font-black text-sm">${luotQuay}</span>
-                </div>
-                <div class="w-px bg-slate-200"></div>
-                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-                    <i class="fas fa-ticket-alt text-orange-500 text-sm"></i> Vé làm lại: <span class="text-orange-600 font-black text-sm">${veLamLai}</span>
-                </div>
-            </div>
-            
-            <div class="flex gap-2 mt-4">
-                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-slate-50 text-slate-500 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
-                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-500 hover:text-white transition border border-pink-100 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng nóng</button>
-            </div>
-        </div>
-        `;
-    });
-
-    document.getElementById('content').innerHTML = html + "</div>"; 
-};
 
 // HÀM MỚI: Popup xem hồ sơ học sinh (ĐÃ NÂNG CẤP CHO PHÉP GVCN ĐỔI ẢNH)
 window.viewProfile = function(studentId) {
@@ -2769,7 +2666,6 @@ window.checkSinhNhat = function() {
 };
 // ==========================================
 // NÂNG CẤP: BẢNG ĐIỀU KHIỂN THƯỞNG NÓNG ĐA NĂNG
-// (Thầy copy và dán đoạn này vào DƯỚI CÙNG file features.js nhé)
 // ==========================================
 
 // Thay thế hàm thuongNong cũ bằng hàm mở Popup Giao diện
@@ -3041,99 +2937,7 @@ window.thoatGameToan = async function(saveScore = false) {
     veTrangChu(); 
 };
 
-// 2. NÂNG CẤP GIAO DIỆN QUẢN LÝ (HIỂN THỊ THÊM LƯỢT GAME)
-window.chuyenTrangQuanLy = async function() { 
-    closeMenu(); 
-    if (!(await window.loadAllDataOnce())) return;
 
-    let html = `
-        <div class="flex items-center mb-6">
-            <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-black text-xl text-blue-600 uppercase">QUẢN LÝ ĐIỂM & HỌC SINH</h2>
-        </div>
-        <p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-chart-pie mr-1"></i> Bảng phân tích chi tiết điểm và kho đồ của từng học sinh</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">
-    `; 
-    
-    let studentStats = Data.hs.map(h => {
-        let logs = Data.log.filter(l => String(l.id) === String(h.id));
-        let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
-        
-        logs.forEach(l => {
-            let s = l.real_added !== undefined ? Number(l.real_added) : (Number(l.score) || 0);
-            if (l.subject === 'math') mathPts += s;
-            else if (l.subject === 'tv' || l.subject === 'vietnamese') tvPts += s;
-            else if (l.subject === 'LuckySpin') spinPts += s;
-            else if (l.subject === 'MathGame') gamePts += s;
-        });
-        
-        let currentScore = Number(h.score) || 0;
-        let totalCalculated = mathPts + tvPts + spinPts + gamePts; 
-        let bonusPts = currentScore - totalCalculated; 
-        
-        return { ...h, mathPts, tvPts, spinPts, gamePts, bonusPts, currentScore };
-    });
-
-    studentStats.sort((a,b) => b.currentScore - a.currentScore);
-
-    studentStats.forEach((s) => {
-        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-        
-        let luotQuay = Number(s.luotQuay) || 0;
-        let veLamLai = Number(s.veLamLai) || 0;
-        let luotGame = Number(s.luotGame) || 0;
-
-        html += `
-        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
-            <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
-                <div class="flex items-center gap-3">
-                    <img src="${avatarUrl}" class="w-12 h-12 rounded-full object-cover shadow-inner border-2 border-indigo-100">
-                    <div>
-                        <div class="font-black text-slate-700 text-lg">${s.name}</div>
-                        <div class="text-[10px] font-bold text-slate-400 uppercase bg-slate-50 inline-block px-2 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng điểm</div>
-                    <div class="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">${s.currentScore}</div>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-5 gap-1.5 text-center">
-                <div class="bg-indigo-50/50 p-1.5 sm:p-2 rounded-xl border border-indigo-100/50"><div class="text-[8px] sm:text-[9px] font-black text-indigo-500 uppercase mb-1"><i class="fas fa-calculator"></i> Toán</div><div class="font-bold text-indigo-700 text-sm">${s.mathPts}</div></div>
-                <div class="bg-green-50/50 p-1.5 sm:p-2 rounded-xl border border-green-100/50"><div class="text-[8px] sm:text-[9px] font-black text-green-500 uppercase mb-1"><i class="fas fa-book-open"></i> T.Việt</div><div class="font-bold text-green-700 text-sm">${s.tvPts}</div></div>
-                <div class="bg-yellow-50/50 p-1.5 sm:p-2 rounded-xl border border-yellow-100/50"><div class="text-[8px] sm:text-[9px] font-black text-yellow-600 uppercase mb-1"><i class="fas fa-dharmachakra"></i> V.Quay</div><div class="font-bold text-yellow-700 text-sm">${s.spinPts}</div></div>
-                <div class="bg-red-50/50 p-1.5 sm:p-2 rounded-xl border border-red-100/50"><div class="text-[8px] sm:text-[9px] font-black text-red-500 uppercase mb-1"><i class="fas fa-rocket"></i> Game</div><div class="font-bold text-red-700 text-sm">${s.gamePts}</div></div>
-                <div class="bg-pink-50/50 p-1.5 sm:p-2 rounded-xl border border-pink-100/50"><div class="text-[8px] sm:text-[9px] font-black text-pink-500 uppercase mb-1"><i class="fas fa-gift"></i> Thưởng</div><div class="font-bold text-pink-700 text-sm">${s.bonusPts}</div></div>
-            </div>
-            
-            <div class="flex justify-between bg-slate-50 mt-3 p-2.5 rounded-xl border border-slate-100 px-3 shadow-inner">
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex flex-col items-center gap-1">
-                    <span><i class="fas fa-dharmachakra text-yellow-500 text-sm"></i> V.Quay</span>
-                    <span class="text-yellow-600 font-black text-sm">${luotQuay}</span>
-                </div>
-                <div class="w-px bg-slate-200"></div>
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex flex-col items-center gap-1">
-                    <span><i class="fas fa-ticket-alt text-orange-500 text-sm"></i> Vé làm lại</span>
-                    <span class="text-orange-600 font-black text-sm">${veLamLai}</span>
-                </div>
-                <div class="w-px bg-slate-200"></div>
-                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide flex flex-col items-center gap-1">
-                    <span><i class="fas fa-rocket text-red-500 text-sm"></i> Lượt Game</span>
-                    <span class="text-red-600 font-black text-sm">${luotGame}</span>
-                </div>
-            </div>
-            
-            <div class="flex gap-2 mt-4">
-                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-slate-50 text-slate-500 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
-                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-500 hover:text-white transition border border-pink-100 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng nóng</button>
-            </div>
-        </div>
-        `;
-    });
-
-    document.getElementById('content').innerHTML = html + "</div>"; 
-};
 
 // 3. NÂNG CẤP POPUP THƯỞNG NÓNG (CHÈN THÊM Ô LƯỢT GAME)
 window.thuongNong = function(studentId, studentName, currentScore) {
@@ -3229,4 +3033,96 @@ window.xacNhanThuongNong = async function(studentId, studentName) {
         document.getElementById('loader').style.display = 'none';
         document.querySelector('#loader p').innerText = "ĐANG TẢI DỮ LIỆU...";
     }
+};
+// ==========================================
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (GIAO DIỆN THU GỌN - ĐẦY ĐỦ KHO ĐỒ CLOUD)
+// ==========================================
+window.chuyenTrangQuanLy = async function() { 
+    closeMenu(); 
+    if (!(await window.loadAllDataOnce())) return;
+
+    let html = `
+        <div class="flex items-center mb-4">
+            <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-xl text-blue-600 uppercase">QUẢN LÝ ĐIỂM & HỌC SINH</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-10 fade-in">
+    `; 
+    
+    let studentStats = Data.hs.map(h => {
+        let logs = Data.log.filter(l => String(l.id) === String(h.id));
+        let mathPts = 0, tvPts = 0, spinPts = 0, gamePts = 0;
+        
+        logs.forEach(l => {
+            let s = l.real_added !== undefined ? Number(l.real_added) : (Number(l.score) || 0);
+            if (l.subject === 'math') mathPts += s;
+            else if (l.subject === 'tv' || l.subject === 'vietnamese') tvPts += s;
+            else if (l.subject === 'LuckySpin') spinPts += s;
+            else if (l.subject === 'MathGame') gamePts += s;
+        });
+        
+        let currentScore = Number(h.score) || 0;
+        let totalCalculated = mathPts + tvPts + spinPts + gamePts; 
+        let bonusPts = currentScore - totalCalculated; 
+        
+        return { ...h, mathPts, tvPts, spinPts, gamePts, bonusPts, currentScore };
+    });
+
+    studentStats.sort((a,b) => b.currentScore - a.currentScore);
+
+    studentStats.forEach((s) => {
+        let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+        
+        // Đọc số liệu từ Kho đồ Cloud
+        let luotQuay = Number(s.luotQuay) || 0;
+        let veLamLai = Number(s.veLamLai) || 0;
+        let luotGame = Number(s.luotGame) || 0;
+
+        html += `
+        <div class="bg-white p-3 rounded-[1rem] border border-slate-200 shadow-sm hover:shadow-md transition relative flex flex-col">
+            <div class="flex justify-between items-center mb-2.5 border-b border-slate-50 pb-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover shadow-inner border border-indigo-100 shrink-0">
+                    <div class="min-w-0">
+                        <div class="font-black text-slate-700 text-sm truncate">${s.name}</div>
+                        <div class="text-[9px] font-bold text-slate-500 uppercase bg-slate-50 inline-block px-1.5 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
+                    </div>
+                </div>
+                <div class="text-right shrink-0 ml-2">
+                    <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Tổng</div>
+                    <div class="font-black text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 leading-none">${s.currentScore}</div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-5 gap-1 text-center mb-2">
+                <div class="bg-indigo-50/50 p-1 rounded-lg border border-indigo-100/50"><div class="text-[8px] font-black text-indigo-500 uppercase mb-0.5 truncate"><i class="fas fa-calculator"></i></div><div class="font-bold text-indigo-700 text-[11px]">${s.mathPts}</div></div>
+                <div class="bg-green-50/50 p-1 rounded-lg border border-green-100/50"><div class="text-[8px] font-black text-green-500 uppercase mb-0.5 truncate"><i class="fas fa-book-open"></i></div><div class="font-bold text-green-700 text-[11px]">${s.tvPts}</div></div>
+                <div class="bg-yellow-50/50 p-1 rounded-lg border border-yellow-100/50"><div class="text-[8px] font-black text-yellow-600 uppercase mb-0.5 truncate"><i class="fas fa-dharmachakra"></i></div><div class="font-bold text-yellow-700 text-[11px]">${s.spinPts}</div></div>
+                <div class="bg-red-50/50 p-1 rounded-lg border border-red-100/50"><div class="text-[8px] font-black text-red-500 uppercase mb-0.5 truncate"><i class="fas fa-rocket"></i></div><div class="font-bold text-red-700 text-[11px]">${s.gamePts}</div></div>
+                <div class="bg-pink-50/50 p-1 rounded-lg border border-pink-100/50"><div class="text-[8px] font-black text-pink-500 uppercase mb-0.5 truncate"><i class="fas fa-gift"></i></div><div class="font-bold text-pink-700 text-[11px]">${s.bonusPts}</div></div>
+            </div>
+            
+            <div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100 px-2 shadow-inner mb-3">
+                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Lượt Quay">
+                    <i class="fas fa-dharmachakra text-yellow-500"></i><span class="text-yellow-600 font-black">${luotQuay}</span>
+                </div>
+                <div class="w-px h-3 bg-slate-200"></div>
+                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Vé Làm Lại">
+                    <i class="fas fa-ticket-alt text-orange-500"></i><span class="text-orange-600 font-black">${veLamLai}</span>
+                </div>
+                <div class="w-px h-3 bg-slate-200"></div>
+                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Lượt Game">
+                    <i class="fas fa-rocket text-red-500"></i><span class="text-red-600 font-black">${luotGame}</span>
+                </div>
+            </div>
+            
+            <div class="flex gap-1.5 mt-auto">
+                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-white text-slate-500 py-1.5 rounded-lg font-bold text-[11px] hover:bg-blue-50 hover:text-blue-600 transition border border-slate-200 shadow-sm"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
+                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-1.5 rounded-lg font-bold text-[11px] hover:bg-pink-500 hover:text-white transition border border-pink-200 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng</button>
+            </div>
+        </div>
+        `;
+    });
+
+    document.getElementById('content').innerHTML = html + "</div>"; 
 };
