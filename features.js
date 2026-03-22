@@ -1875,11 +1875,9 @@ document.addEventListener("copy", (e) => {
     }
 });
 
+
 // ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ CẤU TRÚC ĐIỂM & THƯỞNG NÓNG)
-// ==========================================
-// ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ CẤU TRÚC ĐIỂM & THƯỞNG NÓNG)
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (THỐNG KÊ ĐIỂM & KHO ĐỒ CLOUD)
 // ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
@@ -1890,7 +1888,7 @@ window.chuyenTrangQuanLy = async function() {
             <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
             <h2 class="font-black text-xl text-blue-600 uppercase">QUẢN LÝ ĐIỂM & HỌC SINH</h2>
         </div>
-        <p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-chart-pie mr-1"></i> Bảng phân tích chi tiết nguồn điểm của từng học sinh</p>
+        <p class="text-xs text-slate-500 mb-4 text-center italic"><i class="fas fa-chart-pie mr-1"></i> Bảng phân tích chi tiết điểm và kho đồ của từng học sinh</p>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in">
     `; 
     
@@ -1916,8 +1914,11 @@ window.chuyenTrangQuanLy = async function() {
     studentStats.sort((a,b) => b.currentScore - a.currentScore);
 
     studentStats.forEach((s) => {
-        // Lấy ảnh đại diện mạng của học sinh
         let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+        
+        // Đọc số liệu từ Kho đồ Cloud
+        let luotQuay = Number(s.luotQuay) || 0;
+        let veLamLai = Number(s.veLamLai) || 0;
 
         html += `
         <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition relative">
@@ -1958,6 +1959,16 @@ window.chuyenTrangQuanLy = async function() {
                 </div>
             </div>
             
+            <div class="flex justify-between bg-slate-50 mt-3 p-2.5 rounded-xl border border-slate-100 px-4 shadow-inner">
+                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <i class="fas fa-dharmachakra text-yellow-500 text-sm"></i> Lượt quay: <span class="text-yellow-600 font-black text-sm">${luotQuay}</span>
+                </div>
+                <div class="w-px bg-slate-200"></div>
+                <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <i class="fas fa-ticket-alt text-orange-500 text-sm"></i> Vé làm lại: <span class="text-orange-600 font-black text-sm">${veLamLai}</span>
+                </div>
+            </div>
+            
             <div class="flex gap-2 mt-4">
                 <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-slate-50 text-slate-500 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-50 hover:text-blue-600 transition border border-slate-100"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
                 <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-2.5 rounded-xl font-bold text-xs hover:bg-pink-500 hover:text-white transition border border-pink-100 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng nóng</button>
@@ -1969,7 +1980,6 @@ window.chuyenTrangQuanLy = async function() {
     document.getElementById('content').innerHTML = html + "</div>"; 
 };
 
-// HÀM MỚI: Popup xem hồ sơ học sinh dành riêng cho Thầy Hiển
 // HÀM MỚI: Popup xem hồ sơ học sinh (ĐÃ NÂNG CẤP CHO PHÉP GVCN ĐỔI ẢNH)
 window.viewProfile = function(studentId) {
     let s = Data.hs.find(x => String(x.id) === String(studentId));
