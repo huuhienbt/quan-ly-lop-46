@@ -2448,3 +2448,312 @@ window.moRaDaHoatDong = async function() {
     html += `</div></div>`;
     document.getElementById('content').innerHTML = html;
 };
+// ==========================================
+// NÂNG CẤP ĐÁM MÂY: KHO ĐỒ, LƯỢT QUAY & VÉ LÀM LẠI
+// (Thầy copy toàn bộ đoạn này dán vào DƯỚI CÙNG của file features.js nhé)
+// ==========================================
+
+// 1. ĐỘNG CƠ GIAO TIẾP VỚI MÁY CHỦ
+window.updateKhoDoCloud = async function(spinsToAdd, ticketsToAdd) {
+    if (!currentUser || currentUser.role !== 'student') return;
+    
+    // Cập nhật ngay trên bộ nhớ tạm (để giao diện web hiển thị ngay lập tức)
+    currentUser.luotQuay = (Number(currentUser.luotQuay) || 0) + spinsToAdd;
+    currentUser.veLamLai = (Number(currentUser.veLamLai) || 0) + ticketsToAdd;
+    
+    if(currentUser.luotQuay < 0) currentUser.luotQuay = 0;
+    if(currentUser.veLamLai < 0) currentUser.veLamLai = 0;
+
+    // Bắn tín hiệu lên Google Sheets để lưu vĩnh viễn
+    try {
+        await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'update_inventory',
+                data: { id_hs: currentUser.id, spins: spinsToAdd, tickets: ticketsToAdd }
+            })
+        });
+    } catch(e) { console.log("Lỗi đồng bộ kho đồ Cloud"); }
+};
+
+// 2. THUẬT TOÁN ĐẾM LƯỢT QUAY THÔNG MINH
+window.tinhLuotQuayHienTai = function() {
+    if (!currentUser) return 0;
+    let today = new Date();
+    let daQuayHomNay = Data.log.some(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "LuckySpin") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    });
+    
+    // 1 lượt miễn phí mỗi ngày
+    let freeSpin = daQuayHomNay ? 0 : 1;
+    
+    // Thưởng thêm cho cán sự lớp vào T6, T7, CN
+    let weekendBonus = 0;
+    let d = today.getDay();
+    if (!daQuayHomNay && (d === 0 || d === 5 || d === 6)) {
+        let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
+        let userInfoStr = JSON.stringify(currentUser).toLowerCase();
+        let isOfficer = chucVu.includes('lớp trưởng') || userInfoStr.includes('lớp trưởng') || chucVu.includes('phó') || userInfoStr.includes('phó') || chucVu.includes('tt') || userInfoStr.includes('tt');
+        if (isOfficer) weekendBonus = 1;
+    }
+    
+    let cloudSpins = Number(currentUser.luotQuay) || 0;
+    return freeSpin + weekendBonus + cloudSpins;
+};
+
+// 3. NÂNG CẤP GIAO DIỆN VÒNG QUAY ĐỂ ĐỌC CLOUD
+window.moVongQuay = async function() {
+    if(!currentUser) return showLogin(); 
+    closeMenu(); 
+
+    document.getElementById('content').innerHTML = `<div class="text-center py-10 mt-10"><i class="fas fa-dharmachakra fa-spin text-5xl text-yellow-500 mb-4 shadow-sm rounded-full"></i><p class="font-black text-slate-500 animate-pulse tracking-widest uppercase">Đang đồng bộ kho đồ đám mây...</p></div>`;
+    if (!(await window.loadAllDataOnce(true))) return;
+
+    let tongLuot = window.tinhLuotQuayHienTai();
+    
+    if (tongLuot <= 0) {
+        alert("🛡️ HỆ THỐNG: Con đã dùng hết lượt quay của ngày hôm nay! Hãy làm bài tập đạt 100% để được Thầy thưởng thêm lượt nhé.");
+        return veTrangChu();
+    }
+
+    let sliceAngle = 360 / PRIZES.length; let halfSlice = sliceAngle / 2;
+    let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
+    let gradColors = PRIZES.map((p, i) => `${p.color} ${i * sliceAngle}deg ${(i + 1) * sliceAngle}deg`).join(', ');
+
+    let veLamLai = Number(currentUser.veLamLai) || 0;
+
+    document.getElementById('content').innerHTML = `
+        ${window.getNavHtml('vongquay')}
+        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in">
+            <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
+            <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${veLamLai}</span></p></div>
+            <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition mb-6 cursor-pointer hover:scale-[1.02]">BẮT ĐẦU (${tongLuot} LƯỢT)</button>
+            <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"></div>
+        </div>
+    `;
+    let todayStr = new Date().toLocaleDateString('vi-VN'); 
+    window.renderSpinHistory(todayStr); 
+};
+
+// 4. NÂNG CẤP VÒNG QUAY: TRỪ/CỘNG TRỰC TIẾP LÊN MÁY CHỦ
+window.thucHienQuay = async function() {
+    if(isSpinning) return;
+    let tongLuot = window.tinhLuotQuayHienTai();
+    if (tongLuot <= 0) return alert("Con đã hết lượt quay!");
+
+    isSpinning = true;
+    let btn = document.getElementById('btnSpin'); btn.classList.add('opacity-50', 'pointer-events-none');
+    
+    // Kiểm tra xem có đang xài lượt Cloud không
+    let today = new Date();
+    let daQuayHomNay = Data.log.some(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "LuckySpin") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+    });
+    
+    if (daQuayHomNay) {
+        // Đã xài hết lượt free đầu ngày, đang xài lượt thưởng Cloud -> Trừ 1 lượt Cloud
+        window.updateKhoDoCloud(-1, 0);
+    }
+
+    let chucVu = currentUser.chucvu ? String(currentUser.chucvu).toLowerCase() : "";
+    let userInfoStr = JSON.stringify(currentUser).toLowerCase(); 
+    let isLopTruong = chucVu.includes('lớp trưởng') || userInfoStr.includes('lớp trưởng');
+    let isLopPho = chucVu.includes('phó') || userInfoStr.includes('phó') || chucVu.includes('tt') || userInfoStr.includes('tt');
+
+    let rand = Math.random() * 100; let idx = 0;
+    if (isLopTruong) {
+        if (rand < 10) idx = 0; else if (rand < 25) idx = 1; else if (rand < 50) idx = 2; else if (rand < 55) idx = 3; else if (rand < 65) idx = 4; else if (rand < 70) idx = 5; else idx = 6;                
+    } else if (isLopPho) {
+        if (rand < 10) idx = 0; else if (rand < 25) idx = 1; else if (rand < 60) idx = 2; else if (rand < 65) idx = 3; else if (rand < 75) idx = 4; else if (rand < 80) idx = 5; else idx = 6;                
+    } else {
+        if (rand < 10) idx = 0; else if (rand < 30) idx = 1; else if (rand < 70) idx = 2; else if (rand < 75) idx = 3; else if (rand < 85) idx = 4; else if (rand < 90) idx = 5; else idx = 6;                
+    }
+
+    let sliceAngle = 360 / PRIZES.length; let wheel = document.getElementById('wheel'); 
+    let currentRot = parseFloat(wheel.getAttribute('data-rot') || 0);
+    let nextRot = currentRot + (360 * 5) + (360 - (currentRot % 360)) - (idx * sliceAngle); 
+    wheel.style.transform = `rotate(${nextRot}deg)`; wheel.setAttribute('data-rot', nextRot);
+    
+    let todayStr = new Date().toLocaleDateString('vi-VN'); 
+    
+    setTimeout(async () => {
+        isSpinning = false; let uniqueGroup = "Vòng quay ngày " + todayStr + " (" + Date.now() + ")"; let finalPrize = {...PRIZES[idx]};
+        let addSpins = 0; let addTickets = 0;
+
+        if (finalPrize.id === 'chest') {
+            let chestRand = Math.floor(Math.random() * 3);
+            if (chestRand === 0) { finalPrize.netScore = 10; addSpins = 2; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>2 Lượt quay</b> và <b>10 Điểm</b>."; } 
+            else if (chestRand === 1) { finalPrize.netScore = 30; addSpins = 1; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Lượt quay</b> và <b>30 Điểm</b>."; } 
+            else { finalPrize.netScore = 20; addTickets = 1; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Vé làm lại</b> và <b>20 Điểm</b>."; }
+        }
+
+        if (finalPrize.extraSpin > 0) addSpins += finalPrize.extraSpin;
+        if (finalPrize.id === 'redo') addTickets += 1;
+        
+        // CỘNG QUÀ VÀO CLOUD
+        if (addSpins > 0 || addTickets > 0) {
+            window.updateKhoDoCloud(addSpins, addTickets);
+        }
+
+        if (finalPrize.id === 'riddle') { window.showRiddleModal(todayStr, uniqueGroup); return; }
+
+        window.showPrizeModal(finalPrize);
+        if (finalPrize.netScore !== 0) { currentUser.score = Number(currentUser.score) + finalPrize.netScore; document.getElementById('vqCurrentScore').innerText = currentUser.score; }
+        
+        try { 
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score_earned: finalPrize.netScore, details: "Quay trúng: " + finalPrize.text + (finalPrize.id === 'chest' ? " ("+finalPrize.msg+")" : "") } }) }); 
+            Data.log.push({ id: currentUser.id, subject: "LuckySpin", group: uniqueGroup, score: finalPrize.netScore, time: new Date().toISOString(), details: "Quay trúng: " + finalPrize.text }); 
+            window.renderSpinHistory(todayStr);
+        } catch(e) {}
+        
+        if (finalPrize.netScore > 0 || addSpins > 0 || addTickets > 0) { window.safeConfetti(); }
+        
+        // Cập nhật lại nút bấm
+        let newTongLuot = window.tinhLuotQuayHienTai();
+        if (newTongLuot > 0) {
+            btn.className = "inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition hover:scale-[1.02] cursor-pointer mb-6"; 
+            btn.innerText = `BẮT ĐẦU (${newTongLuot} LƯỢT)`; 
+        } else {
+            btn.className = "inline-block bg-gradient-to-r from-slate-400 to-slate-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg text-xl transition opacity-50 pointer-events-none mb-6"; 
+            btn.innerText = "ĐÃ HẾT LƯỢT HÔM NAY";
+        }
+    }, 4000);
+};
+
+// 5. NÂNG CẤP DÙNG VÉ LÀM LẠI TỪ CLOUD
+window.promptRedo = function(group, time, isMaxScore = false) {
+    let tokens = Number(currentUser.veLamLai) || 0;
+    if(tokens > 0) { 
+        let confirmMsg = isMaxScore 
+            ? `Con đang có ${tokens} VÉ LÀM LẠI.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` 
+            : `Con đang có ${tokens} VÉ LÀM LẠI.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
+
+        if(confirm(confirmMsg)) { 
+            window.updateKhoDoCloud(0, -1); // Trừ 1 vé trên Cloud
+            Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group)); 
+            window.startQuiz(group, time); 
+        } 
+    }
+};
+
+// 6. NÂNG CẤP THƯỞNG 100% VÀO CLOUD
+window.finishQuiz = async function() { 
+    window.isQuizActive = false;
+    if (timer) clearInterval(timer); const maxPossibleScore = quiz.length * 10; let timeTaken = window.totalQuizTime - window.remainingQuizTime; 
+    let halfTime = window.totalQuizTime / 2; let extraSpinsEarned = 0; let rewardMessage = "";
+
+    // Tóm cổ câu bỏ trống
+    if (typeof window.answeredQuestions !== 'undefined' && window.answeredQuestions < quiz.length) {
+        for (let i = window.answeredQuestions; i < quiz.length; i++) {
+            let q = quiz[i];
+            let qTextReplaced = window.parseImg(q.question).replace(/_{3,}/g, '[___]');
+            let correctStr = q.correct.toLowerCase().replace(/\s/g, '');
+            let expectedAnsText = "";
+            if (correctStr.length === 1 && ['a','b','c','d'].includes(correctStr)) { expectedAnsText = window.parseImg(q[correctStr]); } 
+            else { let expectedArr = correctStr.split(','); expectedAnsText = expectedArr.map(k => q[k] ? window.parseImg(q[k]).replace(/<[^>]*>?/gm, '') : '').join(' | '); }
+            wrongAnswersLog.push(`<div class="bg-white p-4 rounded-xl border border-orange-200 mb-3 shadow-sm"><p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-orange-500">Câu ${i+1} (Bỏ trống):</span> ${qTextReplaced}</p><div class="space-y-2 mt-3"><p class="text-orange-600 text-sm bg-orange-50 p-2 rounded-lg border border-orange-100"><i class="fas fa-exclamation-triangle mr-1"></i> <b>Hết giờ / Bị ép nộp (Chưa làm)</b></p><p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng:</b> <span class="font-medium">${expectedAnsText}</span></p></div></div>`);
+        }
+    }
+
+    let previousLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp);
+    let previousMaxScore = previousLogs.length > 0 ? Math.max(...previousLogs.map(l => Number(l.score) || 0)) : 0;
+    let actualScoreEarned = score - previousMaxScore;
+    if (actualScoreEarned < 0) actualScoreEarned = 0; 
+
+    if (score > 0 && score === maxPossibleScore) { 
+        let previousMaxLog = previousLogs.find(l => Number(l.score) === maxPossibleScore);
+        if (!previousMaxLog && currentUser.role === 'student') {
+            if (timeTaken <= halfTime) { extraSpinsEarned = 2; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ! Đúng 100% siêu nhanh. Thưởng <b>+2 Lượt quay</b>!</p></div>`; } 
+            else { extraSpinsEarned = 1; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! Đúng 100%. Thưởng <b>+1 Lượt quay</b>!</p></div>`; }
+            
+            // CỘNG LƯỢT QUAY LÊN CLOUD
+            window.updateKhoDoCloud(extraSpinsEarned, 0);
+        } else if (previousMaxLog && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`; }
+        window.safeConfetti(); 
+    } 
+    
+    let scoreMsg = actualScoreEarned > 0 ? `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
+    
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button onclick="window.loadSubject('${curSub}')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
+    
+    if(currentUser.role === 'student') { 
+        let submitTime = new Date().toISOString(); let detailsToSave = wrongAnswersLog.join('');
+        if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
+        
+        currentUser.score = Number(currentUser.score) + actualScoreEarned;
+        try { 
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }); 
+            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
+        } catch(e){}
+    } 
+};
+
+// 7. NÂNG CẤP HIỂN THỊ HỒ SƠ & TẶNG QUÀ SINH NHẬT TỪ CLOUD
+window.moHoSoCaNhan = function() {
+    if(!currentUser) return showLogin();
+    closeMenu();
+    let savedAvatar = window.layAnhDaiDien(currentUser.id, currentUser.name);
+    let btnAvatar = document.getElementById('btnHeaderAvatar');
+    let headerImg = document.getElementById('headerAvatarImg');
+    if(btnAvatar && headerImg) { btnAvatar.classList.remove('hidden'); headerImg.src = savedAvatar; }
+    let studentTitles = window.calculateTitle ? window.calculateTitle(currentUser) : "";
+    if(!studentTitles) studentTitles = `<span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-lg font-bold">Chiến binh mới</span>`;
+
+    let veLamLai = Number(currentUser.veLamLai) || 0;
+
+    document.getElementById('content').innerHTML = `
+        <div class="flex items-center mb-6 fade-in">
+            <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-xl text-indigo-600 uppercase">HỒ SƠ CỦA TÔI</h2>
+        </div>
+        <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in max-w-sm mx-auto relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+            <div class="relative z-10 mt-10">
+                <div class="relative inline-block group cursor-pointer" onclick="window.doiAnhDaiDien()" title="Bấm để đổi ảnh đại diện">
+                    <img id="myAvatarImg" src="${savedAvatar}" class="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
+                    <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${currentUser.name}</h3>
+                <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 flex justify-around shadow-inner">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tổng điểm</p>
+                        <p class="text-2xl font-black text-indigo-600">${currentUser.score || 0}</p>
+                    </div>
+                    <div class="w-px bg-slate-200"></div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vé làm lại</p>
+                        <p class="text-2xl font-black text-orange-500">${veLamLai}</p>
+                    </div>
+                </div>
+                <button onclick="window.doiAnhDaiDien()" class="w-full mt-6 bg-indigo-50 text-indigo-600 font-bold py-3 rounded-xl border border-indigo-100 hover:bg-indigo-600 hover:text-white transition shadow-sm btn-3d">
+                    <i class="fas fa-upload mr-1"></i> Tải ảnh từ máy lên
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+window.checkSinhNhat = function() { 
+    if (!currentUser || currentUser.role !== 'student' || !currentUser.dob) return; 
+    if (sessionStorage.getItem('hpbdShown_' + currentUser.id)) return; 
+    let dobStr = currentUser.dob; let bDay = 0, bMonth = 0; 
+    try { if (dobStr.includes('T')) { let dt = new Date(dobStr); bDay = dt.getDate(); bMonth = dt.getMonth() + 1; } else if (dobStr.includes('/')) { let parts = dobStr.split('/'); bDay = parseInt(parts[0]); bMonth = parseInt(parts[1]); } else if (dobStr.includes('-')) { let parts = dobStr.split('-'); bDay = parseInt(parts[2]); bMonth = parseInt(parts[1]); } } catch(e) { return; } 
+    let today = new Date(); 
+    if (bDay === today.getDate() && bMonth === (today.getMonth() + 1)) { 
+        let currentYear = today.getFullYear(); let bonusKey = 'hpbd_bonus_' + currentYear + '_' + currentUser.id; 
+        if (!localStorage.getItem(bonusKey)) { 
+            window.updateKhoDoCloud(5, 0); // Thưởng 5 lượt lên Cloud
+            localStorage.setItem(bonusKey, 'true'); 
+            try { fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "LuckySpin", group: "Sinh nhật " + currentYear, score_earned: 0, details: "Hệ thống tự động tặng 5 lượt quay nhân dịp sinh nhật!" } }) }); } catch(e) {} 
+        } 
+        window.showHappyBirthdayUI(); sessionStorage.setItem('hpbdShown_' + currentUser.id, 'true'); 
+    } 
+};
