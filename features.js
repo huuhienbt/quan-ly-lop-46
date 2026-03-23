@@ -125,7 +125,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (BẢNG VÀNG HIỂN THỊ ĐẦY ĐỦ 30 HỌC SINH - KHÔNG THANH CUỘN)
+// 1. GÓC HỌC TẬP (BẢNG VÀNG ĐẦY ĐỦ 30 HS + GIAO DIỆN VÉ LÀM BÀI SIÊU GỌN)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -145,16 +145,17 @@ window.moGocHocTap = async function() {
     let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${mathUnread} BÀI MỚI</div>` : '';
     let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${tvUnread} BÀI MỚI</div>` : '';
 
+    // GIAO DIỆN VÉ LÀM BÀI THU GỌN
     let veLamLaiHtml = "";
     if (currentUser && currentUser.role === 'student') {
         let veLamLai = Number(currentUser.veLamLai) || 0;
         veLamLaiHtml = `
-            <div class="mt-4 bg-orange-50 border-2 border-orange-200 rounded-[1.5rem] p-4 flex justify-between items-center shadow-inner">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-orange-200 text-orange-600 rounded-full flex items-center justify-center text-xl"><i class="fas fa-ticket-alt"></i></div>
-                    <div><h3 class="font-black text-slate-700 uppercase tracking-wide text-sm">Vé làm bài của con</h3><p class="text-[11px] text-slate-500 font-bold">Dùng để làm lại bài cũ cải thiện điểm</p></div>
+            <div class="mt-3 flex justify-end px-1">
+                <div class="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-sm text-sm hover:bg-orange-100 transition cursor-default" title="Dùng để làm lại bài tập cũ cải thiện điểm">
+                    <i class="fas fa-ticket-alt text-orange-500"></i>
+                    <span class="font-bold text-orange-800 uppercase text-[11px] tracking-wide">Vé làm bài:</span>
+                    <span class="font-black text-orange-600 text-base leading-none">${veLamLai}</span>
                 </div>
-                <div class="text-2xl font-black text-orange-600 bg-white px-4 py-1 rounded-xl shadow-sm border border-orange-100">${veLamLai}</div>
             </div>
         `;
     }
@@ -167,7 +168,7 @@ window.moGocHocTap = async function() {
         </div>
         ${veLamLaiHtml}
         ${currentUser && currentUser.role === 'student' ? `
-        <div onclick="window.moGameBaoVeTraiDat()" class="mt-4 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
+        <div onclick="window.moGameBaoVeTraiDat()" class="mt-2 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
             <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
             <div class="flex items-center gap-4 relative z-10">
                 <div class="w-14 h-14 bg-indigo-500 rounded-full flex items-center justify-center text-3xl border-2 border-white shadow-inner animate-pulse"><i class="fas fa-rocket"></i></div>
@@ -190,7 +191,7 @@ window.moGocHocTap = async function() {
         return timeA - timeB; 
     });
 
-    // ÉP CẮT LẤY ĐÚNG 30 HỌC SINH ĐẦU TIÊN
+    // HIỂN THỊ ĐẦY ĐỦ 30 HỌC SINH
     let top30 = sortedStudents.slice(0, 30);
     let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
     let now = new Date();
@@ -267,7 +268,6 @@ window.moGocHocTap = async function() {
             else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Hiện tại con đang ở Hạng ${myRank}.<br>Cố lên nhé, chăm chỉ làm bài để leo rank nha!</p></div>`; } 
         } 
         
-        // XÓA THUỘC TÍNH CUỘN ĐỂ HIỂN THỊ TRẢI DÀI FULL 30 BẠN
         leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col">${listHtml}</div>${personalMsg}</div>`; 
     } 
     document.getElementById('content').innerHTML = htmlTop + leaderboardHtml; 
