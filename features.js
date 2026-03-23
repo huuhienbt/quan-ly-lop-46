@@ -803,7 +803,7 @@ window.moVongQuay = async function() {
     // KIỂM TRA LỆNH KHÓA TỪ GVCN
     let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
     if (blockUntil) {
-        alert(`🚨 TÍNH NĂNG BỊ KHOÁ`);
+        alert("🚨 TÍNH NĂNG BỊ KHOÁ");
         if (window.veTrangChu) veTrangChu();
         return;
     }
@@ -1319,7 +1319,7 @@ window.moGameBaoVeTraiDat = async function() {
     // KIỂM TRA LỆNH KHÓA TỪ GVCN
     let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
     if (blockUntil) {
-        alert(`🚨 TÍNH NĂNG BỊ KHOÁ`);
+        alert("🚨 TÍNH NĂNG BỊ KHOÁ");
         if (window.veTrangChu) veTrangChu();
         return;
     }
