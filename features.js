@@ -125,7 +125,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP
+// 1. GÓC HỌC TẬP (BẢNG VÀNG HIỂN THỊ ĐẦY ĐỦ 30 HỌC SINH - KHÔNG THANH CUỘN)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -190,12 +190,14 @@ window.moGocHocTap = async function() {
         return timeA - timeB; 
     });
 
+    // ÉP CẮT LẤY ĐÚNG 30 HỌC SINH ĐẦU TIÊN
+    let top30 = sortedStudents.slice(0, 30);
     let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
     let now = new Date();
 
     let leaderboardHtml = ""; 
-    if (sortedStudents.length > 0) { 
-        let listHtml = sortedStudents.map((s) => { 
+    if (top30.length > 0) { 
+        let listHtml = top30.map((s) => { 
             let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
             
@@ -213,12 +215,12 @@ window.moGocHocTap = async function() {
 
             let statusDot = ""; let statusTitle = "";
             if (!lastActionTime) {
-                statusDot = "bg-slate-300"; statusTitle = "Chưa truy cập";
+                statusDot = "bg-black"; statusTitle = "Chưa truy cập";
             } else {
                 let diffMinutes = Math.floor((now - lastActionTime) / 60000);
-                if (diffMinutes < 30) { statusDot = "bg-emerald-500 animate-pulse ring-2 ring-emerald-200"; statusTitle = "Đang hoạt động rôm rả"; } 
-                else if (diffMinutes < 60 * 24) { statusDot = "bg-blue-400"; statusTitle = "Có hoạt động hôm nay"; } 
-                else { statusDot = "bg-slate-400"; statusTitle = "Đang Offline"; }
+                if (diffMinutes < 30) { statusDot = "bg-green-500 animate-pulse ring-2 ring-green-200"; statusTitle = "Đang hoạt động rôm rả"; } 
+                else if (diffMinutes < 60 * 24) { statusDot = "bg-blue-500"; statusTitle = "Có hoạt động hôm nay"; } 
+                else { statusDot = "bg-black"; statusTitle = "Đang Offline"; }
             }
 
             let titleBadge = ""; let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
@@ -264,7 +266,9 @@ window.moGocHocTap = async function() {
             if (myRank <= 10) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
             else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Hiện tại con đang ở Hạng ${myRank}.<br>Cố lên nhé, chăm chỉ làm bài để leo rank nha!</p></div>`; } 
         } 
-        leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">${listHtml}</div>${personalMsg}</div>`; 
+        
+        // XÓA THUỘC TÍNH CUỘN ĐỂ HIỂN THỊ TRẢI DÀI FULL 30 BẠN
+        leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col">${listHtml}</div>${personalMsg}</div>`; 
     } 
     document.getElementById('content').innerHTML = htmlTop + leaderboardHtml; 
 };
