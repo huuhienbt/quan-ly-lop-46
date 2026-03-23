@@ -1572,6 +1572,9 @@ document.addEventListener("copy", (e) => { if (window.isQuizActive && currentUse
 // ==========================================
 // 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (GIAO DIỆN THU GỌN - ĐẦY ĐỦ KHO ĐỒ CLOUD)
 // ==========================================
+// ==========================================
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (BỔ SUNG NÚT PHẠT KHÓA TÍNH NĂNG)
+// ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
     if (!(await window.loadAllDataOnce())) return;
@@ -1599,27 +1602,29 @@ window.chuyenTrangQuanLy = async function() {
         let currentScore = Number(h.score) || 0;
         let totalCalculated = mathPts + tvPts + spinPts + gamePts; 
         let bonusPts = currentScore - totalCalculated; 
+        let isBlocked = window.checkIsBlocked ? window.checkIsBlocked(h.id) : false; // Kiểm tra bị khóa
         
-        return { ...h, mathPts, tvPts, spinPts, gamePts, bonusPts, currentScore };
+        return { ...h, mathPts, tvPts, spinPts, gamePts, bonusPts, currentScore, isBlocked };
     });
 
     studentStats.sort((a,b) => b.currentScore - a.currentScore);
 
     studentStats.forEach((s) => {
         let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-        
-        // Đọc số liệu từ Kho đồ Cloud
         let luotQuay = Number(s.luotQuay) || 0;
         let veLamLai = Number(s.veLamLai) || 0;
         let luotGame = Number(s.luotGame) || 0;
+        
+        // Nhãn cảnh báo nếu đang bị khóa
+        let blockBadge = s.isBlocked ? `<span class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded ml-1 animate-pulse align-middle" title="Bị khóa đến ${s.isBlocked.toLocaleString('vi-VN')}"><i class="fas fa-lock text-[8px]"></i> KHÓA</span>` : '';
 
         html += `
-        <div class="bg-white p-3 rounded-[1rem] border border-slate-200 shadow-sm hover:shadow-md transition relative flex flex-col">
+        <div class="bg-white p-3 rounded-[1rem] border border-slate-200 shadow-sm hover:shadow-md transition relative flex flex-col ${s.isBlocked ? 'border-red-300 ring-1 ring-red-100' : ''}">
             <div class="flex justify-between items-center mb-2.5 border-b border-slate-50 pb-2">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover shadow-inner border border-indigo-100 shrink-0">
                     <div class="min-w-0">
-                        <div class="font-black text-slate-700 text-sm truncate">${s.name}</div>
+                        <div class="font-black text-slate-700 text-sm truncate">${s.name} ${blockBadge}</div>
                         <div class="text-[9px] font-bold text-slate-500 uppercase bg-slate-50 inline-block px-1.5 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
                     </div>
                 </div>
@@ -1642,7 +1647,7 @@ window.chuyenTrangQuanLy = async function() {
                     <i class="fas fa-dharmachakra text-yellow-500"></i><span class="text-yellow-600 font-black">${luotQuay}</span>
                 </div>
                 <div class="w-px h-3 bg-slate-200"></div>
-                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Vé làm bài">
+                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Vé Làm Bài">
                     <i class="fas fa-ticket-alt text-orange-500"></i><span class="text-orange-600 font-black">${veLamLai}</span>
                 </div>
                 <div class="w-px h-3 bg-slate-200"></div>
@@ -1652,8 +1657,9 @@ window.chuyenTrangQuanLy = async function() {
             </div>
             
             <div class="flex gap-1.5 mt-auto">
-                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-white text-slate-500 py-1.5 rounded-lg font-bold text-[11px] hover:bg-blue-50 hover:text-blue-600 transition border border-slate-200 shadow-sm"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
-                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-1.5 rounded-lg font-bold text-[11px] hover:bg-pink-500 hover:text-white transition border border-pink-200 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng</button>
+                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-white text-slate-500 py-1.5 rounded-lg font-bold text-[10px] hover:bg-blue-50 hover:text-blue-600 transition border border-slate-200 shadow-sm"><i class="fas fa-id-card"></i> Hồ sơ</button>
+                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-1.5 rounded-lg font-bold text-[10px] hover:bg-pink-500 hover:text-white transition border border-pink-200 shadow-sm"><i class="fas fa-magic"></i> Thưởng</button>
+                <button onclick="window.moKhoaTaiKhoan('${s.id}', '${s.name.replace(/'/g, "\\'")}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg font-bold text-[10px] hover:bg-red-500 hover:text-white transition border border-red-200 shadow-sm"><i class="fas fa-ban"></i> Phạt</button>
             </div>
         </div>
         `;
