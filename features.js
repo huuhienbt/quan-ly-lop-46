@@ -790,8 +790,24 @@ window.tinhLuotQuayHienTai = function() {
     return freeSpin + weekendBonus + cloudSpins;
 };
 
+
+// ==========================================
+// 5. VÒNG QUAY MAY MẮN (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
+// ==========================================
+// ==========================================
+// 5. VÒNG QUAY MAY MẮN (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
+// ==========================================
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); closeMenu(); 
+    
+    // KIỂM TRA LỆNH KHÓA TỪ GVCN
+    let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
+    if (blockUntil) {
+        alert(`🚨 TÍNH NĂNG BỊ KHOÁ`);
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
     document.getElementById('content').innerHTML = `<div class="text-center py-10 mt-10"><i class="fas fa-dharmachakra fa-spin text-5xl text-yellow-500 mb-4 shadow-sm rounded-full"></i><p class="font-black text-slate-500 animate-pulse tracking-widest uppercase">Đang đồng bộ kho đồ đám mây...</p></div>`;
     if (!(await window.loadAllDataOnce(true))) return;
 
@@ -805,7 +821,6 @@ window.moVongQuay = async function() {
     let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
     let gradColors = PRIZES.map((p, i) => `${p.color} ${i * sliceAngle}deg ${(i + 1) * sliceAngle}deg`).join(', ');
 
-    // ĐÃ THAY "VÉ LÀM BÀI" THÀNH "LƯỢT QUAY" Ở GIAO DIỆN
     document.getElementById('content').innerHTML = `
         ${window.getNavHtml('vongquay')}
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in">
@@ -1293,9 +1308,22 @@ window.showHappyBirthdayUI = function() {
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
 
+// ==========================================
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
+// ==========================================
+let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
+
 window.moGameBaoVeTraiDat = async function() {
-    if(!currentUser) return showLogin();
-    closeMenu();
+    if(!currentUser) return showLogin(); closeMenu();
+    
+    // KIỂM TRA LỆNH KHÓA TỪ GVCN
+    let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
+    if (blockUntil) {
+        alert(`🚨 TÍNH NĂNG BỊ KHOÁ`);
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
     if (!(await window.loadAllDataOnce(true))) return;
 
     let todayGame = new Date();
