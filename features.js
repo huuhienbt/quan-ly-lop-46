@@ -1792,9 +1792,23 @@ window.moHoSoCaNhan = function() {
     let studentTitles = window.calculateTitle ? window.calculateTitle(currentUser) : "";
     if(!studentTitles) studentTitles = `<span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-lg font-bold">Chiến binh mới</span>`;
 
+    // Đọc Vé làm bài và Lượt quay
     let veLamLai = Number(currentUser.veLamLai) || 0;
-    let luotGame = Number(currentUser.luotGame) || 0;
     let luotQuay = window.tinhLuotQuayHienTai ? window.tinhLuotQuayHienTai() : (Number(currentUser.luotQuay) || 0);
+
+    // --- BỔ SUNG: TÍNH CHÍNH XÁC LƯỢT GAME (GỒM CẢ LƯỢT FREE) ---
+    let todayGame = new Date();
+    let soLanDaChoiHomNay = Data.log.filter(l => {
+        if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
+        let d = new Date(l.time);
+        return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
+    }).length;
+    
+    let luotGameCloud = Number(currentUser.luotGame) || 0;
+    // Công thức: 1 lượt free + lượt Cloud - số lần đã chơi hôm nay
+    let luotGame = (1 + luotGameCloud) - soLanDaChoiHomNay;
+    if (luotGame < 0) luotGame = 0; // Đảm bảo không bị âm
+    // -------------------------------------------------------------
 
     document.getElementById('content').innerHTML = `
         <div class="flex items-center mb-6 fade-in">
