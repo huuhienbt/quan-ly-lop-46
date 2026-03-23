@@ -984,25 +984,32 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (ĐÃ ĐẢO THỨ TỰ DANH HIỆU)
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
-    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g); const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g); const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
+    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g); const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g);
+    const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
     const userLogs = Data.log.filter(l => String(l.id) === String(student.id));
     const doneMath = new Set(userLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
     const doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
     const isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
 
     let titlesHtml = "";
-    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
-    if (ongVangBadge) titlesHtml += ongVangBadge;
+    let scoreVal = Number(student.score) || 0; 
+    
+    // ƯU TIÊN 1: CHÈN DANH HIỆU ĐIỂM SỐ TRƯỚC
+    let titleBadge = "";
+    if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
+    else if (scoreVal >= 4000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
+    else if (scoreVal >= 3000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
+    
+    if (titleBadge) titlesHtml += titleBadge;
 
-    let scoreVal = Number(student.score) || 0; let titleBadge = "";
-    if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
-    else if (scoreVal >= 4000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
-    else if (scoreVal >= 3000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
-    if (titleBadge) titlesHtml += (titlesHtml ? " " : "") + titleBadge;
+    // ƯU TIÊN 2: CHÈN HUY HIỆU ONG VÀNG XUỐNG DƯỚI
+    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm w-fit">Ong Vàng Chăm Chỉ</div>` : "";
+    if (ongVangBadge) titlesHtml += (titlesHtml ? " " : "") + ongVangBadge;
+
     return titlesHtml;
 };
 
@@ -1570,18 +1577,18 @@ document.addEventListener("contextmenu", (e) => { if (window.isQuizActive && cur
 document.addEventListener("copy", (e) => { if (window.isQuizActive && currentUser && currentUser.role === 'student') { e.preventDefault(); alert("⚠️ Hệ thống: Không được copy câu hỏi con nhé!"); } });
 
 // ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (HIỂN THỊ DANH HIỆU CAO NHẤT & CHUẨN KHO ĐỒ)
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (MỞ RỘNG 2 CỘT & XẾP DỌC DANH HIỆU)
 // ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
     if (!(await window.loadAllDataOnce())) return;
 
     let html = `
-        <div class="flex items-center mb-4">
+        <div class="flex items-center mb-6">
             <button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
             <h2 class="font-black text-xl text-blue-600 uppercase">QUẢN LÝ ĐIỂM & HỌC SINH</h2>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-10 fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pb-10 fade-in">
     `; 
     
     let studentStats = Data.hs.map(h => {
@@ -1634,57 +1641,57 @@ window.chuyenTrangQuanLy = async function() {
         let veLamLai = Number(s.veLamLai) || 0;
 
         // --- CẬP NHẬT GIAO DIỆN NHÃN KHÓA VÀ DANH HIỆU CAO NHẤT ---
-        let blockBadge = s.isBlocked ? `<div class="text-[9px] font-black text-white bg-red-500 px-1.5 py-0.5 rounded border border-red-600 inline-flex items-center shadow-sm animate-pulse" title="Bị khóa đến ${s.isBlocked.toLocaleString('vi-VN')}"><i class="fas fa-lock mr-1"></i>ĐANG KHÓA</div>` : '';
+        let blockBadge = s.isBlocked ? `<div class="text-[9px] font-black text-white bg-red-500 px-1.5 py-0.5 rounded border border-red-600 inline-flex items-center shadow-sm animate-pulse w-fit" title="Bị khóa đến ${s.isBlocked.toLocaleString('vi-VN')}"><i class="fas fa-lock mr-1"></i>ĐANG KHÓA</div>` : '';
         
         let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
         if (!studentTitles && !s.chucvu) {
-            studentTitles = `<div class="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-flex items-center">Học sinh</div>`;
+            studentTitles = `<div class="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-flex items-center w-fit">Học sinh</div>`;
         } else if (s.chucvu) {
-            studentTitles = `<div class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 inline-flex items-center">${s.chucvu}</div>` + studentTitles;
+            studentTitles = `<div class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 inline-flex items-center w-fit">${s.chucvu}</div> ` + studentTitles;
         }
 
         html += `
-        <div class="bg-white p-3 rounded-[1rem] border border-slate-200 shadow-sm hover:shadow-md transition relative flex flex-col ${s.isBlocked ? 'border-red-400 ring-2 ring-red-100' : ''}">
-            <div class="flex justify-between items-center mb-2.5 border-b border-slate-50 pb-2">
-                <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                    <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover shadow-inner border border-indigo-100 shrink-0">
-                    <div class="min-w-0 flex flex-col items-start gap-1 w-full">
-                        <div class="font-black text-slate-700 text-sm truncate w-full" title="${s.name}">${s.name}</div>
-                        <div class="flex flex-wrap gap-1">${blockBadge}${studentTitles}</div>
+        <div class="bg-white p-4 rounded-[1.5rem] border border-slate-200 shadow-sm hover:shadow-md transition relative flex flex-col ${s.isBlocked ? 'border-red-400 ring-2 ring-red-100' : ''}">
+            <div class="flex justify-between items-start mb-4 border-b border-slate-50 pb-4">
+                <div class="flex items-start gap-3 min-w-0 pr-2 w-full">
+                    <img src="${avatarUrl}" class="w-12 h-12 rounded-full object-cover shadow-inner border border-indigo-100 shrink-0">
+                    <div class="min-w-0 flex flex-col items-start gap-1.5 w-full mt-0.5">
+                        <div class="font-black text-slate-700 text-base truncate w-full" title="${s.name}">${s.name}</div>
+                        <div class="flex flex-col gap-1.5 mt-1">${blockBadge}${studentTitles}</div>
                     </div>
                 </div>
                 <div class="text-right shrink-0 ml-1">
-                    <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Tổng</div>
-                    <div class="font-black text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 leading-none">${s.currentScore}</div>
+                    <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Tổng</div>
+                    <div class="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 leading-none">${s.currentScore}</div>
                 </div>
             </div>
             
-            <div class="grid grid-cols-5 gap-1 text-center mb-2">
-                <div class="bg-indigo-50/50 p-1 rounded-lg border border-indigo-100/50" title="Điểm Toán"><div class="text-[8px] font-black text-indigo-500 uppercase mb-0.5 truncate"><i class="fas fa-calculator"></i></div><div class="font-bold text-indigo-700 text-[11px]">${s.mathPts}</div></div>
-                <div class="bg-green-50/50 p-1 rounded-lg border border-green-100/50" title="Điểm T.Việt"><div class="text-[8px] font-black text-green-500 uppercase mb-0.5 truncate"><i class="fas fa-book-open"></i></div><div class="font-bold text-green-700 text-[11px]">${s.tvPts}</div></div>
-                <div class="bg-yellow-50/50 p-1 rounded-lg border border-yellow-100/50" title="Điểm V.Quay"><div class="text-[8px] font-black text-yellow-600 uppercase mb-0.5 truncate"><i class="fas fa-dharmachakra"></i></div><div class="font-bold text-yellow-700 text-[11px]">${s.spinPts}</div></div>
-                <div class="bg-red-50/50 p-1 rounded-lg border border-red-100/50" title="Điểm Game"><div class="text-[8px] font-black text-red-500 uppercase mb-0.5 truncate"><i class="fas fa-rocket"></i></div><div class="font-bold text-red-700 text-[11px]">${s.gamePts}</div></div>
-                <div class="bg-pink-50/50 p-1 rounded-lg border border-pink-100/50" title="Thưởng Nóng"><div class="text-[8px] font-black text-pink-500 uppercase mb-0.5 truncate"><i class="fas fa-gift"></i></div><div class="font-bold text-pink-700 text-[11px]">${s.bonusPts}</div></div>
+            <div class="grid grid-cols-5 gap-1.5 text-center mb-3">
+                <div class="bg-indigo-50/50 p-1.5 rounded-lg border border-indigo-100/50" title="Điểm Toán"><div class="text-[9px] font-black text-indigo-500 uppercase mb-1 truncate"><i class="fas fa-calculator"></i></div><div class="font-bold text-indigo-700 text-xs">${s.mathPts}</div></div>
+                <div class="bg-green-50/50 p-1.5 rounded-lg border border-green-100/50" title="Điểm T.Việt"><div class="text-[9px] font-black text-green-500 uppercase mb-1 truncate"><i class="fas fa-book-open"></i></div><div class="font-bold text-green-700 text-xs">${s.tvPts}</div></div>
+                <div class="bg-yellow-50/50 p-1.5 rounded-lg border border-yellow-100/50" title="Điểm V.Quay"><div class="text-[9px] font-black text-yellow-600 uppercase mb-1 truncate"><i class="fas fa-dharmachakra"></i></div><div class="font-bold text-yellow-700 text-xs">${s.spinPts}</div></div>
+                <div class="bg-red-50/50 p-1.5 rounded-lg border border-red-100/50" title="Điểm Game"><div class="text-[9px] font-black text-red-500 uppercase mb-1 truncate"><i class="fas fa-rocket"></i></div><div class="font-bold text-red-700 text-xs">${s.gamePts}</div></div>
+                <div class="bg-pink-50/50 p-1.5 rounded-lg border border-pink-100/50" title="Thưởng Nóng"><div class="text-[9px] font-black text-pink-500 uppercase mb-1 truncate"><i class="fas fa-gift"></i></div><div class="font-bold text-pink-700 text-xs">${s.bonusPts}</div></div>
             </div>
             
-            <div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100 px-2 shadow-inner mb-3">
-                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Lượt Quay">
+            <div class="flex justify-between items-center bg-slate-50 p-2 rounded-xl border border-slate-100 px-3 shadow-inner mb-4">
+                <div class="text-[11px] font-bold text-slate-500 flex items-center gap-1.5" title="Lượt Quay">
                     <i class="fas fa-dharmachakra text-yellow-500"></i><span class="text-yellow-600 font-black">${luotQuay}</span>
                 </div>
-                <div class="w-px h-3 bg-slate-200"></div>
-                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Vé Làm Bài">
+                <div class="w-px h-4 bg-slate-200"></div>
+                <div class="text-[11px] font-bold text-slate-500 flex items-center gap-1.5" title="Vé Làm Bài">
                     <i class="fas fa-ticket-alt text-orange-500"></i><span class="text-orange-600 font-black">${veLamLai}</span>
                 </div>
-                <div class="w-px h-3 bg-slate-200"></div>
-                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Lượt Game">
+                <div class="w-px h-4 bg-slate-200"></div>
+                <div class="text-[11px] font-bold text-slate-500 flex items-center gap-1.5" title="Lượt Game">
                     <i class="fas fa-rocket text-red-500"></i><span class="text-red-600 font-black">${luotGame}</span>
                 </div>
             </div>
             
-            <div class="flex gap-1.5 mt-auto">
-                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-white text-slate-500 py-1.5 rounded-lg font-bold text-[10px] hover:bg-blue-50 hover:text-blue-600 transition border border-slate-200 shadow-sm"><i class="fas fa-id-card"></i> Hồ sơ</button>
-                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-1.5 rounded-lg font-bold text-[10px] hover:bg-pink-500 hover:text-white transition border border-pink-200 shadow-sm"><i class="fas fa-magic"></i> Thưởng</button>
-                <button onclick="window.moKhoaTaiKhoan('${s.id}', '${s.name.replace(/'/g, "\\'")}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg font-bold text-[10px] hover:bg-red-500 hover:text-white transition border border-red-200 shadow-sm"><i class="fas fa-ban"></i> Phạt</button>
+            <div class="flex gap-2 mt-auto">
+                <button onclick="window.viewProfile('${s.id}')" class="flex-1 bg-white text-slate-500 py-2 rounded-xl font-bold text-[11px] hover:bg-blue-50 hover:text-blue-600 transition border border-slate-200 shadow-sm"><i class="fas fa-id-card mr-1"></i> Hồ sơ</button>
+                <button onclick="window.thuongNong('${s.id}', '${s.name.replace(/'/g, "\\'")}', ${s.currentScore})" class="flex-1 bg-pink-50 text-pink-600 py-2 rounded-xl font-bold text-[11px] hover:bg-pink-500 hover:text-white transition border border-pink-200 shadow-sm"><i class="fas fa-magic mr-1"></i> Thưởng</button>
+                <button onclick="window.moKhoaTaiKhoan('${s.id}', '${s.name.replace(/'/g, "\\'")}')" class="flex-1 bg-red-50 text-red-600 py-2 rounded-xl font-bold text-[11px] hover:bg-red-500 hover:text-white transition border border-red-200 shadow-sm"><i class="fas fa-ban mr-1"></i> Phạt</button>
             </div>
         </div>
         `;
