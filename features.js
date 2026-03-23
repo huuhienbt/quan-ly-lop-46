@@ -145,12 +145,27 @@ window.moGocHocTap = async function() {
     let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${mathUnread} BÀI MỚI</div>` : '';
     let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${tvUnread} BÀI MỚI</div>` : '';
 
+    let veLamLaiHtml = "";
+    if (currentUser && currentUser.role === 'student') {
+        let veLamLai = Number(currentUser.veLamLai) || 0;
+        veLamLaiHtml = `
+            <div class="mt-4 bg-orange-50 border-2 border-orange-200 rounded-[1.5rem] p-4 flex justify-between items-center shadow-inner">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-orange-200 text-orange-600 rounded-full flex items-center justify-center text-xl"><i class="fas fa-ticket-alt"></i></div>
+                    <div><h3 class="font-black text-slate-700 uppercase tracking-wide text-sm">Vé làm bài của con</h3><p class="text-[11px] text-slate-500 font-bold">Dùng để làm lại bài cũ cải thiện điểm</p></div>
+                </div>
+                <div class="text-2xl font-black text-orange-600 bg-white px-4 py-1 rounded-xl shadow-sm border border-orange-100">${veLamLai}</div>
+            </div>
+        `;
+    }
+
     let htmlTop = `
-        ${getNavHtml('hoctap')}
+        ${window.getNavHtml ? window.getNavHtml('hoctap') : ''}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 relative">
             <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${mathBadge}<i class="fas fa-calculator text-3xl mb-1 block opacity-90"></i>TOÁN</button>
             <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${tvBadge}<i class="fas fa-book-open text-3xl mb-1 block opacity-90"></i>TIẾNG VIỆT</button>
         </div>
+        ${veLamLaiHtml}
         ${currentUser && currentUser.role === 'student' ? `
         <div onclick="window.moGameBaoVeTraiDat()" class="mt-4 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
             <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
@@ -163,24 +178,24 @@ window.moGocHocTap = async function() {
     
     function parseLogTime(timeStr) { if(!timeStr) return 0; let d = new Date(timeStr); return !isNaN(d.getTime()) ? d.getTime() : 0; }
 
-    let studentsWithTime = Data.hs.map(s => {
+    let studentsWithTime = Data.hs.filter(s => (s.role || '').toLowerCase() !== 'admin').map(s => {
         let scoreVal = Number(s.score) || 0; let userLogs = Data.log.filter(l => String(l.id) === String(s.id) && Number(l.score) !== 0); let achievedTime = 0;
         if (userLogs.length > 0) { userLogs.sort((a, b) => parseLogTime(a.time) - parseLogTime(b.time)); achievedTime = parseLogTime(userLogs[userLogs.length - 1].time); }
         return { ...s, score: scoreVal, achievedTime: achievedTime };
     });
 
-    let eligibleStudents = studentsWithTime.filter(s => s.score > 1500); 
-    let sortedStudents = eligibleStudents.sort((a, b) => {
+    let sortedStudents = studentsWithTime.sort((a, b) => {
         let scoreDiff = b.score - a.score; if (scoreDiff !== 0) return scoreDiff;
         let timeA = a.achievedTime === 0 ? Infinity : a.achievedTime; let timeB = b.achievedTime === 0 ? Infinity : b.achievedTime;
         return timeA - timeB; 
     });
 
-    let top15 = sortedStudents.slice(0, 15); let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
+    let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
+    let now = new Date();
 
     let leaderboardHtml = ""; 
-    if (top15.length > 0) { 
-        let listHtml = top15.map((s) => { 
+    if (sortedStudents.length > 0) { 
+        let listHtml = sortedStudents.map((s) => { 
             let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
             
@@ -188,6 +203,23 @@ window.moGocHocTap = async function() {
             let doneMath = new Set(userLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
             let doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
             let isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
+
+            let lastActionTime = 0;
+            if (userLogs.length > 0) {
+                userLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+                let d = new Date(userLogs[0].time);
+                if (!isNaN(d.getTime())) lastActionTime = d;
+            }
+
+            let statusDot = ""; let statusTitle = "";
+            if (!lastActionTime) {
+                statusDot = "bg-slate-300"; statusTitle = "Chưa truy cập";
+            } else {
+                let diffMinutes = Math.floor((now - lastActionTime) / 60000);
+                if (diffMinutes < 30) { statusDot = "bg-emerald-500 animate-pulse ring-2 ring-emerald-200"; statusTitle = "Đang hoạt động rôm rả"; } 
+                else if (diffMinutes < 60 * 24) { statusDot = "bg-blue-400"; statusTitle = "Có hoạt động hôm nay"; } 
+                else { statusDot = "bg-slate-400"; statusTitle = "Đang Offline"; }
+            }
 
             let titleBadge = ""; let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
             let nameColor = "text-slate-700 font-bold"; let rowStyles = "bg-slate-50 border-slate-200"; 
@@ -202,9 +234,13 @@ window.moGocHocTap = async function() {
             else { if (actualDisplayRank === 1) rowStyles += " border-yellow-300 shadow-sm"; else if (actualDisplayRank === 2) rowStyles += " border-gray-300"; else if (actualDisplayRank === 3) rowStyles += " border-orange-200"; else rowStyles += " border-emerald-200"; }
 
             let allBadges = ""; if (titleBadge || ongVangBadge) { allBadges = `<div class="flex flex-wrap gap-1">${titleBadge}${ongVangBadge}</div>`; }
-            
             let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-            let avatarHtml = `<img src="${avatarUrl}" class="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover shrink-0">`;
+            
+            let avatarHtml = `
+            <div class="relative shrink-0" title="${statusTitle}">
+                <img src="${avatarUrl}" class="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover">
+                <span class="absolute bottom-0 right-0 w-3 h-3 ${statusDot} border-2 border-white rounded-full"></span>
+            </div>`;
 
             return `
             <div class="flex items-center justify-between p-3 mb-2 rounded-xl transition-all relative border ${rowStyles}">
@@ -225,12 +261,10 @@ window.moGocHocTap = async function() {
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
             let myScore = Number(currentUser.score) || 0; let myRank = uniqueScores.indexOf(myScore) + 1; if (myRank === 0) myRank = uniqueScores.length + 1; 
-            if (myScore > 1500) { if (myRank <= 15) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Con đã vượt mốc với ${myScore} điểm (Hạng ${myRank}).<br>Cố lên nhé, Bảng Vàng ngay trước mắt rồi!</p></div>`; } } else { personalMsg = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Vạch xuất phát là 1500 điểm.<br>Hãy làm bài tập để vượt mốc này và ghi danh nhé!</p></div>`; } 
+            if (myRank <= 10) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
+            else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Hiện tại con đang ở Hạng ${myRank}.<br>Cố lên nhé, chăm chỉ làm bài để leo rank nha!</p></div>`; } 
         } 
-        leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col">${listHtml}</div>${personalMsg}</div>`; 
-    } else { 
-        let personalMsgEmpty = ""; if (currentUser && currentUser.role === 'student') { personalMsgEmpty = `<div class="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl text-center"><p class="text-slate-600 font-bold text-sm"><i class="fas fa-fire mr-1 text-orange-500"></i> Hãy làm bài tập để trở thành người đầu tiên vượt mốc 1500 điểm nhé!</p></div>`; } 
-        leaderboardHtml = `<div class="mt-6 bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in opacity-80"><i class="fas fa-trophy text-5xl text-slate-200 mb-3 block"></i><p class="font-black text-slate-500 text-lg uppercase">Bảng Vàng đang trống</p><p class="text-sm font-bold text-slate-400 mt-1">Chưa có chiến binh nào vượt mốc 1500 điểm.</p>${personalMsgEmpty}</div>`; 
+        leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">${listHtml}</div>${personalMsg}</div>`; 
     } 
     document.getElementById('content').innerHTML = htmlTop + leaderboardHtml; 
 };
@@ -762,15 +796,15 @@ window.moVongQuay = async function() {
     let sliceAngle = 360 / PRIZES.length; let halfSlice = sliceAngle / 2;
     let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
     let gradColors = PRIZES.map((p, i) => `${p.color} ${i * sliceAngle}deg ${(i + 1) * sliceAngle}deg`).join(', ');
-    let veLamLai = Number(currentUser.veLamLai) || 0;
 
+    // ĐÃ THAY "VÉ LÀM BÀI" THÀNH "LƯỢT QUAY" Ở GIAO DIỆN
     document.getElementById('content').innerHTML = `
         ${window.getNavHtml('vongquay')}
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in">
             <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
-            <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm bài: <span class="text-orange-500 font-black text-lg">${veLamLai}</span></p></div>
+            <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Lượt quay: <span class="text-orange-500 font-black text-lg">${tongLuot}</span></p></div>
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
-            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition mb-6 cursor-pointer hover:scale-[1.02]">BẮT ĐẦU (${tongLuot} LƯỢT)</button>
+            <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition mb-6 cursor-pointer hover:scale-[1.02]">BẮT ĐẦU</button>
             <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"></div>
         </div>
     `;
@@ -1743,7 +1777,152 @@ window.layAnhDaiDien = function(studentId, studentName) {
     if (avatarLogs.length > 0) { avatarLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); return avatarLogs[0].details; }
     return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(studentName) + '&background=random&color=fff&size=200&bold=true';
 };
+window.moHoSoCaNhan = function() {
+    if(!currentUser) return showLogin();
+    closeMenu();
+    
+    let savedAvatar = window.layAnhDaiDien(currentUser.id, currentUser.name);
+    let btnAvatar = document.getElementById('btnHeaderAvatar');
+    let headerImg = document.getElementById('headerAvatarImg');
+    if(btnAvatar && headerImg) {
+        btnAvatar.classList.remove('hidden');
+        headerImg.src = savedAvatar;
+    }
+    
+    let studentTitles = window.calculateTitle ? window.calculateTitle(currentUser) : "";
+    if(!studentTitles) studentTitles = `<span class="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded-lg font-bold">Chiến binh mới</span>`;
 
+    let veLamLai = Number(currentUser.veLamLai) || 0;
+    let luotGame = Number(currentUser.luotGame) || 0;
+    let luotQuay = window.tinhLuotQuayHienTai ? window.tinhLuotQuayHienTai() : (Number(currentUser.luotQuay) || 0);
+
+    document.getElementById('content').innerHTML = `
+        <div class="flex items-center mb-6 fade-in">
+            <button onclick="veTrangChu()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-xl text-indigo-600 uppercase">HỒ SƠ CỦA TÔI</h2>
+        </div>
+        
+        <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in max-w-sm mx-auto relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+            
+            <div class="relative z-10 mt-10">
+                <div class="relative inline-block group cursor-pointer" onclick="window.doiAnhDaiDien()" title="Bấm để đổi ảnh đại diện">
+                    <img id="myAvatarImg" src="${savedAvatar}" class="w-32 h-32 rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
+                    <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                
+                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${currentUser.name}</h3>
+                <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
+                
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 grid grid-cols-3 gap-2 shadow-inner">
+                    <div class="flex flex-col items-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Lượt quay</p>
+                        <p class="text-xl font-black text-yellow-500">${luotQuay}</p>
+                    </div>
+                    <div class="flex flex-col items-center border-l border-r border-slate-200">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tổng điểm</p>
+                        <p class="text-2xl font-black text-indigo-600">${currentUser.score || 0}</p>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Lượt Game</p>
+                        <p class="text-xl font-black text-red-500">${luotGame}</p>
+                    </div>
+                </div>
+                
+                <button onclick="window.doiAnhDaiDien()" class="w-full mt-6 bg-indigo-50 text-indigo-600 font-bold py-3 rounded-xl border border-indigo-100 hover:bg-indigo-600 hover:text-white transition shadow-sm btn-3d">
+                    <i class="fas fa-upload mr-1"></i> Tải ảnh từ máy lên
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+window.doiAnhDaiDien = function() {
+    const input = document.createElement('input'); 
+    input.type = 'file'; 
+    input.accept = 'image/*'; 
+    input.onchange = async (e) => { 
+        const file = e.target.files[0]; 
+        if (!file) return; 
+        
+        document.getElementById('loader').style.display = 'flex'; 
+        let loaderText = document.querySelector('#loader p');
+        if(loaderText) loaderText.innerText = "ĐANG TỐI ƯU & LƯU ẢNH LÊN MẠNG...";
+        
+        const reader = new FileReader(); 
+        reader.onload = function(event) { 
+            const img = new Image(); 
+            img.onload = async function() { 
+                const canvas = document.createElement('canvas'); 
+                
+                const size = Math.min(img.width, img.height);
+                const startX = (img.width - size) / 2;
+                const startY = (img.height - size) / 2;
+                
+                const MAX_SIZE = 300; 
+                canvas.width = MAX_SIZE; 
+                canvas.height = MAX_SIZE; 
+                
+                const ctx = canvas.getContext('2d'); 
+                ctx.drawImage(img, startX, startY, size, size, 0, 0, MAX_SIZE, MAX_SIZE); 
+                
+                const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1]; 
+                
+                try { 
+                    const response = await fetch(API_URL, { 
+                        method: 'POST', 
+                        body: JSON.stringify({ action: 'upload_image', data: { filename: file.name, mimeType: 'image/jpeg', base64: base64Data } }) 
+                    }); 
+                    const result = await response.json(); 
+                    
+                    if(result.url) { 
+                        await fetch(API_URL, { 
+                            method: 'POST', 
+                            body: JSON.stringify({ 
+                                action: 'nop_bai', 
+                                data: { 
+                                    id_hs: currentUser.id, 
+                                    subject: "Avatar", 
+                                    group: "Ảnh đại diện", 
+                                    score: 0, 
+                                    score_earned: 0, 
+                                    details: result.url 
+                                } 
+                            }) 
+                        });
+                        
+                        Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.subject === "Avatar")); 
+                        Data.log.push({
+                            id: currentUser.id, subject: "Avatar", group: "Ảnh đại diện", 
+                            score: 0, real_added: 0, time: new Date().toISOString(), details: result.url
+                        });
+                        
+                        let avatarImg = document.getElementById('myAvatarImg');
+                        if(avatarImg) avatarImg.src = result.url;
+                        let headerImg = document.getElementById('headerAvatarImg');
+                        if(headerImg) headerImg.src = result.url;
+                        let menuSideImg = document.querySelector('#menuSideAvatar img');
+                        if(menuSideImg) menuSideImg.src = result.url;
+
+                        alert('Tuyệt vời! Ảnh đại diện của con đã được đồng bộ lên hệ thống.');
+                    } else { 
+                        alert("Lỗi! Không lấy được link ảnh từ Server."); 
+                    } 
+                } catch(err) { 
+                    alert("Lỗi mạng khi tải ảnh lên!"); 
+                } finally {
+                    document.getElementById('loader').style.display = 'none'; 
+                    if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+                }
+            }; 
+            img.src = event.target.result; 
+        }; 
+        reader.readAsDataURL(file); 
+    }; 
+    input.click(); 
+};
 window.doiMauNenTheoNgay = function() {
     const header = document.querySelector('header'); if (!header) return;
     const day = new Date().getDay(); 
