@@ -17,7 +17,7 @@ const PRIZES = [
     { id: "extra", text: "Thêm Lượt", color: "#60a5fa", netScore: 0, extraSpin: 1, msg: "Tuyệt vời! Con được tặng thêm 1 lượt quay nữa.", icon: "🎁" },
     { id: "riddle", text: "Giải Đố", color: "#a78bfa", netScore: 0, extraSpin: 0, msg: "Con hãy giải câu đố để nhận thưởng nhé!", icon: "🧠" },
     { id: "minus10", text: "-10 Điểm", color: "#f87171", netScore: -10, extraSpin: 0, msg: "Ối! Con bị trừ 10 điểm rồi.", icon: "📉" },
-    { id: "redo", text: "Vé Làm Lại", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 VÉ LÀM LẠI. Dùng nó để làm lại bài nhé!", icon: "🎫" },
+    { id: "redo", text: "Vé làm bài", color: "#fb923c", netScore: 0, extraSpin: 0, msg: "Con nhận được 1 Vé làm bài. Dùng nó để làm lại bài nhé!", icon: "🎫" },
     { id: "miss", text: "Mất Lượt", color: "#94a3b8", netScore: 0, extraSpin: 0, msg: "Thật tiếc, con quay trúng ô mất lượt.", icon: "😢" },
     { id: "chest", text: "Kho Báu", color: "#fbbf24", netScore: 0, extraSpin: 0, msg: "Wow! Con đã mở được Rương Kho Báu!", icon: "💎" }
 ];
@@ -529,7 +529,7 @@ window.loadSubject = async function(sub) {
                 cardClass = theme.card; iconClass = theme.icon; iconSymbol = theme.sym;
                 let isMaxScore = (pct >= 100); let tokens = Number(currentUser.veLamLai) || 0;
                 if (tokens > 0) { clickAction = `window.promptRedo('${g}', ${time}, ${isMaxScore})`; } 
-                else { if (isMaxScore) clickAction = `alert('Tuyệt vời! Con đã đạt điểm tuyệt đối ${maxScore}/${maxPossibleScore} ở bài này rồi. Quá xuất sắc! 🎉')`; else clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm.\\n\\nHãy vào Vòng Quay May Mắn tìm VÉ LÀM LẠI nếu muốn cải thiện điểm nhé!')`; }
+                else { if (isMaxScore) clickAction = `alert('Tuyệt vời! Con đã đạt điểm tuyệt đối ${maxScore}/${maxPossibleScore} ở bài này rồi. Quá xuất sắc! 🎉')`; else clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm.\\n\\nHãy vào Vòng Quay May Mắn tìm Vé làm bài nếu muốn cải thiện điểm nhé!')`; }
             } 
             html += `<div onclick="${clickAction}" class="p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${cardClass}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${iconClass}"><i class="fas ${iconSymbol}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${badgeHtml}</div>`; 
         }); 
@@ -540,7 +540,7 @@ window.loadSubject = async function(sub) {
 window.promptRedo = function(group, time, isMaxScore = false) {
     let tokens = Number(currentUser.veLamLai) || 0;
     if(tokens > 0) { 
-        let confirmMsg = isMaxScore ? `Con đang có ${tokens} VÉ LÀM LẠI.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` : `Con đang có ${tokens} VÉ LÀM LẠI.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
+        let confirmMsg = isMaxScore ? `Con đang có ${tokens} Vé làm bài.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` : `Con đang có ${tokens} Vé làm bài.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
         if(confirm(confirmMsg)) { 
             window.updateKhoDoCloud(0, -1); 
             Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group)); 
@@ -768,7 +768,7 @@ window.moVongQuay = async function() {
         ${window.getNavHtml('vongquay')}
         <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 text-center fade-in">
             <h2 class="text-2xl font-black text-slate-800 mb-2 uppercase text-yellow-500">Vòng Quay May Mắn</h2>
-            <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm lại: <span class="text-orange-500 font-black text-lg">${veLamLai}</span></p></div>
+            <div class="flex justify-center items-center gap-4 mb-6"><p class="text-slate-500 font-bold text-sm">Điểm: <span id="vqCurrentScore" class="text-indigo-600 font-black text-lg">${currentUser.score || 0}</span></p><p class="text-slate-500 font-bold text-sm border-l-2 pl-4">Vé làm bài: <span class="text-orange-500 font-black text-lg">${veLamLai}</span></p></div>
             <div class="relative w-64 h-64 sm:w-80 sm:h-80 mx-auto mb-8"><div class="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 text-5xl text-yellow-500 drop-shadow-xl z-30 animate-bounce"><i class="fas fa-caret-down"></i></div><div id="wheel" class="w-full h-full rounded-full border-8 border-yellow-400 shadow-2xl relative overflow-hidden" style="background: conic-gradient(from -${halfSlice}deg, ${gradColors}); transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);">${slicesHtml}<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full z-30 shadow-inner flex items-center justify-center text-xl">🎡</div></div></div>
             <button id="btnSpin" onclick="window.thucHienQuay()" class="inline-block bg-gradient-to-r from-red-500 to-yellow-500 text-white px-12 py-4 rounded-2xl font-black shadow-lg btn-3d text-xl transition mb-6 cursor-pointer hover:scale-[1.02]">BẮT ĐẦU (${tongLuot} LƯỢT)</button>
             <div id="spinHistoryContainer" class="max-w-sm mx-auto transition-all"></div>
@@ -819,7 +819,7 @@ window.thucHienQuay = async function() {
             let chestRand = Math.floor(Math.random() * 3);
             if (chestRand === 0) { finalPrize.netScore = 10; addSpins = 2; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>2 Lượt quay</b> và <b>10 Điểm</b>."; } 
             else if (chestRand === 1) { finalPrize.netScore = 30; addSpins = 1; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Lượt quay</b> và <b>30 Điểm</b>."; } 
-            else { finalPrize.netScore = 20; addTickets = 1; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Vé làm lại</b> và <b>20 Điểm</b>."; }
+            else { finalPrize.netScore = 20; addTickets = 1; finalPrize.msg = "Tuyệt vời! Rương chứa: <b>1 Vé làm bài</b> và <b>20 Điểm</b>."; }
         }
 
         if (finalPrize.extraSpin > 0) addSpins += finalPrize.extraSpin;
@@ -1577,7 +1577,7 @@ window.chuyenTrangQuanLy = async function() {
                     <i class="fas fa-dharmachakra text-yellow-500"></i><span class="text-yellow-600 font-black">${luotQuay}</span>
                 </div>
                 <div class="w-px h-3 bg-slate-200"></div>
-                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Vé Làm Lại">
+                <div class="text-[10px] font-bold text-slate-500 flex items-center gap-1" title="Vé làm bài">
                     <i class="fas fa-ticket-alt text-orange-500"></i><span class="text-orange-600 font-black">${veLamLai}</span>
                 </div>
                 <div class="w-px h-3 bg-slate-200"></div>
@@ -1693,7 +1693,7 @@ window.thuongNong = function(studentId, studentName, currentScore) {
             <div class="space-y-3 text-left bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner">
                 <div class="flex items-center justify-between gap-4"><label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-star text-indigo-500 mr-1"></i> Điểm</label><input type="number" id="tn_points" value="0" class="w-full p-2 border-2 border-indigo-200 rounded-xl font-black text-indigo-600 text-center outline-none focus:border-indigo-500" placeholder="+/-"></div>
                 <div class="flex items-center justify-between gap-4"><label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-dharmachakra text-yellow-500 mr-1"></i> V.Quay</label><input type="number" id="tn_spins" value="0" class="w-full p-2 border-2 border-yellow-200 rounded-xl font-black text-yellow-600 text-center outline-none focus:border-yellow-500" placeholder="+/-"></div>
-                <div class="flex items-center justify-between gap-4"><label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-ticket-alt text-orange-500 mr-1"></i> Vé làm lại</label><input type="number" id="tn_tickets" value="0" class="w-full p-2 border-2 border-orange-200 rounded-xl font-black text-orange-600 text-center outline-none focus:border-orange-500" placeholder="+/-"></div>
+                <div class="flex items-center justify-between gap-4"><label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-ticket-alt text-orange-500 mr-1"></i> Vé làm bài</label><input type="number" id="tn_tickets" value="0" class="w-full p-2 border-2 border-orange-200 rounded-xl font-black text-orange-600 text-center outline-none focus:border-orange-500" placeholder="+/-"></div>
                 <div class="flex items-center justify-between gap-4"><label class="text-[11px] font-black text-slate-600 uppercase w-24"><i class="fas fa-rocket text-red-500 mr-1"></i> Lượt Game</label><input type="number" id="tn_games" value="0" class="w-full p-2 border-2 border-red-200 rounded-xl font-black text-red-600 text-center outline-none focus:border-red-500" placeholder="+/-"></div>
                 <div class="pt-2 border-t border-slate-200 mt-2"><label class="text-[10px] font-black text-slate-400 uppercase block mb-1">Lý do (Tùy chọn)</label><input type="text" id="tn_reason" placeholder="Vd: Thưởng điểm xuất sắc" class="w-full p-2 border-2 border-slate-200 rounded-xl font-medium text-slate-700 outline-none focus:border-pink-400 text-sm"></div>
             </div>
