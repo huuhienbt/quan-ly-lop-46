@@ -1570,7 +1570,7 @@ document.addEventListener("contextmenu", (e) => { if (window.isQuizActive && cur
 document.addEventListener("copy", (e) => { if (window.isQuizActive && currentUser && currentUser.role === 'student') { e.preventDefault(); alert("⚠️ Hệ thống: Không được copy câu hỏi con nhé!"); } });
 
 // ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (ĐỒNG BỘ HIỂN THỊ LƯỢT QUAY/GAME NHƯ HỒ SƠ)
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (HIỂN THỊ DANH HIỆU CAO NHẤT & CHUẨN KHO ĐỒ)
 // ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
@@ -1608,19 +1608,18 @@ window.chuyenTrangQuanLy = async function() {
 
     studentStats.forEach((s) => {
         let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-        let veLamLai = Number(s.veLamLai) || 0;
         
-        // --- ĐỒNG BỘ LOGIC TÍNH LƯỢT QUAY (Giống y hệt Hồ sơ cá nhân) ---
+        // --- ĐỒNG BỘ LOGIC TÍNH LƯỢT QUAY ---
         let originalUser = currentUser;
         let luotQuay = 0;
         try {
-            currentUser = s; // Hệ thống tạm thời mượn danh tính học sinh để tính toán
+            currentUser = s; 
             luotQuay = window.tinhLuotQuayHienTai ? window.tinhLuotQuayHienTai() : (Number(s.luotQuay) || 0);
         } finally {
-            currentUser = originalUser; // Trả lại danh tính Admin cho thầy
+            currentUser = originalUser; 
         }
 
-        // --- ĐỒNG BỘ LOGIC TÍNH LƯỢT GAME (Giống y hệt Hồ sơ cá nhân) ---
+        // --- ĐỒNG BỘ LOGIC TÍNH LƯỢT GAME ---
         let todayGame = new Date();
         let soLanDaChoiHomNay = Data.log.filter(l => {
             if (String(l.id) !== String(s.id) || l.subject !== "MathGame") return false;
@@ -1631,33 +1630,41 @@ window.chuyenTrangQuanLy = async function() {
         let luotGameCloud = Number(s.luotGame) || 0;
         let luotGame = (1 + luotGameCloud) - soLanDaChoiHomNay;
         if (luotGame < 0) luotGame = 0;
-        // -------------------------------------------------------------
         
-        // Nhãn cảnh báo nếu đang bị khóa
-        let blockBadge = s.isBlocked ? `<span class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded ml-1 animate-pulse align-middle" title="Bị khóa đến ${s.isBlocked.toLocaleString('vi-VN')}"><i class="fas fa-lock text-[8px]"></i> KHÓA</span>` : '';
+        let veLamLai = Number(s.veLamLai) || 0;
+
+        // --- CẬP NHẬT GIAO DIỆN NHÃN KHÓA VÀ DANH HIỆU CAO NHẤT ---
+        let blockBadge = s.isBlocked ? `<div class="text-[9px] font-black text-white bg-red-500 px-1.5 py-0.5 rounded border border-red-600 inline-flex items-center shadow-sm animate-pulse" title="Bị khóa đến ${s.isBlocked.toLocaleString('vi-VN')}"><i class="fas fa-lock mr-1"></i>ĐANG KHÓA</div>` : '';
+        
+        let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
+        if (!studentTitles && !s.chucvu) {
+            studentTitles = `<div class="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 inline-flex items-center">Học sinh</div>`;
+        } else if (s.chucvu) {
+            studentTitles = `<div class="text-[9px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 inline-flex items-center">${s.chucvu}</div>` + studentTitles;
+        }
 
         html += `
-        <div class="bg-white p-3 rounded-[1rem] border border-slate-200 shadow-sm hover:shadow-md transition relative flex flex-col ${s.isBlocked ? 'border-red-300 ring-1 ring-red-100' : ''}">
+        <div class="bg-white p-3 rounded-[1rem] border border-slate-200 shadow-sm hover:shadow-md transition relative flex flex-col ${s.isBlocked ? 'border-red-400 ring-2 ring-red-100' : ''}">
             <div class="flex justify-between items-center mb-2.5 border-b border-slate-50 pb-2">
-                <div class="flex items-center gap-2.5 min-w-0">
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
                     <img src="${avatarUrl}" class="w-10 h-10 rounded-full object-cover shadow-inner border border-indigo-100 shrink-0">
-                    <div class="min-w-0">
-                        <div class="font-black text-slate-700 text-sm truncate">${s.name} ${blockBadge}</div>
-                        <div class="text-[9px] font-bold text-slate-500 uppercase bg-slate-50 inline-block px-1.5 py-0.5 rounded mt-0.5 border border-slate-100">${s.chucvu || 'Học sinh'}</div>
+                    <div class="min-w-0 flex flex-col items-start gap-1 w-full">
+                        <div class="font-black text-slate-700 text-sm truncate w-full" title="${s.name}">${s.name}</div>
+                        <div class="flex flex-wrap gap-1">${blockBadge}${studentTitles}</div>
                     </div>
                 </div>
-                <div class="text-right shrink-0 ml-2">
+                <div class="text-right shrink-0 ml-1">
                     <div class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Tổng</div>
                     <div class="font-black text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 leading-none">${s.currentScore}</div>
                 </div>
             </div>
             
             <div class="grid grid-cols-5 gap-1 text-center mb-2">
-                <div class="bg-indigo-50/50 p-1 rounded-lg border border-indigo-100/50"><div class="text-[8px] font-black text-indigo-500 uppercase mb-0.5 truncate"><i class="fas fa-calculator"></i></div><div class="font-bold text-indigo-700 text-[11px]">${s.mathPts}</div></div>
-                <div class="bg-green-50/50 p-1 rounded-lg border border-green-100/50"><div class="text-[8px] font-black text-green-500 uppercase mb-0.5 truncate"><i class="fas fa-book-open"></i></div><div class="font-bold text-green-700 text-[11px]">${s.tvPts}</div></div>
-                <div class="bg-yellow-50/50 p-1 rounded-lg border border-yellow-100/50"><div class="text-[8px] font-black text-yellow-600 uppercase mb-0.5 truncate"><i class="fas fa-dharmachakra"></i></div><div class="font-bold text-yellow-700 text-[11px]">${s.spinPts}</div></div>
-                <div class="bg-red-50/50 p-1 rounded-lg border border-red-100/50"><div class="text-[8px] font-black text-red-500 uppercase mb-0.5 truncate"><i class="fas fa-rocket"></i></div><div class="font-bold text-red-700 text-[11px]">${s.gamePts}</div></div>
-                <div class="bg-pink-50/50 p-1 rounded-lg border border-pink-100/50"><div class="text-[8px] font-black text-pink-500 uppercase mb-0.5 truncate"><i class="fas fa-gift"></i></div><div class="font-bold text-pink-700 text-[11px]">${s.bonusPts}</div></div>
+                <div class="bg-indigo-50/50 p-1 rounded-lg border border-indigo-100/50" title="Điểm Toán"><div class="text-[8px] font-black text-indigo-500 uppercase mb-0.5 truncate"><i class="fas fa-calculator"></i></div><div class="font-bold text-indigo-700 text-[11px]">${s.mathPts}</div></div>
+                <div class="bg-green-50/50 p-1 rounded-lg border border-green-100/50" title="Điểm T.Việt"><div class="text-[8px] font-black text-green-500 uppercase mb-0.5 truncate"><i class="fas fa-book-open"></i></div><div class="font-bold text-green-700 text-[11px]">${s.tvPts}</div></div>
+                <div class="bg-yellow-50/50 p-1 rounded-lg border border-yellow-100/50" title="Điểm V.Quay"><div class="text-[8px] font-black text-yellow-600 uppercase mb-0.5 truncate"><i class="fas fa-dharmachakra"></i></div><div class="font-bold text-yellow-700 text-[11px]">${s.spinPts}</div></div>
+                <div class="bg-red-50/50 p-1 rounded-lg border border-red-100/50" title="Điểm Game"><div class="text-[8px] font-black text-red-500 uppercase mb-0.5 truncate"><i class="fas fa-rocket"></i></div><div class="font-bold text-red-700 text-[11px]">${s.gamePts}</div></div>
+                <div class="bg-pink-50/50 p-1 rounded-lg border border-pink-100/50" title="Thưởng Nóng"><div class="text-[8px] font-black text-pink-500 uppercase mb-0.5 truncate"><i class="fas fa-gift"></i></div><div class="font-bold text-pink-700 text-[11px]">${s.bonusPts}</div></div>
             </div>
             
             <div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg border border-slate-100 px-2 shadow-inner mb-3">
