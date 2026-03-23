@@ -520,14 +520,35 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI & BẤM CHỌN ĐIỀN TỪ
+// 4. TIẾN TRÌNH LÀM BÀI (TÍCH HỢP HIỂN THỊ VÉ SỬA BÀI SAI)
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); curSub = sub; 
     if (!(await window.loadAllDataOnce())) return;
     const qs = Data[sub]; if (!qs) { alert("Không tải được dữ liệu. Vui lòng thử lại."); return veTrangChu(); }
     const grps = [...new Set(qs.map(x => x.group))].filter(g => g).sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
-    let html = `<div class="flex items-center mb-6"><button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2></div><div class="space-y-3">`; 
+    
+    // Giao diện Huy hiệu Vé sửa bài sai
+    let veLamLai = (currentUser && currentUser.role === 'student') ? (Number(currentUser.veLamLai) || 0) : 0;
+    let veHtml = (currentUser && currentUser.role === 'student') ? `
+        <div class="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-sm text-sm" title="Dùng để làm lại bài tập cũ cải thiện điểm">
+            <i class="fas fa-ticket-alt text-orange-500"></i>
+            <span class="font-bold text-orange-800 uppercase text-[10px] sm:text-[11px] tracking-wide whitespace-nowrap">Vé sửa bài sai:</span>
+            <span class="font-black text-orange-600 text-base leading-none">${veLamLai}</span>
+        </div>
+    ` : '';
+
+    let html = `
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2>
+            </div>
+            ${veHtml}
+        </div>
+        <div class="space-y-3">
+    `; 
+
     if(grps.length === 0) { html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; } else {
         grps.forEach(g => { 
             const myLogsForGroup = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g);
@@ -550,7 +571,7 @@ window.loadSubject = async function(sub) {
                 cardClass = theme.card; iconClass = theme.icon; iconSymbol = theme.sym;
                 let isMaxScore = (pct >= 100); let tokens = Number(currentUser.veLamLai) || 0;
                 if (tokens > 0) { clickAction = `window.promptRedo('${g}', ${time}, ${isMaxScore})`; } 
-                else { if (isMaxScore) clickAction = `alert('Tuyệt vời! Con đã đạt điểm tuyệt đối ${maxScore}/${maxPossibleScore} ở bài này rồi. Quá xuất sắc! 🎉')`; else clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm.\\n\\nHãy vào Vòng Quay May Mắn tìm Vé làm bài nếu muốn cải thiện điểm nhé!')`; }
+                else { if (isMaxScore) clickAction = `alert('Tuyệt vời! Con đã đạt điểm tuyệt đối ${maxScore}/${maxPossibleScore} ở bài này rồi. Quá xuất sắc! 🎉')`; else clickAction = `alert('Con đã làm bài này đạt ${maxScore}/${maxPossibleScore} điểm.\\n\\nHãy vào Vòng Quay May Mắn tìm Vé sửa bài sai nếu muốn cải thiện điểm nhé!')`; }
             } 
             html += `<div onclick="${clickAction}" class="p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${cardClass}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${iconClass}"><i class="fas ${iconSymbol}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${count} câu</p></div></div>${badgeHtml}</div>`; 
         }); 
@@ -561,7 +582,7 @@ window.loadSubject = async function(sub) {
 window.promptRedo = function(group, time, isMaxScore = false) {
     let tokens = Number(currentUser.veLamLai) || 0;
     if(tokens > 0) { 
-        let confirmMsg = isMaxScore ? `Con đang có ${tokens} Vé làm bài.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` : `Con đang có ${tokens} Vé làm bài.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
+        let confirmMsg = isMaxScore ? `Con đang có ${tokens} Vé sửa bài sai.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` : `Con đang có ${tokens} Vé sửa bài sai.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
         if(confirm(confirmMsg)) { 
             window.updateKhoDoCloud(0, -1); 
             Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group)); 
