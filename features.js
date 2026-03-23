@@ -2107,3 +2107,75 @@ window.taoNutTrangThaiNoi = function() {
 // Kích hoạt tạo nút khi Web tải xong
 document.addEventListener("DOMContentLoaded", window.taoNutTrangThaiNoi);
 setTimeout(window.taoNutTrangThaiNoi, 1000);
+// ==========================================
+// TÍNH NĂNG BỔ SUNG: HỆ THỐNG PHẠT - KHÓA TÍNH NĂNG GIẢI TRÍ
+// ==========================================
+window.checkIsBlocked = function(studentId) {
+    let penaltyLogs = Data.log.filter(l => String(l.id) === String(studentId) && l.subject === "Penalty" && l.group === "BlockGameSpin");
+    if (penaltyLogs.length === 0) return false;
+    penaltyLogs.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    let latestLog = penaltyLogs[0];
+    let expireTime = Number(latestLog.details); 
+    if (!isNaN(expireTime) && Date.now() < expireTime) {
+        return new Date(expireTime); // Trả về ngày hết hạn
+    }
+    return false; // Đã hết hạn hoặc không bị khóa
+};
+
+window.moKhoaTaiKhoan = function(studentId, studentName) {
+    let currentBlock = window.checkIsBlocked(studentId);
+    let statusHtml = currentBlock ? 
+        `<div class="bg-red-100 text-red-700 p-3 rounded-xl mb-4 font-bold text-sm border border-red-200"><i class="fas fa-ban mr-1"></i> Đang bị phạt khóa đến:<br>${currentBlock.toLocaleString('vi-VN')}</div>` : 
+        `<div class="bg-green-100 text-green-700 p-3 rounded-xl mb-4 font-bold text-sm border border-green-200"><i class="fas fa-check-circle mr-1"></i> Trạng thái bình thường (Đang tự do)</div>`;
+
+    let overlay = document.createElement('div');
+    overlay.id = "khoaTaiKhoanModal";
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 fade-in";
+    overlay.innerHTML = `
+        <div class="bg-white p-6 sm:p-8 rounded-[2rem] shadow-2xl w-full max-w-md relative animate-[cascadeDrop_0.3s_ease-out_forwards]">
+            <button onclick="document.getElementById('khoaTaiKhoanModal').remove()" class="absolute top-4 right-4 w-8 h-8 bg-slate-100 text-slate-500 rounded-full hover:bg-red-500 hover:text-white transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner"><i class="fas fa-lock"></i></div>
+                <h3 class="text-xl font-black text-slate-800 uppercase tracking-wide">PHẠT KHÓA TÍNH NĂNG</h3>
+                <p class="text-sm font-bold text-slate-500 mt-1">Học sinh: <span class="text-indigo-600">${studentName}</span></p>
+            </div>
+            ${statusHtml}
+            <div class="space-y-3 text-left">
+                <label class="text-[11px] font-black text-slate-500 uppercase block">Thời gian tước quyền (Game & Vòng quay)</label>
+                <select id="khoa_duration" class="w-full p-3 border-2 border-slate-200 rounded-xl font-bold text-slate-700 outline-none focus:border-red-500 bg-slate-50">
+                    <option value="1">Khóa 1 ngày (24 giờ)</option>
+                    <option value="2">Khóa 2 ngày</option>
+                    <option value="3">Khóa 3 ngày</option>
+                    <option value="7">Khóa 1 tuần (7 ngày)</option>
+                    <option value="30">Khóa 1 tháng (30 ngày)</option>
+                    <option value="0" class="text-green-600 font-black">MỞ KHÓA NGAY LẬP TỨC 🟢</option>
+                </select>
+                <input type="text" id="khoa_reason" placeholder="Lý do: Gian lận làm bài, copy bài..." class="w-full p-3 border-2 border-slate-200 rounded-xl font-medium text-slate-700 outline-none focus:border-red-500 text-sm mt-3 bg-slate-50">
+            </div>
+            <div class="mt-6">
+                <button onclick="window.xacNhanKhoa('${studentId}', '${studentName}')" class="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white font-black text-lg py-4 rounded-xl hover:scale-[1.02] transition shadow-lg btn-3d"><i class="fas fa-gavel mr-1"></i> THỰC THI LỆNH PHẠT</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+};
+
+window.xacNhanKhoa = async function(studentId, studentName) {
+    let days = parseInt(document.getElementById('khoa_duration').value);
+    let reason = document.getElementById('khoa_reason').value.trim() || "Vi phạm nội quy lớp học";
+    
+    document.getElementById('khoaTaiKhoanModal').remove();
+    document.getElementById('loader').style.display = 'flex'; document.querySelector('#loader p').innerText = "ĐANG GHI LỆNH LÊN MÁY CHỦ...";
+    
+    let expireTime = 0;
+    if (days > 0) { expireTime = Date.now() + (days * 24 * 60 * 60 * 1000); }
+    let logMsg = days > 0 ? `Đã tước quyền ${days} ngày với lý do: ${reason}` : `Đã mở khóa ân xá thành công`;
+    
+    try {
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: studentId, subject: "Penalty", group: "BlockGameSpin", score: 0, score_earned: 0, details: expireTime.toString() } }) });
+        Data.log.push({ id: studentId, subject: "Penalty", group: "BlockGameSpin", score: 0, real_added: 0, time: new Date().toISOString(), details: expireTime.toString() });
+        alert(`Thành công! ${logMsg}`);
+        window.chuyenTrangQuanLy(); 
+    } catch(e) { alert("Lỗi mạng, chưa thực thi được lệnh phạt!"); } 
+    finally { document.getElementById('loader').style.display = 'none'; document.querySelector('#loader p').innerText = "ĐANG TẢI DỮ LIỆU..."; }
+};
