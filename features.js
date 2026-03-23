@@ -125,7 +125,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (BẢNG VÀNG ĐẦY ĐỦ 30 HS + GIAO DIỆN VÉ LÀM BÀI SIÊU GỌN)
+// 1. GÓC HỌC TẬP (ĐÃ GỠ BỎ HIỂN THỊ VÉ ĐỂ TỐI ƯU DIỆN TÍCH)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -145,30 +145,14 @@ window.moGocHocTap = async function() {
     let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${mathUnread} BÀI MỚI</div>` : '';
     let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${tvUnread} BÀI MỚI</div>` : '';
 
-    // GIAO DIỆN VÉ LÀM BÀI THU GỌN
-    let veLamLaiHtml = "";
-    if (currentUser && currentUser.role === 'student') {
-        let veLamLai = Number(currentUser.veLamLai) || 0;
-        veLamLaiHtml = `
-            <div class="mt-3 flex justify-end px-1">
-                <div class="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-sm text-sm hover:bg-orange-100 transition cursor-default" title="Dùng để làm lại bài tập cũ cải thiện điểm">
-                    <i class="fas fa-ticket-alt text-orange-500"></i>
-                    <span class="font-bold text-orange-800 uppercase text-[11px] tracking-wide">Vé làm bài:</span>
-                    <span class="font-black text-orange-600 text-base leading-none">${veLamLai}</span>
-                </div>
-            </div>
-        `;
-    }
-
     let htmlTop = `
         ${window.getNavHtml ? window.getNavHtml('hoctap') : ''}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 relative">
             <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${mathBadge}<i class="fas fa-calculator text-3xl mb-1 block opacity-90"></i>TOÁN</button>
             <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${tvBadge}<i class="fas fa-book-open text-3xl mb-1 block opacity-90"></i>TIẾNG VIỆT</button>
         </div>
-        ${veLamLaiHtml}
         ${currentUser && currentUser.role === 'student' ? `
-        <div onclick="window.moGameBaoVeTraiDat()" class="mt-2 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
+        <div onclick="window.moGameBaoVeTraiDat()" class="mt-4 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
             <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
             <div class="flex items-center gap-4 relative z-10">
                 <div class="w-14 h-14 bg-indigo-500 rounded-full flex items-center justify-center text-3xl border-2 border-white shadow-inner animate-pulse"><i class="fas fa-rocket"></i></div>
@@ -191,7 +175,6 @@ window.moGocHocTap = async function() {
         return timeA - timeB; 
     });
 
-    // HIỂN THỊ ĐẦY ĐỦ 30 HỌC SINH
     let top30 = sortedStudents.slice(0, 30);
     let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
     let now = new Date();
