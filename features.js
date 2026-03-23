@@ -1304,11 +1304,6 @@ window.showHappyBirthdayUI = function() {
 };
 
 // ==========================================
-// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (CÓ BẢO MẬT CHỐNG ĐỔI MÁY CLOUD)
-// ==========================================
-let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
-
-// ==========================================
 // 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
