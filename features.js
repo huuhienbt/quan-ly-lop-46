@@ -1570,10 +1570,7 @@ document.addEventListener("contextmenu", (e) => { if (window.isQuizActive && cur
 document.addEventListener("copy", (e) => { if (window.isQuizActive && currentUser && currentUser.role === 'student') { e.preventDefault(); alert("⚠️ Hệ thống: Không được copy câu hỏi con nhé!"); } });
 
 // ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (GIAO DIỆN THU GỌN - ĐẦY ĐỦ KHO ĐỒ CLOUD)
-// ==========================================
-// ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (BỔ SUNG NÚT PHẠT KHÓA TÍNH NĂNG)
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (ĐỒNG BỘ HIỂN THỊ LƯỢT QUAY/GAME NHƯ HỒ SƠ)
 // ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
@@ -1611,9 +1608,30 @@ window.chuyenTrangQuanLy = async function() {
 
     studentStats.forEach((s) => {
         let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-        let luotQuay = Number(s.luotQuay) || 0;
         let veLamLai = Number(s.veLamLai) || 0;
-        let luotGame = Number(s.luotGame) || 0;
+        
+        // --- ĐỒNG BỘ LOGIC TÍNH LƯỢT QUAY (Giống y hệt Hồ sơ cá nhân) ---
+        let originalUser = currentUser;
+        let luotQuay = 0;
+        try {
+            currentUser = s; // Hệ thống tạm thời mượn danh tính học sinh để tính toán
+            luotQuay = window.tinhLuotQuayHienTai ? window.tinhLuotQuayHienTai() : (Number(s.luotQuay) || 0);
+        } finally {
+            currentUser = originalUser; // Trả lại danh tính Admin cho thầy
+        }
+
+        // --- ĐỒNG BỘ LOGIC TÍNH LƯỢT GAME (Giống y hệt Hồ sơ cá nhân) ---
+        let todayGame = new Date();
+        let soLanDaChoiHomNay = Data.log.filter(l => {
+            if (String(l.id) !== String(s.id) || l.subject !== "MathGame") return false;
+            let d = new Date(l.time);
+            return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
+        }).length;
+        
+        let luotGameCloud = Number(s.luotGame) || 0;
+        let luotGame = (1 + luotGameCloud) - soLanDaChoiHomNay;
+        if (luotGame < 0) luotGame = 0;
+        // -------------------------------------------------------------
         
         // Nhãn cảnh báo nếu đang bị khóa
         let blockBadge = s.isBlocked ? `<span class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded ml-1 animate-pulse align-middle" title="Bị khóa đến ${s.isBlocked.toLocaleString('vi-VN')}"><i class="fas fa-lock text-[8px]"></i> KHÓA</span>` : '';
