@@ -125,12 +125,13 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (ĐÃ GỠ BỎ HIỂN THỊ VÉ ĐỂ TỐI ƯU DIỆN TÍCH)
+// 1. GÓC HỌC TẬP (PHỤC HỒI NHÃN BÁO BÀI TẬP MỚI)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
     if (!(await window.loadAllDataOnce())) return;
 
+    // --- TÍNH TOÁN SỐ BÀI CHƯA LÀM ---
     let mathUnread = 0; let tvUnread = 0;
     const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g);
     const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g);
@@ -142,14 +143,21 @@ window.moGocHocTap = async function() {
         tvUnread = tvGroupsAll.filter(g => !myLogs.some(l => (l.subject === 'vietnamese' || l.subject === 'tv') && l.group === g)).length;
     }
 
-    let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${mathUnread} BÀI MỚI</div>` : '';
-    let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-md animate-pulse z-10">${tvUnread} BÀI MỚI</div>` : '';
+    // --- TẠO NHÃN BÁO ĐỎ NHẤP NHÁY ---
+    let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${mathUnread} BÀI MỚI</div>` : '';
+    let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${tvUnread} BÀI MỚI</div>` : '';
 
     let htmlTop = `
         ${window.getNavHtml ? window.getNavHtml('hoctap') : ''}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 relative">
-            <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${mathBadge}<i class="fas fa-calculator text-3xl mb-1 block opacity-90"></i>TOÁN</button>
-            <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">${tvBadge}<i class="fas fa-book-open text-3xl mb-1 block opacity-90"></i>TIẾNG VIỆT</button>
+            <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
+                ${mathBadge}
+                <i class="fas fa-calculator text-3xl mb-1 block opacity-90"></i>TOÁN
+            </button>
+            <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
+                ${tvBadge}
+                <i class="fas fa-book-open text-3xl mb-1 block opacity-90"></i>TIẾNG VIỆT
+            </button>
         </div>
         ${currentUser && currentUser.role === 'student' ? `
         <div onclick="window.moGameBaoVeTraiDat()" class="mt-4 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
@@ -255,7 +263,6 @@ window.moGocHocTap = async function() {
     } 
     document.getElementById('content').innerHTML = htmlTop + leaderboardHtml; 
 };
-
 // ==========================================
 // 2. KHO QUẢN LÝ BÀI TẬP ADMIN
 // ==========================================
