@@ -1,11 +1,20 @@
 // ==========================================
-// HIỆU ỨNG PHÁO HOA LƠ LỬNG (ĐÃ GIẢM 90% SỐ LƯỢNG & ƯU TIÊN HÌNH OVAN/TRÒN)
+// HIỆU ỨNG PHÁO HOA LƠ LỬNG (ĐÃ NÂNG TÔNG MÀU & THÊM VIỀN SÁNG ĐỂ NỔI BẬT)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('particle-container');
     if (!container) return;
 
-    const colors = ["#FFD1DC", "#FFF8DC", "#E0FFF4", "#E6E6FA"]; // Hồng, Vàng, Xanh, Tím pastel
+    // Bộ màu Pastel được tăng độ đậm và thêm nhiều màu sắc hơn
+    const colors = [
+        "#FF9AA2", // Hồng đào
+        "#FFB7B2", // Cam san hô nhạt
+        "#FFDAC1", // Vàng cam sữa
+        "#E2F0CB", // Xanh lá mạ
+        "#B5EAD7", // Xanh mint (ngọc bích)
+        "#C7CEEA", // Tím mộng mơ
+        "#9ED2F6"  // Xanh da trời
+    ];
 
     function createParticle() {
         const particle = document.createElement('div');
@@ -14,39 +23,39 @@ document.addEventListener("DOMContentLoaded", () => {
         // Kích thước gốc ngẫu nhiên từ 10px đến 18px
         const size = Math.random() * 8 + 10; 
         
-        // Phân bổ tỷ lệ xuất hiện: 60% Ovan, 20% Tròn, 10% Chữ nhật, 10% Vuông
+        // Phân bổ tỷ lệ: 60% Ovan, 20% Tròn, 10% Chữ nhật, 10% Vuông
         const randShape = Math.random();
         
         if (randShape < 0.6) {
-            // Hình Ovan (Bo tròn 50%, chiều cao lớn hơn chiều rộng)
             particle.style.width = size + 'px';
             particle.style.height = size * (Math.random() * 0.6 + 1.4) + 'px'; 
             particle.style.borderRadius = '50%';
         } else if (randShape < 0.8) {
-            // Hình Tròn (Bo tròn 50%, rộng = cao)
             particle.style.width = size + 'px';
             particle.style.height = size + 'px';
             particle.style.borderRadius = '50%';
         } else if (randShape < 0.9) {
-            // Hình Chữ nhật (Bo góc nhẹ 3px)
             particle.style.width = size + 'px';
             particle.style.height = size * (Math.random() * 0.5 + 1.3) + 'px';
-            particle.style.borderRadius = '3px';
+            particle.style.borderRadius = '4px'; // Bo góc nhẹ cho hình chữ nhật
         } else {
-            // Hình Vuông (Bo góc nhẹ 3px)
             particle.style.width = size + 'px';
             particle.style.height = size + 'px';
-            particle.style.borderRadius = '3px';
+            particle.style.borderRadius = '4px'; // Bo góc nhẹ cho hình vuông
         }
 
-        // Chọn màu ngẫu nhiên
+        // Chọn màu đậm hơn
         particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        // THÊM HIỆU ỨNG ĐỂ TÁCH KHỎI NỀN: Viền trắng mờ và bóng đổ nhẹ
+        particle.style.border = "1.5px solid rgba(255, 255, 255, 0.7)";
+        particle.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.05)";
 
-        // Vị trí xuất hiện ngẫu nhiên theo chiều ngang (trải đều 100% màn hình)
+        // Vị trí xuất hiện ngẫu nhiên
         particle.style.left = Math.random() * 100 + '%';
 
-        // Thời gian bay chậm rãi và độ trễ
-        const duration = Math.random() * 4 + 6; // Bay mất 6s đến 10s
+        // Thời gian bay
+        const duration = Math.random() * 4 + 6; 
         const delay = Math.random() * 2;
         particle.style.setProperty('--duration', duration + 's');
         particle.style.setProperty('--delay', delay + 's');
@@ -59,10 +68,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // GIẢM 90% TỐC ĐỘ XUẤT HIỆN: Tạo 1 hạt mới sau mỗi 4 giây (4000ms) thay vì 0.4s như cũ
+    // Tốc độ xuất hiện
     setInterval(createParticle, 4000); 
 
-    // Mồi sẵn 3 hạt đầu tiên khi vừa vào web để trang không bị trống quá lâu
+    // Mồi sẵn 3 hạt đầu tiên
     for(let i = 0; i < 3; i++) {
         setTimeout(createParticle, i * 1000);
     }
