@@ -1,5 +1,5 @@
 // ==========================================
-// HIỆU ỨNG PHÁO HOA LƠ LỬNG (ĐÃ NÂNG TÔNG MÀU & THÊM VIỀN SÁNG ĐỂ NỔI BẬT)
+// HIỆU ỨNG PHÁO HOA LƠ LỬNG (ĐÃ THU NHỎ KÍCH THƯỚC HÌNH OVAN)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('particle-container');
@@ -27,8 +27,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const randShape = Math.random();
         
         if (randShape < 0.6) {
-            particle.style.width = size + 'px';
-            particle.style.height = size * (Math.random() * 0.6 + 1.4) + 'px'; 
+            // ĐÃ CHỈNH SỬA: Thu nhỏ hình Ovan đi 30% so với kích thước gốc
+            const ovalSize = size * 0.7; 
+            particle.style.width = ovalSize + 'px';
+            particle.style.height = ovalSize * (Math.random() * 0.5 + 1.3) + 'px'; 
             particle.style.borderRadius = '50%';
         } else if (randShape < 0.8) {
             particle.style.width = size + 'px';
@@ -37,11 +39,11 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (randShape < 0.9) {
             particle.style.width = size + 'px';
             particle.style.height = size * (Math.random() * 0.5 + 1.3) + 'px';
-            particle.style.borderRadius = '4px'; // Bo góc nhẹ cho hình chữ nhật
+            particle.style.borderRadius = '4px'; 
         } else {
             particle.style.width = size + 'px';
             particle.style.height = size + 'px';
-            particle.style.borderRadius = '4px'; // Bo góc nhẹ cho hình vuông
+            particle.style.borderRadius = '4px'; 
         }
 
         // Chọn màu đậm hơn
@@ -68,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Tốc độ xuất hiện
+    // Tốc độ xuất hiện (4 giây 1 hạt)
     setInterval(createParticle, 4000); 
 
     // Mồi sẵn 3 hạt đầu tiên
