@@ -616,14 +616,55 @@ window.loadSubject = async function(sub) {
     document.getElementById('content').innerHTML = html + `</div>`; 
 };
 
-window.promptRedo = function(group, time, isMaxScore = false) {
+// ==========================================
+// VÁ LỖ HỔNG: DÙNG VÉ LÀM BÀI SẼ TRỪ ĐIỂM CŨ ĐỂ TÍNH LẠI TỪ ĐẦU
+// ==========================================
+window.promptRedo = async function(group, time, isMaxScore = false) {
     let tokens = Number(currentUser.veLamLai) || 0;
     if(tokens > 0) { 
-        let confirmMsg = isMaxScore ? `Con đang có ${tokens} Vé sửa bài sai.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` : `Con đang có ${tokens} Vé sửa bài sai.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
+        let confirmMsg = isMaxScore ? 
+            `Con đang có ${tokens} Vé sửa bài sai.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại không?` : 
+            `Con đang có ${tokens} Vé sửa bài sai.\n\nCon có chắc chắn muốn dùng 1 vé để làm lại bài [${group}] không?\n\n(⚠️ LƯU Ý: Số điểm cũ của bài này sẽ bị trừ đi để con làm và tính lại từ đầu nhé!)`;
+        
         if(confirm(confirmMsg)) { 
-            window.updateKhoDoCloud(0, -1); 
-            Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group)); 
-            window.startQuiz(group, time); 
+            document.getElementById('loader').style.display = 'flex';
+            let loaderP = document.querySelector('#loader p');
+            if(loaderP) loaderP.innerText = "ĐANG XÓA ĐIỂM CŨ VÀ DÙNG VÉ...";
+
+            try {
+                // 1. Trừ 1 vé làm bài trên Đám mây
+                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'update_inventory', data: { id_hs: currentUser.id, spins: 0, tickets: -1, games: 0 } }) });
+                
+                // 2. Tìm điểm cao nhất cũ để trừ đi (Tuyệt đối không cho cộng dồn x2 điểm)
+                let groupLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === group);
+                let maxScoreObj = groupLogs.sort((a,b) => (Number(b.real_added)||0) - (Number(a.real_added)||0))[0];
+                let pointsToDeduct = maxScoreObj ? (Number(maxScoreObj.real_added) || 0) : 0;
+
+                if (pointsToDeduct > 0) {
+                    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "Bonus", group: "Trừ điểm cũ để làm lại", score: -pointsToDeduct, score_earned: -pointsToDeduct, details: `Hệ thống tự trừ ${pointsToDeduct} điểm do dùng Vé sửa bài sai ở bài ${group}` } }) });
+                    currentUser.score = Number(currentUser.score) - pointsToDeduct;
+                }
+                
+                // 3. Ghi log RESET để hệ thống biết bài này bắt đầu lại từ số 0
+                let resetTime = new Date().toISOString();
+                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "RESET", group: group, score: 0, score_earned: 0, details: curSub } }) });
+
+                // 4. Cập nhật dữ liệu ngay trên máy học sinh
+                Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group));
+                Data.log.push({ id: currentUser.id, subject: "RESET", group: group, score: 0, time: resetTime, details: curSub });
+                currentUser.veLamLai = tokens - 1;
+
+                document.getElementById('loader').style.display = 'none';
+                if(loaderP) loaderP.innerText = "ĐANG TẢI DỮ LIỆU...";
+                
+                // Khởi động lại bài thi
+                window.startQuiz(group, time); 
+
+            } catch (error) {
+                alert("Lỗi mạng! Không thể kết nối đến máy chủ để dùng vé.");
+                document.getElementById('loader').style.display = 'none';
+                if(loaderP) loaderP.innerText = "ĐANG TẢI DỮ LIỆU...";
+            }
         } 
     }
 };
