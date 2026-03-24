@@ -692,11 +692,12 @@ window.startQuiz = async function(group, timeMins) {
     quiz = quiz.sort(() => Math.random() - 0.5); 
     window.currentQIndex = 0; score = 0; wrongAnswersLog = []; window.answeredQuestions = 0;
 
-    // 2. CHỐNG GIAN LẬN F5: Khôi phục trạng thái làm dở
+// 2. CHỐNG GIAN LẬN F5: Khôi phục trạng thái làm dở
     const localStateKey = `activeQuizState_${currentUser.id}`;
     let savedState = JSON.parse(localStorage.getItem(localStateKey));
     if (savedState && savedState.subject === curSub && savedState.group === curGrp) {
-        if (confirm("Hệ thống phát hiện con làm bài này chưa xong.\n\nCon có muốn tiếp tục từ câu " + (savedState.quizIndex + 1) + " không? (Nếu chọn Hủy, bài làm trước sẽ bị xóa)")) {
+        // ĐÃ SỬA LẠI CÂU THÔNG BÁO THEO Ý THẦY HIỂN
+        if (confirm("Hệ thống phát hiện con làm bài này chưa xong. Con có muốn tiếp tục không?")) {
             score = savedState.score || 0; 
             wrongAnswersLog = savedState.answersLog || []; 
             window.currentQIndex = savedState.quizIndex || 0; 
