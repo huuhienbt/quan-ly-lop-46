@@ -125,7 +125,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (GIAO DIỆN THẺ BÀI HIỆN ĐẠI NHƯ KHO GAME)
+// 1. GÓC HỌC TẬP (PHỤC HỒI NHÃN BÁO BÀI TẬP MỚI)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -143,59 +143,29 @@ window.moGocHocTap = async function() {
         tvUnread = tvGroupsAll.filter(g => !myLogs.some(l => (l.subject === 'vietnamese' || l.subject === 'tv') && l.group === g)).length;
     }
 
-    // --- TẠO NHÃN BÁO ĐỎ NHẤP NHÁY (Chuyển sang góc trái để nhường chỗ cho icon) ---
-    let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -left-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${mathUnread} BÀI MỚI</div>` : '';
-    let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -left-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${tvUnread} BÀI MỚI</div>` : '';
+    // --- TẠO NHÃN BÁO ĐỎ NHẤP NHÁY ---
+    let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${mathUnread} BÀI MỚI</div>` : '';
+    let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${tvUnread} BÀI MỚI</div>` : '';
 
     let htmlTop = `
         ${window.getNavHtml ? window.getNavHtml('hoctap') : ''}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 relative">
-            
-            <div class="bg-orange-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-orange-100 shadow-sm hover:shadow-md transition relative flex flex-col justify-between min-h-[180px] group">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 relative">
+            <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
                 ${mathBadge}
-                <div class="absolute -top-4 -right-2 bg-orange-100 border-2 border-orange-200 w-12 h-12 rounded-2xl flex items-center justify-center text-orange-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10">
-                    <i class="fas fa-calculator"></i>
-                </div>
-                <div class="mb-6 pr-8 relative z-10">
-                    <div class="text-[10px] font-black text-orange-500 mb-2 uppercase tracking-widest bg-orange-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-fire mr-1"></i>Học Tập</div>
-                    <h3 class="font-black text-2xl sm:text-3xl text-slate-800">TOÁN</h3>
-                    <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Vượt qua các thử thách tính toán để chinh phục đỉnh cao trí tuệ.</p>
-                </div>
-                <button onclick="window.loadSubject('math')" class="w-full bg-orange-500 text-white font-black py-3 rounded-xl shadow-[0_4px_0_rgb(194,65,12)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-orange-600">
-                    <i class="fas fa-play text-sm"></i> VÀO HỌC
-                </button>
-            </div>
-
-            <div class="bg-cyan-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-cyan-100 shadow-sm hover:shadow-md transition relative flex flex-col justify-between min-h-[180px] group">
-                ${tvBadge}
-                <div class="absolute -top-4 -right-2 bg-cyan-100 border-2 border-cyan-200 w-12 h-12 rounded-2xl flex items-center justify-center text-cyan-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10">
-                    <i class="fas fa-book-open"></i>
-                </div>
-                <div class="mb-6 pr-8 relative z-10">
-                    <div class="text-[10px] font-black text-cyan-500 mb-2 uppercase tracking-widest bg-cyan-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-bolt mr-1"></i>Khám phá</div>
-                    <h3 class="font-black text-2xl sm:text-3xl text-slate-800">TIẾNG VIỆT</h3>
-                    <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Rèn luyện kỹ năng đọc hiểu và giải mã các từ khóa thú vị.</p>
-                </div>
-                <button onclick="window.loadSubject('vietnamese')" class="w-full bg-cyan-500 text-white font-black py-3 rounded-xl shadow-[0_4px_0_rgb(6,182,212)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-cyan-600">
-                    <i class="fas fa-play text-sm"></i> VÀO HỌC
-                </button>
-            </div>
-
-        </div>
-        
-        ${currentUser && currentUser.role === 'student' ? `
-        <div class="bg-pink-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-pink-100 shadow-sm hover:shadow-md transition relative flex flex-col sm:flex-row justify-between min-h-[120px] group mt-5 items-center gap-4">
-            <div class="absolute -top-4 -right-2 bg-pink-100 border-2 border-pink-200 w-12 h-12 rounded-2xl flex items-center justify-center text-pink-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10 hidden sm:flex">
-                <i class="fas fa-rocket"></i>
-            </div>
-            <div class="flex-1 pr-0 sm:pr-10 relative z-10 w-full text-center sm:text-left">
-                <div class="text-[10px] font-black text-pink-500 mb-2 uppercase tracking-widest bg-pink-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-gamepad mr-1"></i>Kịch tính</div>
-                <h3 class="font-black text-2xl sm:text-3xl text-slate-800">BẢO VỆ TRÁI ĐẤT</h3>
-                <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Sân đấu trí tuệ phản xạ tính nhẩm nhanh dành cho những chiến binh xuất sắc nhất.</p>
-            </div>
-            <button onclick="window.moGameBaoVeTraiDat()" class="w-full sm:w-auto min-w-[180px] bg-pink-500 text-white font-black py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(219,39,119)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-pink-600 shrink-0">
-                <i class="fas fa-play text-sm"></i> CHƠI NGAY
+                <i class="fas fa-calculator text-3xl mb-1 block opacity-90"></i>TOÁN
             </button>
+            <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
+                ${tvBadge}
+                <i class="fas fa-book-open text-3xl mb-1 block opacity-90"></i>TIẾNG VIỆT
+            </button>
+        </div>
+        ${currentUser && currentUser.role === 'student' ? `
+        <div onclick="window.moGameBaoVeTraiDat()" class="mt-4 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
+            <div class="flex items-center gap-4 relative z-10">
+                <div class="w-14 h-14 bg-indigo-500 rounded-full flex items-center justify-center text-3xl border-2 border-white shadow-inner animate-pulse"><i class="fas fa-rocket"></i></div>
+                <div><h3 class="font-black text-xl text-yellow-400 tracking-wide uppercase">Bảo Vệ Trái Đất</h3><p class="text-xs text-indigo-200 font-bold">Game phản xạ tính nhẩm nhanh</p></div>
+            </div>
         </div>` : ''}
     `; 
     
@@ -616,55 +586,14 @@ window.loadSubject = async function(sub) {
     document.getElementById('content').innerHTML = html + `</div>`; 
 };
 
-// ==========================================
-// VÁ LỖ HỔNG: DÙNG VÉ LÀM BÀI SẼ TRỪ ĐIỂM CŨ ĐỂ TÍNH LẠI TỪ ĐẦU
-// ==========================================
-window.promptRedo = async function(group, time, isMaxScore = false) {
+window.promptRedo = function(group, time, isMaxScore = false) {
     let tokens = Number(currentUser.veLamLai) || 0;
     if(tokens > 0) { 
-        let confirmMsg = isMaxScore ? 
-            `Con đang có ${tokens} Vé sửa bài sai.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại không?` : 
-            `Con đang có ${tokens} Vé sửa bài sai.\n\nCon có chắc chắn muốn dùng 1 vé để làm lại bài [${group}] không?\n\n(⚠️ LƯU Ý: Số điểm cũ của bài này sẽ bị trừ đi để con làm và tính lại từ đầu nhé!)`;
-        
+        let confirmMsg = isMaxScore ? `Con đang có ${tokens} Vé sửa bài sai.\n\nCon đã đạt điểm tối đa ở bài này rồi, con có muốn dùng 1 vé để làm lại cho vui không?` : `Con đang có ${tokens} Vé sửa bài sai.\n\nCon có chắc chắn muốn dùng 1 vé để mở khóa và làm lại [${group}] để cải thiện điểm không?`;
         if(confirm(confirmMsg)) { 
-            document.getElementById('loader').style.display = 'flex';
-            let loaderP = document.querySelector('#loader p');
-            if(loaderP) loaderP.innerText = "ĐANG XÓA ĐIỂM CŨ VÀ DÙNG VÉ...";
-
-            try {
-                // 1. Trừ 1 vé làm bài trên Đám mây
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'update_inventory', data: { id_hs: currentUser.id, spins: 0, tickets: -1, games: 0 } }) });
-                
-                // 2. Tìm điểm cao nhất cũ để trừ đi (Tuyệt đối không cho cộng dồn x2 điểm)
-                let groupLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === group);
-                let maxScoreObj = groupLogs.sort((a,b) => (Number(b.real_added)||0) - (Number(a.real_added)||0))[0];
-                let pointsToDeduct = maxScoreObj ? (Number(maxScoreObj.real_added) || 0) : 0;
-
-                if (pointsToDeduct > 0) {
-                    await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "Bonus", group: "Trừ điểm cũ để làm lại", score: -pointsToDeduct, score_earned: -pointsToDeduct, details: `Hệ thống tự trừ ${pointsToDeduct} điểm do dùng Vé sửa bài sai ở bài ${group}` } }) });
-                    currentUser.score = Number(currentUser.score) - pointsToDeduct;
-                }
-                
-                // 3. Ghi log RESET để hệ thống biết bài này bắt đầu lại từ số 0
-                let resetTime = new Date().toISOString();
-                await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "RESET", group: group, score: 0, score_earned: 0, details: curSub } }) });
-
-                // 4. Cập nhật dữ liệu ngay trên máy học sinh
-                Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group));
-                Data.log.push({ id: currentUser.id, subject: "RESET", group: group, score: 0, time: resetTime, details: curSub });
-                currentUser.veLamLai = tokens - 1;
-
-                document.getElementById('loader').style.display = 'none';
-                if(loaderP) loaderP.innerText = "ĐANG TẢI DỮ LIỆU...";
-                
-                // Khởi động lại bài thi
-                window.startQuiz(group, time); 
-
-            } catch (error) {
-                alert("Lỗi mạng! Không thể kết nối đến máy chủ để dùng vé.");
-                document.getElementById('loader').style.display = 'none';
-                if(loaderP) loaderP.innerText = "ĐANG TẢI DỮ LIỆU...";
-            }
+            window.updateKhoDoCloud(0, -1); 
+            Data.log = Data.log.filter(l => !(String(l.id) === String(currentUser.id) && l.group === group)); 
+            window.startQuiz(group, time); 
         } 
     }
 };
@@ -809,9 +738,6 @@ window.startTimer = function(seconds) {
     }, 1000); 
 };
 
-// ==========================================
-// SỬA LỖI ĐỒNG BỘ: CÁCH 2 - HIỂN THỊ TRẠNG THÁI ĐANG LƯU VÀ KHÓA NÚT
-// ==========================================
 window.finishQuiz = async function() { 
     window.isQuizActive = false; if (timer) clearInterval(timer); const maxPossibleScore = quiz.length * 10; let timeTaken = window.totalQuizTime - window.remainingQuizTime; 
     let halfTime = window.totalQuizTime / 2; let extraSpinsEarned = 0; let rewardMessage = "";
@@ -840,42 +766,17 @@ window.finishQuiz = async function() {
     } 
     
     let scoreMsg = actualScoreEarned > 0 ? `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
-    
-    // --- THAY ĐỔI 1: KHÓA NÚT BẤM, HIỂN THỊ SPINNER ĐANG LƯU ---
-    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button id="btnFinishQuizWait" disabled class="bg-slate-300 text-slate-600 px-10 py-5 rounded-2xl font-black text-xl shadow-inner w-full mt-6 cursor-wait flex items-center justify-center gap-3 transition"><i class="fas fa-spinner fa-spin"></i> ĐANG LƯU ĐIỂM...</button></div>`; 
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button onclick="window.loadSubject('${curSub}')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
     
     if(currentUser.role === 'student') { 
         let submitTime = new Date().toISOString(); let detailsToSave = wrongAnswersLog.join('');
         if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
         currentUser.score = Number(currentUser.score) + actualScoreEarned;
-        
         try { 
-            // Đợi lệnh gửi lên máy chủ hoàn tất 100%
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }); 
             Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
-        } catch(e) {
-            // Nếu rớt mạng, vẫn lưu tạm trên máy học sinh
-            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
-        } finally {
-            // --- THAY ĐỔI 2: MỞ KHÓA NÚT BẤM SAU KHI LƯU XONG ---
-            let btn = document.getElementById('btnFinishQuizWait');
-            if (btn) {
-                btn.disabled = false;
-                btn.className = "bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6";
-                btn.innerHTML = `<i class="fas fa-check-circle mr-1"></i> HOÀN TẤT & TRỞ VỀ`;
-                btn.onclick = function() { window.loadSubject(curSub); };
-            }
-        }
-    } else {
-        // Dành cho Admin (GV) test đề
-        let btn = document.getElementById('btnFinishQuizWait');
-        if (btn) {
-            btn.disabled = false;
-            btn.className = "bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6";
-            btn.innerHTML = `<i class="fas fa-check-circle mr-1"></i> HOÀN TẤT (CHẾ ĐỘ XEM TRƯỚC)`;
-            btn.onclick = function() { window.loadSubject(curSub); };
-        }
-    }
+        } catch(e){}
+    } 
 };
 
 // ==========================================
