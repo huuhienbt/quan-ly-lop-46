@@ -125,7 +125,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (PHỤC HỒI NHÃN BÁO BÀI TẬP MỚI)
+// 1. GÓC HỌC TẬP (GIAO DIỆN THẺ BÀI HIỆN ĐẠI NHƯ KHO GAME)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -143,29 +143,59 @@ window.moGocHocTap = async function() {
         tvUnread = tvGroupsAll.filter(g => !myLogs.some(l => (l.subject === 'vietnamese' || l.subject === 'tv') && l.group === g)).length;
     }
 
-    // --- TẠO NHÃN BÁO ĐỎ NHẤP NHÁY ---
-    let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${mathUnread} BÀI MỚI</div>` : '';
-    let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${tvUnread} BÀI MỚI</div>` : '';
+    // --- TẠO NHÃN BÁO ĐỎ NHẤP NHÁY (Chuyển sang góc trái để nhường chỗ cho icon) ---
+    let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -left-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${mathUnread} BÀI MỚI</div>` : '';
+    let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -left-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${tvUnread} BÀI MỚI</div>` : '';
 
     let htmlTop = `
         ${window.getNavHtml ? window.getNavHtml('hoctap') : ''}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3 relative">
-            <button onclick="window.loadSubject('math')" class="relative bg-gradient-to-br from-blue-500 to-indigo-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 relative">
+            
+            <div class="bg-orange-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-orange-100 shadow-sm hover:shadow-md transition relative flex flex-col justify-between min-h-[180px] group">
                 ${mathBadge}
-                <i class="fas fa-calculator text-3xl mb-1 block opacity-90"></i>TOÁN
-            </button>
-            <button onclick="window.loadSubject('vietnamese')" class="relative bg-gradient-to-br from-green-500 to-emerald-600 text-white h-32 rounded-[2rem] font-black text-2xl shadow-lg btn-3d hover:scale-[1.02] transition">
-                ${tvBadge}
-                <i class="fas fa-book-open text-3xl mb-1 block opacity-90"></i>TIẾNG VIỆT
-            </button>
-        </div>
-        ${currentUser && currentUser.role === 'student' ? `
-        <div onclick="window.moGameBaoVeTraiDat()" class="mt-4 bg-gradient-to-r from-slate-800 to-indigo-900 rounded-[2rem] p-4 text-white shadow-lg cursor-pointer hover:scale-[1.02] transition border-2 border-indigo-400 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700"></div>
-            <div class="flex items-center gap-4 relative z-10">
-                <div class="w-14 h-14 bg-indigo-500 rounded-full flex items-center justify-center text-3xl border-2 border-white shadow-inner animate-pulse"><i class="fas fa-rocket"></i></div>
-                <div><h3 class="font-black text-xl text-yellow-400 tracking-wide uppercase">Bảo Vệ Trái Đất</h3><p class="text-xs text-indigo-200 font-bold">Game phản xạ tính nhẩm nhanh</p></div>
+                <div class="absolute -top-4 -right-2 bg-orange-100 border-2 border-orange-200 w-12 h-12 rounded-2xl flex items-center justify-center text-orange-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10">
+                    <i class="fas fa-calculator"></i>
+                </div>
+                <div class="mb-6 pr-8 relative z-10">
+                    <div class="text-[10px] font-black text-orange-500 mb-2 uppercase tracking-widest bg-orange-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-fire mr-1"></i>Học Tập</div>
+                    <h3 class="font-black text-2xl sm:text-3xl text-slate-800">TOÁN</h3>
+                    <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Vượt qua các thử thách tính toán để chinh phục đỉnh cao trí tuệ.</p>
+                </div>
+                <button onclick="window.loadSubject('math')" class="w-full bg-orange-500 text-white font-black py-3 rounded-xl shadow-[0_4px_0_rgb(194,65,12)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-orange-600">
+                    <i class="fas fa-play text-sm"></i> VÀO HỌC
+                </button>
             </div>
+
+            <div class="bg-cyan-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-cyan-100 shadow-sm hover:shadow-md transition relative flex flex-col justify-between min-h-[180px] group">
+                ${tvBadge}
+                <div class="absolute -top-4 -right-2 bg-cyan-100 border-2 border-cyan-200 w-12 h-12 rounded-2xl flex items-center justify-center text-cyan-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10">
+                    <i class="fas fa-book-open"></i>
+                </div>
+                <div class="mb-6 pr-8 relative z-10">
+                    <div class="text-[10px] font-black text-cyan-500 mb-2 uppercase tracking-widest bg-cyan-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-bolt mr-1"></i>Khám phá</div>
+                    <h3 class="font-black text-2xl sm:text-3xl text-slate-800">TIẾNG VIỆT</h3>
+                    <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Rèn luyện kỹ năng đọc hiểu và giải mã các từ khóa thú vị.</p>
+                </div>
+                <button onclick="window.loadSubject('vietnamese')" class="w-full bg-cyan-500 text-white font-black py-3 rounded-xl shadow-[0_4px_0_rgb(6,182,212)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-cyan-600">
+                    <i class="fas fa-play text-sm"></i> VÀO HỌC
+                </button>
+            </div>
+
+        </div>
+        
+        ${currentUser && currentUser.role === 'student' ? `
+        <div class="bg-pink-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-pink-100 shadow-sm hover:shadow-md transition relative flex flex-col sm:flex-row justify-between min-h-[120px] group mt-5 items-center gap-4">
+            <div class="absolute -top-4 -right-2 bg-pink-100 border-2 border-pink-200 w-12 h-12 rounded-2xl flex items-center justify-center text-pink-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10 hidden sm:flex">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <div class="flex-1 pr-0 sm:pr-10 relative z-10 w-full text-center sm:text-left">
+                <div class="text-[10px] font-black text-pink-500 mb-2 uppercase tracking-widest bg-pink-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-gamepad mr-1"></i>Kịch tính</div>
+                <h3 class="font-black text-2xl sm:text-3xl text-slate-800">BẢO VỆ TRÁI ĐẤT</h3>
+                <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Sân đấu trí tuệ phản xạ tính nhẩm nhanh dành cho những chiến binh xuất sắc nhất.</p>
+            </div>
+            <button onclick="window.moGameBaoVeTraiDat()" class="w-full sm:w-auto min-w-[180px] bg-pink-500 text-white font-black py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(219,39,119)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-pink-600 shrink-0">
+                <i class="fas fa-play text-sm"></i> CHƠI NGAY
+            </button>
         </div>` : ''}
     `; 
     
