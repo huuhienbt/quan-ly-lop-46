@@ -656,7 +656,10 @@ window.renderQuestion = function(index) {
         setTimeout(() => window.initDragAndDrop(index, q.correct), 100);
     } else {
         let optionsHtml = ['a','b','c','d'].filter(k => q[k]).map((key, idx) => {
-            let labelColor = idx % 2 === 0 ? 'text-blue-600' : 'text-pink-600';
+            // Danh sách 4 màu tương ứng cho 4 vị trí 0, 1, 2, 3
+            const colorList = ['text-blue-600', 'text-green-600', 'text-orange-600', 'text-red-600'];
+            let labelColor = colorList[idx]; // Tự động bốc màu theo thứ tự đáp án
+            
             return `<div onclick="window.checkAns(this, '${key}', '${q.correct}', ${index})" class="quiz-option p-4 sm:p-5 border-2 border-green-200 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-green-400 hover:bg-green-200 bg-green-50 transition btn-3d"><span class="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black ${labelColor} uppercase text-lg shrink-0 shadow-sm">${key}</span><div class="font-bold text-slate-800 flex-1 text-base sm:text-lg leading-relaxed">${window.parseImg(q[key])}</div></div>`;
         }).join('');
         document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div></div><div class="space-y-4 mt-auto">${optionsHtml}</div></div>`; 
