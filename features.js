@@ -809,6 +809,9 @@ window.startTimer = function(seconds) {
     }, 1000); 
 };
 
+// ==========================================
+// SỬA LỖI ĐỒNG BỘ: CÁCH 2 - HIỂN THỊ TRẠNG THÁI ĐANG LƯU VÀ KHÓA NÚT
+// ==========================================
 window.finishQuiz = async function() { 
     window.isQuizActive = false; if (timer) clearInterval(timer); const maxPossibleScore = quiz.length * 10; let timeTaken = window.totalQuizTime - window.remainingQuizTime; 
     let halfTime = window.totalQuizTime / 2; let extraSpinsEarned = 0; let rewardMessage = "";
@@ -837,17 +840,42 @@ window.finishQuiz = async function() {
     } 
     
     let scoreMsg = actualScoreEarned > 0 ? `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
-    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button onclick="window.loadSubject('${curSub}')" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6">HOÀN TẤT & TRỞ VỀ</button></div>`; 
+    
+    // --- THAY ĐỔI 1: KHÓA NÚT BẤM, HIỂN THỊ SPINNER ĐANG LƯU ---
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button id="btnFinishQuizWait" disabled class="bg-slate-300 text-slate-600 px-10 py-5 rounded-2xl font-black text-xl shadow-inner w-full mt-6 cursor-wait flex items-center justify-center gap-3 transition"><i class="fas fa-spinner fa-spin"></i> ĐANG LƯU ĐIỂM...</button></div>`; 
     
     if(currentUser.role === 'student') { 
         let submitTime = new Date().toISOString(); let detailsToSave = wrongAnswersLog.join('');
         if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
         currentUser.score = Number(currentUser.score) + actualScoreEarned;
+        
         try { 
+            // Đợi lệnh gửi lên máy chủ hoàn tất 100%
             await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }); 
             Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
-        } catch(e){}
-    } 
+        } catch(e) {
+            // Nếu rớt mạng, vẫn lưu tạm trên máy học sinh
+            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
+        } finally {
+            // --- THAY ĐỔI 2: MỞ KHÓA NÚT BẤM SAU KHI LƯU XONG ---
+            let btn = document.getElementById('btnFinishQuizWait');
+            if (btn) {
+                btn.disabled = false;
+                btn.className = "bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6";
+                btn.innerHTML = `<i class="fas fa-check-circle mr-1"></i> HOÀN TẤT & TRỞ VỀ`;
+                btn.onclick = function() { window.loadSubject(curSub); };
+            }
+        }
+    } else {
+        // Dành cho Admin (GV) test đề
+        let btn = document.getElementById('btnFinishQuizWait');
+        if (btn) {
+            btn.disabled = false;
+            btn.className = "bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-10 py-5 rounded-2xl font-black text-xl btn-3d shadow-lg w-full hover:scale-[1.02] transition mt-6";
+            btn.innerHTML = `<i class="fas fa-check-circle mr-1"></i> HOÀN TẤT (CHẾ ĐỘ XEM TRƯỚC)`;
+            btn.onclick = function() { window.loadSubject(curSub); };
+        }
+    }
 };
 
 // ==========================================
