@@ -902,10 +902,6 @@ window.tinhLuotQuayHienTai = function() {
     return freeSpin + weekendBonus + cloudSpins;
 };
 
-
-// ==========================================
-// 5. VÒNG QUAY MAY MẮN (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
-// ==========================================
 // ==========================================
 // 5. VÒNG QUAY MAY MẮN (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
 // ==========================================
