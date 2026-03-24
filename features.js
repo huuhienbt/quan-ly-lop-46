@@ -689,14 +689,14 @@ window.startQuiz = async function(group, timeMins) {
         if (qText !== "" || q.a || q.b || q.c || q.d) { quiz.push({ ...q, question: qText }); }
     });
     
-    quiz = quiz.sort(() => Math.random() - 0.5).slice(0, 10); 
+    quiz = quiz.sort(() => Math.random() - 0.5); 
     window.currentQIndex = 0; score = 0; wrongAnswersLog = []; window.answeredQuestions = 0;
 
     // 2. CHỐNG GIAN LẬN F5: Khôi phục trạng thái làm dở
     const localStateKey = `activeQuizState_${currentUser.id}`;
     let savedState = JSON.parse(localStorage.getItem(localStateKey));
     if (savedState && savedState.subject === curSub && savedState.group === curGrp) {
-        if (confirm("Hệ thống phát hiện con đang làm dở bài này.\n\nCon có muốn tiếp tục từ câu " + (savedState.quizIndex + 1) + " không? (Nếu chọn Hủy, bài làm dở sẽ bị xóa)")) {
+        if (confirm("Hệ thống phát hiện con làm bài này chưa xong.\n\nCon có muốn tiếp tục từ câu " + (savedState.quizIndex + 1) + " không? (Nếu chọn Hủy, bài làm dở sẽ bị xóa)")) {
             score = savedState.score || 0; 
             wrongAnswersLog = savedState.answersLog || []; 
             window.currentQIndex = savedState.quizIndex || 0; 
