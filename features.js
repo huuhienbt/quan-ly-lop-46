@@ -696,7 +696,7 @@ window.startQuiz = async function(group, timeMins) {
     const localStateKey = `activeQuizState_${currentUser.id}`;
     let savedState = JSON.parse(localStorage.getItem(localStateKey));
     if (savedState && savedState.subject === curSub && savedState.group === curGrp) {
-        if (confirm("Hệ thống phát hiện con làm bài này chưa xong.\n\nCon có muốn tiếp tục từ câu " + (savedState.quizIndex + 1) + " không? (Nếu chọn Hủy, bài làm dở sẽ bị xóa)")) {
+        if (confirm("Hệ thống phát hiện con làm bài này chưa xong.\n\nCon có muốn tiếp tục từ câu " + (savedState.quizIndex + 1) + " không? (Nếu chọn Hủy, bài làm trước sẽ bị xóa)")) {
             score = savedState.score || 0; 
             wrongAnswersLog = savedState.answersLog || []; 
             window.currentQIndex = savedState.quizIndex || 0; 
