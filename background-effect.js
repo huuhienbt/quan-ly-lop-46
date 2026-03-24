@@ -1,33 +1,30 @@
 // ==========================================
-// HIỆU ỨNG PHÁO HOA LƠ LỬNG (ĐÃ THU NHỎ KÍCH THƯỚC HÌNH OVAN)
+// HIỆU ỨNG PHÁO HOA LƠ LỬNG (TÔNG XANH CHỦ ĐẠO)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById('particle-container');
     if (!container) return;
 
-    // Bộ màu Pastel được tăng độ đậm và thêm nhiều màu sắc hơn
+    // BỘ MÀU ƯU TIÊN TÔNG XANH (Blue, Mint)
     const colors = [
-        "#FF9AA2", // Hồng đào
-        "#FFB7B2", // Cam san hô nhạt
-        "#FFDAC1", // Vàng cam sữa
-        "#E2F0CB", // Xanh lá mạ
+        "#9ED2F6", // Xanh da trời
+        "#9ED2F6", // Xanh da trời (xuất hiện nhiều hơn)
         "#B5EAD7", // Xanh mint (ngọc bích)
+        "#B5EAD7", // Xanh mint (xuất hiện nhiều hơn)
+        "#A2E1DB", // Xanh lục bảo nhạt
         "#C7CEEA", // Tím mộng mơ
-        "#9ED2F6"  // Xanh da trời
+        "#FFB7B2", // Cam san hô nhạt (giữ lại 1 ít làm điểm nhấn)
+        "#FF9AA2"  // Hồng đào (giữ lại 1 ít làm điểm nhấn)
     ];
 
     function createParticle() {
         const particle = document.createElement('div');
         particle.className = 'particle';
 
-        // Kích thước gốc ngẫu nhiên từ 10px đến 18px
         const size = Math.random() * 8 + 10; 
-        
-        // Phân bổ tỷ lệ: 60% Ovan, 20% Tròn, 10% Chữ nhật, 10% Vuông
         const randShape = Math.random();
         
         if (randShape < 0.6) {
-            // ĐÃ CHỈNH SỬA: Thu nhỏ hình Ovan đi 30% so với kích thước gốc
             const ovalSize = size * 0.7; 
             particle.style.width = ovalSize + 'px';
             particle.style.height = ovalSize * (Math.random() * 0.5 + 1.3) + 'px'; 
@@ -46,17 +43,13 @@ document.addEventListener("DOMContentLoaded", () => {
             particle.style.borderRadius = '4px'; 
         }
 
-        // Chọn màu đậm hơn
         particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
         
-        // THÊM HIỆU ỨNG ĐỂ TÁCH KHỎI NỀN: Viền trắng mờ và bóng đổ nhẹ
         particle.style.border = "1.5px solid rgba(255, 255, 255, 0.7)";
         particle.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.05)";
 
-        // Vị trí xuất hiện ngẫu nhiên
         particle.style.left = Math.random() * 100 + '%';
 
-        // Thời gian bay
         const duration = Math.random() * 4 + 6; 
         const delay = Math.random() * 2;
         particle.style.setProperty('--duration', duration + 's');
@@ -70,10 +63,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Tốc độ xuất hiện (4 giây 1 hạt)
     setInterval(createParticle, 4000); 
 
-    // Mồi sẵn 3 hạt đầu tiên
     for(let i = 0; i < 3; i++) {
         setTimeout(createParticle, i * 1000);
     }
