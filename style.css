@@ -4,13 +4,13 @@
 /* --- LÀM GỌN VÀ NHẸ GIAO DIỆN --- */
 body { 
     font-family: 'Nunito', sans-serif; 
-    background-color: #f8fafc; 
-    /* Nền Gradient Pastel lung linh và dịu mắt */
+    background-color: #f0fdfa; /* Màu nền gốc đổi sang xanh mint cực nhạt */
+    /* Nền Gradient Pastel ĐÃ ĐỔI SANG TÔNG XANH LÀM CHỦ ĐẠO */
     background-image:
-        radial-gradient(at 10% 10%, #E0FFF4 0px, transparent 50%),
-        radial-gradient(at 90% 10%, #FFD1DC 0px, transparent 50%),
-        radial-gradient(at 90% 90%, #E6E6FA 0px, transparent 50%),
-        radial-gradient(at 10% 90%, #FFF8DC 0px, transparent 50%);
+        radial-gradient(at 20% 20%, #ccfbf1 0px, transparent 60%), /* Xanh ngọc to ở góc trái trên */
+        radial-gradient(at 80% 20%, #dbeafe 0px, transparent 60%), /* Xanh dương to ở góc phải trên */
+        radial-gradient(at 80% 80%, #ede9fe 0px, transparent 50%), /* Tím nhạt ở góc phải dưới */
+        radial-gradient(at 20% 80%, #fce7f3 0px, transparent 40%); /* Hồng phấn thu nhỏ ở góc trái dưới */
     background-attachment: fixed;
     color: #334155; 
     overflow-x: hidden;
