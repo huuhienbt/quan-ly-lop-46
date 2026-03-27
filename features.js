@@ -2559,18 +2559,6 @@ window.batDauLatThe = function() {
         });
     }
 
-    // ... (Phần data câu hỏi phía dưới thầy giữ nguyên nhé) ...
-    
-    // Bắt buộc phát nhạc
-    let playPromise = memoryGame.bgMusic.play();
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            console.log("Trình duyệt chặn phát nhạc tự động. Người chơi có thể bấm nút Loa để bật.");
-            let btnIcon = document.getElementById('btn-music-icon');
-            if(btnIcon) btnIcon.className = "fas fa-volume-mute text-slate-400";
-        });
-    }
-
     let fallbackData = [
         { cauhoi: "Con gì có cánh, Mà lại biết bơi?", dapan: "Chim cánh cụt", img: "🐧" }, { cauhoi: "Con gì cổ dài, Ăn lá trên cao?", dapan: "Hươu cao cổ", img: "🦒" },
         { cauhoi: "Con gì mào đỏ, Gáy sáng ò ó o?", dapan: "Con gà trống", img: "🐓" }, { cauhoi: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", dapan: "Dưa hấu", img: "🍉" },
