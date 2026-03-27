@@ -2432,7 +2432,7 @@ window.xacNhanKhoa = async function(studentId, studentName) {
 };
 
 // ==========================================
-// GAME: LẬT THẺ CÂU ĐỐ VIP (Neon Kẹo Ngọt Phát Sáng + Giữ Chỗ Trống)
+// GAME: LẬT THẺ CÂU ĐỐ VIP (Neon Kẹo Ngọt Phát Sáng + Giữ Chỗ Trống - Đã bỏ BXH)
 // ==========================================
 let memoryGame = {
     cards: [], flipped: [], matchedCount: 0, lockBoard: false, timer: null, timeLeft: 600, score: 0
@@ -2491,60 +2491,13 @@ window.moGameLatTheToan = function() {
                 <p class="text-indigo-200 font-bold mb-6 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / 2 lần</span></p>
                 
                 <div class="space-y-4">
-                    <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-xl border border-cyan-300">
-                        <i class="fas fa-play-circle text-2xl"></i> BẮT ĐẦU CHƠI
-                    </button>
-                    <button onclick="window.xemBxhLatThe()" class="w-full bg-fuchsia-500/20 text-fuchsia-300 font-black py-4 rounded-2xl hover:bg-fuchsia-500/40 transition flex items-center justify-center gap-3 text-xl border border-fuchsia-400 shadow-[0_0_15px_rgba(217,70,239,0.3)]">
-                        <i class="fas fa-trophy text-2xl"></i> BẢNG XẾP HẠNG
+                    <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
+                        <i class="fas fa-play-circle"></i> BẮT ĐẦU CHƠI
                     </button>
                 </div>
             </div>
         </div>
     `;
-};
-
-// --- BẢNG XẾP HẠNG ---
-window.xemBxhLatThe = function() {
-    let scores = {};
-    Data.log.forEach(l => {
-        if (l.subject && l.subject.includes("MathGame_LatThe")) {
-            if(!scores[l.id]) scores[l.id] = 0;
-            scores[l.id] += (Number(l.score) || 0);
-        }
-    });
-    
-    let arrBxh = [];
-    Object.keys(scores).forEach(id => {
-        let hs = Data.hs.find(h => String(h.id) === String(id));
-        if (hs && hs.role === 'student') arrBxh.push({ name: hs.name, score: scores[id] });
-    });
-    arrBxh.sort((a,b) => b.score - a.score);
-    let top10 = arrBxh.slice(0, 10);
-
-    let bxhHtml = top10.map((hs, i) => `
-        <div class="flex items-center justify-between bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20 shadow-sm mb-2 text-white">
-            <div class="flex items-center gap-3">
-                <span class="w-8 h-8 rounded-full flex items-center justify-center font-black ${i===0?'bg-yellow-400 text-yellow-900 shadow-[0_0_10px_#facc15]':i===1?'bg-slate-300 text-slate-800 shadow-[0_0_10px_#cbd5e1]':i===2?'bg-orange-400 text-orange-900 shadow-[0_0_10px_#fb923c]':'bg-white/20 text-white'}">${i+1}</span>
-                <span class="font-bold">${hs.name}</span>
-            </div>
-            <span class="font-black text-cyan-300 drop-shadow-sm">${hs.score} đ</span>
-        </div>
-    `).join('');
-
-    if (top10.length === 0) bxhHtml = `<p class="text-white/50 italic p-4 text-center">Chưa có ai chơi game này!</p>`;
-
-    let modal = document.createElement('div');
-    modal.className = "fixed inset-0 z-[200] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-[cascadeDrop_0.3s_ease-out_forwards]";
-    modal.innerHTML = `
-        <div class="bg-indigo-900 w-full max-w-md rounded-[2rem] shadow-[0_0_30px_rgba(217,70,239,0.4)] overflow-hidden border border-white/20">
-            <div class="bg-gradient-to-r from-fuchsia-500 to-cyan-500 p-4 flex justify-between items-center text-white">
-                <h3 class="font-black text-xl"><i class="fas fa-crown text-yellow-300 mr-2 drop-shadow-[0_0_5px_#facc15]"></i>CAO THỦ LẬT THẺ</h3>
-                <button onclick="this.closest('.fixed').remove()" class="hover:text-cyan-200 transition text-2xl"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">${bxhHtml}</div>
-        </div>
-    `;
-    document.body.appendChild(modal);
 };
 
 // --- KHỞI TẠO GAME TỪ SHEET ---
@@ -2664,7 +2617,6 @@ window.batDauLatThe = function() {
                 }
 
                 /* HIỆU ỨNG KHI ĐÚNG: Nổ to lên rồi biến mất NHƯNG GIỮ CHỖ */
-                /* Loại bỏ display: none để lưới CSS Grid không bị sập */
                 .matched { animation: hideMatched 0.8s ease forwards; pointer-events: none; }
                 @keyframes hideMatched { 
                     0% { transform: scale(1); opacity: 1; } 
