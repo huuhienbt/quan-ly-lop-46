@@ -2510,24 +2510,29 @@ window.moGameLatTheToan = function() {
     closeMenu();
 
     let todayGame = new Date();
+    // Đếm số lần nộp điểm game Lật thẻ hôm nay
     let soLanDaChoiHomNay = Data.log.filter(l => {
         if (String(l.id) !== String(currentUser.id) || !l.subject.includes("MathGame_LatThe")) return false;
         let d = new Date(l.time);
         return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
     }).length;
 
-    // ĐÃ XÓA PHẦN TEXT HƯỚNG DẪN LUẬT TRỪ ĐIỂM
+    // Giới hạn mặc định là 2 lần/ngày (Thầy có thể sửa số 2 ở dòng dưới nếu muốn tăng/giảm)
+    let tongLuotGame = 2; 
+
     document.getElementById('content').innerHTML = `
-        <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-900 flex flex-col items-center justify-center font-sans p-4">
-            <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_0_50px_rgba(236,72,153,0.3)] w-full max-w-md text-center border border-white/20 relative">
-                <button onclick="veTrangChu(); moGocHocTap();" class="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full hover:bg-red-500 transition font-bold shadow-sm"><i class="fas fa-times"></i></button>
-                <div class="text-5xl sm:text-6xl mb-4 animate-pulse drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">🧩</div>
-                <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 mb-2 uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">LẬT THẺ CÂU ĐỐ</h2>
-                <p class="text-indigo-200 font-bold mb-8 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / 2 lần</span></p>
+        <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-950 flex flex-col items-center justify-center font-sans p-4">
+            <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_0_50px_rgba(34,197,94,0.2)] w-full max-w-md text-center border border-white/20 relative">
+                <button onclick="veTrangChu(); moGocHocTap();" class="absolute top-4 right-4 w-10 h-10 bg-white/10 text-white rounded-full hover:bg-red-500 transition font-bold shadow-sm"><i class="fas fa-times"></i></button>
+                <div class="text-6xl mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">🧩</div>
+                
+                <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-400 mb-2 uppercase drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]">LẬT THẺ GIẢI ĐỐ</h2>
+                
+                <p class="text-indigo-100 font-bold mb-8 bg-black/30 py-3 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= tongLuotGame ? 'text-red-400' : 'text-emerald-400'} text-xl ml-1">${soLanDaChoiHomNay} / ${tongLuotGame} lần</span></p>
 
                 <div class="space-y-4">
-                    <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
-                        <i class="fas fa-play-circle"></i> BẮT ĐẦU CHƠI
+                    <button onclick="${soLanDaChoiHomNay >= tongLuotGame ? "alert('Con đã dùng hết " + tongLuotGame + " lượt chơi hôm nay. Ngày mai quay lại nhé!')" : "window.batDauLatThe()"}" class="w-full ${soLanDaChoiHomNay >= tongLuotGame ? 'bg-slate-600 text-slate-300 cursor-not-allowed' : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:scale-105 shadow-[0_0_20px_rgba(16,185,129,0.5)]'} font-black py-5 rounded-2xl transition flex items-center justify-center gap-3 text-2xl border border-white/20">
+                        <i class="fas ${soLanDaChoiHomNay >= tongLuotGame ? 'fa-lock' : 'fa-play-circle'}"></i> ${soLanDaChoiHomNay >= tongLuotGame ? 'ĐÃ HẾT LƯỢT' : 'BẮT ĐẦU CHƠI'}
                     </button>
                 </div>
             </div>
