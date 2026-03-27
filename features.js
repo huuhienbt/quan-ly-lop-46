@@ -2543,7 +2543,7 @@ window.taoLuoiTheKhongCanhNhau = function(pairsData) {
 window.batDauLatThe = function() {
     // KHỞI ĐỘNG NHẠC NỀN (Dùng định dạng MP3 đảm bảo chạy được trên mọi máy)
     if (!memoryGame.bgMusic) {
-        memoryGame.bgMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3');
+        memoryGame.bgMusic = new Audio('https://github.com/huuhienbt/quan-ly-lop-46/blob/main/upload/Childhood.mp3');
         memoryGame.bgMusic.loop = true;
         memoryGame.bgMusic.volume = 0.4; // Tăng âm lượng lên một chút
     }
