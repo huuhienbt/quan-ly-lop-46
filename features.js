@@ -2432,7 +2432,7 @@ window.xacNhanKhoa = async function(studentId, studentName) {
 };
 
 // ==========================================
-// GAME: LẬT THẺ CÂU ĐỐ VIP (Nhạc Nền, Chống Gian Lận, Neon)
+// GAME: LẬT THẺ CÂU ĐỐ VIP (Fix Nhạc MP3 + Bỏ text luật chơi)
 // ==========================================
 let memoryGame = {
     cards: [], flipped: [], matchedCount: 0, lockBoard: false, timer: null, timeLeft: 600, score: 0, bgMusic: null
@@ -2469,18 +2469,14 @@ window.moGameLatTheToan = function() {
         return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
     }).length;
 
+    // ĐÃ XÓA PHẦN TEXT HƯỚNG DẪN LUẬT TRỪ ĐIỂM
     document.getElementById('content').innerHTML = `
         <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-900 flex flex-col items-center justify-center font-sans p-4">
             <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_0_50px_rgba(236,72,153,0.3)] w-full max-w-md text-center border border-white/20 relative">
                 <button onclick="veTrangChu(); moGocHocTap();" class="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full hover:bg-red-500 transition font-bold shadow-sm"><i class="fas fa-times"></i></button>
                 <div class="text-5xl sm:text-6xl mb-4 animate-pulse drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">🧩</div>
                 <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 mb-2 uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">LẬT THẺ CÂU ĐỐ</h2>
-                <p class="text-indigo-200 font-bold mb-6 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / 2 lần</span></p>
-                
-                <div class="bg-indigo-950/50 p-4 rounded-xl mb-6 text-left border border-indigo-500/30">
-                    <p class="text-white text-sm font-bold mb-1"><i class="fas fa-check-circle text-emerald-400 mr-2"></i>Đúng 1 cặp: <span class="text-yellow-300">+10 điểm</span></p>
-                    <p class="text-white text-sm font-bold"><i class="fas fa-times-circle text-red-400 mr-2"></i>Sai 1 cặp: <span class="text-red-300">-1 điểm</span> (Sau khi đã có điểm)</p>
-                </div>
+                <p class="text-indigo-200 font-bold mb-8 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / 2 lần</span></p>
 
                 <div class="space-y-4">
                     <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
@@ -2545,14 +2541,22 @@ window.taoLuoiTheKhongCanhNhau = function(pairsData) {
 
 // --- KHỞI TẠO GAME ---
 window.batDauLatThe = function() {
-    // KHỞI ĐỘNG NHẠC NỀN
+    // KHỞI ĐỘNG NHẠC NỀN (Dùng định dạng MP3 đảm bảo chạy được trên mọi máy)
     if (!memoryGame.bgMusic) {
-        memoryGame.bgMusic = new Audio('https://upload.wikimedia.org/wikipedia/commons/a/a3/Kevin_MacLeod_-_Carefree.ogg');
+        memoryGame.bgMusic = new Audio('https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3');
         memoryGame.bgMusic.loop = true;
-        memoryGame.bgMusic.volume = 0.3; // Mức âm lượng vừa phải (30%)
+        memoryGame.bgMusic.volume = 0.4; // Tăng âm lượng lên một chút
     }
-    // Chạy nhạc ngay khi bấm nút Bắt đầu (Đảm bảo trình duyệt cho phép)
-    memoryGame.bgMusic.play().catch(e => console.log("Trình duyệt chặn autoplay tự động"));
+    
+    // Bắt buộc phát nhạc
+    let playPromise = memoryGame.bgMusic.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Trình duyệt chặn phát nhạc tự động. Người chơi có thể bấm nút Loa để bật.");
+            let btnIcon = document.getElementById('btn-music-icon');
+            if(btnIcon) btnIcon.className = "fas fa-volume-mute text-slate-400";
+        });
+    }
 
     let fallbackData = [
         { cauhoi: "Con gì có cánh, Mà lại biết bơi?", dapan: "Chim cánh cụt", img: "🐧" }, { cauhoi: "Con gì cổ dài, Ăn lá trên cao?", dapan: "Hươu cao cổ", img: "🦒" },
