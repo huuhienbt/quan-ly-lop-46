@@ -1500,9 +1500,23 @@ window.showHappyBirthdayUI = function() {
 };
 
 // ==========================================
-// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (ĐÃ TÍCH HỢP NHẠC NỀN & KIỂM TRA LỆNH PHẠT)
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (CÓ NÚT BẬT/TẮT NHẠC NỀN & ÂM LƯỢNG NHỎ)
 // ==========================================
 let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false, bgMusic: null };
+
+// --- HÀM BẬT/TẮT NHẠC NỀN ---
+window.toggleNhacNenBaoVeTraiDat = function() {
+    let btnIcon = document.getElementById('btn-music-icon-bvtd');
+    if (mathGame.bgMusic) {
+        if (mathGame.bgMusic.paused) {
+            mathGame.bgMusic.play();
+            btnIcon.className = "fas fa-volume-up text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]";
+        } else {
+            mathGame.bgMusic.pause();
+            btnIcon.className = "fas fa-volume-mute text-slate-500";
+        }
+    }
+};
 
 window.moGameBaoVeTraiDat = async function() {
     if(!currentUser) return showLogin(); closeMenu();
@@ -1540,6 +1554,9 @@ window.moGameBaoVeTraiDat = async function() {
             <div class="bg-slate-800/80 backdrop-blur border-b border-slate-700 p-3 flex justify-between items-center text-white relative z-20">
                 <div class="flex items-center gap-2">
                     <button onclick="window.thoatGameToan()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0 hover:bg-red-500 transition"><i class="fas fa-times"></i></button>
+                    <button onclick="window.toggleNhacNenBaoVeTraiDat()" class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center shrink-0 hover:bg-slate-600 transition" title="Bật/Tắt nhạc nền">
+                        <i id="btn-music-icon-bvtd" class="fas fa-volume-up text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]"></i>
+                    </button>
                     <div id="mg-lives" class="text-red-400 text-[10px] sm:text-xs flex tracking-tighter">❤️❤️❤️❤️❤️❤️❤️❤️❤️❤️</div>
                 </div>
                 <div class="text-center absolute left-1/2 -translate-x-1/2 mt-1">
@@ -1582,14 +1599,19 @@ window.moGameBaoVeTraiDat = async function() {
     
     // --- KHỞI ĐỘNG NHẠC NỀN BẢO VỆ TRÁI ĐẤT ---
     if (!mathGame.bgMusic) {
-        mathGame.bgMusic = new Audio('https://raw.githubusercontent.com/huuhienbt/quan-ly-lop-46/main/upload/Nhac%20nen%20tro%20choi%20bao%20ve%20trai%20dat.mp3');
+        mathGame.bgMusic = new Audio('./upload/Nhac%20nen%20tro%20choi%20bao%20ve%20trai%20dat.mp3');
         mathGame.bgMusic.loop = true;
-        mathGame.bgMusic.volume = 0.5; // Âm lượng 50%
+        // Đã giảm âm lượng từ 0.5 xuống 0.3 (nhỏ hơn 40% so với trước)
+        mathGame.bgMusic.volume = 0.3; 
     }
     
     let playPromise = mathGame.bgMusic.play();
     if (playPromise !== undefined) {
-        playPromise.catch(error => console.log("Trình duyệt chặn phát nhạc tự động."));
+        playPromise.catch(error => {
+            console.log("Trình duyệt chặn phát nhạc tự động.");
+            let btnIcon = document.getElementById('btn-music-icon-bvtd');
+            if(btnIcon) btnIcon.className = "fas fa-volume-mute text-slate-500";
+        });
     }
 
     window.mgStartLevel();
@@ -1771,6 +1793,7 @@ window.thoatGameToan = async function(saveScore = false) {
     let gameUI = document.getElementById('gameUI'); if (gameUI) gameUI.remove(); 
     veTrangChu(); 
 };
+
 // ==========================================
 // 11. HỆ THỐNG CHỐNG GIAN LẬN TỰ ĐỘNG
 // ==========================================
