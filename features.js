@@ -1500,9 +1500,9 @@ window.showHappyBirthdayUI = function() {
 };
 
 // ==========================================
-// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
+// 10. GAME TOÁN HỌC: BẢO VỆ TRÁI ĐẤT (ĐÃ TÍCH HỢP NHẠC NỀN & KIỂM TRA LỆNH PHẠT)
 // ==========================================
-let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false };
+let mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: false, bgMusic: null };
 
 window.moGameBaoVeTraiDat = async function() {
     if(!currentUser) return showLogin(); closeMenu();
@@ -1533,7 +1533,7 @@ window.moGameBaoVeTraiDat = async function() {
         return; 
     }
 
-    mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true };
+    mathGame = { loop: null, spawn: null, meteors: [], level: 1, score: 0, combo: 0, lives: 10, timeLeft: 60, active: true, bgMusic: null };
 
     document.getElementById('content').innerHTML = `
         <div id="gameUI" class="fixed inset-0 z-[100] bg-slate-900 overflow-hidden flex flex-col font-sans select-none touch-none">
@@ -1579,6 +1579,19 @@ window.moGameBaoVeTraiDat = async function() {
             </div>
         </div>
     `;
+    
+    // --- KHỞI ĐỘNG NHẠC NỀN BẢO VỆ TRÁI ĐẤT ---
+    if (!mathGame.bgMusic) {
+        mathGame.bgMusic = new Audio('https://raw.githubusercontent.com/huuhienbt/quan-ly-lop-46/main/upload/Nhac%20nen%20tro%20choi%20bao%20ve%20trai%20dat.mp3');
+        mathGame.bgMusic.loop = true;
+        mathGame.bgMusic.volume = 0.5; // Âm lượng 50%
+    }
+    
+    let playPromise = mathGame.bgMusic.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => console.log("Trình duyệt chặn phát nhạc tự động."));
+    }
+
     window.mgStartLevel();
 };
 
@@ -1707,6 +1720,10 @@ window.mgEndLevel = function() {
 
 window.mgGameOver = async function(isWin = false) {
     clearInterval(mathGame.loop); clearInterval(mathGame.spawn); mathGame.active = false;
+    
+    // TẠM DỪNG NHẠC KHI KẾT THÚC GAME
+    if(mathGame.bgMusic) { mathGame.bgMusic.pause(); }
+
     let msg = isWin ? "BẢO VỆ THÀNH CÔNG!" : "NHIỆM VỤ KẾT THÚC!";
     let titleColor = isWin ? "text-emerald-400" : "text-yellow-400"; let iconSmile = isWin ? "🌍" : "😊";
     
@@ -1722,6 +1739,13 @@ window.mgGameOver = async function(isWin = false) {
 
 window.thoatGameToan = async function(saveScore = false) {
     clearInterval(mathGame.loop); clearInterval(mathGame.spawn);
+    
+    // TẮT HẲN NHẠC KHI THOÁT GAME
+    if(mathGame.bgMusic) { 
+        mathGame.bgMusic.pause(); 
+        mathGame.bgMusic.currentTime = 0; 
+    }
+
     if (saveScore && mathGame.score > 0 && currentUser && currentUser.role === 'student') {
         document.getElementById('loader').style.display = 'flex'; 
         
@@ -1747,7 +1771,6 @@ window.thoatGameToan = async function(saveScore = false) {
     let gameUI = document.getElementById('gameUI'); if (gameUI) gameUI.remove(); 
     veTrangChu(); 
 };
-
 // ==========================================
 // 11. HỆ THỐNG CHỐNG GIAN LẬN TỰ ĐỘNG
 // ==========================================
