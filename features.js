@@ -2548,10 +2548,109 @@ window.xemBxhLatThe = function() {
 };
 
 // --- KHỞI TẠO GAME TỪ SHEET CAU_DO ---
-selectedPairs.forEach((item, index) => {
-        let qText = item.question || item.q;
-        let aText = item.answer || item.a;
+window.batDauLatThe = function() {
+    // Lấy 10 câu đố ngẫu nhiên từ Data.caudo, nếu thiếu thì dùng data dự phòng
+    let fallbackData = [
+        { question: "Con gì có cánh, Mà lại biết bơi?", answer: "Chim cánh cụt", img: "🐧" },
+        { question: "Con gì cổ dài, Ăn lá trên cao?", answer: "Hươu cao cổ", img: "🦒" },
+        { question: "Con gì mào đỏ, Gáy sáng ò ó o?", answer: "Con gà trống", img: "🐓" },
+        { question: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", answer: "Dưa hấu", img: "🍉" },
+        { question: "Con gì tám cẳng hai càng?", answer: "Con cua", img: "🦀" },
+        { question: "Cái gì để che nắng mưa?", answer: "Cái ô (dù)", img: "☂️" },
+        { question: "Quả gì năm múi, Cắt ra hình sao?", answer: "Quả khế", img: "⭐" },
+        { question: "Con gì giữ nhà, Thấy khách sủa gâu?", answer: "Con chó", img: "🐶" },
+        { question: "Mùa gì phượng vĩ nở rực?", answer: "Mùa hè", img: "☀️" },
+        { question: "Xe gì hai bánh, Đạp chạy bon bon?", answer: "Xe đạp", img: "🚲" }
+    ];
+
+    let sourceData = (Data.caudo && Data.caudo.length >= 10) ? Data.caudo : fallbackData;
+    let selectedPairs = sourceData.sort(() => 0.5 - Math.random()).slice(0, 10);
+    
+    let cards = [];
+    let colorClasses = ['text-pink-600', 'text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600'];
+    
+    selectedPairs.forEach((item, index) => {
+        // Đã cập nhật để đọc đúng cột cau_hoi và dap_an từ Sheet của thầy
+        let qText = item.cau_hoi || item.question || item.q || "Lỗi câu hỏi";
+        let aText = item.dap_an || item.answer || item.a || "Lỗi đáp án";
         let img = item.img || item.image || "✨";
+        let randColor = colorClasses[index % colorClasses.length];
+
+        // Thẻ Câu đố (Nền xanh nhạt)
+        cards.push({ 
+            matchId: index, type: 'Q', text: qText, 
+            frontTheme: 'bg-blue-50 border-blue-300', textClass: 'text-slate-700 text-sm sm:text-base font-bold' 
+        });
+        // Thẻ Đáp án (Nền hồng/cam nhạt có icon)
+        cards.push({ 
+            matchId: index, type: 'A', text: `${img}<br><span class="text-sm mt-1 block">${aText}</span>`, 
+            frontTheme: 'bg-orange-50 border-orange-300', textClass: `${randColor} text-2xl font-black` 
+        });
+    });
+    
+    memoryGame.cards = cards.sort(() => 0.5 - Math.random());
+    memoryGame.flipped = [];
+    memoryGame.matchedCount = 0;
+    memoryGame.lockBoard = false;
+    memoryGame.timeLeft = 600; // 10 phút
+    memoryGame.score = 0;
+
+    document.getElementById('content').innerHTML = `
+        <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-emerald-50 overflow-hidden flex flex-col font-sans select-none" id="game-ui-container">
+            <div class="bg-white/90 backdrop-blur border-b-4 border-emerald-300 p-2 sm:p-3 flex justify-between items-center shadow-md relative z-20">
+                <button onclick="window.moGameLatTheToan()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xl hover:bg-red-500 hover:text-white transition shadow-sm shrink-0"><i class="fas fa-arrow-left"></i></button>
+                <div class="flex-1 text-center px-2">
+                    <h2 class="text-sm sm:text-lg font-black text-emerald-600 uppercase tracking-widest drop-shadow-sm truncate"><i class="fas fa-puzzle-piece mr-1"></i>TÌM CẶP CÂU ĐỐ</h2>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                    <div class="bg-yellow-100 px-3 py-1.5 rounded-full font-black text-yellow-700 shadow-inner flex items-center gap-1 border-2 border-yellow-200">
+                        <i class="fas fa-star text-yellow-500"></i> <span id="mg-score-latthe">0</span>
+                    </div>
+                    <div class="bg-emerald-100 px-3 py-1.5 rounded-full font-black text-emerald-700 shadow-inner flex items-center gap-1 border-2 border-emerald-200">
+                        <i class="fas fa-stopwatch animate-pulse text-orange-500"></i> <span id="mg-timer-latthe">10:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .memory-card { perspective: 1000px; cursor: pointer; }
+                .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; }
+                .memory-card.flipped .memory-card-inner { transform: rotateY(180deg); }
+                .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+                /* Mặt úp: Nền họa tiết ngộ nghĩnh */
+                .memory-card-front { background: radial-gradient(circle, #fcd34d 0%, #f59e0b 100%); border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: rgba(255,255,255,0.9); text-shadow: 1px 1px 0 #d97706; }
+                /* Mặt ngửa: Thay đổi theo data */
+                .memory-card-back { transform: rotateY(180deg); border: 3px solid; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.5rem; flex-direction: column; }
+                .matched { animation: popMatched 0.6s ease forwards; pointer-events: none; }
+                @keyframes popMatched { 0% { transform: scale(1); } 50% { transform: scale(1.1) rotate(3deg); box-shadow: 0 0 20px #22c55e; } 100% { transform: scale(0.95); opacity: 0.8; filter: grayscale(30%); } }
+            </style>
+
+            <div class="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 relative">
+                <div class="grid grid-cols-4 grid-rows-5 gap-2 w-full max-w-3xl h-full max-h-[80vh]" id="memory-board">
+                    ${memoryGame.cards.map((card, index) => `
+                        <div class="memory-card w-full h-full" id="card-${index}" onclick="window.latTheCauDo(${index})">
+                            <div class="memory-card-inner">
+                                <div class="memory-card-front"><i class="fas fa-leaf"></i></div>
+                                <div class="memory-card-back ${card.frontTheme}">
+                                    <span class="${card.textClass} leading-tight">${card.text}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+
+    if(memoryGame.timer) clearInterval(memoryGame.timer);
+    memoryGame.timer = setInterval(() => {
+        memoryGame.timeLeft--;
+        let m = Math.floor(memoryGame.timeLeft / 60);
+        let s = memoryGame.timeLeft % 60;
+        document.getElementById('mg-timer-latthe').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+        if (memoryGame.timeLeft <= 0) { clearInterval(memoryGame.timer); window.ketThucGameLatThe(true); }
+    }, 1000);
+};
 
 // --- LOGIC LẬT 2 THẺ (MEMORY MATCH TRUYỀN THỐNG) ---
 window.latTheCauDo = function(index) {
