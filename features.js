@@ -2574,9 +2574,11 @@ window.batDauLatThe = function() {
     let colorClasses = ['text-pink-600', 'text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600'];
     
     selectedPairs.forEach((item, index) => {
-        let qText = item.cau_hoi || item.question || item.q || "Lỗi câu hỏi";
-        let aText = item.dap_an || item.answer || item.a || "Lỗi đáp án";
-        let img = item.img || item.image || "✨";
+        // Lấy chính xác cột cauhoi và dapan từ Google Sheet của thầy
+        let qText = item.cauhoi || item['cauhoi'] || "Lỗi câu hỏi";
+        let aText = item.dapan || item['dapan'] || "Lỗi đáp án";
+        let img = item.icon || item.Icon || item.img || "✨";
+        
         let randColor = colorClasses[index % colorClasses.length];
 
         // Lấy icon ngẫu nhiên không trùng cho mặt úp của thẻ Q
