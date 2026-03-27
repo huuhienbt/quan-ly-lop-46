@@ -2432,7 +2432,7 @@ window.xacNhanKhoa = async function(studentId, studentName) {
 };
 
 // ==========================================
-// GAME: LẬT THẺ CÂU ĐỐ (Lấy từ Data.caudo, 20 Thẻ, Âm thanh, BXH)
+// GAME: LẬT THẺ CÂU ĐỐ VIP (Nâng cấp Mặt úp ngẫu nhiên không trùng)
 // ==========================================
 let memoryGame = {
     cards: [], flipped: [], matchedCount: 0, lockBoard: false, timer: null, timeLeft: 600, score: 0
@@ -2547,43 +2547,53 @@ window.xemBxhLatThe = function() {
     document.body.appendChild(modal);
 };
 
-// --- KHỞI TẠO GAME TỪ SHEET CAU_DO ---
+// --- KHỞI TẠO GAME TỪ SHEET CAU_DO (Mặt úp ngẫu nhiên không trùng) ---
 window.batDauLatThe = function() {
-    // Lấy 10 câu đố ngẫu nhiên từ Data.caudo, nếu thiếu thì dùng data dự phòng
     let fallbackData = [
-        { question: "Con gì có cánh, Mà lại biết bơi?", answer: "Chim cánh cụt", img: "🐧" },
-        { question: "Con gì cổ dài, Ăn lá trên cao?", answer: "Hươu cao cổ", img: "🦒" },
-        { question: "Con gì mào đỏ, Gáy sáng ò ó o?", answer: "Con gà trống", img: "🐓" },
-        { question: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", answer: "Dưa hấu", img: "🍉" },
-        { question: "Con gì tám cẳng hai càng?", answer: "Con cua", img: "🦀" },
-        { question: "Cái gì để che nắng mưa?", answer: "Cái ô (dù)", img: "☂️" },
-        { question: "Quả gì năm múi, Cắt ra hình sao?", answer: "Quả khế", img: "⭐" },
-        { question: "Con gì giữ nhà, Thấy khách sủa gâu?", answer: "Con chó", img: "🐶" },
-        { question: "Mùa gì phượng vĩ nở rực?", answer: "Mùa hè", img: "☀️" },
-        { question: "Xe gì hai bánh, Đạp chạy bon bon?", answer: "Xe đạp", img: "🚲" }
+        { cau_hoi: "Con gì có cánh, Mà lại biết bơi?", dap_an: "Chim cánh cụt", img: "🐧" },
+        { cau_hoi: "Con gì cổ dài, Ăn lá trên cao?", dap_an: "Hươu cao cổ", img: "🦒" },
+        { cau_hoi: "Con gì mào đỏ, Gáy sáng ò ó o?", dap_an: "Con gà trống", img: "🐓" },
+        { cau_hoi: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", dap_an: "Dưa hấu", img: "🍉" },
+        { cau_hoi: "Con gì tám cẳng hai càng?", dap_an: "Con cua", img: "🦀" },
+        { cau_hoi: "Cái gì để che nắng mưa?", dap_an: "Cái ô (dù)", img: "☂️" },
+        { cau_hoi: "Quả gì năm múi, Cắt ra hình sao?", dap_an: "Quả khế", img: "⭐" },
+        { cau_hoi: "Con gì giữ nhà, Thấy khách sủa gâu?", dap_an: "Con chó", img: "🐶" },
+        { cau_hoi: "Mùa gì phượng vĩ nở rực?", dap_an: "Mùa hè", img: "☀️" },
+        { cau_hoi: "Xe gì hai bánh, Đạp chạy bon bon?", dap_an: "Xe đạp", img: "🚲" }
     ];
 
     let sourceData = (Data.caudo && Data.caudo.length >= 10) ? Data.caudo : fallbackData;
     let selectedPairs = sourceData.sort(() => 0.5 - Math.random()).slice(0, 10);
     
+    // BỘ SƯU TẬP 20 ICON CHO MẶT ÚP (KHÔNG TRÙNG)
+    const cardBackIcons = ['🦁','🐯','🐘','🦒','🐻','🐨','🐹','🐰','🐶','🐱','🦜','🦋','🍎','🍕','🎁','✈️','🚀','🎸','⚽','🌈'];
+    const shuffledBackIcons = cardBackIcons.sort(() => 0.5 - Math.random()); // Xáo trộn để ngẫu nhiên
+    let cardCount = 0;
+
     let cards = [];
     let colorClasses = ['text-pink-600', 'text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600'];
     
     selectedPairs.forEach((item, index) => {
-        // Đã cập nhật để đọc đúng cột cau_hoi và dap_an từ Sheet của thầy
         let qText = item.cau_hoi || item.question || item.q || "Lỗi câu hỏi";
         let aText = item.dap_an || item.answer || item.a || "Lỗi đáp án";
         let img = item.img || item.image || "✨";
         let randColor = colorClasses[index % colorClasses.length];
 
+        // Lấy icon ngẫu nhiên không trùng cho mặt úp của thẻ Q
+        let qBackIcon = shuffledBackIcons[cardCount];
+        cardCount++;
         // Thẻ Câu đố (Nền xanh nhạt)
         cards.push({ 
-            matchId: index, type: 'Q', text: qText, 
+            matchId: index, type: 'Q', text: qText, backIcon: qBackIcon,
             frontTheme: 'bg-blue-50 border-blue-300', textClass: 'text-slate-700 text-sm sm:text-base font-bold' 
         });
+
+        // Lấy icon ngẫu nhiên không trùng cho mặt úp của thẻ A
+        let aBackIcon = shuffledBackIcons[cardCount];
+        cardCount++;
         // Thẻ Đáp án (Nền hồng/cam nhạt có icon)
         cards.push({ 
-            matchId: index, type: 'A', text: `${img}<br><span class="text-sm mt-1 block">${aText}</span>`, 
+            matchId: index, type: 'A', text: `${img}<br><span class="text-sm mt-1 block">${aText}</span>`, backIcon: aBackIcon,
             frontTheme: 'bg-orange-50 border-orange-300', textClass: `${randColor} text-2xl font-black` 
         });
     });
@@ -2617,9 +2627,9 @@ window.batDauLatThe = function() {
                 .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; }
                 .memory-card.flipped .memory-card-inner { transform: rotateY(180deg); }
                 .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-                /* Mặt úp: Nền họa tiết ngộ nghĩnh */
+                /* Mặt úp: Nền Gradient vàng ấm với icon ngẫu nhiên */
                 .memory-card-front { background: radial-gradient(circle, #fcd34d 0%, #f59e0b 100%); border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: rgba(255,255,255,0.9); text-shadow: 1px 1px 0 #d97706; }
-                /* Mặt ngửa: Thay đổi theo data */
+                /* Mặt ngửa */
                 .memory-card-back { transform: rotateY(180deg); border: 3px solid; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.5rem; flex-direction: column; }
                 .matched { animation: popMatched 0.6s ease forwards; pointer-events: none; }
                 @keyframes popMatched { 0% { transform: scale(1); } 50% { transform: scale(1.1) rotate(3deg); box-shadow: 0 0 20px #22c55e; } 100% { transform: scale(0.95); opacity: 0.8; filter: grayscale(30%); } }
@@ -2630,7 +2640,7 @@ window.batDauLatThe = function() {
                     ${memoryGame.cards.map((card, index) => `
                         <div class="memory-card w-full h-full" id="card-${index}" onclick="window.latTheCauDo(${index})">
                             <div class="memory-card-inner">
-                                <div class="memory-card-front"><i class="fas fa-leaf"></i></div>
+                                <div class="memory-card-front">${card.backIcon}</div>
                                 <div class="memory-card-back ${card.frontTheme}">
                                     <span class="${card.textClass} leading-tight">${card.text}</span>
                                 </div>
@@ -2652,7 +2662,7 @@ window.batDauLatThe = function() {
     }, 1000);
 };
 
-// --- LOGIC LẬT 2 THẺ (MEMORY MATCH TRUYỀN THỐNG) ---
+// --- LOGIC LẬT THẺ ---
 window.latTheCauDo = function(index) {
     if (memoryGame.lockBoard) return;
     let cardEl = document.getElementById('card-' + index);
@@ -2667,7 +2677,6 @@ window.latTheCauDo = function(index) {
         let c1 = memoryGame.flipped[0].data;
         let c2 = memoryGame.flipped[1].data;
 
-        // Khớp khi ID giống nhau VÀ một thẻ là Q, một thẻ là A
         let isMatch = (c1.matchId === c2.matchId) && (c1.type !== c2.type);
 
         if (isMatch) {
@@ -2676,7 +2685,7 @@ window.latTheCauDo = function(index) {
                 document.getElementById('card-' + memoryGame.flipped[0].index).classList.add('matched');
                 document.getElementById('card-' + memoryGame.flipped[1].index).classList.add('matched');
                 
-                memoryGame.score += 5; // +5 điểm
+                memoryGame.score += 5; 
                 document.getElementById('mg-score-latthe').innerText = memoryGame.score;
                 
                 memoryGame.matchedCount += 2;
@@ -2709,7 +2718,7 @@ window.ketThucGameLatThe = function(isTimeout = false) {
     overlay.innerHTML = `
         <div class="text-8xl mb-4 animate-bounce drop-shadow-lg">${isTimeout ? '⏰' : '🏆'}</div>
         <h2 class="text-4xl font-black ${titleColor} mb-2 uppercase text-center drop-shadow-lg px-4">${titleText}</h2>
-        <p class="text-white font-bold mb-2 text-xl">Đã tìm được: <span class="text-emerald-400">${memoryGame.matchedCount / 2} / 10 cặp</span></p>
+        <p class="text-white font-bold mb-2 text-xl">Đã tìm được: <span class="text-emerald-400">${memoryGame.matchedCount / 2} / 10 cặp câu đố</span></p>
         <p class="text-white font-bold mb-8 text-xl text-center">Thưởng: <span class="text-yellow-400 text-5xl ml-2">+${memoryGame.score} đ</span></p>
         <button onclick="window.thoatGameLatTheToan(true)" class="bg-gradient-to-r from-orange-500 to-pink-600 text-white px-10 py-4 rounded-full font-black text-2xl hover:scale-105 transition shadow-[0_0_30px_#f97316] btn-3d">LƯU ĐIỂM & THOÁT</button>
     `;
