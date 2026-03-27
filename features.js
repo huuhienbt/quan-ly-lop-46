@@ -2544,7 +2544,7 @@ window.batDauLatThe = function() {
     // KHỞI ĐỘNG NHẠC NỀN (Đã sửa thành link RAW chuẩn của GitHub)
     if (!memoryGame.bgMusic) {
         // Link chuẩn sẽ bắt đầu bằng raw.githubusercontent.com và không có chữ blob
-        memoryGame.bgMusic = new Audio('https://raw.githubusercontent.com/huuhienbt/quan-ly-lop-46/main/upload/Childhood.mp3');
+        memoryGame.bgMusic = new Audio('./upload/Childhood.mp3');
         memoryGame.bgMusic.loop = true;
         memoryGame.bgMusic.volume = 0.4; // Tăng âm lượng lên một chút
     }
