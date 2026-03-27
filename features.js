@@ -2541,12 +2541,25 @@ window.taoLuoiTheKhongCanhNhau = function(pairsData) {
 
 // --- KHỞI TẠO GAME ---
 window.batDauLatThe = function() {
-    // KHỞI ĐỘNG NHẠC NỀN (Dùng định dạng MP3 đảm bảo chạy được trên mọi máy)
+    // KHỞI ĐỘNG NHẠC NỀN (Đã sửa thành link RAW chuẩn của GitHub)
     if (!memoryGame.bgMusic) {
-        memoryGame.bgMusic = new Audio('https://github.com/huuhienbt/quan-ly-lop-46/blob/main/upload/Childhood.mp3');
+        // Link chuẩn sẽ bắt đầu bằng raw.githubusercontent.com và không có chữ blob
+        memoryGame.bgMusic = new Audio('https://raw.githubusercontent.com/huuhienbt/quan-ly-lop-46/main/upload/Childhood.mp3');
         memoryGame.bgMusic.loop = true;
         memoryGame.bgMusic.volume = 0.4; // Tăng âm lượng lên một chút
     }
+    
+    // Bắt buộc phát nhạc
+    let playPromise = memoryGame.bgMusic.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Trình duyệt chặn phát nhạc tự động hoặc đang tải nhạc. Người chơi có thể bấm nút Loa để bật.");
+            let btnIcon = document.getElementById('btn-music-icon');
+            if(btnIcon) btnIcon.className = "fas fa-volume-mute text-slate-400";
+        });
+    }
+
+    // ... (Phần data câu hỏi phía dưới thầy giữ nguyên nhé) ...
     
     // Bắt buộc phát nhạc
     let playPromise = memoryGame.bgMusic.play();
