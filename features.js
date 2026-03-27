@@ -190,7 +190,7 @@ window.moGocHocTap = async function() {
             </div>
             <div class="flex-1 pr-0 sm:pr-10 relative z-10 w-full text-center sm:text-left">
                 <div class="text-[10px] font-black text-blue-500 mb-2 uppercase tracking-widest bg-blue-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-puzzle-piece mr-1"></i>Trí Tuệ</div>
-                <h3 class="font-black text-2xl sm:text-3xl text-slate-800">LẬT THẺ GIẢI TOÁN</h3>
+                <h3 class="font-black text-2xl sm:text-3xl text-slate-800">LẬT THẺ GIẢI ĐỐ</h3>
                 <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Rèn luyện trí nhớ và khả năng tính nhẩm siêu tốc qua thử thách 20 thẻ bài bí ẩn.</p>
             </div>
             <button onclick="window.moGameLatTheToan()" class="w-full sm:w-auto min-w-[180px] bg-blue-500 text-white font-black py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(37,99,235)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-blue-600 shrink-0">
