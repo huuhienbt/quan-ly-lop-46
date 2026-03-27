@@ -198,16 +198,16 @@ window.moGocHocTap = async function() {
             </button>
         </div>
 
-        <div class="bg-pink-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-pink-100 shadow-sm hover:shadow-md transition relative flex flex-col sm:flex-row justify-between min-h-[120px] group mt-5 items-center gap-4">
-            <div class="absolute -top-4 -right-2 bg-pink-100 border-2 border-pink-200 w-12 h-12 rounded-2xl flex items-center justify-center text-pink-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10 hidden sm:flex">
+        <div class="bg-indigo-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-indigo-100 shadow-sm hover:shadow-md transition relative flex flex-col sm:flex-row justify-between min-h-[120px] group mt-5 items-center gap-4">
+            <div class="absolute -top-4 -right-2 bg-indigo-100 border-2 border-indigo-200 w-12 h-12 rounded-2xl flex items-center justify-center text-indigo-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10 hidden sm:flex">
                 <i class="fas fa-rocket"></i>
             </div>
             <div class="flex-1 pr-0 sm:pr-10 relative z-10 w-full text-center sm:text-left">
-                <div class="text-[10px] font-black text-pink-500 mb-2 uppercase tracking-widest bg-pink-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-gamepad mr-1"></i>Kịch tính</div>
+                <div class="text-[10px] font-black text-indigo-600 mb-2 uppercase tracking-widest bg-indigo-200/50 inline-block px-2 py-0.5 rounded-md"><i class="fas fa-gamepad mr-1"></i>Kịch tính</div>
                 <h3 class="font-black text-2xl sm:text-3xl text-slate-800">BẢO VỆ TRÁI ĐẤT</h3>
                 <p class="text-sm font-bold text-slate-500 mt-1.5 leading-snug">Sân đấu trí tuệ phản xạ tính nhẩm nhanh dành cho những chiến binh xuất sắc nhất.</p>
             </div>
-            <button onclick="window.moGameBaoVeTraiDat()" class="w-full sm:w-auto min-w-[180px] bg-pink-500 text-white font-black py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(219,39,119)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-pink-600 shrink-0">
+            <button onclick="window.moGameBaoVeTraiDat()" class="w-full sm:w-auto min-w-[180px] bg-indigo-500 text-white font-black py-3 px-6 rounded-xl shadow-[0_4px_0_rgb(79,70,229)] active:shadow-none active:translate-y-1 transition text-lg flex items-center justify-center gap-2 relative z-10 hover:bg-indigo-600 shrink-0">
                 <i class="fas fa-play text-sm"></i> CHƠI NGAY
             </button>
         </div>` : ''}
