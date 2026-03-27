@@ -1603,7 +1603,7 @@ window.moGameBaoVeTraiDat = async function() {
     if (!mathGame.bgMusic) {
         mathGame.bgMusic = new Audio('./upload/Nhac%20nen%20tro%20choi%20bao%20ve%20trai%20dat.mp3');
         mathGame.bgMusic.loop = true;
-        mathGame.bgMusic.volume = 0.3; // Âm lượng 30%
+        mathGame.bgMusic.volume = 0.1; // Âm lượng 10%
     }
     
     let playPromise = mathGame.bgMusic.play();
@@ -2593,7 +2593,7 @@ window.batDauLatThe = function() {
         // Link chuẩn sẽ bắt đầu bằng raw.githubusercontent.com và không có chữ blob
         memoryGame.bgMusic = new Audio('./upload/Childhood.mp3');
         memoryGame.bgMusic.loop = true;
-        memoryGame.bgMusic.volume = 0.4; // Tăng âm lượng lên một chút
+        memoryGame.bgMusic.volume = 0.2; // Tăng âm lượng lên một chút
     }
     
     // Bắt buộc phát nhạc
