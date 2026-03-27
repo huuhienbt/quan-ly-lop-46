@@ -2432,7 +2432,7 @@ window.xacNhanKhoa = async function(studentId, studentName) {
 };
 
 // ==========================================
-// GAME: LẬT THẺ CÂU ĐỐ VIP (Pastel Neon + Icon Thu Nhỏ)
+// GAME: LẬT THẺ CÂU ĐỐ VIP (Glassmorphism + Ẩn Thẻ Đúng)
 // ==========================================
 let memoryGame = {
     cards: [], flipped: [], matchedCount: 0, lockBoard: false, timer: null, timeLeft: 600, score: 0
@@ -2522,7 +2522,7 @@ window.xemBxhLatThe = function() {
     let top10 = arrBxh.slice(0, 10);
 
     let bxhHtml = top10.map((hs, i) => `
-        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-cyan-100 shadow-sm mb-2">
+        <div class="flex items-center justify-between bg-white/70 backdrop-blur-md p-3 rounded-xl border border-cyan-100 shadow-sm mb-2">
             <div class="flex items-center gap-3">
                 <span class="w-8 h-8 rounded-full flex items-center justify-center font-black ${i===0?'bg-yellow-400 text-white shadow-md':i===1?'bg-slate-300 text-white shadow-md':i===2?'bg-orange-300 text-white shadow-md':'bg-cyan-50 text-cyan-600'}">${i+1}</span>
                 <span class="font-bold text-slate-700">${hs.name}</span>
@@ -2570,16 +2570,16 @@ window.batDauLatThe = function() {
     const shuffledBackIcons = cardBackIcons.sort(() => 0.5 - Math.random()); 
     let cardCount = 0;
 
-    // BỘ MÀU GRADIENT PASTEL-NEON CHO MẶT ÚP
+    // BỘ MÀU GRADIENT PASTEL-NEON CHO MẶT ÚP (Dùng opacity 70% để tạo hiệu ứng kính)
     const pastelNeonGradients = [
-        'bg-gradient-to-br from-pink-400 to-rose-400',
-        'bg-gradient-to-br from-fuchsia-400 to-purple-500',
-        'bg-gradient-to-br from-cyan-400 to-blue-500',
-        'bg-gradient-to-br from-emerald-400 to-teal-500',
-        'bg-gradient-to-br from-amber-400 to-orange-500',
-        'bg-gradient-to-br from-violet-400 to-fuchsia-500',
-        'bg-gradient-to-br from-lime-400 to-green-500',
-        'bg-gradient-to-br from-sky-400 to-indigo-500'
+        'from-pink-400/70 to-rose-400/70',
+        'from-fuchsia-400/70 to-purple-500/70',
+        'from-cyan-400/70 to-blue-500/70',
+        'from-emerald-400/70 to-teal-500/70',
+        'from-amber-400/70 to-orange-500/70',
+        'from-violet-400/70 to-fuchsia-500/70',
+        'from-lime-400/70 to-green-500/70',
+        'from-sky-400/70 to-indigo-500/70'
     ];
 
     let cards = [];
@@ -2591,24 +2591,23 @@ window.batDauLatThe = function() {
         let img = item.icon || item.Icon || item.img || "✨";
         let randTextColor = colorClasses[index % colorClasses.length];
 
-        // Lấy màu nền Pastel-Neon ngẫu nhiên cho mặt úp thẻ Q
+        // Mặt úp Gradient Neon Glassmorphism
         let qBgColor = pastelNeonGradients[Math.floor(Math.random() * pastelNeonGradients.length)];
         let qBackIcon = shuffledBackIcons[cardCount];
         cardCount++;
 
         cards.push({ 
-            matchId: index, type: 'Q', text: qText, backIcon: qBackIcon, upTheme: qBgColor,
-            frontTheme: 'bg-indigo-50 border-indigo-200', textClass: 'text-indigo-900 text-[13px] sm:text-sm font-bold' 
+            matchId: index, type: 'Q', text: qText, backIcon: qBackIcon, upTheme: `bg-gradient-to-br ${qBgColor}`,
+            textClass: 'text-indigo-900 text-[13px] sm:text-sm font-bold' 
         });
 
-        // Lấy màu nền Pastel-Neon ngẫu nhiên cho mặt úp thẻ A
         let aBgColor = pastelNeonGradients[Math.floor(Math.random() * pastelNeonGradients.length)];
         let aBackIcon = shuffledBackIcons[cardCount];
         cardCount++;
 
         cards.push({ 
-            matchId: index, type: 'A', text: `<div class="text-[1.8rem] mb-1">${img}</div><span class="text-xs sm:text-sm block">${aText}</span>`, backIcon: aBackIcon, upTheme: aBgColor,
-            frontTheme: 'bg-rose-50 border-rose-200', textClass: `${randTextColor} font-black` 
+            matchId: index, type: 'A', text: `<div class="text-[1.8rem] mb-1 drop-shadow-sm">${img}</div><span class="text-xs sm:text-sm block">${aText}</span>`, backIcon: aBackIcon, upTheme: `bg-gradient-to-br ${aBgColor}`,
+            textClass: `${randTextColor} font-black drop-shadow-sm` 
         });
     });
     
@@ -2616,21 +2615,21 @@ window.batDauLatThe = function() {
     memoryGame.flipped = [];
     memoryGame.matchedCount = 0;
     memoryGame.lockBoard = false;
-    memoryGame.timeLeft = 600; // 10 phút
+    memoryGame.timeLeft = 600; 
     memoryGame.score = 0;
 
     document.getElementById('content').innerHTML = `
         <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-50 overflow-hidden flex flex-col font-sans select-none" id="game-ui-container">
-            <div class="bg-white/90 backdrop-blur border-b-4 border-cyan-300 p-2 sm:p-3 flex justify-between items-center shadow-md relative z-20">
-                <button onclick="window.moGameLatTheToan()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xl hover:bg-red-500 hover:text-white transition shadow-sm shrink-0"><i class="fas fa-arrow-left"></i></button>
+            <div class="bg-white/70 backdrop-blur-md border-b border-white/50 p-2 sm:p-3 flex justify-between items-center shadow-md relative z-20">
+                <button onclick="window.moGameLatTheToan()" class="w-10 h-10 rounded-full bg-white/50 text-slate-500 flex items-center justify-center font-bold text-xl hover:bg-red-500 hover:text-white transition shadow-sm shrink-0 border border-white"><i class="fas fa-arrow-left"></i></button>
                 <div class="flex-1 text-center px-2">
                     <h2 class="text-sm sm:text-lg font-black text-cyan-600 uppercase tracking-widest drop-shadow-sm truncate"><i class="fas fa-puzzle-piece mr-1"></i>TÌM CẶP CÂU ĐỐ</h2>
                 </div>
                 <div class="flex gap-2 shrink-0">
-                    <div class="bg-yellow-100 px-3 py-1.5 rounded-full font-black text-yellow-700 shadow-inner flex items-center gap-1 border-2 border-yellow-200">
+                    <div class="bg-yellow-100/80 backdrop-blur-sm px-3 py-1.5 rounded-full font-black text-yellow-700 shadow-inner flex items-center gap-1 border border-yellow-200">
                         <i class="fas fa-star text-yellow-500"></i> <span id="mg-score-latthe">0</span>
                     </div>
-                    <div class="bg-cyan-100 px-3 py-1.5 rounded-full font-black text-cyan-700 shadow-inner flex items-center gap-1 border-2 border-cyan-200">
+                    <div class="bg-cyan-100/80 backdrop-blur-sm px-3 py-1.5 rounded-full font-black text-cyan-700 shadow-inner flex items-center gap-1 border border-cyan-200">
                         <i class="fas fa-stopwatch animate-pulse text-fuchsia-500"></i> <span id="mg-timer-latthe">10:00</span>
                     </div>
                 </div>
@@ -2640,24 +2639,49 @@ window.batDauLatThe = function() {
                 .memory-card { perspective: 1000px; cursor: pointer; }
                 .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; }
                 .memory-card.flipped .memory-card-inner { transform: rotateY(180deg); }
-                .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
                 
-                /* Mặt úp: Bỏ màu fix cứng, lấy màu Pastel Neon từ class Tailwind, thu nhỏ icon */
-                .memory-card-front { border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: rgba(255,255,255,0.9); text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+                /* Layout chung cho cả 2 mặt thẻ */
+                .memory-card-front, .memory-card-back { 
+                    position: absolute; width: 100%; height: 100%; 
+                    backface-visibility: hidden; border-radius: 1rem; 
+                    display: flex; align-items: center; justify-content: center; 
+                    flex-direction: column; text-align: center; padding: 0.5rem;
+                }
                 
-                /* Mặt ngửa */
-                .memory-card-back { transform: rotateY(180deg); border: 3px solid; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.5rem; flex-direction: column; }
-                .matched { animation: popMatched 0.6s ease forwards; pointer-events: none; }
-                @keyframes popMatched { 0% { transform: scale(1); } 50% { transform: scale(1.1) rotate(3deg); box-shadow: 0 0 20px rgba(6, 182, 212, 0.6); } 100% { transform: scale(0.95); opacity: 0.7; filter: grayscale(10%); } }
+                /* MẶT ÚP: Glassmorphism + Gradient Pastel */
+                .memory-card-front { 
+                    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+                    border: 2px solid rgba(255,255,255,0.6); 
+                    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+                    font-size: 1.7rem; color: rgba(255,255,255,0.9); 
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.2); 
+                }
+                
+                /* MẶT NGỬA: Kính mờ trắng sáng */
+                .memory-card-back { 
+                    transform: rotateY(180deg); 
+                    background: rgba(255, 255, 255, 0.5);
+                    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+                    border: 2px solid rgba(255,255,255,0.7); 
+                    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+                }
+
+                /* HIỆU ỨNG KHI ĐÚNG: Nổ to lên rồi mờ dần và biến mất hoàn toàn */
+                .matched { animation: hideMatched 0.8s ease forwards; pointer-events: none; }
+                @keyframes hideMatched { 
+                    0% { transform: scale(1); opacity: 1; } 
+                    40% { transform: scale(1.15) rotate(5deg); opacity: 1; box-shadow: 0 0 30px rgba(255,255,255,0.8); } 
+                    100% { transform: scale(0); opacity: 0; visibility: hidden; display: none; } 
+                }
             </style>
 
             <div class="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 relative">
-                <div class="grid grid-cols-4 grid-rows-5 gap-2 w-full max-w-3xl h-full max-h-[80vh]" id="memory-board">
+                <div class="grid grid-cols-4 grid-rows-5 gap-3 w-full max-w-3xl h-full max-h-[80vh]" id="memory-board">
                     ${memoryGame.cards.map((card, index) => `
                         <div class="memory-card w-full h-full" id="card-${index}" onclick="window.latTheCauDo(${index})">
                             <div class="memory-card-inner">
                                 <div class="memory-card-front ${card.upTheme}">${card.backIcon}</div>
-                                <div class="memory-card-back ${card.frontTheme}">
+                                <div class="memory-card-back">
                                     <span class="${card.textClass} leading-tight">${card.text}</span>
                                 </div>
                             </div>
@@ -2698,6 +2722,7 @@ window.latTheCauDo = function(index) {
         if (isMatch) {
             setTimeout(() => {
                 window.phatAmThanhGame('dung'); 
+                // Thêm class matched để kích hoạt CSS biến mất thẻ
                 document.getElementById('card-' + memoryGame.flipped[0].index).classList.add('matched');
                 document.getElementById('card-' + memoryGame.flipped[1].index).classList.add('matched');
                 
