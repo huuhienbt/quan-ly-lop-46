@@ -2432,10 +2432,10 @@ window.xacNhanKhoa = async function(studentId, studentName) {
 };
 
 // ==========================================
-// GAME: LẬT THẺ CÂU ĐỐ VIP (Neon Kẹo Ngọt Phát Sáng + Giữ Chỗ Trống - Đã bỏ BXH)
+// GAME: LẬT THẺ CÂU ĐỐ VIP (Nhạc Nền, Chống Gian Lận, Neon)
 // ==========================================
 let memoryGame = {
-    cards: [], flipped: [], matchedCount: 0, lockBoard: false, timer: null, timeLeft: 600, score: 0
+    cards: [], flipped: [], matchedCount: 0, lockBoard: false, timer: null, timeLeft: 600, score: 0, bgMusic: null
 };
 
 // --- HỆ THỐNG ÂM THANH KỸ THUẬT SỐ ---
@@ -2444,29 +2444,16 @@ window.phatAmThanhGame = function(type) {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gainNode = ctx.createGain();
-        osc.connect(gainNode);
-        gainNode.connect(ctx.destination);
+        osc.connect(gainNode); gainNode.connect(ctx.destination);
         if (type === 'dung') { 
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(523.25, ctx.currentTime); 
-            osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); 
-            osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); 
-            gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+            osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, ctx.currentTime); osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); 
+            gainNode.gain.setValueAtTime(0.1, ctx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
         } else if (type === 'sai') { 
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(150, ctx.currentTime);
-            osc.frequency.setValueAtTime(100, ctx.currentTime + 0.1);
-            gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, ctx.currentTime); osc.frequency.setValueAtTime(100, ctx.currentTime + 0.1); 
+            gainNode.gain.setValueAtTime(0.1, ctx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
         } else if (type === 'lat') { 
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(300, ctx.currentTime);
-            gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-            osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
+            osc.type = 'triangle'; osc.frequency.setValueAtTime(300, ctx.currentTime); 
+            gainNode.gain.setValueAtTime(0.1, ctx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
         }
     } catch(e) {} 
 };
@@ -2490,6 +2477,11 @@ window.moGameLatTheToan = function() {
                 <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 mb-2 uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">LẬT THẺ CÂU ĐỐ</h2>
                 <p class="text-indigo-200 font-bold mb-6 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / 2 lần</span></p>
                 
+                <div class="bg-indigo-950/50 p-4 rounded-xl mb-6 text-left border border-indigo-500/30">
+                    <p class="text-white text-sm font-bold mb-1"><i class="fas fa-check-circle text-emerald-400 mr-2"></i>Đúng 1 cặp: <span class="text-yellow-300">+10 điểm</span></p>
+                    <p class="text-white text-sm font-bold"><i class="fas fa-times-circle text-red-400 mr-2"></i>Sai 1 cặp: <span class="text-red-300">-1 điểm</span> (Sau khi đã có điểm)</p>
+                </div>
+
                 <div class="space-y-4">
                     <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
                         <i class="fas fa-play-circle"></i> BẮT ĐẦU CHƠI
@@ -2500,30 +2492,83 @@ window.moGameLatTheToan = function() {
     `;
 };
 
-// --- KHỞI TẠO GAME TỪ SHEET ---
+// --- BẬT TẮT NHẠC NỀN ---
+window.toggleNhacNenGame = function() {
+    let btnIcon = document.getElementById('btn-music-icon');
+    if (memoryGame.bgMusic) {
+        if (memoryGame.bgMusic.paused) {
+            memoryGame.bgMusic.play();
+            btnIcon.className = "fas fa-volume-up text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]";
+        } else {
+            memoryGame.bgMusic.pause();
+            btnIcon.className = "fas fa-volume-mute text-slate-400";
+        }
+    }
+};
+
+// --- THUẬT TOÁN SINH LƯỚI BÀI KHÔNG NẰM CẠNH NHAU ---
+window.taoLuoiTheKhongCanhNhau = function(pairsData) {
+    let maxRetries = 100;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        let board = new Array(20).fill(null);
+        let success = true;
+        let pairsToPlace = pairsData.sort(() => 0.5 - Math.random());
+
+        for (let i = 0; i < pairsToPlace.length; i++) {
+            let pair = pairsToPlace[i];
+            let emptySlotsQ = [];
+            for(let k=0; k<20; k++) if(board[k] === null) emptySlotsQ.push(k);
+            if(emptySlotsQ.length === 0) { success = false; break; }
+            let slotQ = emptySlotsQ[Math.floor(Math.random() * emptySlotsQ.length)];
+            board[slotQ] = pair.qCard; 
+
+            let emptySlotsA = [];
+            let xQ = slotQ % 4; let yQ = Math.floor(slotQ / 4);
+
+            for(let k=0; k<20; k++) {
+                if(board[k] === null) {
+                    let xA = k % 4; let yA = Math.floor(k / 4);
+                    if (!(Math.abs(xQ - xA) <= 1 && Math.abs(yQ - yA) <= 1)) emptySlotsA.push(k);
+                }
+            }
+
+            if(emptySlotsA.length === 0) { success = false; break; } 
+            let slotA = emptySlotsA[Math.floor(Math.random() * emptySlotsA.length)];
+            board[slotA] = pair.aCard; 
+        }
+        if (success) return board; 
+    }
+    let allCards = [];
+    pairsData.forEach(p => { allCards.push(p.qCard); allCards.push(p.aCard); });
+    return allCards.sort(() => 0.5 - Math.random());
+};
+
+// --- KHỞI TẠO GAME ---
 window.batDauLatThe = function() {
+    // KHỞI ĐỘNG NHẠC NỀN
+    if (!memoryGame.bgMusic) {
+        memoryGame.bgMusic = new Audio('https://upload.wikimedia.org/wikipedia/commons/a/a3/Kevin_MacLeod_-_Carefree.ogg');
+        memoryGame.bgMusic.loop = true;
+        memoryGame.bgMusic.volume = 0.3; // Mức âm lượng vừa phải (30%)
+    }
+    // Chạy nhạc ngay khi bấm nút Bắt đầu (Đảm bảo trình duyệt cho phép)
+    memoryGame.bgMusic.play().catch(e => console.log("Trình duyệt chặn autoplay tự động"));
+
     let fallbackData = [
-        { cauhoi: "Con gì có cánh, Mà lại biết bơi?", dapan: "Chim cánh cụt", img: "🐧" },
-        { cauhoi: "Con gì cổ dài, Ăn lá trên cao?", dapan: "Hươu cao cổ", img: "🦒" },
-        { cauhoi: "Con gì mào đỏ, Gáy sáng ò ó o?", dapan: "Con gà trống", img: "🐓" },
-        { cauhoi: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", dapan: "Dưa hấu", img: "🍉" },
-        { cauhoi: "Con gì tám cẳng hai càng?", dapan: "Con cua", img: "🦀" },
-        { cauhoi: "Cái gì để che nắng mưa?", dapan: "Cái ô (dù)", img: "☂️" },
-        { cauhoi: "Quả gì năm múi, Cắt ra hình sao?", dapan: "Quả khế", img: "⭐" },
-        { cauhoi: "Con gì giữ nhà, Thấy khách sủa gâu?", dapan: "Con chó", img: "🐶" },
-        { cauhoi: "Mùa gì phượng vĩ nở rực?", dapan: "Mùa hè", img: "☀️" },
-        { cauhoi: "Xe gì hai bánh, Đạp chạy bon bon?", dapan: "Xe đạp", img: "🚲" }
+        { cauhoi: "Con gì có cánh, Mà lại biết bơi?", dapan: "Chim cánh cụt", img: "🐧" }, { cauhoi: "Con gì cổ dài, Ăn lá trên cao?", dapan: "Hươu cao cổ", img: "🦒" },
+        { cauhoi: "Con gì mào đỏ, Gáy sáng ò ó o?", dapan: "Con gà trống", img: "🐓" }, { cauhoi: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", dapan: "Dưa hấu", img: "🍉" },
+        { cauhoi: "Con gì tám cẳng hai càng?", dapan: "Con cua", img: "🦀" }, { cauhoi: "Cái gì để che nắng mưa?", dapan: "Cái ô (dù)", img: "☂️" },
+        { cauhoi: "Quả gì năm múi, Cắt ra hình sao?", dapan: "Quả khế", img: "⭐" }, { cauhoi: "Con gì giữ nhà, Thấy khách sủa gâu?", dapan: "Con chó", img: "🐶" },
+        { cauhoi: "Mùa gì phượng vĩ nở rực?", dapan: "Mùa hè", img: "☀️" }, { cauhoi: "Xe gì hai bánh, Đạp chạy bon bon?", dapan: "Xe đạp", img: "🚲" }
     ];
 
     let sourceData = (Data.caudo && Data.caudo.length >= 10) ? Data.caudo : fallbackData;
     let selectedPairs = sourceData.sort(() => 0.5 - Math.random()).slice(0, 10);
     
-    // BỘ ICON CHO MẶT ÚP 
     const cardBackIcons = ['🦁','🐯','🐘','🦒','🐻','🐨','🐹','🐰','🐶','🐱','🦜','🦋','🍎','🍕','🎁','✈️','🚀','🎸','⚽','🌈'];
     const shuffledBackIcons = cardBackIcons.sort(() => 0.5 - Math.random()); 
     let cardCount = 0;
 
-    // BỘ MÀU NEON KẸO NGỌT PHÁT SÁNG (Dùng Box Shadow dạng Glow)
     const neonThemes = [
         'bg-gradient-to-br from-pink-400 to-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.6)] border-pink-200 text-white',
         'bg-gradient-to-br from-fuchsia-400 to-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.6)] border-fuchsia-200 text-white',
@@ -2534,54 +2579,39 @@ window.batDauLatThe = function() {
         'bg-gradient-to-br from-lime-400 to-green-500 shadow-[0_0_20px_rgba(132,204,22,0.6)] border-lime-200 text-white',
         'bg-gradient-to-br from-sky-400 to-blue-500 shadow-[0_0_20px_rgba(56,189,248,0.6)] border-sky-200 text-white'
     ];
-
-    let cards = [];
     let textNeonColors = ['text-pink-600', 'text-blue-600', 'text-teal-600', 'text-fuchsia-600', 'text-orange-600'];
     
+    let pairsData = [];
     selectedPairs.forEach((item, index) => {
-        let qText = item.cauhoi || item['cauhoi'] || "Lỗi câu hỏi";
-        let aText = item.dapan || item['dapan'] || "Lỗi đáp án";
-        let img = item.icon || item.Icon || item.img || "✨";
+        let qText = item.cauhoi || item['cauhoi'] || "Lỗi câu hỏi"; let aText = item.dapan || item['dapan'] || "Lỗi đáp án"; let img = item.icon || item.Icon || item.img || "✨";
         let randTextColor = textNeonColors[index % textNeonColors.length];
 
-        // Lấy màu Neon ngẫu nhiên cho mặt úp thẻ Q
-        let qTheme = neonThemes[Math.floor(Math.random() * neonThemes.length)];
-        let qBackIcon = shuffledBackIcons[cardCount];
-        cardCount++;
+        let qTheme = neonThemes[Math.floor(Math.random() * neonThemes.length)]; let qBackIcon = shuffledBackIcons[cardCount++];
+        let qCard = { matchId: index, type: 'Q', text: qText, backIcon: qBackIcon, upTheme: qTheme, frontTheme: 'bg-white/95 border-indigo-200 shadow-[0_0_15px_rgba(255,255,255,0.8)]', textClass: 'text-indigo-900 text-[13px] sm:text-sm font-bold' };
 
-        cards.push({ 
-            matchId: index, type: 'Q', text: qText, backIcon: qBackIcon, upTheme: qTheme,
-            frontTheme: 'bg-white/95 border-indigo-200 shadow-[0_0_15px_rgba(255,255,255,0.8)]', textClass: 'text-indigo-900 text-[13px] sm:text-sm font-bold' 
-        });
+        let aTheme = neonThemes[Math.floor(Math.random() * neonThemes.length)]; let aBackIcon = shuffledBackIcons[cardCount++];
+        let aCard = { matchId: index, type: 'A', text: `<div class="text-[1.8rem] mb-1 drop-shadow-sm">${img}</div><span class="text-xs sm:text-sm block">${aText}</span>`, backIcon: aBackIcon, upTheme: aTheme, frontTheme: 'bg-white/95 border-rose-200 shadow-[0_0_15px_rgba(255,255,255,0.8)]', textClass: `${randTextColor} font-black drop-shadow-sm` };
 
-        // Lấy màu Neon ngẫu nhiên cho mặt úp thẻ A
-        let aTheme = neonThemes[Math.floor(Math.random() * neonThemes.length)];
-        let aBackIcon = shuffledBackIcons[cardCount];
-        cardCount++;
-
-        cards.push({ 
-            matchId: index, type: 'A', text: `<div class="text-[1.8rem] mb-1 drop-shadow-sm">${img}</div><span class="text-xs sm:text-sm block">${aText}</span>`, backIcon: aBackIcon, upTheme: aTheme,
-            frontTheme: 'bg-white/95 border-rose-200 shadow-[0_0_15px_rgba(255,255,255,0.8)]', textClass: `${randTextColor} font-black drop-shadow-sm` 
-        });
+        pairsData.push({ qCard, aCard });
     });
     
-    memoryGame.cards = cards.sort(() => 0.5 - Math.random());
-    memoryGame.flipped = [];
-    memoryGame.matchedCount = 0;
-    memoryGame.lockBoard = false;
-    memoryGame.timeLeft = 600; 
-    memoryGame.score = 0;
+    memoryGame.cards = window.taoLuoiTheKhongCanhNhau(pairsData);
+    memoryGame.flipped = []; memoryGame.matchedCount = 0; memoryGame.lockBoard = false; memoryGame.timeLeft = 600; memoryGame.score = 0;
 
-    // Đổi màu nền background thành màu xanh đen (indigo-900) để nổi bật ánh sáng Neon của thẻ
     document.getElementById('content').innerHTML = `
         <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-900 overflow-hidden flex flex-col font-sans select-none" id="game-ui-container">
             <div class="bg-indigo-950/80 backdrop-blur-md border-b border-white/10 p-2 sm:p-3 flex justify-between items-center shadow-lg relative z-20">
-                <button onclick="window.moGameLatTheToan()" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center font-bold text-xl hover:bg-red-500 transition shadow-sm shrink-0 border border-white/20"><i class="fas fa-arrow-left"></i></button>
-                <div class="flex-1 text-center px-2">
-                    <h2 class="text-sm sm:text-lg font-black text-cyan-400 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(34,211,238,0.8)] truncate"><i class="fas fa-puzzle-piece mr-1"></i>TÌM CẶP CÂU ĐỐ</h2>
+                <button onclick="window.thoatGameLatTheToan(false)" class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center font-bold text-xl hover:bg-red-500 transition shadow-sm shrink-0 border border-white/20"><i class="fas fa-arrow-left"></i></button>
+                
+                <div class="flex-1 text-center px-2 flex items-center justify-center gap-2">
+                    <h2 class="text-sm sm:text-lg font-black text-cyan-400 uppercase tracking-widest drop-shadow-[0_0_5px_rgba(34,211,238,0.8)] truncate hidden sm:block"><i class="fas fa-puzzle-piece mr-1"></i>TÌM CẶP CÂU ĐỐ</h2>
+                    <button onclick="window.toggleNhacNenGame()" class="w-8 h-8 rounded-full bg-white/5 border border-white/20 hover:bg-white/20 transition flex items-center justify-center" title="Bật/Tắt nhạc nền">
+                        <i id="btn-music-icon" class="fas fa-volume-up text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]"></i>
+                    </button>
                 </div>
+
                 <div class="flex gap-2 shrink-0">
-                    <div class="bg-yellow-500/20 px-3 py-1.5 rounded-full font-black text-yellow-300 shadow-[0_0_10px_rgba(250,204,21,0.3)] flex items-center gap-1 border border-yellow-400/50">
+                    <div class="bg-yellow-500/20 px-3 py-1.5 rounded-full font-black text-yellow-300 shadow-[0_0_10px_rgba(250,204,21,0.3)] flex items-center gap-1 border border-yellow-400/50 transition-all duration-300" id="mg-score-container">
                         <i class="fas fa-star text-yellow-400 animate-pulse"></i> <span id="mg-score-latthe">0</span>
                     </div>
                     <div class="bg-cyan-500/20 px-3 py-1.5 rounded-full font-black text-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.3)] flex items-center gap-1 border border-cyan-400/50">
@@ -2594,35 +2624,15 @@ window.batDauLatThe = function() {
                 .memory-card { perspective: 1000px; cursor: pointer; }
                 .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; }
                 .memory-card.flipped .memory-card-inner { transform: rotateY(180deg); }
+                .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 1rem; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; padding: 0.5rem; }
+                .memory-card-front { backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); border-width: 2px; border-style: solid; font-size: 2rem; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+                .memory-card-back { transform: rotateY(180deg); border-width: 3px; border-style: solid; }
                 
-                .memory-card-front, .memory-card-back { 
-                    position: absolute; width: 100%; height: 100%; 
-                    backface-visibility: hidden; border-radius: 1rem; 
-                    display: flex; align-items: center; justify-content: center; 
-                    flex-direction: column; text-align: center; padding: 0.5rem;
-                }
-                
-                /* MẶT ÚP: Thêm hiệu ứng phát sáng cho Icon */
-                .memory-card-front { 
-                    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-                    border-width: 2px; border-style: solid;
-                    font-size: 2rem;
-                    text-shadow: 0 0 10px rgba(255,255,255,0.8); 
-                }
-                
-                /* MẶT NGỬA: Kính sáng */
-                .memory-card-back { 
-                    transform: rotateY(180deg); 
-                    border-width: 3px; border-style: solid;
-                }
-
-                /* HIỆU ỨNG KHI ĐÚNG: Nổ to lên rồi biến mất NHƯNG GIỮ CHỖ */
                 .matched { animation: hideMatched 0.8s ease forwards; pointer-events: none; }
-                @keyframes hideMatched { 
-                    0% { transform: scale(1); opacity: 1; } 
-                    40% { transform: scale(1.15) rotate(5deg); opacity: 1; box-shadow: 0 0 30px rgba(255,255,255,0.9); } 
-                    100% { transform: scale(0); opacity: 0; visibility: hidden; } 
-                }
+                @keyframes hideMatched { 0% { transform: scale(1); opacity: 1; } 40% { transform: scale(1.15) rotate(5deg); opacity: 1; box-shadow: 0 0 30px rgba(255,255,255,0.9); } 100% { transform: scale(0); opacity: 0; visibility: hidden; } }
+                
+                .score-up { color: #4ade80 !important; transform: scale(1.2); text-shadow: 0 0 15px #4ade80; }
+                .score-down { color: #f87171 !important; transform: scale(1.2) rotate(-5deg); text-shadow: 0 0 15px #f87171; }
             </style>
 
             <div class="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 relative">
@@ -2645,14 +2655,13 @@ window.batDauLatThe = function() {
     if(memoryGame.timer) clearInterval(memoryGame.timer);
     memoryGame.timer = setInterval(() => {
         memoryGame.timeLeft--;
-        let m = Math.floor(memoryGame.timeLeft / 60);
-        let s = memoryGame.timeLeft % 60;
+        let m = Math.floor(memoryGame.timeLeft / 60); let s = memoryGame.timeLeft % 60;
         document.getElementById('mg-timer-latthe').innerText = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
         if (memoryGame.timeLeft <= 0) { clearInterval(memoryGame.timer); window.ketThucGameLatThe(true); }
     }, 1000);
 };
 
-// --- LOGIC LẬT THẺ ---
+// --- LOGIC LẬT THẺ & TÍNH ĐIỂM ---
 window.latTheCauDo = function(index) {
     if (memoryGame.lockBoard) return;
     let cardEl = document.getElementById('card-' + index);
@@ -2664,10 +2673,11 @@ window.latTheCauDo = function(index) {
 
     if (memoryGame.flipped.length === 2) {
         memoryGame.lockBoard = true;
-        let c1 = memoryGame.flipped[0].data;
-        let c2 = memoryGame.flipped[1].data;
-
+        let c1 = memoryGame.flipped[0].data; let c2 = memoryGame.flipped[1].data;
         let isMatch = (c1.matchId === c2.matchId) && (c1.type !== c2.type);
+
+        let scoreContainer = document.getElementById('mg-score-container');
+        let scoreText = document.getElementById('mg-score-latthe');
 
         if (isMatch) {
             setTimeout(() => {
@@ -2675,12 +2685,14 @@ window.latTheCauDo = function(index) {
                 document.getElementById('card-' + memoryGame.flipped[0].index).classList.add('matched');
                 document.getElementById('card-' + memoryGame.flipped[1].index).classList.add('matched');
                 
-                memoryGame.score += 5; 
-                document.getElementById('mg-score-latthe').innerText = memoryGame.score;
+                memoryGame.score += 10; 
+                scoreText.innerText = memoryGame.score;
+                
+                scoreContainer.classList.add('score-up');
+                setTimeout(() => scoreContainer.classList.remove('score-up'), 500);
                 
                 memoryGame.matchedCount += 2;
-                memoryGame.flipped = [];
-                memoryGame.lockBoard = false;
+                memoryGame.flipped = []; memoryGame.lockBoard = false;
 
                 if (memoryGame.matchedCount === 20) window.ketThucGameLatThe(false);
             }, 600);
@@ -2689,8 +2701,17 @@ window.latTheCauDo = function(index) {
                 window.phatAmThanhGame('sai');
                 document.getElementById('card-' + memoryGame.flipped[0].index).classList.remove('flipped');
                 document.getElementById('card-' + memoryGame.flipped[1].index).classList.remove('flipped');
-                memoryGame.flipped = [];
-                memoryGame.lockBoard = false;
+                
+                if (memoryGame.matchedCount > 0) {
+                    memoryGame.score -= 1; 
+                    if (memoryGame.score < 0) memoryGame.score = 0; 
+                    scoreText.innerText = memoryGame.score;
+                    
+                    scoreContainer.classList.add('score-down');
+                    setTimeout(() => scoreContainer.classList.remove('score-down'), 500);
+                }
+
+                memoryGame.flipped = []; memoryGame.lockBoard = false;
             }, 1200);
         }
     }
@@ -2699,6 +2720,9 @@ window.latTheCauDo = function(index) {
 window.ketThucGameLatThe = function(isTimeout = false) {
     clearInterval(memoryGame.timer);
     
+    // Đổi nhạc nền thành nhạc vinh danh hoặc dừng lại
+    if(memoryGame.bgMusic) { memoryGame.bgMusic.pause(); }
+
     let titleText = isTimeout ? "HẾT GIỜ!" : "XUẤT SẮC!";
     let titleColor = isTimeout ? "text-fuchsia-400" : "text-yellow-300";
     if (!isTimeout) window.safeConfetti();
@@ -2717,14 +2741,14 @@ window.ketThucGameLatThe = function(isTimeout = false) {
 
 window.thoatGameLatTheToan = async function(saveScore = false) {
     clearInterval(memoryGame.timer);
+    if(memoryGame.bgMusic) { memoryGame.bgMusic.pause(); memoryGame.bgMusic.currentTime = 0; }
     
     if (saveScore && memoryGame.score > 0 && currentUser && currentUser.role === 'student') {
         document.getElementById('loader').style.display = 'flex'; 
         let uniqueGameSession = "Lật Thẻ Câu Đố (" + new Date().toLocaleString('vi-VN') + ")";
         let dbSubjectName = "MathGame_LatThe";
-        
         try { 
-            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: dbSubjectName, group: uniqueGameSession, score: memoryGame.score, score_earned: memoryGame.score, details: "Tìm được " + (memoryGame.matchedCount/2) + "/10 cặp câu đố." } }) }); 
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: dbSubjectName, group: uniqueGameSession, score: memoryGame.score, score_earned: memoryGame.score, details: "Tìm được " + (memoryGame.matchedCount/2) + "/10 cặp câu đố. Điểm: " + memoryGame.score } }) }); 
             Data.log.push({ id: currentUser.id, subject: dbSubjectName, group: uniqueGameSession, score: memoryGame.score, real_added: memoryGame.score, time: new Date().toISOString(), details: "Tìm được " + (memoryGame.matchedCount/2) + "/10 cặp." }); 
             currentUser.score = Number(currentUser.score) + memoryGame.score;
             alert(`Nộp điểm thành công! Con nhận được ${memoryGame.score} điểm.`);
@@ -2732,10 +2756,7 @@ window.thoatGameLatTheToan = async function(saveScore = false) {
         finally { document.getElementById('loader').style.display = 'none'; }
     }
     
-    let gameUI = document.querySelector('#game-ui-container');
-    if (gameUI) gameUI.remove();
-    let mainUI = document.querySelector('.bg-\\[url'); 
-    if(mainUI) mainUI.remove();
-
+    let gameUI = document.querySelector('#game-ui-container'); if (gameUI) gameUI.remove();
+    let mainUI = document.querySelector('.bg-\\[url'); if(mainUI) mainUI.remove();
     veTrangChu(); moGocHocTap(); 
 };
