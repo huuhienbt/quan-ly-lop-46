@@ -2432,7 +2432,7 @@ window.xacNhanKhoa = async function(studentId, studentName) {
 };
 
 // ==========================================
-// GAME: LẬT THẺ CÂU ĐỐ VIP (Nâng cấp Mặt úp ngẫu nhiên không trùng)
+// GAME: LẬT THẺ CÂU ĐỐ VIP (Pastel Neon + Icon Thu Nhỏ)
 // ==========================================
 let memoryGame = {
     cards: [], flipped: [], matchedCount: 0, lockBoard: false, timer: null, timeLeft: 600, score: 0
@@ -2483,18 +2483,18 @@ window.moGameLatTheToan = function() {
     }).length;
 
     document.getElementById('content').innerHTML = `
-        <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-blue-50 flex flex-col items-center justify-center font-sans p-4">
-            <div class="bg-white/95 backdrop-blur-md p-8 rounded-[3rem] shadow-2xl w-full max-w-md text-center border-4 border-yellow-300 relative">
+        <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-50 flex flex-col items-center justify-center font-sans p-4">
+            <div class="bg-white/95 backdrop-blur-md p-8 rounded-[3rem] shadow-2xl w-full max-w-md text-center border-4 border-fuchsia-300 relative">
                 <button onclick="veTrangChu(); moGocHocTap();" class="absolute top-4 right-4 w-10 h-10 bg-slate-100 text-slate-500 rounded-full hover:bg-red-500 hover:text-white transition font-bold shadow-sm"><i class="fas fa-times"></i></button>
-                <div class="text-6xl mb-4 animate-bounce drop-shadow-md">🧩</div>
-                <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-pink-500 mb-2 uppercase drop-shadow-sm">LẬT THẺ CÂU ĐỐ</h2>
-                <p class="text-slate-500 font-bold mb-6 bg-yellow-50 py-2 rounded-xl border border-yellow-200">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-500' : 'text-green-600'}">${soLanDaChoiHomNay} / 2 lần</span></p>
+                <div class="text-5xl sm:text-6xl mb-4 animate-bounce drop-shadow-md">🧩</div>
+                <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 to-cyan-500 mb-2 uppercase drop-shadow-sm">LẬT THẺ CÂU ĐỐ</h2>
+                <p class="text-slate-500 font-bold mb-6 bg-indigo-50 py-2 rounded-xl border border-indigo-100">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-500' : 'text-emerald-500'}">${soLanDaChoiHomNay} / 2 lần</span></p>
                 
                 <div class="space-y-4">
-                    <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-green-400 to-emerald-500 text-white font-black py-4 rounded-2xl shadow-[0_5px_0_#059669] hover:translate-y-1 hover:shadow-none transition flex items-center justify-center gap-3 text-xl btn-3d">
+                    <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-4 rounded-2xl shadow-[0_5px_0_#0284c7] hover:translate-y-1 hover:shadow-none transition flex items-center justify-center gap-3 text-xl btn-3d">
                         <i class="fas fa-play-circle text-2xl"></i> BẮT ĐẦU CHƠI
                     </button>
-                    <button onclick="window.xemBxhLatThe()" class="w-full bg-yellow-300 text-yellow-900 font-black py-4 rounded-2xl shadow-[0_5px_0_#ca8a04] hover:translate-y-1 hover:shadow-none transition flex items-center justify-center gap-3 text-xl border-2 border-yellow-400 btn-3d">
+                    <button onclick="window.xemBxhLatThe()" class="w-full bg-fuchsia-100 text-fuchsia-700 font-black py-4 rounded-2xl shadow-[0_5px_0_#d946ef] hover:translate-y-1 hover:shadow-none transition flex items-center justify-center gap-3 text-xl border-2 border-fuchsia-300 btn-3d">
                         <i class="fas fa-trophy text-2xl"></i> BẢNG XẾP HẠNG
                     </button>
                 </div>
@@ -2522,12 +2522,12 @@ window.xemBxhLatThe = function() {
     let top10 = arrBxh.slice(0, 10);
 
     let bxhHtml = top10.map((hs, i) => `
-        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-orange-100 shadow-sm mb-2">
+        <div class="flex items-center justify-between bg-white p-3 rounded-xl border border-cyan-100 shadow-sm mb-2">
             <div class="flex items-center gap-3">
-                <span class="w-8 h-8 rounded-full flex items-center justify-center font-black ${i===0?'bg-yellow-400 text-white shadow-md':i===1?'bg-slate-300 text-white shadow-md':i===2?'bg-orange-300 text-white shadow-md':'bg-orange-50 text-orange-600'}">${i+1}</span>
+                <span class="w-8 h-8 rounded-full flex items-center justify-center font-black ${i===0?'bg-yellow-400 text-white shadow-md':i===1?'bg-slate-300 text-white shadow-md':i===2?'bg-orange-300 text-white shadow-md':'bg-cyan-50 text-cyan-600'}">${i+1}</span>
                 <span class="font-bold text-slate-700">${hs.name}</span>
             </div>
-            <span class="font-black text-orange-600">${hs.score} đ</span>
+            <span class="font-black text-cyan-600">${hs.score} đ</span>
         </div>
     `).join('');
 
@@ -2536,10 +2536,10 @@ window.xemBxhLatThe = function() {
     let modal = document.createElement('div');
     modal.className = "fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-[cascadeDrop_0.3s_ease-out_forwards]";
     modal.innerHTML = `
-        <div class="bg-orange-50 w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden border-4 border-white">
-            <div class="bg-gradient-to-r from-orange-500 to-pink-500 p-4 flex justify-between items-center text-white">
+        <div class="bg-cyan-50 w-full max-w-md rounded-[2rem] shadow-2xl overflow-hidden border-4 border-white">
+            <div class="bg-gradient-to-r from-cyan-500 to-blue-500 p-4 flex justify-between items-center text-white">
                 <h3 class="font-black text-xl"><i class="fas fa-crown text-yellow-300 mr-2"></i>CAO THỦ LẬT THẺ</h3>
-                <button onclick="this.closest('.fixed').remove()" class="hover:text-red-200 transition text-2xl"><i class="fas fa-times"></i></button>
+                <button onclick="this.closest('.fixed').remove()" class="hover:text-cyan-200 transition text-2xl"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">${bxhHtml}</div>
         </div>
@@ -2547,56 +2547,68 @@ window.xemBxhLatThe = function() {
     document.body.appendChild(modal);
 };
 
-// --- KHỞI TẠO GAME TỪ SHEET CAU_DO (Mặt úp ngẫu nhiên không trùng) ---
+// --- KHỞI TẠO GAME TỪ SHEET ---
 window.batDauLatThe = function() {
     let fallbackData = [
-        { cau_hoi: "Con gì có cánh, Mà lại biết bơi?", dap_an: "Chim cánh cụt", img: "🐧" },
-        { cau_hoi: "Con gì cổ dài, Ăn lá trên cao?", dap_an: "Hươu cao cổ", img: "🦒" },
-        { cau_hoi: "Con gì mào đỏ, Gáy sáng ò ó o?", dap_an: "Con gà trống", img: "🐓" },
-        { cau_hoi: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", dap_an: "Dưa hấu", img: "🍉" },
-        { cau_hoi: "Con gì tám cẳng hai càng?", dap_an: "Con cua", img: "🦀" },
-        { cau_hoi: "Cái gì để che nắng mưa?", dap_an: "Cái ô (dù)", img: "☂️" },
-        { cau_hoi: "Quả gì năm múi, Cắt ra hình sao?", dap_an: "Quả khế", img: "⭐" },
-        { cau_hoi: "Con gì giữ nhà, Thấy khách sủa gâu?", dap_an: "Con chó", img: "🐶" },
-        { cau_hoi: "Mùa gì phượng vĩ nở rực?", dap_an: "Mùa hè", img: "☀️" },
-        { cau_hoi: "Xe gì hai bánh, Đạp chạy bon bon?", dap_an: "Xe đạp", img: "🚲" }
+        { cauhoi: "Con gì có cánh, Mà lại biết bơi?", dapan: "Chim cánh cụt", img: "🐧" },
+        { cauhoi: "Con gì cổ dài, Ăn lá trên cao?", dapan: "Hươu cao cổ", img: "🦒" },
+        { cauhoi: "Con gì mào đỏ, Gáy sáng ò ó o?", dapan: "Con gà trống", img: "🐓" },
+        { cauhoi: "Quả gì ruột đỏ, Vỏ xanh chấm đen?", dapan: "Dưa hấu", img: "🍉" },
+        { cauhoi: "Con gì tám cẳng hai càng?", dapan: "Con cua", img: "🦀" },
+        { cauhoi: "Cái gì để che nắng mưa?", dapan: "Cái ô (dù)", img: "☂️" },
+        { cauhoi: "Quả gì năm múi, Cắt ra hình sao?", dapan: "Quả khế", img: "⭐" },
+        { cauhoi: "Con gì giữ nhà, Thấy khách sủa gâu?", dapan: "Con chó", img: "🐶" },
+        { cauhoi: "Mùa gì phượng vĩ nở rực?", dapan: "Mùa hè", img: "☀️" },
+        { cauhoi: "Xe gì hai bánh, Đạp chạy bon bon?", dapan: "Xe đạp", img: "🚲" }
     ];
 
     let sourceData = (Data.caudo && Data.caudo.length >= 10) ? Data.caudo : fallbackData;
     let selectedPairs = sourceData.sort(() => 0.5 - Math.random()).slice(0, 10);
     
-    // BỘ SƯU TẬP 20 ICON CHO MẶT ÚP (KHÔNG TRÙNG)
+    // BỘ ICON CHO MẶT ÚP 
     const cardBackIcons = ['🦁','🐯','🐘','🦒','🐻','🐨','🐹','🐰','🐶','🐱','🦜','🦋','🍎','🍕','🎁','✈️','🚀','🎸','⚽','🌈'];
-    const shuffledBackIcons = cardBackIcons.sort(() => 0.5 - Math.random()); // Xáo trộn để ngẫu nhiên
+    const shuffledBackIcons = cardBackIcons.sort(() => 0.5 - Math.random()); 
     let cardCount = 0;
 
+    // BỘ MÀU GRADIENT PASTEL-NEON CHO MẶT ÚP
+    const pastelNeonGradients = [
+        'bg-gradient-to-br from-pink-400 to-rose-400',
+        'bg-gradient-to-br from-fuchsia-400 to-purple-500',
+        'bg-gradient-to-br from-cyan-400 to-blue-500',
+        'bg-gradient-to-br from-emerald-400 to-teal-500',
+        'bg-gradient-to-br from-amber-400 to-orange-500',
+        'bg-gradient-to-br from-violet-400 to-fuchsia-500',
+        'bg-gradient-to-br from-lime-400 to-green-500',
+        'bg-gradient-to-br from-sky-400 to-indigo-500'
+    ];
+
     let cards = [];
-    let colorClasses = ['text-pink-600', 'text-blue-600', 'text-green-600', 'text-purple-600', 'text-orange-600'];
+    let colorClasses = ['text-pink-600', 'text-blue-600', 'text-teal-600', 'text-fuchsia-600', 'text-orange-600'];
     
     selectedPairs.forEach((item, index) => {
-        // Lấy chính xác cột cauhoi và dapan từ Google Sheet của thầy
         let qText = item.cauhoi || item['cauhoi'] || "Lỗi câu hỏi";
         let aText = item.dapan || item['dapan'] || "Lỗi đáp án";
         let img = item.icon || item.Icon || item.img || "✨";
-        
-        let randColor = colorClasses[index % colorClasses.length];
+        let randTextColor = colorClasses[index % colorClasses.length];
 
-        // Lấy icon ngẫu nhiên không trùng cho mặt úp của thẻ Q
+        // Lấy màu nền Pastel-Neon ngẫu nhiên cho mặt úp thẻ Q
+        let qBgColor = pastelNeonGradients[Math.floor(Math.random() * pastelNeonGradients.length)];
         let qBackIcon = shuffledBackIcons[cardCount];
         cardCount++;
-        // Thẻ Câu đố (Nền xanh nhạt)
+
         cards.push({ 
-            matchId: index, type: 'Q', text: qText, backIcon: qBackIcon,
-            frontTheme: 'bg-blue-50 border-blue-300', textClass: 'text-slate-700 text-sm sm:text-base font-bold' 
+            matchId: index, type: 'Q', text: qText, backIcon: qBackIcon, upTheme: qBgColor,
+            frontTheme: 'bg-indigo-50 border-indigo-200', textClass: 'text-indigo-900 text-[13px] sm:text-sm font-bold' 
         });
 
-        // Lấy icon ngẫu nhiên không trùng cho mặt úp của thẻ A
+        // Lấy màu nền Pastel-Neon ngẫu nhiên cho mặt úp thẻ A
+        let aBgColor = pastelNeonGradients[Math.floor(Math.random() * pastelNeonGradients.length)];
         let aBackIcon = shuffledBackIcons[cardCount];
         cardCount++;
-        // Thẻ Đáp án (Nền hồng/cam nhạt có icon)
+
         cards.push({ 
-            matchId: index, type: 'A', text: `${img}<br><span class="text-sm mt-1 block">${aText}</span>`, backIcon: aBackIcon,
-            frontTheme: 'bg-orange-50 border-orange-300', textClass: `${randColor} text-2xl font-black` 
+            matchId: index, type: 'A', text: `<div class="text-[1.8rem] mb-1">${img}</div><span class="text-xs sm:text-sm block">${aText}</span>`, backIcon: aBackIcon, upTheme: aBgColor,
+            frontTheme: 'bg-rose-50 border-rose-200', textClass: `${randTextColor} font-black` 
         });
     });
     
@@ -2608,18 +2620,18 @@ window.batDauLatThe = function() {
     memoryGame.score = 0;
 
     document.getElementById('content').innerHTML = `
-        <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-emerald-50 overflow-hidden flex flex-col font-sans select-none" id="game-ui-container">
-            <div class="bg-white/90 backdrop-blur border-b-4 border-emerald-300 p-2 sm:p-3 flex justify-between items-center shadow-md relative z-20">
+        <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-50 overflow-hidden flex flex-col font-sans select-none" id="game-ui-container">
+            <div class="bg-white/90 backdrop-blur border-b-4 border-cyan-300 p-2 sm:p-3 flex justify-between items-center shadow-md relative z-20">
                 <button onclick="window.moGameLatTheToan()" class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center font-bold text-xl hover:bg-red-500 hover:text-white transition shadow-sm shrink-0"><i class="fas fa-arrow-left"></i></button>
                 <div class="flex-1 text-center px-2">
-                    <h2 class="text-sm sm:text-lg font-black text-emerald-600 uppercase tracking-widest drop-shadow-sm truncate"><i class="fas fa-puzzle-piece mr-1"></i>TÌM CẶP CÂU ĐỐ</h2>
+                    <h2 class="text-sm sm:text-lg font-black text-cyan-600 uppercase tracking-widest drop-shadow-sm truncate"><i class="fas fa-puzzle-piece mr-1"></i>TÌM CẶP CÂU ĐỐ</h2>
                 </div>
                 <div class="flex gap-2 shrink-0">
                     <div class="bg-yellow-100 px-3 py-1.5 rounded-full font-black text-yellow-700 shadow-inner flex items-center gap-1 border-2 border-yellow-200">
                         <i class="fas fa-star text-yellow-500"></i> <span id="mg-score-latthe">0</span>
                     </div>
-                    <div class="bg-emerald-100 px-3 py-1.5 rounded-full font-black text-emerald-700 shadow-inner flex items-center gap-1 border-2 border-emerald-200">
-                        <i class="fas fa-stopwatch animate-pulse text-orange-500"></i> <span id="mg-timer-latthe">10:00</span>
+                    <div class="bg-cyan-100 px-3 py-1.5 rounded-full font-black text-cyan-700 shadow-inner flex items-center gap-1 border-2 border-cyan-200">
+                        <i class="fas fa-stopwatch animate-pulse text-fuchsia-500"></i> <span id="mg-timer-latthe">10:00</span>
                     </div>
                 </div>
             </div>
@@ -2629,12 +2641,14 @@ window.batDauLatThe = function() {
                 .memory-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-style: preserve-3d; }
                 .memory-card.flipped .memory-card-inner { transform: rotateY(180deg); }
                 .memory-card-front, .memory-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-                /* Mặt úp: Nền Gradient vàng ấm với icon ngẫu nhiên */
-                .memory-card-front { background: radial-gradient(circle, #fcd34d 0%, #f59e0b 100%); border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: rgba(255,255,255,0.9); text-shadow: 1px 1px 0 #d97706; }
+                
+                /* Mặt úp: Bỏ màu fix cứng, lấy màu Pastel Neon từ class Tailwind, thu nhỏ icon */
+                .memory-card-front { border: 3px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: rgba(255,255,255,0.9); text-shadow: 1px 1px 2px rgba(0,0,0,0.2); }
+                
                 /* Mặt ngửa */
                 .memory-card-back { transform: rotateY(180deg); border: 3px solid; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0.5rem; flex-direction: column; }
                 .matched { animation: popMatched 0.6s ease forwards; pointer-events: none; }
-                @keyframes popMatched { 0% { transform: scale(1); } 50% { transform: scale(1.1) rotate(3deg); box-shadow: 0 0 20px #22c55e; } 100% { transform: scale(0.95); opacity: 0.8; filter: grayscale(30%); } }
+                @keyframes popMatched { 0% { transform: scale(1); } 50% { transform: scale(1.1) rotate(3deg); box-shadow: 0 0 20px rgba(6, 182, 212, 0.6); } 100% { transform: scale(0.95); opacity: 0.7; filter: grayscale(10%); } }
             </style>
 
             <div class="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 relative">
@@ -2642,7 +2656,7 @@ window.batDauLatThe = function() {
                     ${memoryGame.cards.map((card, index) => `
                         <div class="memory-card w-full h-full" id="card-${index}" onclick="window.latTheCauDo(${index})">
                             <div class="memory-card-inner">
-                                <div class="memory-card-front">${card.backIcon}</div>
+                                <div class="memory-card-front ${card.upTheme}">${card.backIcon}</div>
                                 <div class="memory-card-back ${card.frontTheme}">
                                     <span class="${card.textClass} leading-tight">${card.text}</span>
                                 </div>
@@ -2712,17 +2726,17 @@ window.ketThucGameLatThe = function(isTimeout = false) {
     clearInterval(memoryGame.timer);
     
     let titleText = isTimeout ? "HẾT GIỜ!" : "XUẤT SẮC!";
-    let titleColor = isTimeout ? "text-red-500" : "text-yellow-400";
+    let titleColor = isTimeout ? "text-fuchsia-500" : "text-yellow-400";
     if (!isTimeout) window.safeConfetti();
     
     let overlay = document.createElement('div');
-    overlay.className = "absolute inset-0 bg-black/85 flex flex-col items-center justify-center z-[200] animate-[cascadeDrop_0.5s_ease-out_forwards]";
+    overlay.className = "absolute inset-0 bg-slate-900/85 flex flex-col items-center justify-center z-[200] animate-[cascadeDrop_0.5s_ease-out_forwards]";
     overlay.innerHTML = `
         <div class="text-8xl mb-4 animate-bounce drop-shadow-lg">${isTimeout ? '⏰' : '🏆'}</div>
         <h2 class="text-4xl font-black ${titleColor} mb-2 uppercase text-center drop-shadow-lg px-4">${titleText}</h2>
-        <p class="text-white font-bold mb-2 text-xl">Đã tìm được: <span class="text-emerald-400">${memoryGame.matchedCount / 2} / 10 cặp câu đố</span></p>
+        <p class="text-white font-bold mb-2 text-xl">Đã tìm được: <span class="text-cyan-400">${memoryGame.matchedCount / 2} / 10 cặp câu đố</span></p>
         <p class="text-white font-bold mb-8 text-xl text-center">Thưởng: <span class="text-yellow-400 text-5xl ml-2">+${memoryGame.score} đ</span></p>
-        <button onclick="window.thoatGameLatTheToan(true)" class="bg-gradient-to-r from-orange-500 to-pink-600 text-white px-10 py-4 rounded-full font-black text-2xl hover:scale-105 transition shadow-[0_0_30px_#f97316] btn-3d">LƯU ĐIỂM & THOÁT</button>
+        <button onclick="window.thoatGameLatTheToan(true)" class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-10 py-4 rounded-full font-black text-2xl hover:scale-105 transition shadow-[0_0_30px_#06b6d4] btn-3d">LƯU ĐIỂM & THOÁT</button>
     `;
     document.getElementById('memory-board').parentElement.appendChild(overlay);
 };
