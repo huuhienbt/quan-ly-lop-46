@@ -2713,7 +2713,7 @@ window.batDauLatThe = function() {
     }, 1000);
 };
 
-// --- LOGIC LẬT THẺ & TÍNH ĐIỂM (CÓ HOÁN ĐỔI VỊ TRÍ, GIỮ NGUYÊN MẶT TRƯỚC/SAU) ---
+// --- LOGIC LẬT THẺ & TÍNH ĐIỂM (CHỈ XÁO TRỘN THẺ CÒN LẠI, CHỖ TRỐNG ĐỨNG YÊN) ---
 window.latTheCauDo = function(index) {
     if (memoryGame.lockBoard) return;
     let cardEl = document.getElementById('card-' + index);
@@ -2750,24 +2750,35 @@ window.latTheCauDo = function(index) {
                 if (memoryGame.matchedCount === 20) {
                     window.ketThucGameLatThe(false);
                 } else {
-                    // --- HOÁN ĐỔI VỊ TRÍ TOÀN BỘ CÁC THẺ (Bao gồm cả khoảng trống) ---
-                    // Bước 1: Tạo danh sách 20 vị trí và đảo lộn ngẫu nhiên
-                    let orderArray = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19];
-                    orderArray = orderArray.sort(() => Math.random() - 0.5);
+                    // --- CHỈ HOÁN ĐỔI VỊ TRÍ CÁC THẺ CÒN LẠI (GIỮ NGUYÊN CHỖ TRỐNG) ---
+                    let unmatchedCards = [];
+                    let availableOrders = [];
                     
-                    // Bước 2: Bốc từng nguyên khối thẻ (chứa cả icon và text) đặt vào vị trí mới
                     for(let i = 0; i < 20; i++) {
                         let cardDom = document.getElementById('card-' + i);
-                        if(cardDom) {
-                            cardDom.style.order = orderArray[i];
+                        if (cardDom) {
+                            // Gán thứ tự ban đầu nếu thẻ chưa có
+                            if (!cardDom.style.order) cardDom.style.order = i;
                             
-                            // Chỉ tạo hiệu ứng chớp sáng cho các thẻ ĐANG ÚP (còn lại trên bàn)
+                            // Nếu thẻ CHƯA bị lật trúng (tức là không có class matched)
                             if (!cardDom.classList.contains('matched')) {
-                                cardDom.classList.add('animate-pulse');
-                                setTimeout(() => cardDom.classList.remove('animate-pulse'), 500);
+                                unmatchedCards.push(cardDom);
+                                // Ghi lại các vị trí (order) đang có thẻ
+                                availableOrders.push(parseInt(cardDom.style.order));
                             }
                         }
                     }
+                    
+                    // Đảo lộn ngẫu nhiên danh sách các vị trí đang có thẻ
+                    availableOrders = availableOrders.sort(() => Math.random() - 0.5);
+                    
+                    // Trả các vị trí mới này vào lại cho các thẻ chưa lật
+                    unmatchedCards.forEach((cardDom, idx) => {
+                        cardDom.style.order = availableOrders[idx];
+                        // Tạo chớp sáng để HS biết thẻ vừa bị đổi chỗ
+                        cardDom.classList.add('animate-pulse');
+                        setTimeout(() => cardDom.classList.remove('animate-pulse'), 500);
+                    });
                 }
             }, 600);
         } else {
