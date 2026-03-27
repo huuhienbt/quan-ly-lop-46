@@ -2713,7 +2713,7 @@ window.batDauLatThe = function() {
     }, 1000);
 };
 
-// --- LOGIC LẬT THẺ & TÍNH ĐIỂM (CHỈ XÁO TRỘN THẺ CÒN LẠI, CHỖ TRỐNG ĐỨNG YÊN) ---
+// --- LOGIC LẬT THẺ & TÍNH ĐIỂM (XÁO TRỘN THÔNG MINH: KHÔNG NẰM KỀ NHAU NGANG/DỌC/CHÉO) ---
 window.latTheCauDo = function(index) {
     if (memoryGame.lockBoard) return;
     let cardEl = document.getElementById('card-' + index);
@@ -2740,8 +2740,10 @@ window.latTheCauDo = function(index) {
                 memoryGame.score += 10; 
                 scoreText.innerText = memoryGame.score;
                 
-                scoreContainer.classList.add('score-up');
-                setTimeout(() => scoreContainer.classList.remove('score-up'), 500);
+                if (scoreContainer) {
+                    scoreContainer.classList.add('score-up');
+                    setTimeout(() => scoreContainer.classList.remove('score-up'), 500);
+                }
                 
                 memoryGame.matchedCount += 2;
                 memoryGame.flipped = []; 
@@ -2750,34 +2752,70 @@ window.latTheCauDo = function(index) {
                 if (memoryGame.matchedCount === 20) {
                     window.ketThucGameLatThe(false);
                 } else {
-                    // --- CHỈ HOÁN ĐỔI VỊ TRÍ CÁC THẺ CÒN LẠI (GIỮ NGUYÊN CHỖ TRỐNG) ---
-                    let unmatchedCards = [];
+                    // --- THUẬT TOÁN XÁO TRỘN THÔNG MINH (KHÔNG CẠNH NHAU) ---
+                    let remaining = [];
                     let availableOrders = [];
+                    
+                    // Lấy số lượng cột hiện tại của lưới để tính toán Tọa độ (Ngang, Dọc, Chéo)
+                    // Hỗ trợ cả màn hình điện thoại (4 cột) và máy tính (5 cột)
+                    let gridEl = document.getElementById('memory-board');
+                    let cols = 4; 
+                    if (gridEl) {
+                        let colsStr = window.getComputedStyle(gridEl).gridTemplateColumns;
+                        cols = colsStr.trim().split(/\s+/).length;
+                    }
+                    if (!cols || cols < 2) cols = 4;
                     
                     for(let i = 0; i < 20; i++) {
                         let cardDom = document.getElementById('card-' + i);
                         if (cardDom) {
-                            // Gán thứ tự ban đầu nếu thẻ chưa có
                             if (!cardDom.style.order) cardDom.style.order = i;
-                            
-                            // Nếu thẻ CHƯA bị lật trúng (tức là không có class matched)
                             if (!cardDom.classList.contains('matched')) {
-                                unmatchedCards.push(cardDom);
-                                // Ghi lại các vị trí (order) đang có thẻ
+                                remaining.push({ dom: cardDom, matchId: memoryGame.cards[i].matchId });
                                 availableOrders.push(parseInt(cardDom.style.order));
                             }
                         }
                     }
                     
-                    // Đảo lộn ngẫu nhiên danh sách các vị trí đang có thẻ
-                    availableOrders = availableOrders.sort(() => Math.random() - 0.5);
+                    // Hàm kiểm tra 2 vị trí có nằm kề nhau (Ngang, Dọc, Chéo) không
+                    const isAdjacent = (p1, p2) => {
+                        let r1 = Math.floor(p1 / cols), c1 = p1 % cols;
+                        let r2 = Math.floor(p2 / cols), c2 = p2 % cols;
+                        return Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1;
+                    };
+
+                    let bestOrders = [];
                     
-                    // Trả các vị trí mới này vào lại cho các thẻ chưa lật
-                    unmatchedCards.forEach((cardDom, idx) => {
-                        cardDom.style.order = availableOrders[idx];
-                        // Tạo chớp sáng để HS biết thẻ vừa bị đổi chỗ
-                        cardDom.classList.add('animate-pulse');
-                        setTimeout(() => cardDom.classList.remove('animate-pulse'), 500);
+                    // Thử xáo trộn ngẫu nhiên tối đa 200 lần để tìm ra cấu hình hoàn hảo
+                    for(let attempt = 0; attempt < 200; attempt++) {
+                        let tempOrders = [...availableOrders].sort(() => Math.random() - 0.5);
+                        let valid = true;
+
+                        for(let i = 0; i < remaining.length; i++) {
+                            for(let j = i + 1; j < remaining.length; j++) {
+                                // Nếu 2 thẻ cùng 1 cặp (cùng matchId)
+                                if(remaining[i].matchId === remaining[j].matchId) {
+                                    // Mà lại nằm cạnh nhau -> Loại bỏ cấu hình này
+                                    if(isAdjacent(tempOrders[i], tempOrders[j])) {
+                                        valid = false; break;
+                                    }
+                                }
+                            }
+                            if(!valid) break;
+                        }
+
+                        if(valid) { // Nếu tìm được cấu hình thỏa mãn điều kiện
+                            bestOrders = tempOrders;
+                            break;
+                        }
+                        if(attempt === 0) bestOrders = tempOrders; // Lưu tạm cấu hình đầu tiên phòng hờ
+                    }
+
+                    // Áp dụng vị trí mới siêu khó này cho các thẻ
+                    remaining.forEach((item, idx) => {
+                        item.dom.style.order = bestOrders[idx];
+                        item.dom.classList.add('animate-pulse');
+                        setTimeout(() => item.dom.classList.remove('animate-pulse'), 500);
                     });
                 }
             }, 600);
@@ -2792,8 +2830,10 @@ window.latTheCauDo = function(index) {
                     if (memoryGame.score < 0) memoryGame.score = 0; 
                     scoreText.innerText = memoryGame.score;
                     
-                    scoreContainer.classList.add('score-down');
-                    setTimeout(() => scoreContainer.classList.remove('score-down'), 500);
+                    if (scoreContainer) {
+                        scoreContainer.classList.add('score-down');
+                        setTimeout(() => scoreContainer.classList.remove('score-down'), 500);
+                    }
                 }
 
                 memoryGame.flipped = []; memoryGame.lockBoard = false;
