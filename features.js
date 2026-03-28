@@ -1230,7 +1230,10 @@ window.calculateTitle = function(student) {
     return titlesHtml;
 };
 
-window.moTienDo = async function() { 
+// ==========================================
+// MỞ BẢNG TIẾN ĐỘ (CÓ HỖ TRỢ TRUYỀN THAM SỐ MÔN HỌC & TÊN HỌC SINH TỪ BẢNG QUẢN LÝ)
+// ==========================================
+window.moTienDo = async function(presetSubject = "all", presetStudentName = "") { 
     closeMenu(); if (!(await window.loadAllDataOnce())) return;
     const mathGroups = [...new Set(Data.math.map(x=>x.group))].filter(g=>g); 
     const tvGroups = [...new Set(Data.tv.map(x=>x.group))].filter(g=>g); 
@@ -1240,10 +1243,28 @@ window.moTienDo = async function() {
     let filterGroupHtml = `<option value="all">Tất cả Bài tập / Tuần</option>` + allGroups.map(g => `<option value="${g}">${g}</option>`).join('');
 
     let html = `
-        <div class="flex items-center mb-4"><button onclick="veTrangChu()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">TIẾN ĐỘ HỌC TẬP</h2></div>
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <button onclick="window.chuyenTrangQuanLy()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-black text-xl text-purple-600 uppercase">TIẾN ĐỘ HỌC TẬP</h2>
+            </div>
+        </div>
+        
         <div class="bg-white p-4 sm:p-5 rounded-[2rem] shadow-sm border border-slate-100 mb-6 fade-in">
+            <div class="mb-4">
+                <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-search"></i> Tìm học sinh</label>
+                <input type="text" id="filterProgName" oninput="window.renderDanhSachTienDo()" placeholder="Nhập tên học sinh (VD: Minh Châu)..." class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400 placeholder:font-normal placeholder:text-sm" value="${presetStudentName}">
+            </div>
+            
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div><label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-book"></i> Môn học</label><select id="filterProgSub" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400"><option value="all">Tất cả Môn</option><option value="math">📐 Toán</option><option value="tv">📖 Tiếng Việt</option></select></div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-book"></i> Môn học</label>
+                    <select id="filterProgSub" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400">
+                        <option value="all" ${presetSubject === 'all' ? 'selected' : ''}>Tất cả Môn</option>
+                        <option value="math" ${presetSubject === 'math' ? 'selected' : ''}>📐 Toán</option>
+                        <option value="tv" ${presetSubject === 'tv' ? 'selected' : ''}>📖 Tiếng Việt</option>
+                    </select>
+                </div>
                 <div><label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-filter"></i> Lọc Bài / Tuần</label><select id="filterProgGroup" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400">${filterGroupHtml}</select></div>
                 <div><label class="text-[10px] font-black text-slate-400 uppercase mb-1 block"><i class="fas fa-bullseye"></i> Lọc Mức điểm</label><select id="filterProgScore" onchange="window.renderDanhSachTienDo()" class="w-full bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl font-bold text-slate-700 outline-none focus:border-purple-400"><option value="all">Tất cả mức điểm</option><option value="100">💯 100đ (Tuyệt đối)</option><option value="90">🟢 Từ 90 - 100đ (Giỏi)</option><option value="70">🟡 Từ 70 - 89đ (Khá)</option><option value="50">🟠 Từ 50 - 69đ (TB)</option><option value="0">🔴 Dưới 50đ (Cố gắng)</option></select></div>
             </div>
@@ -1251,15 +1272,30 @@ window.moTienDo = async function() {
         </div>
         <div id="danhSachTienDoRender" class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-10 fade-in"></div>
     `; 
-    document.getElementById('content').innerHTML = html; window.renderDanhSachTienDo();
+    document.getElementById('content').innerHTML = html; 
+    
+    // Gọi hàm render danh sách tiến độ để nó áp dụng bộ lọc (tên & môn học) vừa được truyền vào
+    if (window.renderDanhSachTienDo) {
+        window.renderDanhSachTienDo();
+    }
 };
 
 window.renderDanhSachTienDo = function() {
-    let fSub = document.getElementById('filterProgSub').value; let fGroup = document.getElementById('filterProgGroup').value; let fScore = document.getElementById('filterProgScore').value;
+    // 1. LẤY THÊM TỪ KHÓA TỪ Ô TÌM KIẾM TÊN (Nếu có)
+    let fName = document.getElementById('filterProgName') ? document.getElementById('filterProgName').value.toLowerCase().trim() : "";
+    
+    let fSub = document.getElementById('filterProgSub').value; 
+    let fGroup = document.getElementById('filterProgGroup').value; 
+    let fScore = document.getElementById('filterProgScore').value;
     let htmlList = ""; let tMath = window.totalMathAssignments; let tTv = window.totalTvAssignments;
     
     let filteredStudents = Data.hs.filter(h => {
+        // 2. LỌC TÊN TRƯỚC TIÊN: Nếu có nhập tên mà không khớp thì loại luôn thẻ của học sinh này
+        if (fName && !h.name.toLowerCase().includes(fName)) return false;
+
+        // Nếu các bộ lọc môn/nhóm/điểm đều là "Tất cả" thì giữ lại (vì đã qua ải lọc tên ở trên)
         if (fSub === 'all' && fGroup === 'all' && fScore === 'all') return true;
+        
         let userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject));
         if (fSub === 'math') userLogs = userLogs.filter(l => l.subject === 'math');
         if (fSub === 'tv') userLogs = userLogs.filter(l => l.subject === 'tv' || l.subject === 'vietnamese');
@@ -1312,7 +1348,9 @@ window.renderDanhSachTienDo = function() {
         const userLogs = Data.log.filter(l => String(l.id) === String(h.id) && ['math', 'tv', 'vietnamese'].includes(l.subject)); 
         let mathData = buildSegments(userLogs, 'math', tMath); let tvData = buildSegments(userLogs, 'tv', tTv);
         let filteredHighlight = "";
-        if (fSub !== 'all' || fGroup !== 'all' || fScore !== 'all') { filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white z-10">Khớp bộ lọc</span>`; }
+        
+        // 3. CẬP NHẬT NHÃN HIGHLIGHT: Nháy báo hiệu nếu có bất kỳ bộ lọc nào đang được dùng (bao gồm cả Tên)
+        if (fName !== "" || fSub !== 'all' || fGroup !== 'all' || fScore !== 'all') { filteredHighlight = `<span class="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow animate-pulse border border-white z-10">Khớp bộ lọc</span>`; }
 
         let studentTitles = window.calculateTitle(h); let currentScore = Number(h.score) || 0;
 
@@ -1841,7 +1879,7 @@ document.addEventListener("contextmenu", (e) => { if (window.isQuizActive && cur
 document.addEventListener("copy", (e) => { if (window.isQuizActive && currentUser && currentUser.role === 'student') { e.preventDefault(); alert("⚠️ Hệ thống: Không được copy câu hỏi con nhé!"); } });
 
 // ==========================================
-// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (BẢN COMPACT - SIÊU THU GỌN DIỆN TÍCH)
+// 12. NÂNG CẤP TRANG QUẢN LÝ HỌC SINH (CÓ TÍNH NĂNG CHUYỂN NHANH SANG TIẾN ĐỘ)
 // ==========================================
 window.chuyenTrangQuanLy = async function() { 
     closeMenu(); 
@@ -1901,7 +1939,7 @@ window.chuyenTrangQuanLy = async function() {
         
         let veLamLai = Number(s.veLamLai) || 0;
 
-        // CẬP NHẬT NHÃN GIAO DIỆN (NÚT KHÓA NGANG TÊN, DANH HIỆU XẾP NGANG)
+        // CẬP NHẬT NHÃN GIAO DIỆN
         let blockBadge = s.isBlocked ? `<div class="text-[8px] font-black text-white bg-red-500 px-1.5 py-0.5 rounded shadow-sm animate-pulse shrink-0 whitespace-nowrap" title="Bị khóa đến ${s.isBlocked.toLocaleString('vi-VN')}"><i class="fas fa-lock mr-0.5"></i>ĐANG KHÓA</div>` : '';
         
         let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
@@ -1932,8 +1970,9 @@ window.chuyenTrangQuanLy = async function() {
             </div>
             
             <div class="grid grid-cols-5 gap-1 text-center mb-2">
-                <div class="bg-indigo-50/50 p-1 rounded-lg border border-indigo-100/50" title="Điểm Toán"><div class="text-[8px] font-black text-indigo-500 uppercase mb-0.5 truncate"><i class="fas fa-calculator"></i></div><div class="font-bold text-indigo-700 text-[10px]">${s.mathPts}</div></div>
-                <div class="bg-green-50/50 p-1 rounded-lg border border-green-100/50" title="Điểm T.Việt"><div class="text-[8px] font-black text-green-500 uppercase mb-0.5 truncate"><i class="fas fa-book-open"></i></div><div class="font-bold text-green-700 text-[10px]">${s.tvPts}</div></div>
+                <div onclick="window.moTienDo('math', '${s.name.replace(/'/g, "\\'")}')" class="bg-indigo-50/50 p-1 rounded-lg border border-indigo-100/50 cursor-pointer hover:bg-indigo-100 transition" title="Xem tiến độ Toán của ${s.name}"><div class="text-[8px] font-black text-indigo-500 uppercase mb-0.5 truncate"><i class="fas fa-calculator"></i></div><div class="font-bold text-indigo-700 text-[10px]">${s.mathPts}</div></div>
+                <div onclick="window.moTienDo('tv', '${s.name.replace(/'/g, "\\'")}')" class="bg-green-50/50 p-1 rounded-lg border border-green-100/50 cursor-pointer hover:bg-green-100 transition" title="Xem tiến độ Tiếng Việt của ${s.name}"><div class="text-[8px] font-black text-green-500 uppercase mb-0.5 truncate"><i class="fas fa-book-open"></i></div><div class="font-bold text-green-700 text-[10px]">${s.tvPts}</div></div>
+                
                 <div class="bg-yellow-50/50 p-1 rounded-lg border border-yellow-100/50" title="Điểm V.Quay"><div class="text-[8px] font-black text-yellow-600 uppercase mb-0.5 truncate"><i class="fas fa-dharmachakra"></i></div><div class="font-bold text-yellow-700 text-[10px]">${s.spinPts}</div></div>
                 <div class="bg-red-50/50 p-1 rounded-lg border border-red-100/50" title="Điểm Game"><div class="text-[8px] font-black text-red-500 uppercase mb-0.5 truncate"><i class="fas fa-rocket"></i></div><div class="font-bold text-red-700 text-[10px]">${s.gamePts}</div></div>
                 <div class="bg-pink-50/50 p-1 rounded-lg border border-pink-100/50" title="Thưởng Nóng"><div class="text-[8px] font-black text-pink-500 uppercase mb-0.5 truncate"><i class="fas fa-gift"></i></div><div class="font-bold text-pink-700 text-[10px]">${s.bonusPts}</div></div>
