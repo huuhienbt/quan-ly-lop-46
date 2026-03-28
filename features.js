@@ -66,35 +66,45 @@ window.updateKhoDoCloud = async function(spinsToAdd, ticketsToAdd, gamesToAdd = 
     } catch(e) { console.log("Lỗi đồng bộ kho đồ Cloud"); }
 };
 
-window.loadAllDataOnce = async function(force = false, silent = false) {
+// ==========================================
+// 3. TẢI DỮ LIỆU TOÀN CỤC TỪ SERVER (ĐÃ TÍCH HỢP TẢI SHEET CONFIG)
+// ==========================================
+window.loadAllDataOnce = async function(force = false) {
     if (window.isAllDataLoaded && !force) return true;
-    if (!force) {
-        try {
-            let cacheData = localStorage.getItem('eduDataCache');
-            if (cacheData) {
-                let parsed = JSON.parse(cacheData);
-                if (parsed.math && parsed.tv && parsed.log) {
-                    Data.math = parsed.math; Data.tv = parsed.tv; Data.vietnamese = parsed.tv;
-                    Data.log = parsed.log; Data.caudo = parsed.caudo || []; window.isAllDataLoaded = true;
-                    if (!window.isFetchingBackground) {
-                        window.isFetchingBackground = true;
-                        window.fetchFreshDataSilently(false).then(() => window.isFetchingBackground = false);
-                    }
-                    return true;
-                }
-            }
-        } catch(e) {}
+    document.getElementById('loader').style.display = 'flex';
+    let loaderText = document.querySelector('#loader p');
+    if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+    try {
+        const [mRes, tRes, lRes, cRes, cfgRes] = await Promise.all([
+            fetch(API_URL + "?type=math&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=vietnamese&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=config&t=" + Date.now()).then(r => r.json()) // Lấy cấu hình Ẩn/Hiện
+        ]);
+        
+        Data.math = Array.isArray(mRes) ? mRes : [];
+        Data.tv = Array.isArray(tRes) ? tRes : [];
+        Data.vietnamese = Data.tv;
+        Data.caudo = Array.isArray(cRes) ? cRes : [];
+        Data.config = Array.isArray(cfgRes) ? cfgRes : []; // Lưu cấu hình
+        
+        let rawLog = Array.isArray(lRes) ? lRes : []; 
+        let resetLogs = rawLog.filter(l => l.subject === "RESET");
+        resetLogs.forEach(rLog => {
+            rawLog = rawLog.filter(l => !(String(l.id) === String(rLog.id) && (l.subject === rLog.details || (rLog.details === 'vietnamese' && l.subject === 'tv')) && l.group === rLog.group && new Date(l.time) < new Date(rLog.time)));
+        });
+        Data.log = rawLog;
+        
+        try { localStorage.setItem('eduDataCache', JSON.stringify({ math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo, config: Data.config })); } catch(e) {}
+        window.isAllDataLoaded = true;
+        return true;
+    } catch(e) {
+        alert("Lỗi tải dữ liệu máy chủ!");
+        return false;
+    } finally {
+        document.getElementById('loader').style.display = 'none';
     }
-
-    if (!silent) {
-        document.getElementById('content').innerHTML = `
-            <div class="flex flex-col items-center justify-center mt-28 fade-in opacity-90">
-                <i class="fas fa-circle-notch animate-spin inline-block text-5xl text-indigo-500 mb-4 drop-shadow-md"></i>
-                <p class="text-slate-500 font-bold text-sm animate-pulse tracking-wide">Đang đồng bộ không gian học tập...</p>
-            </div>
-        `;
-    }
-    return await window.fetchFreshDataSilently(!silent);
 };
 
 window.fetchFreshDataSilently = async function(showError = false) {
@@ -104,12 +114,12 @@ window.fetchFreshDataSilently = async function(showError = false) {
             fetch(API_URL + "?type=vietnamese&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json()),
-            fetch(API_URL + "?type=config&t=" + Date.now()).then(r => r.json()) // Lệnh mới: Tải cấu hình
+            fetch(API_URL + "?type=config&t=" + Date.now()).then(r => r.json()) // Lấy cấu hình Ẩn/Hiện
         ]);
 
         Data.math = Array.isArray(mRes) ? mRes : []; Data.tv = Array.isArray(tRes) ? tRes : []; Data.vietnamese = Data.tv;
         Data.caudo = Array.isArray(cRes) ? cRes : [];
-        Data.config = Array.isArray(cfgRes) ? cfgRes : []; // Lưu Config vào biến toàn cục
+        Data.config = Array.isArray(cfgRes) ? cfgRes : []; // Lưu cấu hình
         
         let rawLog = Array.isArray(lRes) ? lRes : []; 
         let resetLogs = rawLog.filter(l => l.subject === "RESET");
