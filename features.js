@@ -891,17 +891,22 @@ window.startTimer = function(seconds) {
 };
 
 window.finishQuiz = async function() { 
-    window.isQuizActive = false; if (timer) clearInterval(timer); 
+    window.isQuizActive = false; if (timer) clearInterval(timer);
     const maxPossibleScore = quiz.length * 10; 
     let timeTaken = window.totalQuizTime - window.remainingQuizTime; 
-    let halfTime = window.totalQuizTime / 2; let extraSpinsEarned = 0; let rewardMessage = "";
+    let halfTime = window.totalQuizTime / 2;
+    let extraSpinsEarned = 0; let rewardMessage = "";
 
     // CHỐNG HACK ĐIỂM F12: Tính điểm chuẩn từ số câu làm sai/bỏ trống
     if (typeof window.answeredQuestions !== 'undefined' && window.answeredQuestions < quiz.length) {
         for (let i = window.answeredQuestions; i < quiz.length; i++) {
-            let q = quiz[i]; let qTextReplaced = window.parseImg(q.question).replace(/_{3,}/g, '[___]'); let correctStr = q.correct.toLowerCase().replace(/\s/g, ''); let expectedAnsText = "";
-            if (correctStr.length === 1 && ['a','b','c','d'].includes(correctStr)) { expectedAnsText = window.parseImg(q[correctStr]); } 
-            else { let expectedArr = correctStr.split(','); expectedAnsText = expectedArr.map(k => q[k] ? window.parseImg(q[k]).replace(/<[^>]*>?/gm, '') : '').join(' | '); }
+            let q = quiz[i];
+            let qTextReplaced = window.parseImg(q.question).replace(/_{3,}/g, '[___]'); let correctStr = q.correct.toLowerCase().replace(/\s/g, ''); let expectedAnsText = "";
+            if (correctStr.length === 1 && ['a','b','c','d'].includes(correctStr)) { expectedAnsText = window.parseImg(q[correctStr]);
+            } 
+            else { let expectedArr = correctStr.split(',');
+            expectedAnsText = expectedArr.map(k => q[k] ? window.parseImg(q[k]).replace(/<[^>]*>?/gm, '') : '').join(' | ');
+            }
             wrongAnswersLog.push(`<div class="bg-white p-4 rounded-xl border border-orange-200 mb-3 shadow-sm"><p class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2"><span class="text-orange-500">Câu ${i+1} (Bỏ trống):</span> ${qTextReplaced}</p><div class="space-y-2 mt-3"><p class="text-orange-600 text-sm bg-orange-50 p-2 rounded-lg border border-orange-100"><i class="fas fa-exclamation-triangle mr-1"></i> <b>Hết giờ / Bị ép nộp (Chưa làm)</b></p><p class="text-green-600 text-sm bg-green-50 p-2 rounded-lg border border-green-100"><i class="fas fa-check-circle mr-1"></i> <b>Đáp án đúng:</b> <span class="font-medium">${expectedAnsText}</span></p></div></div>`);
         }
     }
@@ -909,43 +914,66 @@ window.finishQuiz = async function() {
     // ĐỐI CHIẾU AN TOÀN KÉP
     let secureScore = (quiz.length * 10) - (wrongAnswersLog.length * 10);
     if (secureScore < 0) secureScore = 0;
-    score = secureScore; // Khóa chết điểm số, không cho sửa bậy
+    score = secureScore;
 
+    // ========================================================
+    // LUẬT MỚI: PHẢI ĐẠT TRÊN 50% MỚI ĐƯỢC NỘP BÀI VÀ LƯU ĐIỂM
+    // ========================================================
+    let phanTramDatDuoc = maxPossibleScore > 0 ? (score / maxPossibleScore) * 100 : 0;
+    if (phanTramDatDuoc < 50) {
+        alert(`⚠️ CHƯA HOÀN THÀNH!\n\nCon mới chỉ đạt ${Math.round(phanTramDatDuoc)}% (${score}/${maxPossibleScore} điểm).\nTheo quy định, con phải đạt từ 50% trở lên mới được nộp bài và lưu điểm.\n\nCon hãy ôn lại kiến thức và làm lại cẩn thận hơn nhé!`);
+        
+        // Xóa trạng thái làm bài dở dang để học sinh có thể làm lại
+        localStorage.removeItem(`activeQuizState_${currentUser.id}`);
+        
+        // Đẩy học sinh về lại trang danh sách bài tập của môn học đó
+        window.loadSubject(curSub);
+        
+        return; // CHẶN LẠI TẠI ĐÂY, KHÔNG CHO CHẠY LỆNH LƯU ĐIỂM BÊN DƯỚI
+    }
+    // ========================================================
+
+    // Khóa chết điểm số, không cho sửa bậy
     let previousLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === curSub && l.group === curGrp);
     let previousMaxScore = previousLogs.length > 0 ? Math.max(...previousLogs.map(l => Number(l.score) || 0)) : 0;
-    let actualScoreEarned = score - previousMaxScore; if (actualScoreEarned < 0) actualScoreEarned = 0; 
+    let actualScoreEarned = score - previousMaxScore;
+    if (actualScoreEarned < 0) actualScoreEarned = 0; 
 
     if (score > 0 && score === maxPossibleScore) { 
         let previousMaxLog = previousLogs.find(l => Number(l.score) === maxPossibleScore);
         if (!previousMaxLog && currentUser.role === 'student') {
-            if (timeTaken <= halfTime) { extraSpinsEarned = 2; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ! Đúng 100% siêu nhanh. Thưởng <b>+2 Lượt quay</b>!</p></div>`; } 
-            else { extraSpinsEarned = 1; rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! Đúng 100%. Thưởng <b>+1 Lượt quay</b>!</p></div>`; }
+            if (timeTaken <= halfTime) { extraSpinsEarned = 2;
+            rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ!
+            Đúng 100% siêu nhanh. Thưởng <b>+2 Lượt quay</b>!</p></div>`; } 
+            else { extraSpinsEarned = 1;
+            rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC!
+            Đúng 100%. Thưởng <b>+1 Lượt quay</b>!</p></div>`; }
             window.updateKhoDoCloud(extraSpinsEarned, 0);
-        } else if (previousMaxLog && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`; }
+        } else if (previousMaxLog && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`;
+        }
         window.safeConfetti(); 
     } 
     
-    let scoreMsg = actualScoreEarned > 0 ? `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
-    
-    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p id="finalScoreDisplay" class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button id="btnFinishQuizWait" disabled class="bg-slate-300 text-slate-600 px-10 py-5 rounded-2xl font-black text-xl shadow-inner w-full mt-6 cursor-wait flex items-center justify-center gap-3 transition"><i class="fas fa-spinner fa-spin"></i> ĐANG LƯU ĐIỂM...</button></div>`; 
+    let scoreMsg = actualScoreEarned > 0 ?
+    `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
+    document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p id="finalScoreDisplay" class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button id="btnFinishQuizWait" disabled class="bg-slate-300 text-slate-600 px-10 py-5 rounded-2xl font-black text-xl shadow-inner w-full mt-6 cursor-wait flex items-center justify-center gap-3 transition"><i class="fas fa-spinner fa-spin"></i> ĐANG LƯU ĐIỂM...</button></div>`;
     
     try {
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'finish_quiz', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score } }) });
-        
         // Mở khóa bài làm trên máy local
         localStorage.removeItem(`activeQuizState_${currentUser.id}`);
-        
         if(currentUser.role === 'student') { 
-            let submitTime = new Date().toISOString(); 
+            let submitTime = new Date().toISOString();
             let detailsToSave = wrongAnswersLog.join('');
-            if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`; }
+            if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`;
+            }
             currentUser.score = Number(currentUser.score) + actualScoreEarned;
-            
             // Ghi log lên máy chủ
             fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }).catch(e => console.log("Lỗi mạng ngầm"));
-            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave }); 
+            Data.log.push({ id: currentUser.id, subject: curSub, group: curGrp, score: score, real_added: actualScoreEarned, time: submitTime, details: detailsToSave });
         }
-    } catch(e) { console.log("Lỗi khi kết thúc quiz"); }
+    } catch(e) { console.log("Lỗi khi kết thúc quiz");
+    }
     finally {
         let btn = document.getElementById('btnFinishQuizWait');
         if (btn) {
