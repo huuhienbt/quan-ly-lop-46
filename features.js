@@ -133,8 +133,10 @@ window.moGocHocTap = async function() {
 
     // --- TÍNH TOÁN SỐ BÀI CHƯA LÀM ---
     let mathUnread = 0; let tvUnread = 0;
-    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g);
-    const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g);
+    let hiddenMath = window.getHiddenGroups ? window.getHiddenGroups('math') : [];
+    let hiddenTv = window.getHiddenGroups ? window.getHiddenGroups('tv') : [];
+    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g && !hiddenMath.includes(g));
+    const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g && !hiddenTv.includes(g));
     const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
 
     if (currentUser && currentUser.role === 'student') {
@@ -332,6 +334,45 @@ window.renderGiaoDienKho = function(sub) {
     `; window.filterQuestions(); 
 };
 
+// --- HỆ THỐNG ẨN/HIỆN BÀI TẬP ---
+window.getHiddenGroups = function(subjectCode) {
+    if (!Data.log) return [];
+    let checkSub = (subjectCode === 'vietnamese' || subjectCode === 'tv') ? 'tv' : 'math';
+    let configLog = Data.log.filter(l => l.subject === "SystemConfig" && l.group === "HiddenGroups_" + checkSub);
+    if (configLog.length === 0) return [];
+    configLog.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    let hiddenStr = configLog[0].details || "";
+    return hiddenStr ? hiddenStr.split('|||') : [];
+};
+
+window.toggleVisibility = async function(subjectCode, groupName, e) {
+    if(e) e.stopPropagation(); 
+    let checkSub = (subjectCode === 'vietnamese' || subjectCode === 'tv') ? 'tv' : 'math';
+    let hidden = window.getHiddenGroups(checkSub);
+    
+    if (hidden.includes(groupName)) {
+        hidden = hidden.filter(g => g !== groupName); // Bật lên
+    } else {
+        hidden.push(groupName); // Tắt đi
+    }
+    
+    let newDetails = hidden.join('|||');
+    document.getElementById('loader').style.display = 'flex';
+    let loaderText = document.querySelector('#loader p');
+    if(loaderText) loaderText.innerText = "ĐANG CẬP NHẬT TRẠNG THÁI HIỂN THỊ...";
+    
+    try {
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "SystemConfig", group: "HiddenGroups_" + checkSub, score: 0, score_earned: 0, details: newDetails } }) });
+        Data.log.push({ id: currentUser.id, subject: "SystemConfig", group: "HiddenGroups_" + checkSub, score: 0, time: new Date().toISOString(), details: newDetails });
+        window.filterQuestions(); 
+    } catch(err) {
+        alert("Lỗi mạng, chưa lưu được cài đặt!");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+    }
+};
+
 window.filterQuestions = function() { 
     const val = document.getElementById("qFilter").value; 
     let list = val === 'all' ? Data[curSub] : Data[curSub].filter(q => String(q.group) === val); 
@@ -345,10 +386,18 @@ window.filterQuestions = function() {
         if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); 
     }); 
     
+    let hiddenGroups = window.getHiddenGroups(curSub);
     let html = ""; 
     sortedGroups.forEach((grp, grpIndex) => { 
         let questions = grouped[grp]; let safeGrpId = 'grp_questions_' + grpIndex; 
-        html += `<div class="bg-white rounded-[2rem] shadow-sm border border-slate-100 mb-4 fade-in overflow-hidden transition-all"><div onclick="window.toggleGroupQuestions('${safeGrpId}')" class="flex items-center justify-between p-5 cursor-pointer hover:bg-indigo-50 transition select-none"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner"><i class="fas fa-layer-group"></i></div><div><h3 class="font-black text-xl text-slate-800 uppercase">${grp}</h3><p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p></div></div><div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i></div></div><div id="content_${safeGrpId}" class="hidden px-5 pb-5 pt-2 border-t-2 border-slate-50 bg-slate-50/50 space-y-3">`; 
+        let isHidden = hiddenGroups.includes(grp);
+        
+        let eyeIcon = isHidden ? 'fa-eye-slash text-red-500' : 'fa-eye text-emerald-500';
+        let eyeBtnClass = isHidden ? 'bg-red-50 hover:bg-red-100 border-red-200' : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-200';
+        let visibilityText = isHidden ? '<span class="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded ml-2 shadow-sm animate-pulse">ĐANG ẨN</span>' : '';
+        let wrapperOp = isHidden ? 'opacity-80 border-red-200' : 'border-slate-100';
+
+        html += `<div class="bg-white rounded-[2rem] shadow-sm border mb-4 fade-in overflow-hidden transition-all ${wrapperOp}"><div onclick="window.toggleGroupQuestions('${safeGrpId}')" class="flex items-center justify-between p-5 cursor-pointer hover:bg-indigo-50 transition select-none"><div class="flex items-center gap-4"><div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner"><i class="fas fa-layer-group"></i></div><div><h3 class="font-black text-xl text-slate-800 uppercase">${grp} ${visibilityText}</h3><p class="text-sm font-bold text-slate-400">${questions.length} câu hỏi</p></div></div><div class="flex items-center gap-3"><button onclick="window.toggleVisibility('${curSub}', '${grp.replace(/'/g, "\\'")}', event)" class="w-10 h-10 rounded-full ${eyeBtnClass} border flex items-center justify-center transition shadow-sm" title="${isHidden ? 'Bấm để Hiện bài này cho HS' : 'Bấm để Ẩn bài này đi'}"><i class="fas ${eyeIcon} text-lg"></i></button><div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center"><i id="icon_${safeGrpId}" class="fas fa-chevron-down transition-transform duration-300 text-lg"></i></div></div></div><div id="content_${safeGrpId}" class="hidden px-5 pb-5 pt-2 border-t-2 border-slate-50 bg-slate-50/50 space-y-3">`; 
         questions.forEach((q, index) => { 
             let qText = window.parseImg(q.question || ""); if (q.image) qText += `<br><img src="${q.image}" class="max-w-full rounded-md mt-2">`; if (qText.includes('[BAIDOC]')) qText = "<span class='text-yellow-600 font-bold'>[CHỨA BÀI ĐỌC]</span> " + qText.replace(/\[BAIDOC\].*?\[\/BAIDOC\]/s, '').trim();
             html += `<div class="bg-white p-4 rounded-xl border border-slate-200 hover:border-indigo-300 transition relative shadow-sm"><div class="flex justify-between items-start"><div class="flex gap-3 w-full pr-16"><span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">${index + 1}</span><div class="font-medium text-slate-700 text-base mt-1 overflow-hidden break-words w-full [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mt-2">${qText}</div></div><div class="flex gap-2 absolute top-4 right-4"><button onclick="window.renderFormCauHoi('${q.id}')" class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition shadow-sm" title="Sửa"><i class="fas fa-edit"></i></button><button onclick="window.xoaCauHoi('${q.id}')" class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center hover:bg-red-600 hover:text-white transition shadow-sm" title="Xóa"><i class="fas fa-trash"></i></button></div></div></div>`; 
@@ -571,13 +620,19 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI (TÍCH HỢP HIỂN THỊ VÉ SỬA BÀI SAI)
+// 4. TIẾN TRÌNH LÀM BÀI (CÓ TÍCH HỢP BỘ LỌC ẨN/HIỆN BÀI TẬP TỪ ADMIN)
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); curSub = sub; 
     if (!(await window.loadAllDataOnce())) return;
     const qs = Data[sub]; if (!qs) { alert("Không tải được dữ liệu. Vui lòng thử lại."); return veTrangChu(); }
-    const grps = [...new Set(qs.map(x => x.group))].filter(g => g).sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
+    
+    // --- LỌC BỎ CÁC BÀI TẬP ĐANG BỊ ẨN ---
+    let hiddenGroups = window.getHiddenGroups ? window.getHiddenGroups(sub) : [];
+    
+    const grps = [...new Set(qs.map(x => x.group))]
+        .filter(g => g && !hiddenGroups.includes(g)) // Dòng này sẽ chặn không cho bài bị ẩn hiện lên
+        .sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
     
     // Giao diện Huy hiệu Vé sửa bài sai
     let veLamLai = (currentUser && currentUser.role === 'student') ? (Number(currentUser.veLamLai) || 0) : 0;
@@ -600,7 +655,7 @@ window.loadSubject = async function(sub) {
         <div class="space-y-3">
     `; 
 
-    if(grps.length === 0) { html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào.</p>`; } else {
+    if(grps.length === 0) { html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào được giao.</p>`; } else {
         grps.forEach(g => { 
             const myLogsForGroup = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g);
             const isDone = myLogsForGroup.length > 0; 
