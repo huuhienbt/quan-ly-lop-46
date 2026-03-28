@@ -99,14 +99,17 @@ window.loadAllDataOnce = async function(force = false, silent = false) {
 
 window.fetchFreshDataSilently = async function(showError = false) {
     try {
-        const [mRes, tRes, lRes, cRes] = await Promise.all([
+        const [mRes, tRes, lRes, cRes, cfgRes] = await Promise.all([
             fetch(API_URL + "?type=math&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=vietnamese&t=" + Date.now()).then(r => r.json()),
             fetch(API_URL + "?type=history_all&t=" + Date.now()).then(r => r.json()),
-            fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json())
+            fetch(API_URL + "?type=caudo&t=" + Date.now()).then(r => r.json()),
+            fetch(API_URL + "?type=config&t=" + Date.now()).then(r => r.json()) // Lệnh mới: Tải cấu hình
         ]);
 
         Data.math = Array.isArray(mRes) ? mRes : []; Data.tv = Array.isArray(tRes) ? tRes : []; Data.vietnamese = Data.tv;
+        Data.caudo = Array.isArray(cRes) ? cRes : [];
+        Data.config = Array.isArray(cfgRes) ? cfgRes : []; // Lưu Config vào biến toàn cục
         
         let rawLog = Array.isArray(lRes) ? lRes : []; 
         let resetLogs = rawLog.filter(l => l.subject === "RESET");
@@ -114,9 +117,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
             rawLog = rawLog.filter(l => !(String(l.id) === String(rLog.id) && (l.subject === rLog.details || (rLog.details === 'vietnamese' && l.subject === 'tv')) && l.group === rLog.group && new Date(l.time) < new Date(rLog.time)));
         });
         Data.log = rawLog;
-        Data.caudo = Array.isArray(cRes) ? cRes : [];
-
-        try { localStorage.setItem('eduDataCache', JSON.stringify({ math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo })); } catch(e) {}
+        try { localStorage.setItem('eduDataCache', JSON.stringify({ math: Data.math, tv: Data.tv, log: Data.log, caudo: Data.caudo, config: Data.config })); } catch(e) {}
         window.isAllDataLoaded = true; return true;
     } catch(e) {
         if (showError) { document.getElementById('content').innerHTML = `<div class="text-center mt-24 text-red-500 fade-in"><i class="fas fa-wifi text-6xl mb-4 opacity-50"></i><h2 class="text-xl font-black uppercase mb-2">Lỗi Kết Nối</h2><p class="font-bold text-sm">Không thể kết nối. Thầy/cô và con vui lòng F5 tải lại trang nhé!</p></div>`; }
@@ -334,15 +335,13 @@ window.renderGiaoDienKho = function(sub) {
     `; window.filterQuestions(); 
 };
 
-// --- HỆ THỐNG ẨN/HIỆN BÀI TẬP ---
+// --- HỆ THỐNG ẨN/HIỆN BÀI TẬP (VERSION 2: SỬ DỤNG SHEET CONFIG) ---
 window.getHiddenGroups = function(subjectCode) {
-    if (!Data.log) return [];
+    if (!Data.config) return [];
     let checkSub = (subjectCode === 'vietnamese' || subjectCode === 'tv') ? 'tv' : 'math';
-    let configLog = Data.log.filter(l => l.subject === "SystemConfig" && l.group === "HiddenGroups_" + checkSub);
-    if (configLog.length === 0) return [];
-    configLog.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-    let hiddenStr = configLog[0].details || "";
-    return hiddenStr ? hiddenStr.split('|||') : [];
+    let hiddenCfg = Data.config.find(c => c.key === "HiddenGroups_" + checkSub);
+    if (!hiddenCfg) return [];
+    return hiddenCfg.value ? hiddenCfg.value.split('|||').filter(g => g.trim() !== '') : [];
 };
 
 window.toggleVisibility = async function(subjectCode, groupName, e) {
@@ -362,8 +361,15 @@ window.toggleVisibility = async function(subjectCode, groupName, e) {
     if(loaderText) loaderText.innerText = "ĐANG CẬP NHẬT TRẠNG THÁI HIỂN THỊ...";
     
     try {
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: "SystemConfig", group: "HiddenGroups_" + checkSub, score: 0, score_earned: 0, details: newDetails } }) });
-        Data.log.push({ id: currentUser.id, subject: "SystemConfig", group: "HiddenGroups_" + checkSub, score: 0, time: new Date().toISOString(), details: newDetails });
+        // GỌI API LƯU VÀO SHEET CONFIG
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'luu_config', data: { key: "HiddenGroups_" + checkSub, value: newDetails } }) });
+        
+        // Cập nhật lại giao diện ngay lập tức
+        if(!Data.config) Data.config = [];
+        let cfgIdx = Data.config.findIndex(c => c.key === "HiddenGroups_" + checkSub);
+        if(cfgIdx > -1) Data.config[cfgIdx].value = newDetails;
+        else Data.config.push({ key: "HiddenGroups_" + checkSub, value: newDetails });
+
         window.filterQuestions(); 
     } catch(err) {
         alert("Lỗi mạng, chưa lưu được cài đặt!");
