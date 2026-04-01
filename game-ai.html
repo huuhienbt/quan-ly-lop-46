@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Game - Nghiêng Đầu Trí Tuệ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js"></script>
+    <style>
+        body { background-color: #0f172a; color: white; overflow: hidden; font-family: sans-serif; }
+        .bg-grid { background-image: linear-gradient(to right, #1e293b 1px, transparent 1px), linear-gradient(to bottom, #1e293b 1px, transparent 1px); background-size: 40px 40px; }
+        #video-container { position: relative; width: 100%; max-width: 480px; margin: 0 auto; border-radius: 2rem; overflow: hidden; border: 4px solid #3b82f6; box-shadow: 0 0 30px rgba(59,130,246,0.5); }
+        video { width: 100%; transform: scaleX(-1); /* Lật gương camera */ display: block; }
+        .answer-box { transition: all 0.3s ease; }
+        .answer-active { transform: scale(1.1); box-shadow: 0 0 20px rgba(255,255,255,0.8); z-index: 10; border-color: white !important; }
+    </style>
+</head>
+<body class="bg-grid min-h-screen flex flex-col">
+
+    <div class="p-4 flex justify-between items-center bg-slate-900/80 backdrop-blur-md z-50">
+        <a href="index.html" class="w-10 h-10 bg-slate-800 text-slate-300 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fas fa-arrow-left"></i></a>
+        <h1 class="font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 text-xl uppercase tracking-wider"><i class="fas fa-robot mr-2 text-cyan-400"></i>AI CAMERA GAME</h1>
+        <div class="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full font-bold border border-yellow-500/50"><i class="fas fa-star mr-1"></i><span id="score">0</span></div>
+    </div>
+
+    <div class="flex-1 flex flex-col items-center justify-center p-4 relative">
+        
+        <div id="loading" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/95">
+            <i class="fas fa-spinner fa-spin text-6xl text-cyan-400 mb-4"></i>
+            <h2 class="text-2xl font-black text-white animate-pulse">ĐANG KHỞI ĐỘNG AI...</h2>
+            <p class="text-slate-400 mt-2 font-bold text-center">Con vui lòng cấp quyền Camera khi được hỏi nhé!</p>
+        </div>
+
+        <div id="game-ui" class="w-full max-w-md hidden flex-col items-center">
+            
+            <div id="question-box" class="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-3xl w-full text-center shadow-lg border-2 border-blue-400 mb-6 relative z-20">
+                <h3 id="question-text" class="text-2xl sm:text-3xl font-black text-white drop-shadow-md">Chuẩn bị...</h3>
+            </div>
+
+            <div id="video-container" class="mb-6 relative">
+                <video id="webcam" autoplay playsinline muted></video>
+                <div id="tilt-left-indicator" class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-red-500/50 to-transparent opacity-0 transition-opacity"></div>
+                <div id="tilt-right-indicator" class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-green-500/50 to-transparent opacity-0 transition-opacity"></div>
+            </div>
+
+            <div class="flex w-full gap-4 justify-between">
+                <div id="ans-left" class="answer-box flex-1 bg-slate-800 border-4 border-red-500 p-4 rounded-2xl text-center shadow-[0_0_15px_rgba(239,68,68,0.3)]">
+                    <div class="text-red-400 font-black mb-1 text-sm uppercase"><i class="fas fa-arrow-left"></i> Nghiêng Trái</div>
+                    <div id="text-left" class="text-xl font-bold text-white">...</div>
+                </div>
+                <div id="ans-right" class="answer-box flex-1 bg-slate-800 border-4 border-green-500 p-4 rounded-2xl text-center shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                    <div class="text-green-400 font-black mb-1 text-sm uppercase">Nghiêng Phải <i class="fas fa-arrow-right"></i></div>
+                    <div id="text-right" class="text-xl font-bold text-white">...</div>
+                </div>
+            </div>
+            
+            <p class="text-slate-500 text-xs mt-6 font-bold uppercase tracking-widest"><i class="fas fa-info-circle"></i> Giữ đầu nghiêng 2 giây để chốt đáp án</p>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('webcam');
+        const loading = document.getElementById('loading');
+        const gameUI = document.getElementById('game-ui');
+        let facemesh;
+        let isPlaying = false;
+        let isAnswering = false;
+
+        // Bộ câu hỏi mẫu (Thầy có thể thay đổi/thêm bớt)
+        const questions = [
+            { q: "9 x 8 = ?", left: "72", right: "81", correct: "left" },
+            { q: "54 : 6 = ?", left: "8", right: "9", correct: "right" },
+            { q: "Con mèo kêu thế nào?", left: "Gâu gâu", right: "Meo meo", correct: "right" },
+            { q: "100 - 45 = ?", left: "55", right: "65", correct: "left" },
+            { q: "Thủ đô của Việt Nam?", left: "Hà Nội", right: "TP.HCM", correct: "left" }
+        ];
+        let currentQIndex = 0;
+        let score = 0;
+
+        // 1. Khởi động Camera
+        async function setupCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+                video.srcObject = stream;
+                return new Promise((resolve) => { video.onloadedmetadata = () => { resolve(video); }; });
+            } catch (err) {
+                alert("Lỗi: Không thể bật Camera. Con hãy kiểm tra lại quyền truy cập nhé!");
+            }
+        }
+
+        // 2. Khởi động AI ml5.js FaceMesh
+        async function loadAI() {
+            await setupCamera();
+            video.play();
+            // Tải mô hình nhận diện khuôn mặt
+            facemesh = ml5.facemesh(video, () => {
+                loading.style.display = 'none';
+                gameUI.style.display = 'flex';
+                startGame();
+            });
+            // Lắng nghe sự kiện khi AI tìm thấy khuôn mặt
+            facemesh.on("predict", results => {
+                if (results.length > 0 && isPlaying && !isAnswering) {
+                    analyzeTilt(results[0].annotations);
+                }
+            });
+        }
+
+        // 3. Phân tích góc nghiêng của đầu
+        let tiltHoldTime = 0;
+        let currentTilt = null;
+
+        function analyzeTilt(annotations) {
+            // Lấy tọa độ 2 con mắt
+            const leftEye = annotations.leftEyeUpper0[3];
+            const rightEye = annotations.rightEyeUpper0[3];
+
+            // Tính góc nghiêng (Trigonometry)
+            const dy = rightEye[1] - leftEye[1];
+            const dx = rightEye[0] - leftEye[0];
+            let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            // Xử lý Giao diện báo hiệu
+            let tiltLeftInd = document.getElementById('tilt-left-indicator');
+            let tiltRightInd = document.getElementById('tilt-right-indicator');
+            let boxLeft = document.getElementById('ans-left');
+            let boxRight = document.getElementById('ans-right');
+
+            // Do camera lật gương, nghiêng trái của người chơi = góc dương
+            if (angle > 15) { // Nghiêng TRÁI
+                tiltLeftInd.style.opacity = '1'; tiltRightInd.style.opacity = '0';
+                boxLeft.classList.add('answer-active'); boxRight.classList.remove('answer-active');
+                if (currentTilt !== 'left') { currentTilt = 'left'; tiltHoldTime = 0; }
+                tiltHoldTime++;
+            } 
+            else if (angle < -15) { // Nghiêng PHẢI
+                tiltRightInd.style.opacity = '1'; tiltLeftInd.style.opacity = '0';
+                boxRight.classList.add('answer-active'); boxLeft.classList.remove('answer-active');
+                if (currentTilt !== 'right') { currentTilt = 'right'; tiltHoldTime = 0; }
+                tiltHoldTime++;
+            } 
+            else { // Đầu thẳng
+                tiltLeftInd.style.opacity = '0'; tiltRightInd.style.opacity = '0';
+                boxLeft.classList.remove('answer-active'); boxRight.classList.remove('answer-active');
+                currentTilt = null; tiltHoldTime = 0;
+            }
+
+            // Nếu giữ nghiêng đủ lâu (khoảng 15 khung hình ~ 0.5s) -> Chốt đáp án
+            if (tiltHoldTime > 15 && currentTilt !== null) {
+                checkAnswer(currentTilt);
+            }
+        }
+
+        // 4. Logic Gameplay
+        function startGame() {
+            score = 0;
+            currentQIndex = 0;
+            document.getElementById('score').innerText = score;
+            loadQuestion();
+            isPlaying = true;
+        }
+
+        function loadQuestion() {
+            if (currentQIndex >= questions.length) {
+                document.getElementById('question-text').innerText = "🎉 HOÀN THÀNH XUẤT SẮC!";
+                document.getElementById('text-left').innerText = "-";
+                document.getElementById('text-right').innerText = "-";
+                isPlaying = false;
+                alert("Chúc mừng con đã hoàn thành trò chơi! Điểm của con: " + score);
+                return;
+            }
+            let q = questions[currentQIndex];
+            document.getElementById('question-text').innerText = q.q;
+            document.getElementById('text-left').innerText = q.left;
+            document.getElementById('text-right').innerText = q.right;
+            isAnswering = false;
+            currentTilt = null;
+            tiltHoldTime = 0;
+            document.getElementById('ans-left').classList.remove('answer-active');
+            document.getElementById('ans-right').classList.remove('answer-active');
+            document.getElementById('tilt-left-indicator').style.opacity = '0';
+            document.getElementById('tilt-right-indicator').style.opacity = '0';
+        }
+
+        function checkAnswer(chosenSide) {
+            isAnswering = true;
+            let q = questions[currentQIndex];
+            
+            // Đổi màu box để báo đúng sai
+            let chosenBox = chosenSide === 'left' ? document.getElementById('ans-left') : document.getElementById('ans-right');
+            
+            if (chosenSide === q.correct) {
+                chosenBox.style.backgroundColor = '#166534'; // Xanh lá đậm
+                score += 10;
+                document.getElementById('score').innerText = score;
+            } else {
+                chosenBox.style.backgroundColor = '#991b1b'; // Đỏ đậm
+            }
+
+            // Đợi 1.5 giây rồi qua câu mới
+            setTimeout(() => {
+                chosenBox.style.backgroundColor = ''; // Reset màu
+                currentQIndex++;
+                loadQuestion();
+            }, 1500);
+        }
+
+        // Bắt đầu ngay khi tải trang
+        loadAI();
+    </script>
+</body>
+</html>
