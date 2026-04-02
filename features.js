@@ -260,15 +260,15 @@ window.moGocHocTap = async function() {
         return timeA - timeB; 
     });
 
-    let top30 = sortedStudents.slice(0, 30);
+    let top20 = sortedStudents.slice(0, 20); // <--- ĐỔI SỐ 30 THÀNH 20 TẠI ĐÂY
     
     // Tính Rank (Hạng) chỉ dựa trên những học sinh KHÔNG VI PHẠM
     let uniqueScores = [...new Set(sortedStudents.filter(s => !checkBan(s)).map(s => s.score))].sort((a, b) => b - a);
     let now = new Date();
 
     let leaderboardHtml = ""; 
-    if (top30.length > 0) { 
-        let listHtml = top30.map((s) => { 
+    if (top20.length > 0) {
+        let listHtml = top20.map((s) => {
             let isBanned = checkBan(s);
             let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
