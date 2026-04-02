@@ -346,7 +346,7 @@ window.moGocHocTap = async function() {
         if (currentUser && currentUser.role === 'student') { 
             let isBanned = checkBan(currentUser);
             if (isBanned) {
-                personalMsg = `<div class="mt-4 p-3 bg-red-100 border border-red-300 rounded-xl text-center shadow-inner"><p class="text-red-700 font-bold text-sm"><i class="fas fa-ban text-red-500 mr-1 animate-pulse"></i> Con đang bị đình chỉ thi đua. Hãy cố gắng rèn luyện đạo đức để được thầy gỡ phạt nhé!</p></div>`;
+                personalMsg = `<div class="mt-4 p-3 bg-red-100 border border-red-300 rounded-xl text-center shadow-inner"><p class="text-red-700 font-bold text-sm"><i class="fas fa-ban text-red-500 mr-1 animate-pulse"></i>Tạm đình chỉ thi đua do vi phạm nội quy!</p></div>`;
             } else {
                 let myScore = Number(currentUser.score) || 0; let myRank = uniqueScores.indexOf(myScore) + 1; if (myRank === 0) myRank = uniqueScores.length + 1; 
                 if (myRank <= 10) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
