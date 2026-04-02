@@ -136,7 +136,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (GIAO DIỆN THẺ BÀI HIỆN ĐẠI NHƯ KHO GAME)
+// 1. GÓC HỌC TẬP (BẢNG VÀNG CÓ TÍCH HỢP CẤM THI ĐUA)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -156,14 +156,12 @@ window.moGocHocTap = async function() {
         tvUnread = tvGroupsAll.filter(g => !myLogs.some(l => (l.subject === 'vietnamese' || l.subject === 'tv') && l.group === g)).length;
     }
 
-    // --- TẠO NHÃN BÁO ĐỎ NHẤP NHÁY (Chuyển sang góc trái để nhường chỗ cho icon) ---
     let mathBadge = mathUnread > 0 ? `<div class="absolute -top-3 -left-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${mathUnread} BÀI MỚI</div>` : '';
     let tvBadge = tvUnread > 0 ? `<div class="absolute -top-3 -left-3 bg-red-500 text-white text-[12px] font-black px-3 py-1.5 rounded-full border-2 border-white shadow-[0_0_15px_rgba(239,68,68,0.5)] animate-bounce z-20">${tvUnread} BÀI MỚI</div>` : '';
 
     let htmlTop = `
         ${window.getNavHtml ? window.getNavHtml('hoctap') : ''}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 relative">
-            
             <div class="bg-orange-50/80 p-5 sm:p-6 rounded-[2rem] border-2 border-orange-100 shadow-sm hover:shadow-md transition relative flex flex-col justify-between min-h-[180px] group">
                 ${mathBadge}
                 <div class="absolute -top-4 -right-2 bg-orange-100 border-2 border-orange-200 w-12 h-12 rounded-2xl flex items-center justify-center text-orange-500 text-2xl shadow-sm rotate-12 group-hover:rotate-0 transition z-10">
@@ -193,7 +191,6 @@ window.moGocHocTap = async function() {
                     <i class="fas fa-play text-sm"></i> VÀO HỌC
                 </button>
             </div>
-
         </div>
         
         ${currentUser && currentUser.role === 'student' ? `
@@ -228,25 +225,51 @@ window.moGocHocTap = async function() {
     
     function parseLogTime(timeStr) { if(!timeStr) return 0; let d = new Date(timeStr); return !isNaN(d.getTime()) ? d.getTime() : 0; }
 
-    let studentsWithTime = Data.hs.filter(s => (s.role || '').toLowerCase() !== 'admin').map(s => {
-        let scoreVal = Number(s.score) || 0; let userLogs = Data.log.filter(l => String(l.id) === String(s.id) && Number(l.score) !== 0); let achievedTime = 0;
-        if (userLogs.length > 0) { userLogs.sort((a, b) => parseLogTime(a.time) - parseLogTime(b.time)); achievedTime = parseLogTime(userLogs[userLogs.length - 1].time); }
-        return { ...s, score: scoreVal, achievedTime: achievedTime };
-    });
+    // ===============================================
+    // LỌC VÀ SẮP XẾP BẢNG VÀNG (CÓ ĐẨY ĐÁY KẺ VI PHẠM)
+    // ===============================================
+    let studentsWithTime = Data.hs
+        .filter(s => (s.role || '').toLowerCase() !== 'admin') // Chỉ lọc admin, để lại học sinh vi phạm
+        .map(s => {
+            let scoreVal = Number(s.score) || 0; 
+            let userLogs = Data.log.filter(l => String(l.id) === String(s.id) && Number(l.score) !== 0); 
+            let achievedTime = 0;
+            if (userLogs.length > 0) {
+                userLogs.sort((a,b) => parseLogTime(b.time) - parseLogTime(a.time));
+                let d = new Date(userLogs[0].time);
+                if (!isNaN(d.getTime())) achievedTime = d.getTime();
+            }
+            return { ...s, score: scoreVal, achievedTime: achievedTime };
+        });
+
+    const checkBan = (hs) => String(hs.ViPham).trim().toUpperCase() === 'TRUE';
 
     let sortedStudents = studentsWithTime.sort((a, b) => {
-        let scoreDiff = b.score - a.score; if (scoreDiff !== 0) return scoreDiff;
-        let timeA = a.achievedTime === 0 ? Infinity : a.achievedTime; let timeB = b.achievedTime === 0 ? Infinity : b.achievedTime;
+        let aBanned = checkBan(a);
+        let bBanned = checkBan(b);
+
+        // Học sinh vi phạm bị đẩy xuống ĐÁY BẢNG VÀNG bất kể điểm số
+        if (aBanned && !bBanned) return 1;
+        if (!aBanned && bBanned) return -1;
+
+        // Nếu cùng trạng thái thì xếp hạng theo điểm
+        let scoreDiff = b.score - a.score; 
+        if (scoreDiff !== 0) return scoreDiff;
+        let timeA = a.achievedTime === 0 ? Infinity : a.achievedTime; 
+        let timeB = b.achievedTime === 0 ? Infinity : b.achievedTime;
         return timeA - timeB; 
     });
 
     let top30 = sortedStudents.slice(0, 30);
-    let uniqueScores = [...new Set(sortedStudents.map(s => s.score))].sort((a, b) => b - a);
+    
+    // Tính Rank (Hạng) chỉ dựa trên những học sinh KHÔNG VI PHẠM
+    let uniqueScores = [...new Set(sortedStudents.filter(s => !checkBan(s)).map(s => s.score))].sort((a, b) => b - a);
     let now = new Date();
 
     let leaderboardHtml = ""; 
     if (top30.length > 0) { 
         let listHtml = top30.map((s) => { 
+            let isBanned = checkBan(s);
             let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
             
@@ -257,34 +280,45 @@ window.moGocHocTap = async function() {
 
             let lastActionTime = 0;
             if (userLogs.length > 0) {
-                userLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+                userLogs.sort((a,b) => parseLogTime(b.time) - parseLogTime(a.time));
                 let d = new Date(userLogs[0].time);
                 if (!isNaN(d.getTime())) lastActionTime = d;
             }
 
             let statusDot = ""; let statusTitle = "";
-            if (!lastActionTime) {
-                statusDot = "bg-black"; statusTitle = "Chưa truy cập";
-            } else {
+            if (!lastActionTime) { statusDot = "bg-black"; statusTitle = "Chưa truy cập"; } 
+            else {
                 let diffMinutes = Math.floor((now - lastActionTime) / 60000);
                 if (diffMinutes < 30) { statusDot = "bg-green-500 animate-pulse ring-2 ring-green-200"; statusTitle = "Đang hoạt động rôm rả"; } 
                 else if (diffMinutes < 60 * 24) { statusDot = "bg-blue-500"; statusTitle = "Có hoạt động hôm nay"; } 
                 else { statusDot = "bg-black"; statusTitle = "Đang Offline"; }
             }
 
-            let titleBadge = ""; let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
+            let titleBadge = "";
+            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
             let nameColor = "text-slate-700 font-bold"; let rowStyles = "bg-slate-50 border-slate-200"; 
             
-            if (actualDisplayRank === 1) { rowStyles = "bg-yellow-50 scale-[1.02] z-10"; nameColor = "text-yellow-700 font-bold"; rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; }
-            else if (actualDisplayRank === 2) { rowStyles = "bg-gray-50"; rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; }
-            else if (actualDisplayRank === 3) { rowStyles = "bg-orange-50"; rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; }
+            // XỬ LÝ GIAO DIỆN HỌC SINH VI PHẠM
+            if (isBanned) {
+                rowStyles = "bg-slate-100 border-slate-300 opacity-60 grayscale";
+                nameColor = "text-slate-500 font-bold line-through";
+                rankIcon = `<i class="fas fa-ban text-2xl text-slate-400 drop-shadow-md" title="Bị đình chỉ"></i>`;
+                titleBadge = `<div class="text-[10px] font-black text-red-600 bg-red-100 px-2 py-1 rounded border border-red-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-exclamation-triangle mr-1"></i>Tạm đình chỉ thi đua do vi phạm nội quy</div>`;
+                ongVangBadge = ""; 
+            } else {
+                if (actualDisplayRank === 1) { rowStyles = "bg-yellow-50 scale-[1.02] z-10 border-yellow-300 shadow-sm"; nameColor = "text-yellow-700 font-bold"; rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; }
+                else if (actualDisplayRank === 2) { rowStyles = "bg-gray-50 border-gray-300"; rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; }
+                else if (actualDisplayRank === 3) { rowStyles = "bg-orange-50 border-orange-200"; rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; }
+                else { rowStyles += " border-emerald-200"; }
 
-            if (s.score >= 5000) { titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`; nameColor = "text-red-600 font-black drop-shadow-md"; rowStyles += " border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)] ring-2 ring-red-200 ring-offset-1 animate-pulse"; } 
-            else if (s.score >= 4000) { titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`; nameColor = "text-purple-700 font-bold drop-shadow-sm"; rowStyles += " border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]"; } 
-            else if (s.score >= 3000) { titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`; nameColor = "text-emerald-700 font-bold"; rowStyles += " border-2 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]"; } 
-            else { if (actualDisplayRank === 1) rowStyles += " border-yellow-300 shadow-sm"; else if (actualDisplayRank === 2) rowStyles += " border-gray-300"; else if (actualDisplayRank === 3) rowStyles += " border-orange-200"; else rowStyles += " border-emerald-200"; }
+                if (s.score >= 5000) { titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`; nameColor = "text-red-600 font-black drop-shadow-md"; rowStyles += " border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)] ring-2 ring-red-200 ring-offset-1 animate-pulse"; } 
+                else if (s.score >= 4000) { titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`; nameColor = "text-purple-700 font-bold drop-shadow-sm"; rowStyles += " border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]"; } 
+                else if (s.score >= 3000) { titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`; nameColor = "text-emerald-700 font-bold"; rowStyles += " border-2 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]"; } 
+            }
 
-            let allBadges = ""; if (titleBadge || ongVangBadge) { allBadges = `<div class="flex flex-wrap gap-1">${titleBadge}${ongVangBadge}</div>`; }
+            let allBadges = "";
+            if (titleBadge || ongVangBadge) { allBadges = `<div class="flex flex-col gap-1 mt-1">${titleBadge}${ongVangBadge}</div>`; }
+            
             let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
             
             let avatarHtml = `
@@ -292,7 +326,6 @@ window.moGocHocTap = async function() {
                 <img src="${avatarUrl}" class="w-10 h-10 rounded-full border border-slate-200 shadow-sm object-cover">
                 <span class="absolute bottom-0 right-0 w-3 h-3 ${statusDot} border-2 border-white rounded-full"></span>
             </div>`;
-
             return `
             <div class="flex items-center justify-between p-3 mb-2 rounded-xl transition-all relative border ${rowStyles}">
                 <div class="flex items-center gap-2 sm:gap-3">
@@ -306,19 +339,133 @@ window.moGocHocTap = async function() {
                 <div class="font-black text-indigo-600 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm text-sm shrink-0">
                     ${s.score} <span class="text-[10px] text-indigo-500 font-bold ml-1 uppercase">điểm</span>
                 </div>
-            </div>`; 
-        }).join(''); 
+            </div>`;
+        }).join('');
         
         let personalMsg = ""; 
         if (currentUser && currentUser.role === 'student') { 
-            let myScore = Number(currentUser.score) || 0; let myRank = uniqueScores.indexOf(myScore) + 1; if (myRank === 0) myRank = uniqueScores.length + 1; 
-            if (myRank <= 10) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
-            else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Hiện tại con đang ở Hạng ${myRank}.<br>Cố lên nhé, chăm chỉ làm bài để leo rank nha!</p></div>`; } 
+            let isBanned = checkBan(currentUser);
+            if (isBanned) {
+                personalMsg = `<div class="mt-4 p-3 bg-red-100 border border-red-300 rounded-xl text-center shadow-inner"><p class="text-red-700 font-bold text-sm"><i class="fas fa-ban text-red-500 mr-1 animate-pulse"></i> Con đang bị đình chỉ thi đua. Hãy cố gắng rèn luyện đạo đức để được thầy gỡ phạt nhé!</p></div>`;
+            } else {
+                let myScore = Number(currentUser.score) || 0; let myRank = uniqueScores.indexOf(myScore) + 1; if (myRank === 0) myRank = uniqueScores.length + 1; 
+                if (myRank <= 10) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
+                else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Hiện tại con đang ở Hạng ${myRank}.<br>Cố lên nhé, chăm chỉ làm bài để leo rank nha!</p></div>`; } 
+            }
         } 
         
         leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col">${listHtml}</div>${personalMsg}</div>`; 
     } 
     document.getElementById('content').innerHTML = htmlTop + leaderboardHtml; 
+};
+
+// ==========================================
+// 2. GIAO DIỆN HỒ SƠ ADMIN (GẮN CÔNG TẮC CẤM)
+// ==========================================
+window.viewProfile = function(studentId) {
+    let s = Data.hs.find(x => String(x.id) === String(studentId));
+    if (!s) return;
+    
+    let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
+    let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
+    let currentScore = Number(s.score) || 0;
+    let isBanned = String(s.ViPham).trim().toUpperCase() === 'TRUE';
+    
+    let overlay = document.createElement('div'); overlay.id = "profileModalAdmin"; 
+    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
+    overlay.innerHTML = `
+        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center relative animate-[cascadeDrop_0.4s_ease-out_forwards] overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+            <button onclick="document.getElementById('profileModalAdmin').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/20 text-white rounded-full hover:bg-red-500 transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
+            
+            <div class="relative z-10 mt-6">
+                <div class="relative inline-block group cursor-pointer" onclick="window.gvDoiAnhHocSinh('${s.id}', '${s.name.replace(/'/g, "\\'")}')" title="Bấm để đổi ảnh cho học sinh này">
+                    <img id="adminViewAvatarImg" src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
+                    <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                
+                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${s.name}</h3>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${s.chucvu || 'Học sinh'}</p>
+                <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
+                
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner mb-4 text-left">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-trophy text-yellow-500 mr-1"></i> Tổng điểm</span>
+                        <span class="text-lg font-black text-indigo-600">${currentScore}</span>
+                    </div>
+                    <div class="w-full h-px bg-slate-200 mb-3"></div>
+                    <div>
+                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1"><i class="fas fa-phone-alt text-green-500 mr-1"></i> SĐT Phụ huynh</span>
+                        <div class="flex justify-between text-sm font-bold text-slate-600">
+                            <span>Bố: ${s.fatherPhone || '---'}</span>
+                            <span>Mẹ: ${s.motherPhone || '---'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-red-50 rounded-2xl p-4 border ${isBanned ? 'border-red-400 ring-2 ring-red-200' : 'border-red-100'} shadow-inner mb-6 text-left flex items-center justify-between transition-all" id="boxBan_${s.id}">
+                    <label class="text-xs font-black text-red-600 uppercase tracking-widest cursor-pointer flex items-center gap-2" for="banLB_${s.id}">
+                        <i class="fas fa-user-slash"></i> Cấm Bảng Vàng
+                    </label>
+                    <input type="checkbox" id="banLB_${s.id}" ${isBanned ? 'checked' : ''} onchange="window.toggleBanLeaderboard('${s.id}', '${s.name.replace(/'/g, "\\'")}', this.checked)" class="w-6 h-6 accent-red-600 cursor-pointer shadow-sm">
+                </div>
+                
+                <button onclick="document.getElementById('profileModalAdmin').remove()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 hover:text-slate-800 transition shadow-sm">
+                    ĐÓNG HỒ SƠ
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+};
+
+// ==========================================
+// 3. API KÍCH HOẠT LỆNH CẤM BẢNG VÀNG (Gửi lên Sheet)
+// ==========================================
+window.toggleBanLeaderboard = async function(studentId, studentName, isBanned) {
+    let viPhamVal = isBanned ? "TRUE" : "";
+    let alertMsg = isBanned ? `⚠️ Đã CẤM em ${studentName} xuất hiện trên Bảng Vàng.` : `✅ Đã KHÔI PHỤC em ${studentName} lên Bảng Vàng.`;
+
+    document.getElementById('loader').style.display = 'flex';
+    let loaderText = document.querySelector('#loader p');
+    if (loaderText) loaderText.innerText = "ĐANG LƯU LỆNH LÊN ĐÁM MÂY...";
+
+    try {
+        await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'cap_nhat_vi_pham', 
+                data: { id_hs: studentId, ViPham: viPhamVal } 
+            }) 
+        });
+        
+        // Cập nhật dữ liệu tạm thời trên máy để không cần F5
+        let idx = Data.hs.findIndex(x => String(x.id) === String(studentId));
+        if (idx !== -1) { Data.hs[idx].ViPham = viPhamVal; }
+
+        // Đổi màu viền khung cho trực quan
+        let box = document.getElementById(`boxBan_${studentId}`);
+        if(box) {
+            box.className = isBanned 
+                ? "bg-red-50 rounded-2xl p-4 border border-red-400 ring-2 ring-red-200 shadow-inner mb-6 text-left flex items-center justify-between transition-all"
+                : "bg-red-50 rounded-2xl p-4 border border-red-100 shadow-inner mb-6 text-left flex items-center justify-between transition-all";
+        }
+        
+        alert(alertMsg);
+        
+        // Reload lại trang Bảng Vàng để thấy tác dụng ngay
+        if (document.getElementById('content').innerHTML.includes('BẢNG VÀNG')) {
+            window.moGocHocTap();
+        }
+    } catch(e) {
+        alert("Lỗi mạng, chưa cập nhật được trạng thái!");
+        document.getElementById(`banLB_${studentId}`).checked = !isBanned; 
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        if (loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+    }
 };
 // ==========================================
 // 2. KHO QUẢN LÝ BÀI TẬP ADMIN
@@ -2102,7 +2249,7 @@ window.viewProfile = function(studentId) {
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${s.chucvu || 'Học sinh'}</p>
                 <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
                 
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner mb-6 text-left">
+                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner mb-4 text-left">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-trophy text-yellow-500 mr-1"></i> Tổng điểm</span>
                         <span class="text-lg font-black text-indigo-600">${currentScore}</span>
@@ -2115,6 +2262,13 @@ window.viewProfile = function(studentId) {
                             <span>Mẹ: ${s.motherPhone || '---'}</span>
                         </div>
                     </div>
+                </div>
+
+                <div class="bg-red-50 rounded-2xl p-4 border ${String(s.ViPham).trim().toUpperCase() === 'TRUE' ? 'border-red-400 ring-2 ring-red-200' : 'border-red-100'} shadow-inner mb-6 text-left flex items-center justify-between transition-all" id="boxBan_${s.id}">
+                    <label class="text-xs font-black text-red-600 uppercase tracking-widest cursor-pointer flex items-center gap-2" for="banLB_${s.id}">
+                        <i class="fas fa-user-slash"></i> Cấm Bảng Vàng
+                    </label>
+                    <input type="checkbox" id="banLB_${s.id}" ${String(s.ViPham).trim().toUpperCase() === 'TRUE' ? 'checked' : ''} onchange="window.toggleBanLeaderboard('${s.id}', '${s.name.replace(/'/g, "\\'")}', this.checked)" class="w-6 h-6 accent-red-600 cursor-pointer shadow-sm">
                 </div>
                 
                 <button onclick="document.getElementById('profileModalAdmin').remove()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 hover:text-slate-800 transition shadow-sm">
@@ -2949,4 +3103,45 @@ window.thoatGameLatTheToan = async function(saveScore = false) {
     let gameUI = document.querySelector('#game-ui-container'); if (gameUI) gameUI.remove();
     let mainUI = document.querySelector('.bg-\\[url'); if(mainUI) mainUI.remove();
     veTrangChu(); moGocHocTap(); 
+};
+// ==========================================
+// HỆ THỐNG ĐÌNH CHỈ BẢNG VÀNG BẰNG CỘT M
+// ==========================================
+window.toggleBanLeaderboard = async function(studentId, studentName, isBanned) {
+    let viPhamVal = isBanned ? "TRUE" : "";
+    let alertMsg = isBanned ? `⚠️ Đã CẤM em ${studentName} xuất hiện trên Bảng Vàng.` : `✅ Đã KHÔI PHỤC em ${studentName} lên Bảng Vàng.`;
+
+    document.getElementById('loader').style.display = 'flex';
+    let loaderText = document.querySelector('#loader p');
+    if (loaderText) loaderText.innerText = "ĐANG LƯU LỆNH LÊN ĐÁM MÂY...";
+
+    try {
+        await fetch(API_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ 
+                action: 'cap_nhat_vi_pham', 
+                data: { id_hs: studentId, ViPham: viPhamVal } 
+            }) 
+        });
+        
+        // Cập nhật dữ liệu tạm thời trên máy để không cần F5
+        let idx = Data.hs.findIndex(x => String(x.id) === String(studentId));
+        if (idx !== -1) { Data.hs[idx].ViPham = viPhamVal; }
+
+        // Đổi màu viền khung cho trực quan
+        let box = document.getElementById(`boxBan_${studentId}`);
+        if(box) {
+            box.className = isBanned 
+                ? "bg-red-50 rounded-2xl p-4 border border-red-400 ring-2 ring-red-200 shadow-inner mb-6 text-left flex items-center justify-between transition-all"
+                : "bg-red-50 rounded-2xl p-4 border border-red-100 shadow-inner mb-6 text-left flex items-center justify-between transition-all";
+        }
+        
+        alert(alertMsg);
+    } catch(e) {
+        alert("Lỗi mạng, chưa cập nhật được trạng thái!");
+        document.getElementById(`banLB_${studentId}`).checked = !isBanned; 
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        if (loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+    }
 };
