@@ -360,7 +360,7 @@ window.moGocHocTap = async function() {
 };
 
 // ==========================================
-// 2. GIAO DIỆN HỒ SƠ ADMIN (GẮN CÔNG TẮC CẤM)
+// GIAO DIỆN HỒ SƠ ADMIN (XEM HỌC SINH + CÔNG TẮC CẤM)
 // ==========================================
 window.viewProfile = function(studentId) {
     let s = Data.hs.find(x => String(x.id) === String(studentId));
@@ -369,31 +369,42 @@ window.viewProfile = function(studentId) {
     let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
     let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
     let currentScore = Number(s.score) || 0;
+    
+    // KIỂM TRA VI PHẠM ĐỂ CHỈNH MÀU GIAO DIỆN
     let isBanned = String(s.ViPham).trim().toUpperCase() === 'TRUE';
+    let scoreStyle = isBanned ? "text-lg font-black text-slate-400 opacity-50 line-through grayscale" : "text-lg font-black text-indigo-600";
+    
+    if (isBanned) {
+        studentTitles = `<span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-lg font-black border border-red-300 shadow-sm"><i class="fas fa-ban mr-1"></i>Đang bị đình chỉ</span>`;
+    }
+
+    // Xóa modal cũ nếu vô tình bấm nhiều lần
+    let oldModal = document.getElementById('profileModalAdmin');
+    if (oldModal) oldModal.remove();
     
     let overlay = document.createElement('div'); overlay.id = "profileModalAdmin"; 
     overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
     overlay.innerHTML = `
         <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center relative animate-[cascadeDrop_0.4s_ease-out_forwards] overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r ${isBanned ? 'from-slate-400 to-slate-500 grayscale' : 'from-blue-400 to-indigo-500'}"></div>
             <button onclick="document.getElementById('profileModalAdmin').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/20 text-white rounded-full hover:bg-red-500 transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
             
             <div class="relative z-10 mt-6">
                 <div class="relative inline-block group cursor-pointer" onclick="window.gvDoiAnhHocSinh('${s.id}', '${s.name.replace(/'/g, "\\'")}')" title="Bấm để đổi ảnh cho học sinh này">
-                    <img id="adminViewAvatarImg" src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
+                    <img id="adminViewAvatarImg" src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80 ${isBanned ? 'grayscale opacity-70' : ''}">
                     <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
                         <i class="fas fa-camera"></i>
                     </div>
                 </div>
                 
-                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${s.name}</h3>
+                <h3 class="text-2xl font-black ${isBanned ? 'text-slate-400 line-through' : 'text-slate-800'} mt-4 mb-1">${s.name}</h3>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${s.chucvu || 'Học sinh'}</p>
                 <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
                 
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner mb-4 text-left">
+                <div class="bg-slate-50 rounded-2xl p-4 border ${isBanned ? 'border-red-100 bg-red-50/30' : 'border-slate-100'} shadow-inner mb-4 text-left">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-trophy text-yellow-500 mr-1"></i> Tổng điểm</span>
-                        <span class="text-lg font-black text-indigo-600">${currentScore}</span>
+                        <span class="${scoreStyle}">${currentScore}</span>
                     </div>
                     <div class="w-full h-px bg-slate-200 mb-3"></div>
                     <div>
@@ -1203,13 +1214,12 @@ window.finishQuiz = async function() {
     }
 };
 
-// ==========================================
-
-// ==========================================
-// 5. VÒNG QUAY MAY MẮN (CÓ BẢO MẬT & CLOUD)
-// ==========================================
 window.tinhLuotQuayHienTai = function() {
     if (!currentUser) return 0;
+    
+    // NẾU VI PHẠM ĐẠO ĐỨC -> ÉP LƯỢT QUAY VỀ 0 NGAY LẬP TỨC
+    if (String(currentUser.ViPham).trim().toUpperCase() === 'TRUE') return 0;
+
     let today = new Date();
     let daQuayHomNay = Data.log.some(l => {
         if (String(l.id) !== String(currentUser.id) || l.subject !== "LuckySpin") return false;
@@ -1805,6 +1815,13 @@ window.toggleNhacNenBaoVeTraiDat = function() {
 window.moGameBaoVeTraiDat = async function() {
     if(!currentUser) return showLogin(); closeMenu();
     
+    // --- KIỂM TRA ĐÌNH CHỈ THI ĐUA (CỘT M = TRUE) ---
+    if (String(currentUser.ViPham).trim().toUpperCase() === 'TRUE') {
+        alert("🚨 HỆ THỐNG: Con đang bị tạm đình chỉ thi đua do vi phạm nội quy!\n\nTính năng chơi Game đã bị khóa. Hãy cố gắng ngoan ngoãn và rèn luyện đạo đức để thầy mở khóa cho con nhé!");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+    
     // KIỂM TRA LỆNH KHÓA TỪ GVCN
     let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
     if (blockUntil) {
@@ -1883,11 +1900,11 @@ window.moGameBaoVeTraiDat = async function() {
         </div>
     `;
     
-    // --- KHỞI ĐỘNG NHẠC NỀN BẢO VỆ TRÁI ĐẤT (Đã dùng link ngắn) ---
+    // --- KHỞI ĐỘNG NHẠC NỀN BẢO VỆ TRÁI ĐẤT ---
     if (!mathGame.bgMusic) {
         mathGame.bgMusic = new Audio('./upload/Nhac%20nen%20tro%20choi%20bao%20ve%20trai%20dat.mp3');
         mathGame.bgMusic.loop = true;
-        mathGame.bgMusic.volume = 0.1; // Âm lượng 10%
+        mathGame.bgMusic.volume = 0.1;
     }
     
     let playPromise = mathGame.bgMusic.play();
@@ -2220,64 +2237,6 @@ window.chuyenTrangQuanLy = async function() {
     });
 
     document.getElementById('content').innerHTML = html + "</div>"; 
-};
-
-window.viewProfile = function(studentId) {
-    let s = Data.hs.find(x => String(x.id) === String(studentId));
-    if (!s) return;
-    
-    let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
-    let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
-    let currentScore = Number(s.score) || 0;
-    
-    let overlay = document.createElement('div'); overlay.id = "profileModalAdmin"; 
-    overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
-    overlay.innerHTML = `
-        <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center relative animate-[cascadeDrop_0.4s_ease-out_forwards] overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
-            <button onclick="document.getElementById('profileModalAdmin').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/20 text-white rounded-full hover:bg-red-500 transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
-            
-            <div class="relative z-10 mt-6">
-                <div class="relative inline-block group cursor-pointer" onclick="window.gvDoiAnhHocSinh('${s.id}', '${s.name.replace(/'/g, "\\'")}')" title="Bấm để đổi ảnh cho học sinh này">
-                    <img id="adminViewAvatarImg" src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
-                    <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
-                        <i class="fas fa-camera"></i>
-                    </div>
-                </div>
-                
-                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${s.name}</h3>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${s.chucvu || 'Học sinh'}</p>
-                <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
-                
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner mb-4 text-left">
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-trophy text-yellow-500 mr-1"></i> Tổng điểm</span>
-                        <span class="text-lg font-black text-indigo-600">${currentScore}</span>
-                    </div>
-                    <div class="w-full h-px bg-slate-200 mb-3"></div>
-                    <div>
-                        <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block mb-1"><i class="fas fa-phone-alt text-green-500 mr-1"></i> SĐT Phụ huynh</span>
-                        <div class="flex justify-between text-sm font-bold text-slate-600">
-                            <span>Bố: ${s.fatherPhone || '---'}</span>
-                            <span>Mẹ: ${s.motherPhone || '---'}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-red-50 rounded-2xl p-4 border ${String(s.ViPham).trim().toUpperCase() === 'TRUE' ? 'border-red-400 ring-2 ring-red-200' : 'border-red-100'} shadow-inner mb-6 text-left flex items-center justify-between transition-all" id="boxBan_${s.id}">
-                    <label class="text-xs font-black text-red-600 uppercase tracking-widest cursor-pointer flex items-center gap-2" for="banLB_${s.id}">
-                        <i class="fas fa-user-slash"></i> Cấm Bảng Vàng
-                    </label>
-                    <input type="checkbox" id="banLB_${s.id}" ${String(s.ViPham).trim().toUpperCase() === 'TRUE' ? 'checked' : ''} onchange="window.toggleBanLeaderboard('${s.id}', '${s.name.replace(/'/g, "\\'")}', this.checked)" class="w-6 h-6 accent-red-600 cursor-pointer shadow-sm">
-                </div>
-                
-                <button onclick="document.getElementById('profileModalAdmin').remove()" class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 hover:text-slate-800 transition shadow-sm">
-                    ĐÓNG HỒ SƠ
-                </button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(overlay);
 };
 
 window.gvDoiAnhHocSinh = function(studentId, studentName) {
@@ -2801,6 +2760,21 @@ window.moGameLatTheToan = function() {
     if(!currentUser) return showLogin();
     closeMenu();
 
+    // --- KIỂM TRA ĐÌNH CHỈ THI ĐUA (CỘT M = TRUE) ---
+    if (String(currentUser.ViPham).trim().toUpperCase() === 'TRUE') {
+        alert("🚨 HỆ THỐNG: Con đang bị tạm đình chỉ thi đua do vi phạm nội quy!\n\nTính năng chơi Game đã bị khóa. Hãy cố gắng ngoan ngoãn và rèn luyện đạo đức để thầy mở khóa cho con nhé!");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+    
+    // KIỂM TRA LỆNH KHÓA TỪ GVCN
+    let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
+    if (blockUntil) {
+        alert("🚨 TÍNH NĂNG BỊ KHOÁ");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
     let todayGame = new Date();
     let soLanDaChoiHomNay = Data.log.filter(l => {
         if (String(l.id) !== String(currentUser.id) || !l.subject.includes("MathGame_LatThe")) return false;
@@ -2808,17 +2782,26 @@ window.moGameLatTheToan = function() {
         return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
     }).length;
 
-    // ĐÃ XÓA PHẦN TEXT HƯỚNG DẪN LUẬT TRỪ ĐIỂM
+    // Số lượt chơi Lật Thẻ là 2 (Mặc định) + lượt đám mây
+    let luotGameCloud = Number(currentUser.luotGame) || 0;
+    let tongLuotGame = 2 + luotGameCloud; // Game lật thẻ cho 2 lượt
+
+    if (soLanDaChoiHomNay >= tongLuotGame) {
+        alert(`🛡️ HỆ THỐNG: Con đã dùng hết ${soLanDaChoiHomNay}/${tongLuotGame} lượt chơi Lật Thẻ hôm nay! Hãy cố gắng học tốt để xin Thầy thưởng thêm lượt nhé.`);
+        if (window.veTrangChu) veTrangChu();
+        return; 
+    }
+
     document.getElementById('content').innerHTML = `
         <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-900 flex flex-col items-center justify-center font-sans p-4">
             <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_0_50px_rgba(236,72,153,0.3)] w-full max-w-md text-center border border-white/20 relative">
                 <button onclick="veTrangChu(); moGocHocTap();" class="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full hover:bg-red-500 transition font-bold shadow-sm"><i class="fas fa-times"></i></button>
                 <div class="text-5xl sm:text-6xl mb-4 animate-pulse drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">🧩</div>
                 <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 mb-2 uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">LẬT THẺ CÂU ĐỐ</h2>
-                <p class="text-indigo-200 font-bold mb-8 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / 2 lần</span></p>
+                <p class="text-indigo-200 font-bold mb-8 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= tongLuotGame ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / ${tongLuotGame} lần</span></p>
 
                 <div class="space-y-4">
-                    <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
+                    <button onclick="window.batDauLatThe()" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
                         <i class="fas fa-play-circle"></i> BẮT ĐẦU CHƠI
                     </button>
                 </div>
