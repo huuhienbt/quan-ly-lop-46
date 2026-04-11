@@ -260,7 +260,7 @@ window.moGocHocTap = async function() {
         return timeA - timeB; 
     });
 
-    let top20 = sortedStudents.slice(0, 20); // <--- ĐỔI SỐ 30 THÀNH 20 TẠI ĐÂY
+    let top20 = sortedStudents.slice(0, 20); // Hiển thị Top 20
     
     // Tính Rank (Hạng) chỉ dựa trên những học sinh KHÔNG VI PHẠM
     let uniqueScores = [...new Set(sortedStudents.filter(s => !checkBan(s)).map(s => s.score))].sort((a, b) => b - a);
@@ -294,30 +294,54 @@ window.moGocHocTap = async function() {
                 else { statusDot = "bg-black"; statusTitle = "Đang Offline"; }
             }
 
-            let titleBadge = "";
-            let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center mt-1 shadow-sm">Ong Vàng Chăm Chỉ</div>` : "";
-            let nameColor = "text-slate-700 font-bold"; let rowStyles = "bg-slate-50 border-slate-200"; 
+            // XỬ LÝ GIAO DIỆN HÀNH VI & DANH HIỆU CHUẨN MỚI
+            let allBadgesArray = [];
+            let nameColor = "text-slate-700 font-bold"; 
+            let rowStyles = "bg-slate-50 border-slate-200"; 
             
-            // XỬ LÝ GIAO DIỆN HỌC SINH VI PHẠM
             if (isBanned) {
                 rowStyles = "bg-slate-100 border-slate-300 opacity-60 grayscale";
                 nameColor = "text-slate-500 font-bold line-through";
                 rankIcon = `<i class="fas fa-ban text-2xl text-slate-400 drop-shadow-md" title="Bị đình chỉ"></i>`;
-                titleBadge = `<div class="text-[10px] font-black text-red-600 bg-red-100 px-2 py-1 rounded border border-red-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-exclamation-triangle mr-1"></i>Tạm đình chỉ thi đua do vi phạm nội quy</div>`;
-                ongVangBadge = ""; 
+                allBadgesArray.push(`<div class="text-[10px] font-black text-red-600 bg-red-100 px-2 py-1 rounded border border-red-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-exclamation-triangle mr-1"></i>TÀI KHOẢN BỊ ĐÌNH CHỈ THI ĐUA DO VI PHẠM!</div>`);
             } else {
-                if (actualDisplayRank === 1) { rowStyles = "bg-yellow-50 scale-[1.02] z-10 border-yellow-300 shadow-sm"; nameColor = "text-yellow-700 font-bold"; rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; }
+                // 1. THƯỞNG CHO HẠNG 1: SIÊU SAO HỌC TẬP
+                if (actualDisplayRank === 1) { 
+                    rowStyles = "bg-yellow-50 scale-[1.02] z-10 border-yellow-300 shadow-sm"; 
+                    nameColor = "text-yellow-700 font-bold"; 
+                    rankIcon = `<i class="fas fa-medal text-3xl text-yellow-500 drop-shadow-md"></i>`; 
+                    if (s.score > 0) {
+                        allBadgesArray.push(`<div class="text-[10px] font-black text-pink-600 bg-pink-50 px-2 py-0.5 rounded border border-pink-300 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-trophy mr-1"></i>Siêu Sao Học Tập</div>`);
+                    }
+                }
                 else if (actualDisplayRank === 2) { rowStyles = "bg-gray-50 border-gray-300"; rankIcon = `<i class="fas fa-medal text-3xl text-slate-400 drop-shadow-md"></i>`; }
                 else if (actualDisplayRank === 3) { rowStyles = "bg-orange-50 border-orange-200"; rankIcon = `<i class="fas fa-medal text-3xl text-orange-400 drop-shadow-md"></i>`; }
                 else { rowStyles += " border-emerald-200"; }
 
-                if (s.score >= 5000) { titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`; nameColor = "text-red-600 font-black drop-shadow-md"; rowStyles += " border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)] ring-2 ring-red-200 ring-offset-1 animate-pulse"; } 
-                else if (s.score >= 4000) { titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`; nameColor = "text-purple-700 font-bold drop-shadow-sm"; rowStyles += " border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]"; } 
-                else if (s.score >= 3000) { titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`; nameColor = "text-emerald-700 font-bold"; rowStyles += " border-2 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]"; } 
+                // 2. DANH HIỆU THEO MỐC ĐIỂM MỚI
+                if (s.score >= 15000) { 
+                    allBadgesArray.push(`<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`); 
+                    nameColor = "text-red-600 font-black drop-shadow-md"; 
+                    rowStyles += " border-2 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.7)] ring-2 ring-red-200 animate-pulse"; 
+                } 
+                else if (s.score >= 10000) { 
+                    allBadgesArray.push(`<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`); 
+                    nameColor = "text-purple-700 font-bold"; 
+                    rowStyles += " border-2 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.4)]"; 
+                } 
+                else if (s.score >= 5000) { 
+                    allBadgesArray.push(`<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`); 
+                    nameColor = "text-emerald-700 font-bold"; 
+                    rowStyles += " border-2 border-emerald-400"; 
+                } 
+
+                // 3. DANH HIỆU CHĂM CHỈ (Thay cho Ong Vàng)
+                if (isOngVang) {
+                    allBadgesArray.push(`<div class="text-[10px] font-black text-orange-700 bg-orange-100 px-2 py-0.5 rounded border border-orange-400 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-check-circle mr-1"></i>Chăm Chỉ</div>`);
+                }
             }
 
-            let allBadges = "";
-            if (titleBadge || ongVangBadge) { allBadges = `<div class="flex flex-col gap-1 mt-1">${titleBadge}${ongVangBadge}</div>`; }
+            let allBadges = allBadgesArray.length > 0 ? `<div class="flex flex-col gap-1 mt-1 items-start">${allBadgesArray.join('')}</div>` : "";
             
             let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
             
@@ -1419,31 +1443,52 @@ window.showPrizeModal = function(prize) {
 };
 
 // ==========================================
-// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (ĐÃ ĐẢO THỨ TỰ DANH HIỆU)
+// 6. QUẢN LÝ TIẾN ĐỘ THÔNG MINH (ĐÃ CẬP NHẬT MỐC ĐIỂM & ĐÌNH CHỈ)
 // ==========================================
 window.calculateTitle = function(student) {
     if (!window.Data || !Data.math || !Data.tv || !Data.log) return "";
-    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g); const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g);
+
+    // KIỂM TRA ĐÌNH CHỈ THI ĐUA NẾU VI PHẠM
+    const isBanned = String(student.ViPham).trim().toUpperCase() === 'TRUE';
+    if (isBanned) {
+        return `<div class="text-[10px] font-black text-red-600 bg-red-100 px-2 py-1 rounded border border-red-300 inline-flex items-center shadow-sm w-fit"><i class="fas fa-ban mr-1"></i>Đang bị đình chỉ</div>`;
+    }
+
+    const mathGroupsAll = [...new Set(Data.math.map(x => x.group))].filter(g => g); 
+    const tvGroupsAll = [...new Set(Data.tv.map(x => x.group))].filter(g => g);
     const totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
     const userLogs = Data.log.filter(l => String(l.id) === String(student.id));
     const doneMath = new Set(userLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
     const doneTv = new Set(userLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
-    const isOngVang = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
+    
+    // ĐỔI TÊN BIẾN THÀNH isChamChi
+    const isChamChi = (totalAssignments > 0 && (doneMath + doneTv) >= totalAssignments);
 
     let titlesHtml = "";
     let scoreVal = Number(student.score) || 0; 
     
-    // ƯU TIÊN 1: CHÈN DANH HIỆU ĐIỂM SỐ TRƯỚC
+    // --- XÁC ĐỊNH HẠNG 1 ĐỂ TẶNG "SIÊU SAO HỌC TẬP" ---
+    const checkBan = (hs) => String(hs.ViPham).trim().toUpperCase() === 'TRUE' || (window.checkIsBannedLeaderboard && window.checkIsBannedLeaderboard(hs.id));
+    let validStudents = Data.hs.filter(hs => (hs.role || '').toLowerCase() !== 'admin' && !checkBan(hs));
+    let uniqueScores = [...new Set(validStudents.map(hs => Number(hs.score) || 0))].sort((a, b) => b - a);
+    let topScore = uniqueScores[0] || 0;
+
+    // ƯU TIÊN 0: SIÊU SAO HỌC TẬP (TOP 1)
+    if (scoreVal === topScore && scoreVal > 0) {
+        titlesHtml += `<div class="text-[10px] font-black text-pink-600 bg-pink-50 px-2 py-0.5 rounded border border-pink-300 inline-flex items-center shadow-sm w-fit mr-1"><i class="fas fa-trophy mr-1"></i>Siêu Sao Học Tập</div>`;
+    }
+    
+    // ƯU TIÊN 1: CHÈN DANH HIỆU ĐIỂM SỐ MỚI (15k, 10k, 5k)
     let titleBadge = "";
-    if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
-    else if (scoreVal >= 4000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
-    else if (scoreVal >= 3000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
+    if (scoreVal >= 15000) titleBadge = `<div class="text-[10px] font-black text-red-500 bg-red-50 px-2 py-0.5 rounded border border-red-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-star mr-1"></i>Ngôi Sao Tri Thức</div>`;
+    else if (scoreVal >= 10000) titleBadge = `<div class="text-[10px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-award mr-1"></i>Học Sinh Ưu Tú</div>`;
+    else if (scoreVal >= 5000) titleBadge = `<div class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 inline-flex items-center shadow-sm w-fit"><i class="fas fa-medal mr-1"></i>Học Giả Nhí</div>`;
     
     if (titleBadge) titlesHtml += titleBadge;
 
-    // ƯU TIÊN 2: CHÈN HUY HIỆU ONG VÀNG XUỐNG DƯỚI
-    let ongVangBadge = isOngVang ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm w-fit">Ong Vàng Chăm Chỉ</div>` : "";
-    if (ongVangBadge) titlesHtml += (titlesHtml ? " " : "") + ongVangBadge;
+    // ƯU TIÊN 2: CHÈN HUY HIỆU "CHĂM CHỈ" XUỐNG DƯỚI
+    let chamChiBadge = isChamChi ? `<div class="text-[10px] font-black text-orange-700 bg-orange-100 px-2 py-0.5 rounded border border-orange-400 inline-flex items-center shadow-sm w-fit mt-1 sm:mt-0 sm:ml-1"><i class="fas fa-check-circle mr-1"></i>Chăm Chỉ</div>` : "";
+    if (chamChiBadge) titlesHtml += (titlesHtml ? " " : "") + chamChiBadge;
 
     return titlesHtml;
 };
