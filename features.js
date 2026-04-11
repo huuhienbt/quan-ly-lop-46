@@ -341,7 +341,7 @@ window.moGocHocTap = async function() {
                 }
             }
 
-            let allBadges = allBadgesArray.length > 0 ? `<div class="flex flex-col gap-1 mt-1 items-start">${allBadgesArray.join('')}</div>` : "";
+            let allBadges = allBadgesArray.length > 0 ? `<div class="flex flex-row flex-wrap gap-1.5 mt-1.5 items-center justify-start w-full">${allBadgesArray.join('')}</div>` : "";
             
             let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
             
