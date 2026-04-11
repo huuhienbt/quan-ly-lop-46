@@ -335,9 +335,9 @@ window.moGocHocTap = async function() {
                     rowStyles += " border-2 border-emerald-400"; 
                 } 
 
-                // 3. DANH HIỆU CHĂM CHỈ (Thay cho Ong Vàng)
+                // 3. DANH HIỆU CHĂM CHỈ (Màu vàng rực rỡ)
                 if (isOngVang) {
-                    allBadgesArray.push(`<div class="text-[10px] font-black text-orange-700 bg-orange-100 px-2 py-0.5 rounded border border-orange-400 inline-flex items-center mt-1 shadow-sm"><i class="fas fa-check-circle mr-1"></i>Chăm Chỉ</div>`);
+                    allBadgesArray.push(`<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm"><i class="fas fa-check-circle mr-1"></i>Chăm Chỉ</div>`);
                 }
             }
 
@@ -1486,8 +1486,8 @@ window.calculateTitle = function(student) {
     
     if (titleBadge) titlesHtml += titleBadge;
 
-    // ƯU TIÊN 2: CHÈN HUY HIỆU "CHĂM CHỈ" XUỐNG DƯỚI
-    let chamChiBadge = isChamChi ? `<div class="text-[10px] font-black text-orange-700 bg-orange-100 px-2 py-0.5 rounded border border-orange-400 inline-flex items-center shadow-sm w-fit mt-1 sm:mt-0 sm:ml-1"><i class="fas fa-check-circle mr-1"></i>Chăm Chỉ</div>` : "";
+    // ƯU TIÊN 2: CHÈN HUY HIỆU "CHĂM CHỈ" (MÀU VÀNG)
+    let chamChiBadge = isChamChi ? `<div class="text-[10px] font-black text-yellow-800 bg-yellow-100 px-2 py-0.5 rounded border border-yellow-400 inline-flex items-center shadow-sm w-fit mt-1 sm:mt-0 sm:ml-1"><i class="fas fa-check-circle mr-1"></i>Chăm Chỉ</div>` : "";
     if (chamChiBadge) titlesHtml += (titlesHtml ? " " : "") + chamChiBadge;
 
     return titlesHtml;
