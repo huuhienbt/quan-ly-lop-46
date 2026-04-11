@@ -2855,9 +2855,27 @@ window.phatAmThanhGame = function(type) {
     } catch(e) {} 
 };
 
+// ==========================================
+// GAME LẬT THẺ CÂU ĐỐ (GIỚI HẠN 1 LƯỢT/NGÀY)
+// ==========================================
 window.moGameLatTheToan = function() {
     if(!currentUser) return showLogin();
     closeMenu();
+
+    // 🚨 KIỂM TRA ĐÌNH CHỈ THI ĐUA (CỘT M = TRUE)
+    if (String(currentUser.ViPham).trim().toUpperCase() === 'TRUE') {
+        alert("🚨 HỆ THỐNG: Con đang bị tạm đình chỉ thi đua do vi phạm nội quy!\n\nTính năng chơi Game Lật Thẻ đã bị khóa. Hãy rèn luyện tốt để được mở khóa nhé!");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
+    // KIỂM TRA LỆNH KHÓA TỪ GVCN
+    let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
+    if (blockUntil) {
+        alert("🚨 TÍNH NĂNG BỊ KHOÁ");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
 
     let todayGame = new Date();
     let soLanDaChoiHomNay = Data.log.filter(l => {
@@ -2866,17 +2884,27 @@ window.moGameLatTheToan = function() {
         return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
     }).length;
 
-    // ĐÃ XÓA PHẦN TEXT HƯỚNG DẪN LUẬT TRỪ ĐIỂM
+    // --- ĐÃ ĐỔI THÀNH 1 LƯỢT MẶC ĐỊNH ---
+    let luotGameCloud = Number(currentUser.luotGame) || 0;
+    let tongLuotGame = 1 + luotGameCloud; 
+
+    // Kiểm tra nếu đã hết lượt
+    if (soLanDaChoiHomNay >= tongLuotGame) {
+        alert(`🛡️ HỆ THỐNG: Con đã dùng hết ${soLanDaChoiHomNay}/${tongLuotGame} lượt chơi Lật Thẻ hôm nay! Hãy cố gắng học tốt để xin Thầy thưởng thêm lượt nhé.`);
+        if (window.veTrangChu) veTrangChu();
+        return; 
+    }
+
     document.getElementById('content').innerHTML = `
         <div class="fixed inset-0 z-[100] bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-indigo-900 flex flex-col items-center justify-center font-sans p-4">
             <div class="bg-white/10 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_0_50px_rgba(236,72,153,0.3)] w-full max-w-md text-center border border-white/20 relative">
                 <button onclick="veTrangChu(); moGocHocTap();" class="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full hover:bg-red-500 transition font-bold shadow-sm"><i class="fas fa-times"></i></button>
                 <div class="text-5xl sm:text-6xl mb-4 animate-pulse drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">🧩</div>
                 <h2 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 mb-2 uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">LẬT THẺ CÂU ĐỐ</h2>
-                <p class="text-indigo-200 font-bold mb-8 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= 2 ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / 2 lần</span></p>
+                <p class="text-indigo-200 font-bold mb-8 bg-black/20 py-2 rounded-xl border border-white/10">Hôm nay con đã chơi: <span class="${soLanDaChoiHomNay >= tongLuotGame ? 'text-red-400' : 'text-emerald-400'}">${soLanDaChoiHomNay} / ${tongLuotGame} lần</span></p>
 
                 <div class="space-y-4">
-                    <button onclick="${soLanDaChoiHomNay >= 2 ? "alert('Con đã hết lượt chơi hôm nay!')" : "window.batDauLatThe()"}" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
+                    <button onclick="window.batDauLatThe()" class="w-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-black py-5 rounded-2xl shadow-[0_0_20px_rgba(14,165,233,0.6)] hover:scale-105 transition flex items-center justify-center gap-3 text-2xl border border-cyan-300">
                         <i class="fas fa-play-circle"></i> BẮT ĐẦU CHƠI
                     </button>
                 </div>
@@ -2884,7 +2912,6 @@ window.moGameLatTheToan = function() {
         </div>
     `;
 };
-
 // --- BẬT TẮT NHẠC NỀN ---
 window.toggleNhacNenGame = function() {
     let btnIcon = document.getElementById('btn-music-icon');
