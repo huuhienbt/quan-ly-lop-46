@@ -384,7 +384,7 @@ window.moGocHocTap = async function() {
 };
 
 // ==========================================
-// 2. GIAO DIỆN HỒ SƠ ADMIN (GẮN CÔNG TẮC CẤM)
+// GIAO DIỆN HỒ SƠ ADMIN (TÍCH HỢP ĐÌNH CHỈ TOÀN TẬP VÀ HIỆU ỨNG MỜ)
 // ==========================================
 window.viewProfile = function(studentId) {
     let s = Data.hs.find(x => String(x.id) === String(studentId));
@@ -393,31 +393,42 @@ window.viewProfile = function(studentId) {
     let avatarUrl = window.layAnhDaiDien ? window.layAnhDaiDien(s.id, s.name) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=random&color=fff';
     let studentTitles = window.calculateTitle ? window.calculateTitle(s) : "";
     let currentScore = Number(s.score) || 0;
+    
+    // KIỂM TRA VI PHẠM (CỘT M) ĐỂ CHỈNH MÀU GIAO DIỆN
     let isBanned = String(s.ViPham).trim().toUpperCase() === 'TRUE';
+    let scoreStyle = isBanned ? "text-lg font-black text-slate-400 opacity-50 line-through grayscale" : "text-lg font-black text-indigo-600";
+    
+    if (isBanned) {
+        studentTitles = `<span class="bg-red-100 text-red-600 text-[10px] sm:text-xs px-2 py-1 rounded-lg font-black border border-red-300 shadow-sm"><i class="fas fa-ban mr-1"></i>Đang bị đình chỉ</span>`;
+    }
+
+    // Xóa modal cũ nếu có để tránh bị mở đè 2 lớp
+    let oldModal = document.getElementById('profileModalAdmin');
+    if (oldModal) oldModal.remove();
     
     let overlay = document.createElement('div'); overlay.id = "profileModalAdmin"; 
     overlay.className = "fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in p-4";
     overlay.innerHTML = `
         <div class="bg-white p-8 rounded-[2rem] shadow-2xl max-w-sm w-full text-center relative animate-[cascadeDrop_0.4s_ease-out_forwards] overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r ${isBanned ? 'from-slate-400 to-slate-500 grayscale' : 'from-blue-400 to-indigo-500'}"></div>
             <button onclick="document.getElementById('profileModalAdmin').remove()" class="absolute top-4 right-4 w-8 h-8 bg-black/20 text-white rounded-full hover:bg-red-500 transition flex items-center justify-center font-bold text-xl z-20">&times;</button>
             
             <div class="relative z-10 mt-6">
                 <div class="relative inline-block group cursor-pointer" onclick="window.gvDoiAnhHocSinh('${s.id}', '${s.name.replace(/'/g, "\\'")}')" title="Bấm để đổi ảnh cho học sinh này">
-                    <img id="adminViewAvatarImg" src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80">
+                    <img id="adminViewAvatarImg" src="${avatarUrl}" class="w-32 h-32 mx-auto rounded-full border-4 border-white shadow-xl object-cover bg-white transition group-hover:opacity-80 ${isBanned ? 'grayscale opacity-70' : ''}">
                     <div class="absolute bottom-0 right-0 bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-md group-hover:scale-110 transition">
                         <i class="fas fa-camera"></i>
                     </div>
                 </div>
                 
-                <h3 class="text-2xl font-black text-slate-800 mt-4 mb-1">${s.name}</h3>
+                <h3 class="text-2xl font-black ${isBanned ? 'text-slate-400 line-through' : 'text-slate-800'} mt-4 mb-1">${s.name}</h3>
                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${s.chucvu || 'Học sinh'}</p>
                 <div class="flex justify-center gap-2 mb-6 flex-wrap">${studentTitles}</div>
                 
-                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 shadow-inner mb-4 text-left">
+                <div class="bg-slate-50 rounded-2xl p-4 border ${isBanned ? 'border-red-100 bg-red-50/30' : 'border-slate-100'} shadow-inner mb-4 text-left">
                     <div class="flex justify-between items-center mb-3">
                         <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest"><i class="fas fa-trophy text-yellow-500 mr-1"></i> Tổng điểm</span>
-                        <span class="text-lg font-black text-indigo-600">${currentScore}</span>
+                        <span class="${scoreStyle}">${currentScore}</span>
                     </div>
                     <div class="w-full h-px bg-slate-200 mb-3"></div>
                     <div>
@@ -431,7 +442,7 @@ window.viewProfile = function(studentId) {
 
                 <div class="bg-red-50 rounded-2xl p-4 border ${isBanned ? 'border-red-400 ring-2 ring-red-200' : 'border-red-100'} shadow-inner mb-6 text-left flex items-center justify-between transition-all" id="boxBan_${s.id}">
                     <label class="text-xs font-black text-red-600 uppercase tracking-widest cursor-pointer flex items-center gap-2" for="banLB_${s.id}">
-                        <i class="fas fa-user-slash"></i> Cấm Bảng Vàng
+                        <i class="fas fa-user-slash"></i> Đình chỉ Thi đua & Game
                     </label>
                     <input type="checkbox" id="banLB_${s.id}" ${isBanned ? 'checked' : ''} onchange="window.toggleBanLeaderboard('${s.id}', '${s.name.replace(/'/g, "\\'")}', this.checked)" class="w-6 h-6 accent-red-600 cursor-pointer shadow-sm">
                 </div>
@@ -446,11 +457,13 @@ window.viewProfile = function(studentId) {
 };
 
 // ==========================================
-// 3. API KÍCH HOẠT LỆNH CẤM BẢNG VÀNG (Gửi lên Sheet)
+// 3. API KÍCH HOẠT LỆNH ĐÌNH CHỈ TOÀN TẬP (BẢNG VÀNG & GAME)
 // ==========================================
 window.toggleBanLeaderboard = async function(studentId, studentName, isBanned) {
     let viPhamVal = isBanned ? "TRUE" : "";
-    let alertMsg = isBanned ? `⚠️ Đã CẤM em ${studentName} xuất hiện trên Bảng Vàng.` : `✅ Đã KHÔI PHỤC em ${studentName} lên Bảng Vàng.`;
+    
+    // ĐÃ SỬA CÂU THÔNG BÁO CHO PHÙ HỢP VỚI LỆNH CẤM GỘP CHUNG
+    let alertMsg = isBanned ? `⚠️ Đã ĐÌNH CHỈ Bảng Vàng và KHÓA Game của em ${studentName}.` : `✅ Đã MỞ KHÓA toàn bộ cho em ${studentName}.`;
 
     document.getElementById('loader').style.display = 'flex';
     let loaderText = document.querySelector('#loader p');
