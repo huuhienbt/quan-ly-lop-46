@@ -3190,3 +3190,19 @@ window.toggleBanLeaderboard = async function(studentId, studentName, isBanned) {
         if (loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
     }
 };
+// ==========================================
+// HỆ THỐNG TỰ ĐỘNG TẮT NHẠC/VIDEO CHÉO (CHỈ CHO PHÁT 1 BÀI CÙNG LÚC)
+// ==========================================
+document.addEventListener('play', function(e) {
+    // Kiểm tra xem phần tử vừa được bấm Play có phải là Audio (âm thanh) hoặc Video không
+    if (e.target.tagName === 'AUDIO' || e.target.tagName === 'VIDEO') {
+        // Tìm tất cả các thẻ Audio và Video trên toàn bộ trang web
+        const mediaElements = document.querySelectorAll('audio, video');
+        mediaElements.forEach(media => {
+            // Nếu media này không phải là cái vừa được bấm Play thì tự động Tạm dừng (Pause)
+            if (media !== e.target) {
+                media.pause();
+            }
+        });
+    }
+}, true); // Dùng 'true' (Capture Phase) để bắt sự kiện Play trên toàn bộ tài liệu một cách đáng tin cậy
