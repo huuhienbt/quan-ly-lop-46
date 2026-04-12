@@ -1145,12 +1145,13 @@ window.startTimer = function(seconds) {
     }, 1000); 
 };
 
+// ==========================================
+// HÀM NỘP BÀI (ĐÃ BỎ CHỨC NĂNG THƯỞNG LƯỢT QUAY)
+// ==========================================
 window.finishQuiz = async function() { 
     window.isQuizActive = false; if (timer) clearInterval(timer);
     const maxPossibleScore = quiz.length * 10; 
-    let timeTaken = window.totalQuizTime - window.remainingQuizTime; 
-    let halfTime = window.totalQuizTime / 2;
-    let extraSpinsEarned = 0; let rewardMessage = "";
+    let rewardMessage = "";
 
     // CHỐNG HACK ĐIỂM F12: Tính điểm chuẩn từ số câu làm sai/bỏ trống
     if (typeof window.answeredQuestions !== 'undefined' && window.answeredQuestions < quiz.length) {
@@ -1194,34 +1195,29 @@ window.finishQuiz = async function() {
     let actualScoreEarned = score - previousMaxScore;
     if (actualScoreEarned < 0) actualScoreEarned = 0; 
 
+    // CHỈ RẢI HOA GIẤY VÀ KHEN NGỢI NẾU ĐÚNG 100% (BỎ PHẦN THƯỞNG LƯỢT QUAY)
     if (score > 0 && score === maxPossibleScore) { 
         let previousMaxLog = previousLogs.find(l => Number(l.score) === maxPossibleScore);
         if (!previousMaxLog && currentUser.role === 'student') {
-            if (timeTaken <= halfTime) { extraSpinsEarned = 2;
-            rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-bolt text-orange-500 mr-1 text-lg"></i> KỶ LỤC TỐC ĐỘ!
-            Đúng 100% siêu nhanh. Thưởng <b>+2 Lượt quay</b>!</p></div>`; } 
-            else { extraSpinsEarned = 1;
-            rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC!
-            Đúng 100%. Thưởng <b>+1 Lượt quay</b>!</p></div>`; }
-            window.updateKhoDoCloud(extraSpinsEarned, 0);
-        } else if (previousMaxLog && currentUser.role === 'student') { rewardMessage = `<p class="text-slate-400 font-bold mt-4 text-xs italic">Con đã từng đạt điểm tối đa bài này rồi nên không nhận thêm thưởng nữa nhé.</p>`;
-        }
+            rewardMessage = `<div class="bg-green-50 border border-green-200 p-3 rounded-xl mt-4"><p class="text-green-700 font-bold text-sm"><i class="fas fa-gift text-red-500 mr-1 text-lg"></i> XUẤT SẮC! ĐÚNG 100%</p></div>`;
+        } 
         window.safeConfetti(); 
     } 
     
     let scoreMsg = actualScoreEarned > 0 ?
     `<p class="text-green-600 font-bold text-sm mt-2">+${actualScoreEarned} điểm vào tổng kết</p>` : `<p class="text-slate-400 font-bold text-sm mt-2">Làm lại bài (Không cộng thêm điểm)</p>`;
+    
     document.getElementById('content').innerHTML = `<div class="text-center bg-white p-10 rounded-[3rem] shadow-2xl fade-in max-w-lg mx-auto mt-10 border-t-8 border-indigo-500"><div class="text-7xl mb-6 animate-bounce">🏆</div><h3 class="text-3xl font-black text-slate-800 mb-2 uppercase tracking-wider">ĐIỂM CỦA CON</h3><p id="finalScoreDisplay" class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2 drop-shadow-sm">${score}</p>${scoreMsg}${rewardMessage}<button id="btnFinishQuizWait" disabled class="bg-slate-300 text-slate-600 px-10 py-5 rounded-2xl font-black text-xl shadow-inner w-full mt-6 cursor-wait flex items-center justify-center gap-3 transition"><i class="fas fa-spinner fa-spin"></i> ĐANG LƯU ĐIỂM...</button></div>`;
     
     try {
         await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'finish_quiz', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: score } }) });
         // Mở khóa bài làm trên máy local
         localStorage.removeItem(`activeQuizState_${currentUser.id}`);
+        
         if(currentUser.role === 'student') { 
             let submitTime = new Date().toISOString();
             let detailsToSave = wrongAnswersLog.join('');
-            if (extraSpinsEarned > 0) { detailsToSave += `<br><div style="color:green; font-weight:bold; background:#f0fdf4; padding:5px; border-radius:5px;">(Hệ thống tự động: Đã thưởng ${extraSpinsEarned} lượt quay)</div>`;
-            }
+            
             currentUser.score = Number(currentUser.score) + actualScoreEarned;
             // Ghi log lên máy chủ
             fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'nop_bai', data: { id_hs: currentUser.id, subject: curSub, group: curGrp, score_earned: actualScoreEarned, details: detailsToSave } }) }).catch(e => console.log("Lỗi mạng ngầm"));
@@ -1240,7 +1236,6 @@ window.finishQuiz = async function() {
     }
 };
 
-// ==========================================
 
 // ==========================================
 // 5. VÒNG QUAY MAY MẮN (CÓ BẢO MẬT & CLOUD)
@@ -1863,7 +1858,14 @@ window.toggleNhacNenBaoVeTraiDat = function() {
 window.moGameBaoVeTraiDat = async function() {
     if(!currentUser) return showLogin(); closeMenu();
     
-    // KIỂM TRA LỆNH KHÓA TỪ GVCN
+    // 1. KIỂM TRA ĐÌNH CHỈ THI ĐUA (CỘT M = TRUE)
+    if (String(currentUser.ViPham).trim().toUpperCase() === 'TRUE') {
+        alert("🚨 HỆ THỐNG: Con đang bị tạm đình chỉ thi đua do vi phạm nội quy!\n\nTính năng chơi Game đã bị khóa. Hãy cố gắng rèn luyện để thầy mở khóa cho con nhé!");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
+    // 2. KIỂM TRA LỆNH KHÓA TỪ GVCN
     let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
     if (blockUntil) {
         alert("🚨 TÍNH NĂNG BỊ KHOÁ");
@@ -1873,6 +1875,25 @@ window.moGameBaoVeTraiDat = async function() {
 
     if (!(await window.loadAllDataOnce(true))) return;
 
+    // 3. 🚨 CHỐT CHẶN: PHẢI LÀM XONG HẾT BÀI TẬP MỚI CHO CHƠI GAME
+    let hiddenMath = window.getHiddenGroups ? window.getHiddenGroups('math') : [];
+    let hiddenTv = window.getHiddenGroups ? window.getHiddenGroups('tv') : [];
+    let mathGroupsAll = [...new Set((Data.math || []).map(x => x.group))].filter(g => g && !hiddenMath.includes(g));
+    let tvGroupsAll = [...new Set((Data.tv || []).map(x => x.group))].filter(g => g && !hiddenTv.includes(g));
+    let totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
+
+    let myLogs = (Data.log || []).filter(l => String(l.id) === String(currentUser.id));
+    let doneMath = new Set(myLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
+    let doneTv = new Set(myLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
+    
+    if (totalAssignments > 0 && (doneMath + doneTv) < totalAssignments) {
+        let thieu = totalAssignments - (doneMath + doneTv);
+        alert(`⚠️ HỆ THỐNG: Con chưa hoàn thành bài tập Thầy giao (Còn nợ ${thieu} bài).\n\nCon hãy vào Góc Học Tập làm xong hết bài rồi mới được mở khóa Game nhé!`);
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
+    // 4. KIỂM TRA LƯỢT CHƠI
     let todayGame = new Date();
     let soLanDaChoiHomNay = Data.log.filter(l => {
         if (String(l.id) !== String(currentUser.id) || l.subject !== "MathGame") return false;
@@ -1941,11 +1962,11 @@ window.moGameBaoVeTraiDat = async function() {
         </div>
     `;
     
-    // --- KHỞI ĐỘNG NHẠC NỀN BẢO VỆ TRÁI ĐẤT (Đã dùng link ngắn) ---
+    // --- KHỞI ĐỘNG NHẠC NỀN BẢO VỆ TRÁI ĐẤT ---
     if (!mathGame.bgMusic) {
         mathGame.bgMusic = new Audio('./upload/Nhac%20nen%20tro%20choi%20bao%20ve%20trai%20dat.mp3');
         mathGame.bgMusic.loop = true;
-        mathGame.bgMusic.volume = 0.1; // Âm lượng 10%
+        mathGame.bgMusic.volume = 0.1; 
     }
     
     let playPromise = mathGame.bgMusic.play();
@@ -1963,22 +1984,25 @@ window.moGameBaoVeTraiDat = async function() {
 window.mgTaoPhepTinh = function(level) {
     let rand = Math.random(); let a, b, ans, op;
     if (level === 1) {
-        if (rand < 0.2) { a = Math.floor(Math.random() * 40) + 10; b = Math.floor(Math.random() * 40) + 10; op = '+'; ans = a + b; } 
-        else if (rand < 0.4) { a = Math.floor(Math.random() * 70) + 20; b = Math.floor(Math.random() * (a - 10)) + 10; op = '-'; ans = a - b; } 
-        else if (rand < 0.6) { a = Math.floor(Math.random() * 4) + 2; b = Math.floor(Math.random() * 9) + 2; op = 'x'; ans = a * b; } 
-        else if (rand < 0.8) { b = Math.floor(Math.random() * 4) + 2; ans = Math.floor(Math.random() * 9) + 2; a = b * ans; op = ':'; } 
-        else { let base = Math.floor(Math.random() * 89) + 10; if (Math.random() < 0.5) { a = base; b = 10; op = 'x'; ans = a * b; } else { ans = base; b = 10; a = ans * b; op = ':'; } }
+        // CẤP ĐỘ 1 (Khởi động): Cộng trừ 2 chữ số (có nhớ), Nhân 2 chữ số nhỏ với 1 chữ số, Chia nhẩm cơ bản
+        if (rand < 0.3) { a = Math.floor(Math.random() * 80) + 15; b = Math.floor(Math.random() * 80) + 15; op = '+'; ans = a + b; } 
+        else if (rand < 0.6) { a = Math.floor(Math.random() * 80) + 50; b = Math.floor(Math.random() * 40) + 15; op = '-'; ans = a - b; } 
+        else if (rand < 0.8) { a = Math.floor(Math.random() * 10) + 11; b = Math.floor(Math.random() * 5) + 2; op = 'x'; ans = a * b; } // vd: 15 x 4
+        else { b = Math.floor(Math.random() * 8) + 2; ans = Math.floor(Math.random() * 10) + 5; a = b * ans; op = ':'; } // vd: 72 : 8
     } 
     else if (level === 2) {
-        if (rand < 0.15) { a = Math.floor(Math.random() * 4) + 6; b = Math.floor(Math.random() * 9) + 2; op = 'x'; ans = a * b; } 
-        else if (rand < 0.30) { b = Math.floor(Math.random() * 4) + 6; ans = Math.floor(Math.random() * 9) + 2; a = b * ans; op = ':'; } 
-        else if (rand < 0.70) { let num1 = Math.floor(Math.random() * 8) + 2; let num2 = (Math.floor(Math.random() * 8) + 2) * 10; if (Math.random() < 0.5) { a = num1; b = num2; op = 'x'; ans = a * b; } else { b = num1; ans = num2; a = b * ans; op = ':'; } } 
-        else { let base = Math.floor(Math.random() * 89) + 10; if (Math.random() < 0.5) { a = base; b = 100; op = 'x'; ans = a * b; } else { ans = base; b = 100; a = ans * b; op = ':'; } }
+        // CẤP ĐỘ 2 (Tăng tốc): Cộng trừ số tròn chục (hàng trăm), Nhân số lớn hơn, Chia số tròn chục
+        if (rand < 0.3) { a = (Math.floor(Math.random() * 40) + 10) * 10; b = (Math.floor(Math.random() * 40) + 10) * 10; op = '+'; ans = a + b; } // vd: 240 + 150
+        else if (rand < 0.6) { a = (Math.floor(Math.random() * 50) + 50) * 10; b = (Math.floor(Math.random() * 40) + 10) * 10; op = '-'; ans = a - b; } // vd: 850 - 240
+        else if (rand < 0.8) { a = Math.floor(Math.random() * 30) + 15; b = Math.floor(Math.random() * 6) + 3; op = 'x'; ans = a * b; } // vd: 25 x 6
+        else { ans = (Math.floor(Math.random() * 9) + 2) * 10; b = Math.floor(Math.random() * 8) + 2; a = ans * b; op = ':'; } // vd: 320 : 8
     } 
     else {
-        if (rand < 0.4) { let num1 = Math.floor(Math.random() * 8) + 2; let isHundred = Math.random() < 0.5; let num2 = (Math.floor(Math.random() * 8) + 2) * (isHundred ? 100 : 1000); if (Math.random() < 0.5) { a = num1; b = num2; op = 'x'; ans = a * b; } else { b = num1; ans = num2; a = b * ans; op = ':'; } } 
-        else if (rand < 0.7) { let base = Math.floor(Math.random() * 89) + 10; if (Math.random() < 0.5) { a = base; b = 1000; op = 'x'; ans = a * b; } else { ans = base; b = 1000; a = ans * b; op = ':'; } } 
-        else { if (Math.random() < 0.5) { a = Math.floor(Math.random() * 50) + 45; b = Math.floor(Math.random() * 50) + 45; op = '+'; ans = a + b; } else { a = Math.floor(Math.random() * 50) + 100; b = Math.floor(Math.random() * 80) + 20; op = '-'; ans = a - b; } }
+        // CẤP ĐỘ 3 (Bùng nổ - Lớp 4 nâng cao): Nhân nhẩm với 11, Nhân chia với số tròn chục, Trừ từ 1000/2000
+        if (rand < 0.25) { a = Math.floor(Math.random() * 89) + 10; b = 11; op = 'x'; ans = a * b; } // Mẹo nhân 11. vd: 45 x 11
+        else if (rand < 0.5) { a = Math.floor(Math.random() * 40) + 11; b = (Math.floor(Math.random() * 5) + 2) * 10; op = 'x'; ans = a * b; } // vd: 15 x 20
+        else if (rand < 0.75) { ans = (Math.floor(Math.random() * 40) + 11); b = (Math.floor(Math.random() * 5) + 2) * 10; a = ans * b; op = ':'; } // vd: 600 : 20
+        else { a = (Math.floor(Math.random() * 3) + 1) * 1000; b = Math.floor(Math.random() * 800) + 100; op = '-'; ans = a - b; } // vd: 1000 - 450
     }
     return { q: `${a} ${op} ${b}`, a: ans.toString() };
 };
@@ -2856,20 +2880,20 @@ window.phatAmThanhGame = function(type) {
 };
 
 // ==========================================
-// GAME LẬT THẺ CÂU ĐỐ (GIỚI HẠN 1 LƯỢT/NGÀY)
+// GAME LẬT THẺ CÂU ĐỐ (1 LƯỢT/NGÀY + CHỐT CHẶN BÀI TẬP)
 // ==========================================
-window.moGameLatTheToan = function() {
+window.moGameLatTheToan = async function() {
     if(!currentUser) return showLogin();
     closeMenu();
 
-    // 🚨 KIỂM TRA ĐÌNH CHỈ THI ĐUA (CỘT M = TRUE)
+    // 🚨 1. KIỂM TRA ĐÌNH CHỈ THI ĐUA (CỘT M = TRUE)
     if (String(currentUser.ViPham).trim().toUpperCase() === 'TRUE') {
         alert("🚨 HỆ THỐNG: Con đang bị tạm đình chỉ thi đua do vi phạm nội quy!\n\nTính năng chơi Game Lật Thẻ đã bị khóa. Hãy rèn luyện tốt để được mở khóa nhé!");
         if (window.veTrangChu) veTrangChu();
         return;
     }
 
-    // KIỂM TRA LỆNH KHÓA TỪ GVCN
+    // 2. KIỂM TRA LỆNH KHÓA TỪ GVCN
     let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
     if (blockUntil) {
         alert("🚨 TÍNH NĂNG BỊ KHOÁ");
@@ -2877,6 +2901,27 @@ window.moGameLatTheToan = function() {
         return;
     }
 
+    if (!(await window.loadAllDataOnce(true))) return;
+
+    // 3. 🚨 CHỐT CHẶN: PHẢI LÀM XONG HẾT BÀI TẬP MỚI CHO CHƠI
+    let hiddenMath = window.getHiddenGroups ? window.getHiddenGroups('math') : [];
+    let hiddenTv = window.getHiddenGroups ? window.getHiddenGroups('tv') : [];
+    let mathGroupsAll = [...new Set((Data.math || []).map(x => x.group))].filter(g => g && !hiddenMath.includes(g));
+    let tvGroupsAll = [...new Set((Data.tv || []).map(x => x.group))].filter(g => g && !hiddenTv.includes(g));
+    let totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
+
+    let myLogs = (Data.log || []).filter(l => String(l.id) === String(currentUser.id));
+    let doneMath = new Set(myLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
+    let doneTv = new Set(myLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
+    
+    if (totalAssignments > 0 && (doneMath + doneTv) < totalAssignments) {
+        let thieu = totalAssignments - (doneMath + doneTv);
+        alert(`⚠️ HỆ THỐNG: Con chưa hoàn thành bài tập Thầy giao (Còn nợ ${thieu} bài).\n\nCon hãy vào Góc Học Tập làm xong hết bài rồi mới được mở khóa Game Lật Thẻ nhé!`);
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
+    // 4. KIỂM TRA LƯỢT CHƠI (Đã đổi thành 1 lượt mặc định)
     let todayGame = new Date();
     let soLanDaChoiHomNay = Data.log.filter(l => {
         if (String(l.id) !== String(currentUser.id) || !l.subject.includes("MathGame_LatThe")) return false;
@@ -2884,7 +2929,6 @@ window.moGameLatTheToan = function() {
         return !isNaN(d) && d.getDate() === todayGame.getDate() && d.getMonth() === todayGame.getMonth() && d.getFullYear() === todayGame.getFullYear();
     }).length;
 
-    // --- ĐÃ ĐỔI THÀNH 1 LƯỢT MẶC ĐỊNH ---
     let luotGameCloud = Number(currentUser.luotGame) || 0;
     let tongLuotGame = 1 + luotGameCloud; 
 
@@ -2912,6 +2956,7 @@ window.moGameLatTheToan = function() {
         </div>
     `;
 };
+
 // --- BẬT TẮT NHẠC NỀN ---
 window.toggleNhacNenGame = function() {
     let btnIcon = document.getElementById('btn-music-icon');
