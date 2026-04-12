@@ -1262,12 +1262,19 @@ window.tinhLuotQuayHienTai = function() {
 };
 
 // ==========================================
-// 5. VÒNG QUAY MAY MẮN (ĐÃ TÍCH HỢP KIỂM TRA LỆNH PHẠT)
+// 5. VÒNG QUAY MAY MẮN (ĐÃ TÍCH HỢP CHỐT CHẶN)
 // ==========================================
 window.moVongQuay = async function() {
     if(!currentUser) return showLogin(); closeMenu(); 
     
-    // KIỂM TRA LỆNH KHÓA TỪ GVCN
+    // 1. 🚨 KIỂM TRA ĐÌNH CHỈ THI ĐUA (CỘT M = TRUE)
+    if (String(currentUser.ViPham).trim().toUpperCase() === 'TRUE') {
+        alert("🚨 HỆ THỐNG: Con đang bị tạm đình chỉ thi đua do vi phạm nội quy!\n\nTính năng Vòng Quay May Mắn đã bị khóa. Hãy rèn luyện tốt để được mở khóa nhé!");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+    
+    // 2. KIỂM TRA LỆNH KHÓA TỪ GVCN
     let blockUntil = window.checkIsBlocked ? window.checkIsBlocked(currentUser.id) : false;
     if (blockUntil) {
         alert("🚨 TÍNH NĂNG BỊ KHOÁ");
@@ -1276,14 +1283,39 @@ window.moVongQuay = async function() {
     }
 
     document.getElementById('content').innerHTML = `<div class="text-center py-10 mt-10"><i class="fas fa-dharmachakra fa-spin text-5xl text-yellow-500 mb-4 shadow-sm rounded-full"></i><p class="font-black text-slate-500 animate-pulse tracking-widest uppercase">Đang đồng bộ kho đồ đám mây...</p></div>`;
+    
+    // Bắt buộc tải dữ liệu mới nhất (bài tập, điểm, lịch sử) từ Sheet
     if (!(await window.loadAllDataOnce(true))) return;
 
-    let tongLuot = window.tinhLuotQuayHienTai();
-    if (tongLuot <= 0) {
-        alert("🛡️ HỆ THỐNG: Con đã dùng hết lượt quay của ngày hôm nay! Hãy làm bài tập đạt 100% để được Thầy thưởng thêm lượt nhé.");
-        return veTrangChu();
+    // 3. 🚨 CHỐT CHẶN: PHẢI LÀM XONG HẾT BÀI TẬP MỚI ĐƯỢC QUAY THƯỞNG
+    let hiddenMath = window.getHiddenGroups ? window.getHiddenGroups('math') : [];
+    let hiddenTv = window.getHiddenGroups ? window.getHiddenGroups('tv') : [];
+    let mathGroupsAll = [...new Set((Data.math || []).map(x => x.group))].filter(g => g && !hiddenMath.includes(g));
+    let tvGroupsAll = [...new Set((Data.tv || []).map(x => x.group))].filter(g => g && !hiddenTv.includes(g));
+    let totalAssignments = mathGroupsAll.length + tvGroupsAll.length;
+
+    let myLogs = (Data.log || []).filter(l => String(l.id) === String(currentUser.id));
+    let doneMath = new Set(myLogs.filter(l => l.subject === 'math' && mathGroupsAll.includes(l.group)).map(l => l.group)).size;
+    let doneTv = new Set(myLogs.filter(l => (l.subject === 'vietnamese' || l.subject === 'tv') && tvGroupsAll.includes(l.group)).map(l => l.group)).size;
+    
+    if (totalAssignments > 0 && (doneMath + doneTv) < totalAssignments) {
+        let thieu = totalAssignments - (doneMath + doneTv);
+        alert(`⚠️ HỆ THỐNG: Con chưa hoàn thành bài tập Thầy giao (Còn nợ ${thieu} bài).\n\nCon hãy vào Góc Học Tập làm xong hết bài rồi mới được mở Vòng Quay May Mắn nhé!`);
+        if (window.veTrangChu) veTrangChu();
+        return;
     }
 
+    // 4. KIỂM TRA LƯỢT QUAY
+    let tongLuot = window.tinhLuotQuayHienTai();
+    if (tongLuot <= 0) {
+        alert("🛡️ HỆ THỐNG: Con đã dùng hết lượt quay của ngày hôm nay! Hãy học tập thật tốt để xin Thầy thưởng thêm lượt nhé.");
+        if (window.veTrangChu) veTrangChu();
+        return;
+    }
+
+    // =================================================================
+    // GIAO DIỆN VÒNG QUAY MAY MẮN
+    // =================================================================
     let sliceAngle = 360 / PRIZES.length; let halfSlice = sliceAngle / 2;
     let slicesHtml = PRIZES.map((p, i) => `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${i * sliceAngle}deg);"><div class="pt-5 font-black text-white text-[10px] sm:text-[11px] drop-shadow-md w-14 text-center leading-tight z-20" style="transform: rotate(0deg);">${p.text}</div></div>`).join('');
     let gradColors = PRIZES.map((p, i) => `${p.color} ${i * sliceAngle}deg ${(i + 1) * sliceAngle}deg`).join(', ');
