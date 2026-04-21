@@ -260,7 +260,7 @@ window.moGocHocTap = async function() {
         return timeA - timeB; 
     });
 
-    let top20 = sortedStudents.slice(0, 20); // Hiển thị Top 20
+    let top20 = sortedStudents.slice(0, 5); // Hiển thị Top 5
     
     // Tính Rank (Hạng) chỉ dựa trên những học sinh KHÔNG VI PHẠM
     let uniqueScores = [...new Set(sortedStudents.filter(s => !checkBan(s)).map(s => s.score))].sort((a, b) => b - a);
