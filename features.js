@@ -136,7 +136,7 @@ window.fetchFreshDataSilently = async function(showError = false) {
 };
 
 // ==========================================
-// 1. GÓC HỌC TẬP (BẢNG VÀNG CÓ TÍCH HỢP CẤM THI ĐUA)
+// 1. GÓC HỌC TẬP (BẢNG VÀNG CHỈ HIỆN TOP 5)
 // ==========================================
 window.moGocHocTap = async function() { 
     closeMenu(); 
@@ -260,15 +260,16 @@ window.moGocHocTap = async function() {
         return timeA - timeB; 
     });
 
-    let top20 = sortedStudents.slice(0, 5); // Hiển thị Top 5
+    // CHỈ LẤY 5 HỌC SINH ĐẦU TIÊN CHO BẢNG VÀNG
+    let top5 = sortedStudents.slice(0, 5); 
     
     // Tính Rank (Hạng) chỉ dựa trên những học sinh KHÔNG VI PHẠM
     let uniqueScores = [...new Set(sortedStudents.filter(s => !checkBan(s)).map(s => s.score))].sort((a, b) => b - a);
     let now = new Date();
 
     let leaderboardHtml = ""; 
-    if (top20.length > 0) {
-        let listHtml = top20.map((s) => {
+    if (top5.length > 0) {
+        let listHtml = top5.map((s) => {
             let isBanned = checkBan(s);
             let actualDisplayRank = uniqueScores.indexOf(s.score) + 1; 
             let rankIcon = `<span class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center font-black text-sm">${actualDisplayRank}</span>`; 
@@ -373,12 +374,12 @@ window.moGocHocTap = async function() {
                 personalMsg = `<div class="mt-4 p-3 bg-red-100 border border-red-300 rounded-xl text-center shadow-inner"><p class="text-red-700 font-bold text-sm"><i class="fas fa-ban text-red-500 mr-1 animate-pulse"></i>Tạm đình chỉ thi đua do vi phạm nội quy!</p></div>`;
             } else {
                 let myScore = Number(currentUser.score) || 0; let myRank = uniqueScores.indexOf(myScore) + 1; if (myRank === 0) myRank = uniqueScores.length + 1; 
-                if (myRank <= 10) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
+                if (myRank <= 5) { personalMsg = `<div class="mt-4 p-3 bg-green-100 border border-green-200 rounded-xl text-center"><p class="text-green-700 font-bold text-sm"><i class="fas fa-star text-yellow-500 mr-1 animate-pulse"></i> Tuyệt vời! Con đang ở Top ${myRank} Bảng Vàng!</p></div>`; } 
                 else { personalMsg = `<div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-center"><p class="text-blue-700 font-bold text-sm"><i class="fas fa-rocket mr-1 text-blue-500"></i> Hiện tại con đang ở Hạng ${myRank}.<br>Cố lên nhé, chăm chỉ làm bài để leo rank nha!</p></div>`; } 
             }
         } 
         
-        leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6</h3></div><div class="flex flex-col">${listHtml}</div>${personalMsg}</div>`; 
+        leaderboardHtml = `<div class="mt-6 bg-white p-5 sm:p-6 rounded-[2rem] shadow-md border-t-4 border-yellow-400 fade-in"><div class="text-center mb-5"><h3 class="font-black text-xl sm:text-2xl text-yellow-600 uppercase tracking-wide"><i class="fas fa-crown text-yellow-500 mr-2 mb-1 animate-bounce inline-block"></i>BẢNG VÀNG LỚP 4/6 (TOP 5)</h3></div><div class="flex flex-col">${listHtml}</div>${personalMsg}</div>`; 
     } 
     document.getElementById('content').innerHTML = htmlTop + leaderboardHtml; 
 };
