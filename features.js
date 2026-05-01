@@ -890,13 +890,12 @@ window.loadSubject = async function(sub) {
             const time = groupQs.length > 0 ? (groupQs[0].time || 20) : 20; 
             
             // XÁC ĐỊNH RÕ SỐ CÂU TỰ LUẬN VÀ TRẮC NGHIỆM
-            // Một câu hỏi là trắc nghiệm nếu correct không phải 'tuluan' VÀ (có đáp án a,b,c,d HOẶC có chỗ điền khuyết HOẶC không phải là bài đọc thuần túy)
             let autoGradedQs = groupQs.filter(q => String(q.correct).trim().toLowerCase() !== 'tuluan' && (q.a || q.b || q.c || q.d || /_{3,}/.test(q.question) || !(q.question||"").includes('[BAIDOC]')));
             let tuluanQs = groupQs.filter(q => String(q.correct).trim().toLowerCase() === 'tuluan');
             
             let autoGradedCount = autoGradedQs.length;
             let hasTuluan = tuluanQs.length > 0;
-            // Tổng số câu (dùng để hiển thị đếm số câu) = số câu trắc nghiệm + số câu tự luận
+            // Tổng số câu hiển thị = số câu trắc nghiệm + số câu tự luận
             let totalDisplayCount = autoGradedCount + tuluanQs.length;
             
             const maxPossibleScore = autoGradedCount * 10; 
@@ -905,7 +904,6 @@ window.loadSubject = async function(sub) {
             let badgeHtml = `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>`;
             let cardClass = `border-indigo-50 bg-white`; let iconClass = `bg-indigo-100 text-indigo-600`; let iconSymbol = `fa-star`;
             
-            // Nếu có câu Tự luận, hiển thị thêm biểu tượng cây bút
             let tuluanIconHtml = hasTuluan ? `<span class="text-indigo-500 ml-1" title="Có câu hỏi tự luận"><i class="fas fa-pen-nib"></i></span>` : '';
 
             if (isDone && currentUser.role === 'student') { 
@@ -915,32 +913,43 @@ window.loadSubject = async function(sub) {
                 let detailsStr = String(latestLog.details || "").toUpperCase();
                 
                 let isWaiting = detailsStr.includes('CHỜ GV CHẤM ĐIỂM');
-                let hasMistakes = detailsStr.includes('BORDER-RED-200') || detailsStr.includes('BỎ TRỐNG');
                 
+                // TÍNH TOÁN PHẦN TRĂM ĐỂ PHỦ MÀU SẮC
+                let pct = 0;
+                if (maxPossibleScore > 0) {
+                    pct = (score / maxPossibleScore) * 100;
+                } else if (hasTuluan && score > 0) {
+                    pct = 100; // Bài tự luận 100% đã được thầy chấm điểm
+                }
+
                 let theme = {};
                 let scoreDisplay = (maxPossibleScore === 0 || (hasTuluan && autoGradedCount === 0)) ? `${score} điểm` : `${score}/${maxPossibleScore} điểm`;
 
                 if (isWaiting) {
-                    // Đang chờ GV chấm điểm Tự luận
+                    // Đang chờ GV chấm điểm
                     theme = { badge: "bg-orange-100 text-orange-700 border border-orange-500", card: "border-orange-200 bg-orange-50/40 opacity-95", icon: "bg-orange-100 text-orange-600", sym: "fa-hourglass-half" };
                     badgeHtml = `<span class="${theme.badge} text-[10px] font-black px-2 py-1 rounded shadow-sm flex items-center gap-1"><i class="fas fa-user-clock text-xs"></i>Chờ Thầy chấm</span>`;
-                } else if (score > 0 && !hasMistakes) {
-                    // Làm đúng hoặc đã chấm xong
-                    theme = { badge: "bg-green-100 text-green-700 border border-green-500", card: "border-green-200 bg-green-50/40 opacity-95", icon: "bg-green-100 text-green-600", sym: "fa-check-circle" }; 
-                    badgeHtml = `<span class="${theme.badge} text-[10px] font-black px-2 py-1 rounded shadow-sm"><i class="fas ${theme.sym} text-xs mr-1"></i>${scoreDisplay}</span>`;
                 } else {
-                    // Làm sai
-                    theme = { badge: "bg-red-100 text-red-700 border border-red-500", card: "border-red-200 bg-red-50/40 opacity-95", icon: "bg-red-100 text-red-600", sym: "fa-times-circle" };
+                    // LUẬT MÀU SẮC ĐÚNG CHUẨN CỦA THẦY
+                    if (pct >= 85) { 
+                        theme = { badge: "bg-green-100 text-green-700 border border-green-500", card: "border-green-200 bg-green-50/40 opacity-95", icon: "bg-green-100 text-green-600", sym: "fa-check-circle" }; 
+                    } 
+                    else if (pct >= 50) { 
+                        theme = { badge: "bg-yellow-100 text-yellow-700 border border-yellow-500", card: "border-yellow-200 bg-yellow-50/40 opacity-95", icon: "bg-yellow-100 text-yellow-600", sym: "fa-exclamation-circle" }; 
+                    } 
+                    else { 
+                        theme = { badge: "bg-red-100 text-red-700 border border-red-500", card: "border-red-200 bg-red-50/40 opacity-95", icon: "bg-red-100 text-red-600", sym: "fa-times-circle" }; 
+                    }
                     badgeHtml = `<span class="${theme.badge} text-[10px] font-black px-2 py-1 rounded shadow-sm"><i class="fas ${theme.sym} text-xs mr-1"></i>${scoreDisplay}</span>`;
                 }
                 
                 cardClass = theme.card; iconClass = theme.icon; iconSymbol = theme.sym;
-                let isMaxScore = maxPossibleScore > 0 ? (score >= maxPossibleScore) : true; 
+                let isMaxScore = pct >= 100;
                 let tokens = Number(currentUser.veLamLai) || 0;
                 
                 if (tokens > 0) { clickAction = `window.promptRedo('${g}', ${time}, ${isMaxScore})`; } 
                 else { 
-                    if (isMaxScore && !isWaiting && !hasMistakes) clickAction = `alert('Tuyệt vời! Con đã đạt kết quả xuất sắc ở bài này rồi. 🎉')`; 
+                    if (isMaxScore && !isWaiting) clickAction = `alert('Tuyệt vời! Con đã đạt kết quả xuất sắc ở bài này rồi. 🎉')`; 
                     else if (isWaiting) clickAction = `alert('Bài này đang chờ Thầy chấm điểm phần Tự luận. Con hãy kiên nhẫn đợi nhé!')`;
                     else clickAction = `alert('Con đã làm bài này đạt ${scoreDisplay}.\\n\\nHãy vào Vòng Quay May Mắn tìm Vé sửa bài sai nếu muốn cải thiện điểm nhé!')`; 
                 }
