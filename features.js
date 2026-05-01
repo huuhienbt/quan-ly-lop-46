@@ -1933,7 +1933,7 @@ window.renderDanhSachTienDo = function() {
 };
 
 // ==========================================
-// 1. CẬP NHẬT HÀM XEM TIẾN ĐỘ (ĐỂ HIỂN THỊ NÚT "CHẤM BÀI")
+// 1. CẬP NHẬT HÀM XEM TIẾN ĐỘ (ĐÃ SỬA LỖI VIẾT HOA/THƯỜNG)
 // ==========================================
 window.xemChiTietTienDo = function(studentId, studentName) { 
     const userLogs = Data.log.filter(l => String(l.id) === String(studentId)); 
@@ -1950,9 +1950,10 @@ window.xemChiTietTienDo = function(studentId, studentName) {
                 const count = qs.filter(q => q.group === grp && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length;
                 const maxScore = count * 10; const isMax = (Number(log.score) >= maxScore && maxScore > 0); 
                 
-                // KIỂM TRA XEM BÀI NÀY CÓ CẦN CHẤM TỰ LUẬN KHÔNG?
-                const needsGrading = log.details && String(log.details).includes('CHỜ GV CHẤM ĐIỂM');
-                const hasMistakes = log.details && String(log.details).includes('border-red-200');
+                // KIỂM TRA XEM BÀI NÀY CÓ CẦN CHẤM TỰ LUẬN KHÔNG (Ép về chữ hoa để so sánh cho chắc)
+                const detailsStr = String(log.details || "").toUpperCase();
+                const needsGrading = detailsStr.includes('CHỜ GV CHẤM ĐIỂM');
+                const hasMistakes = detailsStr.includes('BORDER-RED-200');
                 const isTuyetDoi = isMax || (Number(log.score) > 0 && !hasMistakes && !needsGrading);
                 
                 let btnChiTiet = "";
@@ -1970,24 +1971,34 @@ window.xemChiTietTienDo = function(studentId, studentName) {
             } else { return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; } 
         }).join(''); 
     }; 
-    document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div><div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>`; 
+    document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div><div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md" id="rvHeader"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium custom-scrollbar"></div></div></div>`; 
 };
 
 // ==========================================
-// 2. CẬP NHẬT HÀM XEM LỖI SAI (THÊM KHUNG CHẤM ĐIỂM)
+// 2. CẬP NHẬT HÀM XEM LỖI SAI (THÊM KHUNG CHẤM ĐIỂM VÀ ĐỔI TITLE)
 // ==========================================
 window.xemLoiSai = function(studentId, subjectCode, group) { 
     const student = Data.hs.find(s => String(s.id) === String(studentId)); const studentName = student ? student.name : "Học sinh"; 
     let groupLogs = Data.log.filter(l => String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group);
     groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
     
-    document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; 
+    let contentHtml = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; 
+    let isNeedGrading = contentHtml.toUpperCase().includes('CHỜ GV CHẤM ĐIỂM');
+
+    // Thay đổi tiêu đề và màu sắc modal nếu đang chấm bài
+    let rvHeader = document.getElementById("rvHeader");
+    if (isNeedGrading) {
+        document.getElementById("rvTitle").innerText = "CHẤM BÀI: " + group;
+        if(rvHeader) rvHeader.className = "bg-orange-500 p-5 text-white flex justify-between items-center relative shadow-md";
+    } else {
+        document.getElementById("rvTitle").innerText = "LỖI SAI: " + group;
+        if(rvHeader) rvHeader.className = "bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md";
+    }
+    
     document.getElementById("rvName").innerText = studentName; 
     
-    let contentHtml = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; 
-
     // NẾU PHÁT HIỆN CÓ BÀI CẦN CHẤM VÀ LÀ ADMIN (GIÁO VIÊN)
-    if (contentHtml.includes('CHỜ GV CHẤM ĐIỂM') && currentUser && currentUser.role === 'admin') {
+    if (isNeedGrading && currentUser && currentUser.role === 'admin') {
         let gradingUI = `
             <div class="mt-6 p-5 bg-orange-100 border-2 border-orange-300 rounded-2xl shadow-md">
                 <h4 class="font-black text-orange-800 mb-3 uppercase text-center"><i class="fas fa-pen-nib mr-2"></i>Chấm Điểm Tự Luận</h4>
@@ -2027,9 +2038,9 @@ window.luuDiemTuLuan = async function(studentId, subjectCode, group) {
         return alert("Lỗi: Không tìm thấy bài nộp!");
     }
 
-    // 2. Thay đổi nhãn "CHỜ CHẤM" thành "ĐÃ CHẤM" bằng code HTML
+    // 2. Thay đổi nhãn "CHỜ CHẤM" thành "ĐÃ CHẤM" (DÙNG REGEX KHÔNG PHÂN BIỆT HOA THƯỜNG)
     let newDetails = log.details
-        .replace(/CHỜ GV CHẤM ĐIỂM/g, `ĐÃ CHẤM: +${diemThem}đ`)
+        .replace(/Chờ GV chấm điểm/gi, `ĐÃ CHẤM: +${diemThem}đ`)
         .replace(/bg-orange-100/g, 'bg-emerald-100')
         .replace(/text-orange-500/g, 'text-emerald-700')
         .replace(/border-orange-200/g, 'border-emerald-300');
