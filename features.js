@@ -1932,6 +1932,9 @@ window.renderDanhSachTienDo = function() {
     document.getElementById('danhSachTienDoRender').innerHTML = htmlList;
 };
 
+// ==========================================
+// 1. CẬP NHẬT HÀM XEM TIẾN ĐỘ (ĐỂ HIỂN THỊ NÚT "CHẤM BÀI")
+// ==========================================
 window.xemChiTietTienDo = function(studentId, studentName) { 
     const userLogs = Data.log.filter(l => String(l.id) === String(studentId)); 
     const sortFunc = (a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); };
@@ -1945,10 +1948,24 @@ window.xemChiTietTienDo = function(studentId, studentName) {
             if(groupLogs.length > 0) { 
                 groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
                 const count = qs.filter(q => q.group === grp && (q.a || q.b || q.c || q.d || !(q.question||"").includes('[BAIDOC]'))).length;
-                const maxScore = count * 10; const isMax = (Number(log.score) >= maxScore && maxScore > 0); const hasMistakes = log.details && String(log.details).includes('border-red-200');
-                const isTuyetDoi = isMax || (Number(log.score) > 0 && !hasMistakes);
-                const btnChiTiet = isTuyetDoi ? `<span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200 shadow-sm"><i class="fas fa-star text-yellow-500 mr-1"></i>Tuyệt đối</span>` : `<button onclick="window.xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Lỗi sai</button>`; 
-                const btnMoLai = `<button onclick="window.moLaiBai('${studentId}', '${studentName}', '${subjectCode}', '${grp}')" class="text-[10px] bg-orange-50 text-orange-600 font-bold px-2 py-1 rounded hover:bg-orange-600 hover:text-white transition shadow-sm ml-1" title="Xóa kết quả để em làm lại từ đầu"><i class="fas fa-undo"></i> Mở lại</button>`;
+                const maxScore = count * 10; const isMax = (Number(log.score) >= maxScore && maxScore > 0); 
+                
+                // KIỂM TRA XEM BÀI NÀY CÓ CẦN CHẤM TỰ LUẬN KHÔNG?
+                const needsGrading = log.details && String(log.details).includes('CHỜ GV CHẤM ĐIỂM');
+                const hasMistakes = log.details && String(log.details).includes('border-red-200');
+                const isTuyetDoi = isMax || (Number(log.score) > 0 && !hasMistakes && !needsGrading);
+                
+                let btnChiTiet = "";
+                if (needsGrading) {
+                    // Nút CHẤM BÀI màu cam nổi bật
+                    btnChiTiet = `<button onclick="window.xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-orange-500 text-white font-black px-3 py-1 rounded-lg hover:bg-orange-600 transition shadow-md animate-pulse"><i class="fas fa-pen-nib mr-1"></i>Chấm Bài</button>`;
+                } else if (isTuyetDoi) {
+                    btnChiTiet = `<span class="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200 shadow-sm"><i class="fas fa-star text-yellow-500 mr-1"></i>Tuyệt đối</span>`;
+                } else {
+                    btnChiTiet = `<button onclick="window.xemLoiSai('${studentId}', '${subjectCode}', '${grp}')" class="text-[10px] bg-red-50 text-red-600 font-bold px-3 py-1 rounded hover:bg-red-600 hover:text-white transition shadow-sm"><i class="fas fa-search mr-1"></i>Lỗi sai</button>`; 
+                }
+
+                const btnMoLai = `<button onclick="window.moLaiBai('${studentId}', '${studentName}', '${subjectCode}', '${grp}')" class="text-[10px] bg-slate-50 text-slate-500 font-bold px-2 py-1 rounded hover:bg-slate-600 hover:text-white transition shadow-sm ml-1" title="Xóa kết quả để em làm lại từ đầu"><i class="fas fa-undo"></i> Mở lại</button>`;
                 return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 hover:bg-slate-50 transition px-2 rounded-lg"><div class="flex items-center gap-2"><i class="fas fa-check-circle text-green-500 text-lg"></i><span class="font-bold text-slate-700 text-sm">${grp}</span></div><div class="flex items-center gap-2"><span class="font-black text-indigo-600 text-lg mr-1">${log.score}đ</span>${btnChiTiet}${btnMoLai}</div></div>`; 
             } else { return `<div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-0 opacity-50 px-2"><div class="flex items-center gap-2"><i class="far fa-circle text-slate-300 text-lg"></i><span class="font-bold text-slate-500 text-sm line-through">${grp}</span></div><span class="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-1 rounded">Chưa làm</span></div>`; } 
         }).join(''); 
@@ -1956,13 +1973,110 @@ window.xemChiTietTienDo = function(studentId, studentName) {
     document.getElementById('content').innerHTML = `<div class="flex items-center mb-6"><button onclick="window.moTienDo()" class="bg-white p-2 rounded shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl text-purple-600 uppercase">CHI TIẾT: ${studentName}</h2></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in pb-10"><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-blue-100"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fas fa-calculator"></i></div><h3 class="font-black text-blue-800 text-lg">MÔN TOÁN</h3></div><div>${renderSubjectProgress('math', mathGroups)}</div></div><div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100"><div class="flex items-center gap-2 mb-4 pb-2 border-b-2 border-green-100"><div class="w-8 h-8 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i class="fas fa-book"></i></div><h3 class="font-black text-green-800 text-lg">MÔN TIẾNG VIỆT</h3></div><div>${renderSubjectProgress('vietnamese', tvGroups)}</div></div></div><div id="modalReview" class="hidden fixed inset-0 z-[90] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm fade-in"><div class="bg-white w-full max-w-lg rounded-[2rem] overflow-hidden flex flex-col max-h-[85vh]"><div class="bg-red-500 p-5 text-white flex justify-between items-center relative shadow-md"><div><h3 class="font-black text-lg uppercase" id="rvTitle">--</h3><p class="text-xs text-red-100 font-bold" id="rvName">--</p></div><button onclick="document.getElementById('modalReview').classList.add('hidden')" class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/40 transition"><i class="fas fa-times"></i></button></div><div id="rvContent" class="p-5 overflow-y-auto bg-slate-50 space-y-4 text-sm text-slate-700 leading-relaxed font-medium"></div></div></div>`; 
 };
 
+// ==========================================
+// 2. CẬP NHẬT HÀM XEM LỖI SAI (THÊM KHUNG CHẤM ĐIỂM)
+// ==========================================
 window.xemLoiSai = function(studentId, subjectCode, group) { 
     const student = Data.hs.find(s => String(s.id) === String(studentId)); const studentName = student ? student.name : "Học sinh"; 
     let groupLogs = Data.log.filter(l => String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group);
     groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime()); const log = groupLogs[0]; 
-    document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; document.getElementById("rvName").innerText = studentName; document.getElementById("rvContent").innerHTML = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; document.getElementById("modalReview").classList.remove("hidden"); 
+    
+    document.getElementById("rvTitle").innerText = "Lỗi sai: " + group; 
+    document.getElementById("rvName").innerText = studentName; 
+    
+    let contentHtml = (log && log.details) ? log.details : '<p class="text-center text-slate-400">Không có dữ liệu chi tiết.</p>'; 
+
+    // NẾU PHÁT HIỆN CÓ BÀI CẦN CHẤM VÀ LÀ ADMIN (GIÁO VIÊN)
+    if (contentHtml.includes('CHỜ GV CHẤM ĐIỂM') && currentUser && currentUser.role === 'admin') {
+        let gradingUI = `
+            <div class="mt-6 p-5 bg-orange-100 border-2 border-orange-300 rounded-2xl shadow-md">
+                <h4 class="font-black text-orange-800 mb-3 uppercase text-center"><i class="fas fa-pen-nib mr-2"></i>Chấm Điểm Tự Luận</h4>
+                <div class="flex gap-2 items-center">
+                    <input type="number" id="diemTuLuanInput" class="w-full p-4 border-2 border-orange-200 rounded-xl font-black text-xl text-center text-orange-700 outline-none focus:border-orange-500 shadow-inner bg-white" placeholder="Nhập điểm...">
+                    <button onclick="window.luuDiemTuLuan('${studentId}', '${subjectCode}', '${group}')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white font-black px-6 py-4 rounded-xl hover:scale-105 transition shadow-lg btn-3d whitespace-nowrap">
+                        <i class="fas fa-check-circle"></i> CHỐT
+                    </button>
+                </div>
+            </div>
+        `;
+        contentHtml += gradingUI;
+    }
+
+    document.getElementById("rvContent").innerHTML = contentHtml; 
+    document.getElementById("modalReview").classList.remove("hidden"); 
 };
 
+// ==========================================
+// 3. THÊM HÀM MỚI: XỬ LÝ LƯU ĐIỂM VÀ ĐỒNG BỘ MÁY CHỦ
+// ==========================================
+window.luuDiemTuLuan = async function(studentId, subjectCode, group) {
+    let diemThem = parseInt(document.getElementById('diemTuLuanInput').value);
+    if (isNaN(diemThem) || diemThem < 0) return alert("Thầy vui lòng nhập số điểm hợp lệ!");
+
+    document.getElementById('loader').style.display = 'flex';
+    let loaderText = document.querySelector('#loader p');
+    if (loaderText) loaderText.innerText = "ĐANG CẬP NHẬT ĐIỂM...";
+
+    // 1. Tìm đúng bài làm để sửa
+    let groupLogs = Data.log.filter(l => String(l.id) === String(studentId) && (l.subject === subjectCode || (subjectCode === 'vietnamese' && l.subject === 'tv')) && l.group === group);
+    groupLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    let log = groupLogs[0];
+
+    if (!log) {
+        document.getElementById('loader').style.display = 'none';
+        return alert("Lỗi: Không tìm thấy bài nộp!");
+    }
+
+    // 2. Thay đổi nhãn "CHỜ CHẤM" thành "ĐÃ CHẤM" bằng code HTML
+    let newDetails = log.details
+        .replace(/CHỜ GV CHẤM ĐIỂM/g, `ĐÃ CHẤM: +${diemThem}đ`)
+        .replace(/bg-orange-100/g, 'bg-emerald-100')
+        .replace(/text-orange-500/g, 'text-emerald-700')
+        .replace(/border-orange-200/g, 'border-emerald-300');
+
+    // 3. Tính tổng điểm mới
+    let newTotalScore = Number(log.score) + diemThem;
+    let newRealAdded = Number(log.real_added) + diemThem;
+
+    try {
+        // 4. Gửi lệnh lên máy chủ
+        await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: 'cham_diem_tu_luan',
+                data: {
+                    id_hs: studentId,
+                    subject: log.subject,
+                    group: group,
+                    extra_score: diemThem,
+                    new_score: newTotalScore,
+                    new_real_added: newRealAdded,
+                    new_details: newDetails
+                }
+            })
+        });
+
+        // 5. Cập nhật dữ liệu hiển thị ngay lập tức (không cần tải lại trang)
+        log.score = newTotalScore;
+        log.real_added = newRealAdded;
+        log.details = newDetails;
+
+        let hs = Data.hs.find(x => String(x.id) === String(studentId));
+        if (hs) hs.score = Number(hs.score) + diemThem;
+
+        alert(`Chấm xong! Đã cộng thêm ${diemThem} điểm tự luận cho em ${hs ? hs.name : ''}.`);
+        document.getElementById("modalReview").classList.add("hidden");
+        
+        // Cập nhật lại khung nhìn Tiến độ
+        window.xemChiTietTienDo(studentId, hs ? hs.name : ''); 
+
+    } catch (e) {
+        alert("Lỗi kết nối mạng, chưa thể lưu điểm!");
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        if (loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
+    }
+}
 window.moLaiBai = async function(studentId, studentName, subjectCode, group) {
     if(!confirm(`⚠️ CHÚ Ý: Thầy có chắc chắn muốn MỞ LẠI bài [${group}] cho em ${studentName} không?\n\nHành động này sẽ hủy kết quả hiện tại của bài này để em có thể làm lại từ đầu (Điểm của bài này cũng sẽ bị trừ khỏi tổng kết).`)) return;
 
