@@ -734,12 +734,24 @@ window.changeQType = function(initialCorr = '') {
     let lblA = document.getElementById("lblA"); let lblB = document.getElementById("lblB");
     let lblC = document.getElementById("lblC"); let lblD = document.getElementById("lblD");
     let corrContainer = document.getElementById("corrContainer");
+    let optionsGrid = document.getElementById("optionsGrid"); // Cần id này để ẩn/hiện A,B,C,D
+    
     let curVal = initialCorr || (document.getElementById("frmCorr") ? document.getElementById("frmCorr").value : 'a');
-    if(val === 'dienkhuyet') {
+    
+    if (val === 'tuluan') {
+        hint.className = "mt-2 text-[11px] font-bold text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-200 fade-in";
+        hint.innerHTML = `<i class="fas fa-camera"></i> Học sinh sẽ trả lời bằng cách gõ văn bản hoặc chụp ảnh bài làm up lên. Thầy không cần nhập đáp án A, B, C, D (Hệ thống sẽ lưu lại bài làm để Thầy xem sau).`;
+        if(optionsGrid) optionsGrid.style.display = 'none';
+        corrContainer.innerHTML = `<input type="hidden" id="frmCorr" value="tuluan">`;
+    }
+    else if(val === 'dienkhuyet') {
+        if(optionsGrid) optionsGrid.style.display = '';
         hint.className = "mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in";
+        hint.innerHTML = `<i class="fas fa-info-circle"></i> Hệ thống sẽ tạo dạng Bấm-Điền-Từ. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!`;
         lblA.innerText = "Từ gợi ý 1 (A)"; lblB.innerText = "Từ gợi ý 2 (B)"; lblC.innerText = "Từ gợi ý 3 (C)"; lblD.innerText = "Từ gợi ý 4 (D)";
-        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Thứ tự điền vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
+        corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Thứ tự điền vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal !== 'tuluan' ? curVal : 'a,b'}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
     } else {
+        if(optionsGrid) optionsGrid.style.display = '';
         hint.className = "hidden"; lblA.innerText = "Đáp án A"; lblB.innerText = "Đáp án B"; lblC.innerText = "Đáp án C"; lblD.innerText = "Đáp án D";
         if(!['a','b','c','d'].includes(curVal.toLowerCase())) curVal = 'a';
         corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full bg-yellow-50 border-2 border-yellow-200 p-3 rounded-xl font-bold text-yellow-800 outline-none focus:border-yellow-500"><option value="a" ${curVal=='a'?'selected':''}>Đáp án A</option><option value="b" ${curVal=='b'?'selected':''}>Đáp án B</option><option value="c" ${curVal=='c'?'selected':''}>Đáp án C</option><option value="d" ${curVal=='d'?'selected':''}>Đáp án D</option></select>`;
@@ -757,18 +769,21 @@ window.renderFormCauHoi = function(id) {
         if (match) { baiDocHtml = match[1]; cauHoiHtml = cauHoiHtml.replace(match[0], '').trim(); } 
         else if (cauHoiHtml.includes('[ĐOẠN VĂN]')) { baiDocHtml = cauHoiHtml.replace('[ĐOẠN VĂN]', '').trim(); cauHoiHtml = ""; } 
     }
-    let isDrag = /_{3,}/.test(cauHoiHtml);
+    let isTuluan = q.correct === 'tuluan';
+    let isDrag = /_{3,}/.test(cauHoiHtml) && !isTuluan;
+    
     let formLayout = isTV ? `<div class="mb-4 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-2xl"><label class="text-xs font-black text-yellow-700 uppercase tracking-wider block mb-2"><i class="fas fa-book-reader"></i> Khung Bài Đọc</label>${window.getRichTextToolbar('frmBaiDoc')}<div id="frmBaiDoc" onclick="window.handleEditorClick(event)" contenteditable="true" class="w-full min-h-[120px] bg-white border border-yellow-300 p-4 rounded-xl outline-none focus:border-orange-400 transition text-base overflow-hidden break-words [&_img]:max-w-full [&_img]:rounded-md">${baiDocHtml}</div></div>` : ``;
     formLayout += `
         <div class="w-full mb-4">
             <div class="mb-4 bg-indigo-50 border border-indigo-100 p-3 rounded-xl shadow-sm">
                 <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Loại Câu Hỏi</label>
                 <select id="frmQType" onchange="window.changeQType()" class="edit-input w-full bg-white border-2 border-indigo-200 p-2 rounded-xl font-bold text-indigo-700 outline-none focus:border-indigo-500 transition cursor-pointer">
-                    <option value="tracnghiem" ${!isDrag ? 'selected' : ''}>🔘 Trắc nghiệm chọn đáp án (A, B, C, D)</option>
+                    <option value="tracnghiem" ${!isDrag && !isTuluan ? 'selected' : ''}>🔘 Trắc nghiệm chọn đáp án</option>
                     <option value="dienkhuyet" ${isDrag ? 'selected' : ''}>🧩 Bấm chọn Điền khuyết</option>
+                    <option value="tuluan" ${isTuluan ? 'selected' : ''}>📝 Tự luận (Nhập chữ / Chụp ảnh)</option>
                 </select>
-                <div id="qTypeHint" class="${isDrag ? 'mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in' : 'hidden'}">
-                    <i class="fas fa-info-circle"></i> Hệ thống sẽ tạo dạng Bấm-Điền-Từ. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!
+                <div id="qTypeHint" class="${isTuluan ? 'mt-2 text-[11px] font-bold text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-200 fade-in' : (isDrag ? 'mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in' : 'hidden')}">
+                    ${isTuluan ? '<i class="fas fa-camera"></i> Học sinh sẽ trả lời bằng cách gõ văn bản hoặc chụp ảnh bài làm up lên. Thầy không cần nhập đáp án A, B, C, D (Hệ thống sẽ lưu lại bài làm để Thầy xem sau).' : '<i class="fas fa-info-circle"></i> Hệ thống sẽ tạo dạng Bấm-Điền-Từ. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!'}
                 </div>
             </div>
             <label class="text-xs font-black text-indigo-700 uppercase tracking-wider block mb-2"><i class="fas fa-edit"></i> Khung Câu Hỏi</label>
@@ -785,7 +800,7 @@ window.renderFormCauHoi = function(id) {
                 <div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div>
             </div>
             ${formLayout} 
-            <div class="grid grid-cols-2 gap-3 mt-4">
+            <div id="optionsGrid" class="grid grid-cols-2 gap-3 mt-4" style="${isTuluan ? 'display:none;' : ''}">
                 <div><label id="lblA" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 1 (A)' : 'Đáp án A'}</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
                 <div><label id="lblB" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 2 (B)' : 'Đáp án B'}</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
                 <div><label id="lblC" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 3 (C)' : 'Đáp án C'}</label><input type="text" id="frmC" value="${q.c}" class="edit-input w-full mt-1"></div>
@@ -807,7 +822,14 @@ window.luuCauHoi = async function(id) {
     }
     if (isTV) { let baiDocText = (document.getElementById("frmBaiDoc") ? document.getElementById("frmBaiDoc").innerHTML.trim() : ""); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
     let corrVal = document.getElementById("frmCorr").value.trim().toLowerCase();
-    const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: document.getElementById("frmA").value, b: document.getElementById("frmB").value, c: document.getElementById("frmC").value, d: document.getElementById("frmD").value, correct: corrVal, image: "" }; 
+    
+    // Nếu là câu tự luận, ta gán A B C D thành rỗng để tiết kiệm dung lượng Data trên máy chủ
+    let aVal = typeVal === 'tuluan' ? '' : document.getElementById("frmA").value;
+    let bVal = typeVal === 'tuluan' ? '' : document.getElementById("frmB").value;
+    let cVal = typeVal === 'tuluan' ? '' : document.getElementById("frmC").value;
+    let dVal = typeVal === 'tuluan' ? '' : document.getElementById("frmD").value;
+
+    const data = { id: id, subject: curSub, group: document.getElementById("frmG").value, time: document.getElementById("frmT").value, question: finalQuestionText, a: aVal, b: bVal, c: cVal, d: dVal, correct: corrVal, image: "" }; 
     if(!data.group || !finalQuestionText.trim()) { return alert("Vui lòng điền đủ Tên bài và Câu hỏi!"); }
     document.getElementById('loader').style.display = 'flex'; 
     try { await fetch(API_URL, { method:'POST', body:JSON.stringify({ action: id ? 'sua_cau_hoi' : 'them_cau_hoi', data: data }) }); window.isAllDataLoaded = false; alert("Lưu thành công!"); window.quanLyNganHang(curSub, true); } catch(e) { alert("Lỗi mạng! Không thể lưu câu hỏi."); } finally { document.getElementById('loader').style.display = 'none'; }
