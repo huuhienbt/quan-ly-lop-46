@@ -1052,82 +1052,156 @@ window.startQuiz = async function(group, timeMins) {
 };
 
 // ==========================================
-// 1. HÀM TẢI ẢNH BÀI LÀM TỰ LUẬN (MỚI)
+// 1. HÀM TẢI NHIỀU ẢNH VÀ FILE BÀI LÀM (ĐÃ NÂNG CẤP)
 // ==========================================
 window.uploadAnhTuLuan = function(index) {
     const input = document.createElement('input'); 
     input.type = 'file'; 
-    input.accept = 'image/*'; 
+    input.multiple = true; // Cho phép chọn nhiều file cùng lúc
+    input.accept = 'image/*,.pdf,.doc,.docx'; // Hỗ trợ cả hình ảnh và file tài liệu
+    
     input.onchange = async (e) => { 
-        const file = e.target.files[0]; 
-        if (!file) return; 
+        const files = e.target.files; 
+        if (!files || files.length === 0) return; 
         
         document.getElementById('loader').style.display = 'flex'; 
         let loaderText = document.querySelector('#loader p');
-        if(loaderText) loaderText.innerText = "ĐANG TẢI ẢNH BÀI LÀM LÊN MÁY CHỦ...";
         
-        const reader = new FileReader(); 
-        reader.onload = function(event) { 
-            const img = new Image(); 
-            img.onload = async function() { 
-                const canvas = document.createElement('canvas'); 
-                let scaleSize = 1;
-                const MAX_WIDTH = 1200; // Giữ kích thước lớn để giáo viên đọc chữ rõ nét
-                if(img.width > MAX_WIDTH) { scaleSize = MAX_WIDTH / img.width; }
-                canvas.width = img.width * scaleSize; 
-                canvas.height = img.height * scaleSize; 
+        // Khởi tạo mảng lưu file nếu chưa có
+        if (!quiz[index].studentAnswerFiles) quiz[index].studentAnswerFiles = [];
+
+        // Duyệt qua từng file để upload
+        for (let i = 0; i < files.length; i++) {
+            let file = files[i];
+            if(loaderText) loaderText.innerText = `ĐANG TẢI FILE ${i+1}/${files.length} LÊN MÁY CHỦ...`;
+            
+            try {
+                // Đọc file và chuyển thành Base64
+                let base64Data = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        if (file.type.startsWith('image/')) {
+                            // Nếu là ảnh -> Thu nhỏ kích thước
+                            const img = new Image();
+                            img.onload = function() {
+                                const canvas = document.createElement('canvas');
+                                let scaleSize = 1;
+                                const MAX_WIDTH = 1200; // Giữ nét chữ rõ ràng
+                                if (img.width > MAX_WIDTH) scaleSize = MAX_WIDTH / img.width;
+                                canvas.width = img.width * scaleSize;
+                                canvas.height = img.height * scaleSize;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+                            };
+                            img.src = event.target.result;
+                        } else {
+                            // Nếu là file PDF, DOC -> Bỏ qua thu nhỏ ảnh, lấy base64 luôn
+                            resolve(event.target.result.split(',')[1]);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+
+                // Gửi lên server
+                let extension = file.type.startsWith('image/') ? '.jpg' : file.name.substring(file.name.lastIndexOf('.'));
+                const response = await fetch(API_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        action: 'upload_image', 
+                        data: { 
+                            filename: "bailam_" + Date.now() + "_" + i + extension, 
+                            mimeType: file.type || 'application/octet-stream', 
+                            base64: base64Data 
+                        } 
+                    }) 
+                }); 
+                const result = await response.json(); 
                 
-                const ctx = canvas.getContext('2d'); 
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height); 
-                
-                const base64Data = canvas.toDataURL('image/jpeg', 0.8).split(',')[1]; 
-                
-                try { 
-                    const response = await fetch(API_URL, { 
-                        method: 'POST', 
-                        body: JSON.stringify({ action: 'upload_image', data: { filename: "bailam_"+Date.now()+".jpg", mimeType: 'image/jpeg', base64: base64Data } }) 
-                    }); 
-                    const result = await response.json(); 
-                    
-                    if(result.url) { 
-                        quiz[index].studentAnswerImg = result.url; // Lưu tạm vào biến quiz
-                        let preview = document.getElementById(`ansTuluanImgPreview_${index}`);
-                        preview.innerHTML = `<p class="text-xs font-bold text-indigo-600 mb-2"><i class="fas fa-check-circle"></i> Đã đính kèm 1 ảnh bài làm:</p><img src="${result.url}" class="max-h-64 mx-auto rounded-xl shadow-md border-2 border-indigo-200 cursor-pointer hover:opacity-80 transition" onclick="window.open('${result.url}', '_blank')" title="Bấm để xem ảnh phóng to">`;
-                        preview.classList.remove('hidden');
-                    } else { 
-                        alert("Lỗi! Không lấy được link ảnh từ Server."); 
-                    } 
-                } catch(err) { 
-                    alert("Lỗi mạng khi tải ảnh lên!"); 
-                } finally {
-                    document.getElementById('loader').style.display = 'none'; 
-                    if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
-                }
-            }; 
-            img.src = event.target.result; 
-        }; 
-        reader.readAsDataURL(file); 
+                if (result.url) { 
+                    quiz[index].studentAnswerFiles.push({
+                        url: result.url,
+                        type: file.type.startsWith('image/') ? 'image' : 'doc',
+                        name: file.name
+                    });
+                } else { 
+                    console.log(`Không lấy được link file ${file.name} từ Server.`); 
+                } 
+            } catch(err) { 
+                console.log(`Lỗi mạng khi tải file ${file.name} lên!`); 
+            }
+        }
+        
+        // Vẽ lại khung Preview sau khi up xong
+        window.renderPreviewTuLuan(index);
+        
+        document.getElementById('loader').style.display = 'none'; 
+        if(loaderText) loaderText.innerText = "ĐANG TẢI DỮ LIỆU...";
     }; 
     input.click(); 
 };
 
 // ==========================================
-// 2. HÀM CHỐT ĐÁP ÁN TỰ LUẬN (MỚI)
+// 1.5. HÀM HIỂN THỊ TRƯỚC VÀ XÓA FILE TỰ LUẬN
+// ==========================================
+window.renderPreviewTuLuan = function(index) {
+    let preview = document.getElementById(`ansTuluanImgPreview_${index}`);
+    if (!preview) return;
+    let files = quiz[index].studentAnswerFiles || [];
+    
+    if (files.length === 0) {
+        preview.classList.add('hidden');
+        return;
+    }
+    
+    let html = `<p class="text-xs font-bold text-indigo-600 mb-3 border-b border-slate-200 pb-2"><i class="fas fa-check-circle"></i> Đã đính kèm ${files.length} tệp tin bài làm:</p><div class="flex flex-wrap gap-4 items-start">`;
+    
+    files.forEach((f, idx) => {
+        if (f.type === 'image') {
+            html += `<div class="relative group"><img src="${f.url}" class="h-24 w-auto rounded-lg shadow-sm border border-indigo-200 cursor-pointer hover:opacity-80" onclick="window.open('${f.url}', '_blank')"><button onclick="window.xoaFileTuLuan(${index}, ${idx}, event)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md hover:scale-110 transition"><i class="fas fa-times"></i></button></div>`;
+        } else {
+            html += `<div class="relative group bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center gap-3 cursor-pointer hover:bg-blue-100 shadow-sm" onclick="window.open('${f.url}', '_blank')"><i class="fas fa-file-alt text-blue-500 text-2xl"></i><span class="text-sm font-bold text-slate-700 truncate max-w-[120px]">${f.name}</span><button onclick="window.xoaFileTuLuan(${index}, ${idx}, event)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md hover:scale-110 transition"><i class="fas fa-times"></i></button></div>`;
+        }
+    });
+    html += `</div>`;
+    preview.innerHTML = html;
+    preview.classList.remove('hidden');
+};
+
+window.xoaFileTuLuan = function(index, fileIndex, e) {
+    if (e) e.stopPropagation();
+    if (confirm('Con có chắc muốn xóa file đính kèm này không?')) {
+        quiz[index].studentAnswerFiles.splice(fileIndex, 1);
+        window.renderPreviewTuLuan(index);
+    }
+};
+// ==========================================
+// 2. HÀM CHỐT ĐÁP ÁN TỰ LUẬN (HỖ TRỢ NHIỀU FILE)
 // ==========================================
 window.checkTuLuanAns = function(index) {
     window.answeredQuestions++;
     let textAns = document.getElementById(`ansTuluanText_${index}`).value.trim();
-    let imgAns = quiz[index].studentAnswerImg || "";
+    let files = quiz[index].studentAnswerFiles || [];
     
     let answerDisplay = "";
     if (textAns) answerDisplay += `<div class="whitespace-pre-wrap font-medium text-slate-700 bg-white p-3 rounded-xl border border-slate-200 mt-2">${textAns}</div>`;
-    if (imgAns) answerDisplay += `<div class="mt-3"><img src="${imgAns}" class="max-w-full rounded-xl border-2 border-indigo-200 cursor-pointer shadow-sm" onclick="window.open('${imgAns}', '_blank')"></div>`;
     
-    if (!textAns && !imgAns) {
-        answerDisplay = `<p class="text-slate-500 italic mt-2"><i class="fas fa-exclamation-triangle"></i> Học sinh để trống (Không gõ nội dung, không nộp ảnh).</p>`;
+    if (files.length > 0) {
+        answerDisplay += `<div class="mt-3 flex flex-wrap gap-3">`;
+        files.forEach(f => {
+            if (f.type === 'image') {
+                answerDisplay += `<img src="${f.url}" class="max-h-40 w-auto rounded-lg border-2 border-indigo-200 cursor-pointer shadow-sm hover:opacity-80" onclick="window.open('${f.url}', '_blank')">`;
+            } else {
+                answerDisplay += `<a href="${f.url}" target="_blank" class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 flex items-center gap-2 hover:bg-blue-100 transition shadow-sm"><i class="fas fa-file-alt text-blue-500 text-xl"></i><span class="text-sm font-bold text-slate-700">${f.name}</span></a>`;
+            }
+        });
+        answerDisplay += `</div>`;
+    }
+    
+    if (!textAns && files.length === 0) {
+        answerDisplay = `<p class="text-slate-500 italic mt-2"><i class="fas fa-exclamation-triangle"></i> Học sinh để trống (Không gõ nội dung, không nộp file).</p>`;
     }
 
-    // Đưa vào kho log để nộp cho Giáo viên xem lại
     wrongAnswersLog.push(`
         <div class="bg-indigo-50 p-4 sm:p-5 rounded-2xl border border-indigo-200 mb-4 shadow-sm">
             <div class="flex justify-between border-b border-indigo-200 pb-3 mb-3 items-center">
@@ -1142,14 +1216,13 @@ window.checkTuLuanAns = function(index) {
         </div>
     `);
 
-    // Lưu ý: Tự luận máy không tự chấm được nên score không cộng điểm tự động.
     window.currentQIndex = index + 1;
     if (typeof window.saveQuizState === 'function') window.saveQuizState();
     window.renderQuestion(window.currentQIndex); 
 };
 
 // ==========================================
-// 3. HÀM VẼ GIAO DIỆN CÂU HỎI CHÍNH (ĐÃ NÂNG CẤP)
+// 3. HÀM VẼ GIAO DIỆN CÂU HỎI (ĐÃ CẬP NHẬT NÚT UPLOAD)
 // ==========================================
 window.renderQuestion = function(index) { 
     window.currentQIndex = index; 
@@ -1158,7 +1231,6 @@ window.renderQuestion = function(index) {
     let wrapperClass = (curSub === 'vietnamese' || curSub === 'tv') ? 'bg-white p-6 rounded-[2rem] shadow-lg border-2 border-slate-100 flex-1 flex flex-col' : 'flex-1 flex flex-col';
     let questionHtml = window.parseImg(q.question); 
     
-    // KIỂM TRA LOẠI CÂU HỎI
     let isTuluan = q.correct === 'tuluan';
     let isDragMode = /_{3,}/.test(questionHtml) && !isTuluan;
 
@@ -1174,15 +1246,18 @@ window.renderQuestion = function(index) {
                         <textarea id="ansTuluanText_${index}" class="w-full bg-white p-4 rounded-xl font-medium text-slate-700 outline-none focus:ring-2 focus:ring-indigo-300 min-h-[140px] resize-y" placeholder="Con có thể gõ câu trả lời vào đây..."></textarea>
                     </div>
                     
-                    <div id="ansTuluanImgPreview_${index}" class="hidden w-full text-center p-4 bg-slate-50 rounded-2xl border border-slate-200"></div>
+                    <div id="ansTuluanImgPreview_${index}" class="hidden w-full text-left p-4 bg-slate-50 rounded-2xl border border-slate-200"></div>
 
                     <button onclick="window.uploadAnhTuLuan(${index})" class="w-full bg-white text-indigo-600 border-2 border-indigo-200 py-4 rounded-2xl font-black hover:bg-indigo-50 transition shadow-sm flex justify-center items-center gap-2 btn-3d">
-                        <i class="fas fa-camera text-xl"></i> CHỤP HOẶC TẢI ẢNH BÀI LÀM TRÊN GIẤY LÊN ĐÂY
+                        <i class="fas fa-paperclip text-xl"></i> ĐÍNH KÈM TỆP TIN (CHỌN NHIỀU ẢNH / FILE CÙNG LÚC)
                     </button>
                     
                     <button onclick="window.checkTuLuanAns(${index})" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-4 rounded-2xl font-black btn-3d shadow-lg text-xl hover:scale-[1.02] transition mt-4"><i class="fas fa-check-circle mr-2"></i> CHỐT CÂU TRẢ LỜI</button>
                 </div>
             </div>`;
+        
+        // Gọi lại hàm vẽ preview nếu lỡ học sinh F5 trang (khôi phục state)
+        setTimeout(() => window.renderPreviewTuLuan(index), 50);
     } 
     else if (isDragMode) {
         let dropCount = 0;
@@ -1212,17 +1287,12 @@ window.renderQuestion = function(index) {
         let optionsHtml = ['a','b','c','d'].filter(k => q[k]).map((key, idx) => {
             const colorList = ['text-blue-600', 'text-green-600', 'text-orange-600', 'text-red-600'];
             let labelColor = colorList[idx]; 
-            // ẨN ĐÁP ÁN ĐÚNG KHỎI HTML F12
             return `<div onclick="window.checkAns(this, '${key}', ${index})" class="quiz-option p-4 sm:p-5 border-2 border-green-200 rounded-2xl flex items-center gap-4 cursor-pointer hover:border-green-400 hover:bg-green-200 bg-green-50 transition btn-3d"><span class="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black ${labelColor} uppercase text-lg shrink-0 shadow-sm">${key}</span><div class="font-bold text-slate-800 flex-1 text-base sm:text-lg leading-relaxed">${window.parseImg(q[key])}</div></div>`;
         }).join('');
         document.getElementById("quizBox").innerHTML = `<div class="${wrapperClass} fade-in"><div class="mb-6"><div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200">CÂU HỎI ${index + 1} / ${quiz.length}</div><div class="text-xl sm:text-2xl font-bold text-slate-800 leading-snug [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div></div><div class="space-y-4 mt-auto">${optionsHtml}</div></div>`; 
     }
 
-    // ==========================================
-    // ĐÁNH THỨC MATHJAX ĐỂ VẼ LẠI PHÂN SỐ SAU KHI TẢI CÂU HỎI
-    // ==========================================
     if (window.MathJax) {
-        // Cần dùng setTimeout nhỏ để đảm bảo nội dung HTML đã được render xong trước khi MathJax quét
         setTimeout(() => {
             MathJax.typesetPromise().catch((err) => console.log('Lỗi MathJax: ' + err.message));
         }, 50);
