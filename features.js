@@ -848,93 +848,107 @@ window.xoaCauHoi = async function(id) {
 // ==========================================
 // 4. TIẾN TRÌNH LÀM BÀI (CÓ TÍCH HỢP BỘ LỌC ẨN/HIỆN BÀI TẬP TỪ ADMIN)
 // ==========================================
-// ==========================================
-// HÀM HIỂN THỊ BÀI TẬP (ĐÃ SỬA TRIỆT ĐỂ LỖI HIỂN THỊ ĐIỂM TỰ LUẬN)
-// ==========================================
-window.loadSubject = function(subjectCode) {
-    curSub = subjectCode;
-    let subjectName = curSub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT';
-    let textClass = curSub === 'math' ? 'text-orange-600' : 'text-cyan-600';
-    let borderClass = curSub === 'math' ? 'border-orange-200' : 'border-cyan-200';
-
-    const sortFunc = (a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numA - numB; return String(a).localeCompare(String(b)); };
+window.loadSubject = async function(sub) { 
+    if(!currentUser) return showLogin(); curSub = sub; 
+    if (!(await window.loadAllDataOnce())) return;
+    const qs = Data[sub]; if (!qs) { alert("Không tải được dữ liệu. Vui lòng thử lại."); return veTrangChu(); }
     
-    let hiddenGroups = window.getHiddenGroups ? window.getHiddenGroups(curSub) : [];
-    const groups = [...new Set(Data[curSub].map(x => x.group))].filter(g => g && !hiddenGroups.includes(g)).sort(sortFunc);
+    // --- LỌC BỎ CÁC BÀI TẬP ĐANG BỊ ẨN ---
+    let hiddenGroups = window.getHiddenGroups ? window.getHiddenGroups(sub) : [];
+    
+    const grps = [...new Set(qs.map(x => x.group))]
+        .filter(g => g && !hiddenGroups.includes(g)) // Dòng này sẽ chặn không cho bài bị ẩn hiện lên
+        .sort((a, b) => { let matchA = String(a).match(/\d+(\.\d+)?/); let matchB = String(b).match(/\d+(\.\d+)?/); let numA = matchA ? parseFloat(matchA[0]) : 0; let numB = matchB ? parseFloat(matchB[0]) : 0; if(numA !== numB) return numB - numA; return String(b).localeCompare(String(a)); });
+    
+    // Giao diện Huy hiệu Vé sửa bài sai
+    let veLamLai = (currentUser && currentUser.role === 'student') ? (Number(currentUser.veLamLai) || 0) : 0;
+    let veHtml = (currentUser && currentUser.role === 'student') ? `
+        <div class="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-sm text-sm" title="Dùng để làm lại bài tập cũ cải thiện điểm">
+            <i class="fas fa-ticket-alt text-orange-500"></i>
+            <span class="font-bold text-orange-800 uppercase text-[10px] sm:text-[11px] tracking-wide whitespace-nowrap">Vé sửa bài sai:</span>
+            <span class="font-black text-orange-600 text-base leading-none">${veLamLai}</span>
+        </div>
+    ` : '';
 
-    let html = `<div class="flex items-center mb-6"><button onclick="window.moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500"><i class="fas fa-arrow-left"></i></button><h2 class="font-black text-xl sm:text-2xl ${textClass}">BÀI TẬP ${subjectName}</h2></div><div class="space-y-4 fade-in pb-10">`;
-
-    if (groups.length === 0) {
-        html += `<p class="text-center text-slate-500 font-bold mt-10">Chưa có bài tập nào.</p>`;
-    }
-
-    groups.forEach(g => {
-        // LỌC RỘNG HƠN ĐỂ KHÔNG BỎ SÓT BẤT KỲ CÂU TỰ LUẬN NÀO
-        let groupQs = Data[curSub].filter(q => q.group === g && (q.question || q.image || q.a || q.b || String(q.correct).includes('tuluan')));
-        let qCount = groupQs.length;
-        let timeMins = groupQs.length > 0 ? (groupQs[0].time || 10) : 10;
-        
-        // XÁC ĐỊNH RÕ SỐ CÂU TỰ LUẬN VÀ TRẮC NGHIỆM
-        let hasTuluan = groupQs.some(q => String(q.correct).trim().toLowerCase() === 'tuluan');
-        let autoGradedCount = groupQs.filter(q => String(q.correct).trim().toLowerCase() !== 'tuluan').length;
-        let maxScore = autoGradedCount * 10;
-
-        let myLogs = [];
-        if (currentUser && currentUser.role === 'student') {
-            myLogs = Data.log.filter(l => String(l.id) === String(currentUser.id) && (l.subject === curSub || (curSub === 'vietnamese' && l.subject === 'tv')) && l.group === g);
-            myLogs.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-        }
-
-        let statusHtml = `<button onclick="window.startQuiz('${g}', ${timeMins})" class="shrink-0 bg-white text-slate-700 font-black px-4 sm:px-6 py-2 sm:py-3 rounded-xl shadow-sm border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 transition btn-3d"><i class="fas fa-play text-sm mr-1"></i> BẮT ĐẦU</button>`;
-        let iconHtml = `<div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white flex items-center justify-center font-black text-slate-400 shadow-inner border border-slate-100 text-lg shrink-0"><i class="fas fa-lock"></i></div>`;
-        let boxClass = "bg-slate-50 opacity-80 grayscale hover:grayscale-0 transition-all duration-300";
-
-        if (myLogs.length > 0) {
-            let log = myLogs[0];
-            let score = Number(log.score) || 0;
-            let detailsStr = String(log.details || "").toUpperCase();
-            
-            let isWaiting = detailsStr.includes('CHỜ GV CHẤM ĐIỂM');
-            boxClass = "bg-white";
-            
-            // LOGIC HIỂN THỊ ĐIỂM THÔNG MINH CHO TỰ LUẬN
-            let scoreDisplay = (maxScore === 0 || (hasTuluan && autoGradedCount === 0)) ? `${score} điểm` : `${score}/${maxScore} điểm`;
-
-            if (isWaiting) {
-                iconHtml = `<div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-orange-100 flex items-center justify-center font-black text-orange-500 shadow-inner border border-orange-200 text-lg shrink-0 animate-pulse"><i class="fas fa-hourglass-half"></i></div>`;
-                statusHtml = `<div class="shrink-0 bg-orange-50 text-orange-600 font-black px-3 py-2 rounded-lg border border-orange-200 shadow-sm flex items-center gap-1.5"><i class="fas fa-user-clock"></i> <span class="hidden sm:inline">Chờ Thầy chấm</span></div>`;
-            } 
-            else if (score > 0) {
-                // Đã chấm xong / Hoặc làm có điểm -> Hiển thị màu xanh lá
-                iconHtml = `<div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-100 flex items-center justify-center font-black text-green-500 shadow-inner border border-green-200 text-lg shrink-0"><i class="fas fa-check"></i></div>`;
-                statusHtml = `<div class="shrink-0 bg-green-50 text-green-600 font-black px-3 py-2 rounded-lg border border-green-200 shadow-sm flex items-center gap-1.5"><i class="fas fa-star text-yellow-500"></i> ${scoreDisplay}</div>`;
-            } 
-            else {
-                // Bài làm 0 điểm -> Hiển thị màu đỏ
-                iconHtml = `<div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-100 flex items-center justify-center font-black text-red-500 shadow-inner border border-red-200 text-lg shrink-0"><i class="fas fa-times"></i></div>`;
-                statusHtml = `<div class="shrink-0 bg-red-50 text-red-600 font-black px-3 py-2 rounded-lg border border-red-200 shadow-sm flex items-center gap-1.5"><i class="fas fa-times-circle"></i> ${scoreDisplay}</div>`;
-            }
-            
-            // Nút xem lại bài làm
-            statusHtml += `<button onclick="window.xemLoiSai('${currentUser.id}', '${curSub}', '${g}')" class="ml-2 shrink-0 bg-white text-slate-500 font-black px-3 py-2 rounded-lg border border-slate-200 shadow-sm hover:bg-slate-100 transition" title="Xem lại bài làm"><i class="fas fa-search"></i></button>`;
-        }
-
-        html += `<div class="${boxClass} p-4 sm:p-5 border-2 ${borderClass} rounded-2xl shadow-sm flex items-center justify-between gap-4">
-            <div class="flex items-center gap-4 flex-1 min-w-0">
-                ${iconHtml}
-                <div class="flex-1 min-w-0">
-                    <h4 class="font-bold text-slate-800 text-base sm:text-lg truncate">${g}</h4>
-                    <p class="text-xs sm:text-sm font-bold text-slate-400 mt-0.5"><i class="fas fa-clock mr-1"></i> ${timeMins} phút &bull; ${qCount} câu ${hasTuluan ? '<span class="text-indigo-500 ml-1"><i class="fas fa-pen-nib"></i> Có Tự Luận</span>' : ''}</p>
-                </div>
-            </div>
+    let html = `
+        <div class="flex items-center justify-between mb-6">
             <div class="flex items-center">
-                ${statusHtml}
+                <button onclick="moGocHocTap()" class="bg-white p-2 rounded-xl shadow mr-3 text-slate-500 hover:bg-slate-50 transition"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-black text-xl text-indigo-900 uppercase">${sub === 'math' ? 'TOÁN' : 'TIẾNG VIỆT'}</h2>
             </div>
-        </div>`;
-    });
-    
-    html += `</div>`;
-    document.getElementById('content').innerHTML = html;
+            ${veHtml}
+        </div>
+        <div class="space-y-3">
+    `; 
+
+    if(grps.length === 0) { html += `<p class="text-center text-gray-400 mt-10">Hiện chưa có bài tập nào được giao.</p>`; } else {
+        grps.forEach(g => { 
+            // 1. Phân loại và phân tích nhóm câu hỏi
+            const groupQs = qs.filter(q => q.group === g);
+            const myLogsForGroup = Data.log.filter(l => String(l.id) === String(currentUser.id) && l.subject === sub && l.group === g);
+            const isDone = myLogsForGroup.length > 0; 
+            const time = groupQs.length > 0 ? (groupQs[0].time || 20) : 20; 
+            
+            // XÁC ĐỊNH RÕ SỐ CÂU TỰ LUẬN VÀ TRẮC NGHIỆM
+            // Một câu hỏi là trắc nghiệm nếu correct không phải 'tuluan' VÀ (có đáp án a,b,c,d HOẶC có chỗ điền khuyết HOẶC không phải là bài đọc thuần túy)
+            let autoGradedQs = groupQs.filter(q => String(q.correct).trim().toLowerCase() !== 'tuluan' && (q.a || q.b || q.c || q.d || /_{3,}/.test(q.question) || !(q.question||"").includes('[BAIDOC]')));
+            let tuluanQs = groupQs.filter(q => String(q.correct).trim().toLowerCase() === 'tuluan');
+            
+            let autoGradedCount = autoGradedQs.length;
+            let hasTuluan = tuluanQs.length > 0;
+            // Tổng số câu (dùng để hiển thị đếm số câu) = số câu trắc nghiệm + số câu tự luận
+            let totalDisplayCount = autoGradedCount + tuluanQs.length;
+            
+            const maxPossibleScore = autoGradedCount * 10; 
+            
+            let clickAction = `window.startQuiz('${g}', ${time})`; 
+            let badgeHtml = `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>`;
+            let cardClass = `border-indigo-50 bg-white`; let iconClass = `bg-indigo-100 text-indigo-600`; let iconSymbol = `fa-star`;
+            
+            // Nếu có câu Tự luận, hiển thị thêm biểu tượng cây bút
+            let tuluanIconHtml = hasTuluan ? `<span class="text-indigo-500 ml-1" title="Có câu hỏi tự luận"><i class="fas fa-pen-nib"></i></span>` : '';
+
+            if (isDone && currentUser.role === 'student') { 
+                myLogsForGroup.sort((a,b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+                let latestLog = myLogsForGroup[0];
+                let score = Number(latestLog.score) || 0;
+                let detailsStr = String(latestLog.details || "").toUpperCase();
+                
+                let isWaiting = detailsStr.includes('CHỜ GV CHẤM ĐIỂM');
+                let hasMistakes = detailsStr.includes('BORDER-RED-200') || detailsStr.includes('BỎ TRỐNG');
+                
+                let theme = {};
+                let scoreDisplay = (maxPossibleScore === 0 || (hasTuluan && autoGradedCount === 0)) ? `${score} điểm` : `${score}/${maxPossibleScore} điểm`;
+
+                if (isWaiting) {
+                    // Đang chờ GV chấm điểm Tự luận
+                    theme = { badge: "bg-orange-100 text-orange-700 border border-orange-500", card: "border-orange-200 bg-orange-50/40 opacity-95", icon: "bg-orange-100 text-orange-600", sym: "fa-hourglass-half" };
+                    badgeHtml = `<span class="${theme.badge} text-[10px] font-black px-2 py-1 rounded shadow-sm flex items-center gap-1"><i class="fas fa-user-clock text-xs"></i>Chờ Thầy chấm</span>`;
+                } else if (score > 0 && !hasMistakes) {
+                    // Làm đúng hoặc đã chấm xong
+                    theme = { badge: "bg-green-100 text-green-700 border border-green-500", card: "border-green-200 bg-green-50/40 opacity-95", icon: "bg-green-100 text-green-600", sym: "fa-check-circle" }; 
+                    badgeHtml = `<span class="${theme.badge} text-[10px] font-black px-2 py-1 rounded shadow-sm"><i class="fas ${theme.sym} text-xs mr-1"></i>${scoreDisplay}</span>`;
+                } else {
+                    // Làm sai
+                    theme = { badge: "bg-red-100 text-red-700 border border-red-500", card: "border-red-200 bg-red-50/40 opacity-95", icon: "bg-red-100 text-red-600", sym: "fa-times-circle" };
+                    badgeHtml = `<span class="${theme.badge} text-[10px] font-black px-2 py-1 rounded shadow-sm"><i class="fas ${theme.sym} text-xs mr-1"></i>${scoreDisplay}</span>`;
+                }
+                
+                cardClass = theme.card; iconClass = theme.icon; iconSymbol = theme.sym;
+                let isMaxScore = maxPossibleScore > 0 ? (score >= maxPossibleScore) : true; 
+                let tokens = Number(currentUser.veLamLai) || 0;
+                
+                if (tokens > 0) { clickAction = `window.promptRedo('${g}', ${time}, ${isMaxScore})`; } 
+                else { 
+                    if (isMaxScore && !isWaiting && !hasMistakes) clickAction = `alert('Tuyệt vời! Con đã đạt kết quả xuất sắc ở bài này rồi. 🎉')`; 
+                    else if (isWaiting) clickAction = `alert('Bài này đang chờ Thầy chấm điểm phần Tự luận. Con hãy kiên nhẫn đợi nhé!')`;
+                    else clickAction = `alert('Con đã làm bài này đạt ${scoreDisplay}.\\n\\nHãy vào Vòng Quay May Mắn tìm Vé sửa bài sai nếu muốn cải thiện điểm nhé!')`; 
+                }
+            } 
+            html += `<div onclick="${clickAction}" class="p-4 rounded-2xl border-2 flex justify-between items-center cursor-pointer hover:-translate-y-1 transition btn-3d ${cardClass}"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl ${iconClass}"><i class="fas ${iconSymbol}"></i></div><div><h3 class="font-black text-lg text-slate-700">${g}</h3><p class="text-xs font-bold text-slate-400 mt-1"><i class="fas fa-clock mr-1"></i>${time} phút • ${totalDisplayCount} câu ${tuluanIconHtml}</p></div></div>${badgeHtml}</div>`; 
+        }); 
+    } 
+    document.getElementById('content').innerHTML = html + `</div>`; 
 };
 
 // ==========================================
