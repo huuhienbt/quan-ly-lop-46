@@ -738,6 +738,7 @@ window.changeQType = function(initialCorr = '') {
     let lblC = document.getElementById("lblC"); let lblD = document.getElementById("lblD");
     let corrContainer = document.getElementById("corrContainer");
     let optionsGrid = document.getElementById("optionsGrid"); // Cần id này để ẩn/hiện A,B,C,D
+    let tuluanGrid = document.getElementById("tuluanGrid"); // Cần id này để ẩn/hiện khung nhập điểm Tự luận
     
     let curVal = initialCorr || (document.getElementById("frmCorr") ? document.getElementById("frmCorr").value : 'a');
     
@@ -745,16 +746,19 @@ window.changeQType = function(initialCorr = '') {
         hint.className = "mt-2 text-[11px] font-bold text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-200 fade-in";
         hint.innerHTML = `<i class="fas fa-camera"></i> Học sinh sẽ trả lời bằng cách gõ văn bản hoặc chụp ảnh bài làm up lên. Thầy không cần nhập đáp án A, B, C, D (Hệ thống sẽ lưu lại bài làm để Thầy xem sau).`;
         if(optionsGrid) optionsGrid.style.display = 'none';
+        if(tuluanGrid) tuluanGrid.style.display = 'block'; // HIỆN KHUNG NHẬP ĐIỂM TỰ LUẬN
         corrContainer.innerHTML = `<input type="hidden" id="frmCorr" value="tuluan">`;
     }
     else if(val === 'dienkhuyet') {
         if(optionsGrid) optionsGrid.style.display = '';
+        if(tuluanGrid) tuluanGrid.style.display = 'none'; // ẨN KHUNG NHẬP ĐIỂM TỰ LUẬN
         hint.className = "mt-2 text-[11px] font-bold text-orange-600 bg-orange-50 p-2 rounded-lg border border-orange-200 fade-in";
         hint.innerHTML = `<i class="fas fa-info-circle"></i> Hệ thống sẽ tạo dạng Bấm-Điền-Từ. Thầy hãy đặt con trỏ chuột vào chỗ cần điền và bấm nút <b class="bg-white px-1 rounded border border-slate-200 text-slate-700"><i class="far fa-square"></i> Ô Trống</b> ở thanh công cụ bên dưới nhé!`;
         lblA.innerText = "Từ gợi ý 1 (A)"; lblB.innerText = "Từ gợi ý 2 (B)"; lblC.innerText = "Từ gợi ý 3 (C)"; lblD.innerText = "Từ gợi ý 4 (D)";
         corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Thứ tự điền vào ô trống? (Vd: a,b,c)</label><input type="text" id="frmCorr" value="${curVal !== 'tuluan' ? curVal : 'a,b'}" class="edit-input w-full bg-yellow-50 text-yellow-800 border-2 border-yellow-200 p-3 rounded-xl font-bold uppercase outline-none focus:border-yellow-500" placeholder="Ví dụ: a, c">`;
     } else {
         if(optionsGrid) optionsGrid.style.display = '';
+        if(tuluanGrid) tuluanGrid.style.display = 'none'; // ẨN KHUNG NHẬP ĐIỂM TỰ LUẬN
         hint.className = "hidden"; lblA.innerText = "Đáp án A"; lblB.innerText = "Đáp án B"; lblC.innerText = "Đáp án C"; lblD.innerText = "Đáp án D";
         if(!['a','b','c','d'].includes(curVal.toLowerCase())) curVal = 'a';
         corrContainer.innerHTML = `<label class="text-xs font-bold text-slate-500 uppercase block mb-1">Chọn Đáp Án Đúng</label><select id="frmCorr" class="edit-input w-full bg-yellow-50 border-2 border-yellow-200 p-3 rounded-xl font-bold text-yellow-800 outline-none focus:border-yellow-500"><option value="a" ${curVal=='a'?'selected':''}>Đáp án A</option><option value="b" ${curVal=='b'?'selected':''}>Đáp án B</option><option value="c" ${curVal=='c'?'selected':''}>Đáp án C</option><option value="d" ${curVal=='d'?'selected':''}>Đáp án D</option></select>`;
@@ -803,6 +807,13 @@ window.renderFormCauHoi = function(id) {
                 <div><label class="text-xs font-bold text-slate-500 uppercase">Phút</label><input type="number" id="frmT" value="${q.time}" class="edit-input w-full mt-1 text-center"></div>
             </div>
             ${formLayout} 
+            
+            <div id="tuluanGrid" class="p-4 bg-blue-50 border-2 border-blue-200 rounded-2xl mt-4" style="${isTuluan ? '' : 'display:none;'}">
+                <label class="text-xs font-bold text-blue-700 uppercase block mb-2"><i class="fas fa-star text-yellow-500 mr-1"></i> ĐIỂM TỐI ĐA CHO CÂU TỰ LUẬN NÀY</label>
+                <input type="number" id="frmEssayScore" value="${isTuluan ? (q.a || 10) : 10}" class="edit-input w-full bg-white text-blue-900 border-2 border-blue-300 p-3 rounded-xl font-black text-xl outline-none focus:border-blue-500" placeholder="Ví dụ: 30">
+                <p class="text-xs font-bold text-blue-600 mt-2 italic"><i class="fas fa-info-circle"></i> Hệ thống sẽ tự động cộng dồn điểm này vào Tổng Điểm của bài thi.</p>
+            </div>
+
             <div id="optionsGrid" class="grid grid-cols-2 gap-3 mt-4" style="${isTuluan ? 'display:none;' : ''}">
                 <div><label id="lblA" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 1 (A)' : 'Đáp án A'}</label><input type="text" id="frmA" value="${q.a}" class="edit-input w-full mt-1"></div>
                 <div><label id="lblB" class="text-xs font-bold text-slate-500 uppercase">${isDrag ? 'Từ gợi ý 2 (B)' : 'Đáp án B'}</label><input type="text" id="frmB" value="${q.b}" class="edit-input w-full mt-1"></div>
@@ -826,8 +837,8 @@ window.luuCauHoi = async function(id) {
     if (isTV) { let baiDocText = (document.getElementById("frmBaiDoc") ? document.getElementById("frmBaiDoc").innerHTML.trim() : ""); if (baiDocText && baiDocText !== '<br>') { finalQuestionText = `[BAIDOC]${baiDocText}[/BAIDOC] ` + finalQuestionText; } }
     let corrVal = document.getElementById("frmCorr").value.trim().toLowerCase();
     
-    // Nếu là câu tự luận, ta gán A B C D thành rỗng để tiết kiệm dung lượng Data trên máy chủ
-    let aVal = typeVal === 'tuluan' ? '' : document.getElementById("frmA").value;
+    // GHI ĐIỂM TỰ LUẬN VÀO VỊ TRÍ ĐÁP ÁN A (B, C, D gán rỗng)
+    let aVal = typeVal === 'tuluan' ? (document.getElementById("frmEssayScore").value || 10) : document.getElementById("frmA").value;
     let bVal = typeVal === 'tuluan' ? '' : document.getElementById("frmB").value;
     let cVal = typeVal === 'tuluan' ? '' : document.getElementById("frmC").value;
     let dVal = typeVal === 'tuluan' ? '' : document.getElementById("frmD").value;
@@ -846,7 +857,7 @@ window.xoaCauHoi = async function(id) {
 };
 
 // ==========================================
-// 4. TIẾN TRÌNH LÀM BÀI (CÓ TÍCH HỢP BỘ LỌC ẨN/HIỆN BÀI TẬP TỪ ADMIN)
+// 4. TIẾN TRÌNH LÀM BÀI (ĐÃ TÍCH HỢP TỔNG ĐIỂM TỰ LUẬN + MÀU SẮC CHUẨN)
 // ==========================================
 window.loadSubject = async function(sub) { 
     if(!currentUser) return showLogin(); curSub = sub; 
@@ -898,7 +909,9 @@ window.loadSubject = async function(sub) {
             // Tổng số câu hiển thị = số câu trắc nghiệm + số câu tự luận
             let totalDisplayCount = autoGradedCount + tuluanQs.length;
             
-            const maxPossibleScore = autoGradedCount * 10; 
+            // TÍNH ĐIỂM TỐI ĐA MỚI (Trắc nghiệm + Tự luận)
+            let tuluanMaxScore = tuluanQs.reduce((sum, q) => sum + (Number(q.a) || 10), 0); // Lấy điểm từ cột A
+            const maxPossibleScore = (autoGradedCount * 10) + tuluanMaxScore; 
             
             let clickAction = `window.startQuiz('${g}', ${time})`; 
             let badgeHtml = `<span class="bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded animate-pulse shadow-md">MỚI</span>`;
@@ -914,7 +927,7 @@ window.loadSubject = async function(sub) {
                 
                 let isWaiting = detailsStr.includes('CHỜ GV CHẤM ĐIỂM');
                 
-                // TÍNH TOÁN PHẦN TRĂM ĐỂ PHỦ MÀU SẮC
+                // TÍNH TOÁN PHẦN TRĂM ĐỂ PHỦ MÀU SẮC DỰA TRÊN ĐIỂM TỔNG MỚI
                 let pct = 0;
                 if (maxPossibleScore > 0) {
                     pct = (score / maxPossibleScore) * 100;
@@ -1225,7 +1238,7 @@ window.xoaFileTuLuan = function(index, fileIndex, e) {
     }
 };
 // ==========================================
-// 2. HÀM CHỐT ĐÁP ÁN TỰ LUẬN (HỖ TRỢ NHIỀU FILE)
+// 2. HÀM CHỐT ĐÁP ÁN TỰ LUẬN (ĐÃ BỔ SUNG ĐIỂM TỐI ĐA VÀO LỊCH SỬ)
 // ==========================================
 window.checkTuLuanAns = function(index) {
     window.answeredQuestions++;
@@ -1251,10 +1264,16 @@ window.checkTuLuanAns = function(index) {
         answerDisplay = `<p class="text-slate-500 italic mt-2"><i class="fas fa-exclamation-triangle"></i> Học sinh để trống (Không gõ nội dung, không nộp file).</p>`;
     }
 
+    // Lấy điểm tối đa từ đáp án A (mặc định 10 nếu không có)
+    let essayMaxScore = quiz[index].a ? Number(quiz[index].a) : 10;
+
     wrongAnswersLog.push(`
         <div class="bg-indigo-50 p-4 sm:p-5 rounded-2xl border border-indigo-200 mb-4 shadow-sm">
             <div class="flex justify-between border-b border-indigo-200 pb-3 mb-3 items-center">
-                <span class="font-black text-indigo-700 text-base"><i class="fas fa-pen-nib mr-1"></i> Câu ${index+1} (Tự luận)</span>
+                <span class="font-black text-indigo-700 text-base">
+                    <i class="fas fa-pen-nib mr-1"></i> Câu ${index+1} (Tự luận) 
+                    <span class="text-xs text-indigo-500 ml-2 font-bold bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded-md shadow-sm">(Tối đa: ${essayMaxScore}đ)</span>
+                </span>
                 <span class="text-[10px] font-black text-orange-500 bg-orange-100 border border-orange-200 px-2 py-1 rounded-lg uppercase shadow-sm">Chờ GV chấm điểm</span>
             </div>
             <div class="font-bold text-slate-800 text-sm mb-4 leading-relaxed">${window.parseImg(quiz[index].question)}</div>
@@ -1271,7 +1290,7 @@ window.checkTuLuanAns = function(index) {
 };
 
 // ==========================================
-// 3. HÀM VẼ GIAO DIỆN CÂU HỎI (ĐÃ CẬP NHẬT NÚT UPLOAD)
+// 3. HÀM VẼ GIAO DIỆN CÂU HỎI (ĐÃ CẬP NHẬT HIỂN THỊ ĐIỂM TỐI ĐA CHO TỰ LUẬN)
 // ==========================================
 window.renderQuestion = function(index) { 
     window.currentQIndex = index; 
@@ -1284,10 +1303,16 @@ window.renderQuestion = function(index) {
     let isDragMode = /_{3,}/.test(questionHtml) && !isTuluan;
 
     if (isTuluan) {
+        // Rút xuất điểm tối đa đã lưu từ vị trí Đáp án A (mặc định là 10 nếu chưa cài)
+        let essayMaxScore = q.a ? Number(q.a) : 10;
+
         document.getElementById("quizBox").innerHTML = `
             <div class="${wrapperClass} fade-in">
                 <div class="mb-6">
-                    <div class="text-sm font-black ${colorTheme} mb-3 uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200"><i class="fas fa-pen-nib mr-1"></i> CÂU ${index + 1} / ${quiz.length} (TỰ LUẬN)</div>
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="text-sm font-black ${colorTheme} uppercase tracking-widest bg-slate-50 inline-block px-3 py-1 rounded-lg border border-slate-200"><i class="fas fa-pen-nib mr-1"></i> CÂU ${index + 1} / ${quiz.length} (TỰ LUẬN)</div>
+                        <div class="text-xs sm:text-sm font-black text-pink-600 bg-pink-50 border border-pink-200 px-3 py-1 rounded-lg shadow-sm"><i class="fas fa-star text-yellow-500 mr-1"></i> ${essayMaxScore} ĐIỂM</div>
+                    </div>
                     <div class="text-xl sm:text-2xl font-bold text-slate-800 leading-[2.2] [&_img]:max-w-full [&_img]:rounded-xl [&_img]:shadow-sm [&_img]:my-4">${questionHtml}</div>
                 </div>
                 <div class="mt-auto space-y-4">
