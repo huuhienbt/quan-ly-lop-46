@@ -2,7 +2,7 @@
 // FILE 1: CONFIG.JS (KẾT NỐI, KHỞI TẠO, ĐĂNG NHẬP BẢO MẬT)
 // ==========================================
 
-const API_URL = "https://script.google.com/macros/s/AKfycby3g1YD33YvtPHxFrROITYquUiC3-_jw2tuYXDMPZ53RRWdTaDlvvv1MW3aegBzVh9Kdw/exec";
+const API_URL = "https://api-lop46.huuhienbte.workers.dev/";
 
 // Khởi tạo các biến toàn cục dùng chung cho cả 3 file
 let Data = { hs: [], math: [], tv: [], vietnamese: [], log: [], stats: null, leaves: [], notiList: [] };
